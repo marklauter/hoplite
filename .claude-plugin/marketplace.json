@@ -1,0 +1,21 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "marklauter",
+  "description": "Mark Lauter's personal Claude Code plugins and skills",
+  "owner": {
+    "name": "Mark Lauter",
+    "email": "mark@marklauter.com"
+  },
+  "plugins": [
+    {
+      "name": "skills",
+      "description": "Mark's collection of personal skills, centrally maintained",
+      "author": {
+        "name": "Mark Lauter",
+        "email": "mark@marklauter.com"
+      },
+      "category": "productivity",
+      "source": "./plugins/skills"
+    }
+  ]
+}
