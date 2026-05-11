@@ -13,7 +13,7 @@ These principles draw on several orienting threads. Evans for domain-driven desi
 
 Minsky on making illegal states unrepresentable. Hickey on values, immutability, the distinction between simple and easy, and state representation as a series of events. Brooks on essential versus accidental complexity. Kernighan and Pike on the rule of clarity.
 
-They describe what good code looks like. They apply to new code without exception; existing code is updated to match when it's touched, not chased preemptively.
+They describe what good code looks like. They apply to new code without exception; existing code is updated to match when it's touched.
 
 ### Make invalid states unrepresentable
 
@@ -21,11 +21,11 @@ The type system is the first line of defense, not a fallback. Construction is wh
 
 ### Immutable by default
 
-Default to immutable — Hickey's values-not-state stance. Mutation is a deliberate carve-out, justified by a measured hot path or a domain concept that genuinely models change in place. It is never the path of least resistance.
+Default to immutable — Hickey's values-not-state stance. Mutation is a deliberate carve-out, justified by a measured hot path or a domain concept that genuinely models change in place.
 
 ### Pure functions over procedures
 
-Push side effects to the boundary; keep the interior computational. Pure functions are testable by reading them. Impure functions require fixtures, fakes, and mocks — and that ceremony is a signal that the design wants to be purer than it currently is.
+Push side effects to the boundary; keep the interior computational. Pure functions are testable by reading them. Impure functions require fixtures, fakes, and mocks — and that ceremony is a signal that the design wants to be purer.
 
 ### Results, not exceptions
 
@@ -33,7 +33,7 @@ If you can name the outcome — `NotFound`, `Conflict`, `InvalidInput` — it is
 
 ### Fail loud when prevention fails
 
-The first defense is making bad states unreachable. When something slips past anyway, the system crashes immediately with a stack trace — Armstrong's let-it-crash, applied at function granularity. A loud failure beats silent data corruption every time, and quietly swallowing an unexpected condition is worse than either.
+The first defense is making bad states unreachable. When something slips past anyway, the system crashes immediately with a stack trace — Armstrong's let-it-crash, applied at function granularity. A loud failure beats silent data corruption.
 
 ### The domain doesn't know how it's stored
 
@@ -45,7 +45,7 @@ Domain types describe meaning. If a reader can reverse-engineer the database, OR
 
 ### Modern idioms
 
-New code uses the newest stable language features: records, pattern matching, primary constructors, collection expressions, file-scoped namespaces, expression-bodied members, required members, raw string literals. Older syntax exists for backward compatibility with existing code, not as a stylistic option for new code.
+New code uses the newest stable language features: records, pattern matching, primary constructors, collection expressions, file-scoped namespaces, expression-bodied members, required members, raw string literals.
 
 ### Performance where it matters
 
@@ -61,7 +61,7 @@ The first implementation of a pattern becomes the example the next ten will copy
 
 ### One source of truth
 
-Every fact has exactly one authoritative representation. When the fact changes, one place changes. Duplicated knowledge — copy-pasted code, parallel hierarchies, values restated in both code and config — is a defect waiting to surface.
+Every fact has one authoritative representation. When the fact changes, one place changes. Duplicated knowledge — copy-pasted code, parallel hierarchies, values restated in both code and config — is a defect waiting to surface.
 
 ### The easy path is the correct path
 
@@ -73,7 +73,7 @@ C#-specific patterns that operationalize the principles above. Each subsection m
 
 ### Make invalid states unrepresentable
 
-- `internal sealed` by default. Records and concrete classes are `internal sealed`. `internal sealed record Range { ... }`. Promote to `public` only when the type is part of the library's exported contract.
+- `internal sealed` by default for records and concrete classes. `internal sealed record Range { ... }`. Promote to `public` only when the type is part of the library's exported contract.
 - Public interfaces, internal implementations. Library exports a `public interface IFormatter`; the implementation is `internal sealed class MarkdownFormatter(FormatterOptions options) : IFormatter`. Consumers depend on the interface; the implementation is registered in the DI container. The public contract is mockable for tests because callers see only the interface.
 - `required` for construction-time invariants. `public required int Start { get; init; }`. Every construction site is forced to set the property.
 - `init` accessors only. Properties expose `init`, never `set`. Once constructed, the value is the value.
@@ -96,13 +96,13 @@ C#-specific patterns that operationalize the principles above. Each subsection m
 
 - Static factory methods for composition. Pure factories take parameters, return a configured object, perform no I/O. Composition is a value, not an event.
 - Imperative shell at the entry point. I/O (Console, file system, network, database) lives in `Program.cs`, the controller, the host. The core layer takes data in and returns data out.
-- `TimeProvider` injected instead of direct `DateTime.UtcNow` or `Stopwatch.GetTimestamp` calls. Time becomes testable and controllable in tests.
+- `TimeProvider` injected instead of direct `DateTime.UtcNow` or `Stopwatch.GetTimestamp` calls. Time becomes testable and controllable.
 - Static helpers for pure transformations (tokenize, normalize, parse, format). No state, no I/O, no logging — just data → data.
 - Logging is opt-in via constructor injection. A pure transformation does not log; a middleware that needs to log declares `ILogger<T>` in its primary constructor and does so explicitly.
 
 ### Results, not exceptions
 
-- ErrorOr for domain logic. Domain operations return `ErrorOr<T>`. Callers pattern match on success or error and act accordingly.
+- ErrorOr for domain logic. Domain operations return `ErrorOr<T>`. Callers pattern match on success or error.
 - Domain error enum (or sealed hierarchy) in the domain layer only. The named failure shapes the domain knows how to act on: `Gone`, `NotFound`, `Conflict`, `Validation`. Each carries the context needed to handle it.
 - Adapters and ports throw. Database errors, network failures, file-system errors, deserialization failures, and any other infrastructure-layer failure throw. The domain layer does not see these directly.
 - Infrastructure-only codebases lean on exceptions. A framework, library, or adapter codebase with no domain to model (e.g., a request-pipeline library) uses exceptions throughout — there is no domain layer for Results to inhabit. Apply Results where there is a domain to name failures in.
@@ -156,7 +156,7 @@ _Architectural treatment (bounded contexts, layer boundaries, mapper/DTO convent
 - `<AnalysisMode>All</AnalysisMode>` and `<AnalysisLevel>latest-all</AnalysisLevel>` in `Directory.Build.props`. The strictest analyzer set against the latest language version.
 - Analyzer packs via `GlobalPackageReference` in `Directory.Packages.props` so every project picks them up automatically. No per-project drift.
 - ArchUnitNET tests as structural gates. Architectural invariants — sealed concrete classes, no public instance fields, namespace shape, layer dependencies, constructor visibility — encoded as xUnit tests. Drift trips the build.
-- Coverage threshold ratchet in `Directory.Build.props`. Line, branch, and method coverage minimums as MSBuild properties. Start at zero, measure the current value, lock the threshold in at that value, and ratchet up as coverage grows. The gate moves forward only — never back.
+- Coverage threshold ratchet in `Directory.Build.props`. Line, branch, and method coverage minimums as MSBuild properties. Start at zero, measure the current value, lock the threshold in at that value, and ratchet up as coverage grows. The gate moves forward only.
 - Suppress at the lowest scope possible. Order of preference: `#pragma warning disable` around the offending lines → `[SuppressMessage(..., Justification = "...")]` attribute on a member → `<NoWarn>` in the project `.csproj` → `<NoWarn>` in `Directory.Build.props`. Push suppressions as close to the offending code as possible.
 - `[SuppressMessage]` always carries a `Justification`. An unjustified suppression is a defect.
 - Solution-wide suppressions in `Directory.Build.props` use `<NoWarn>$(NoWarn);1234;5678</NoWarn>` and must be preceded by one comment per warning, in the form:
@@ -188,7 +188,7 @@ _Architectural treatment (bounded contexts, layer boundaries, mapper/DTO convent
 
 ### The easy path is the correct path
 
-- Primary constructors for DI. The easy thing — declare a parameter — is the correct thing — capture an immutable dependency. No boilerplate constructor, no field-assignment ceremony.
+- Primary constructors for DI. The easy thing — declare a parameter — is the correct thing — capture an immutable dependency. No boilerplate constructor body.
 - Fluent builders with `WithX()` extension methods. `WithServices(...)`, `WithConfiguration(...)`, `WithInMemorySettings(...)`, and similar. The right configuration path is a chain of `WithX` calls; deviation requires writing a custom builder.
 - DI ownership tracked alongside construction. When a factory creates a resource it owns, an internal flag tracks ownership so disposal lives in the same place as construction. `using var x = Factory.Create(...);` disposes correctly without the caller thinking about it.
 - ArchUnitNET tests as forcing functions. When a structural rule is encoded as a test, deviation is harder than compliance — the build fails the moment someone tries.
@@ -206,7 +206,7 @@ The golden rule: test what you own. The framework, the ORM, and the third-party 
 - `TestContext.Current.CancellationToken` propagated into every async test so cancellation works correctly under the test runner's lifecycle.
 - ArchUnitNET tests for structural invariants — sealed concrete classes, immutable types, namespace shape, layer dependencies, no forbidden assembly references. These run as ordinary xUnit tests and fail the build when the architecture drifts.
 - Coverage threshold ratchet. Line, branch, and method coverage minimums set in `Directory.Build.props`. Start at zero, measure, lock the threshold in at the current value, then ratchet up as coverage grows. The threshold moves forward only.
-- One test project per implementation project, namespaces mirrored along the DDD onion. `Domain` → `Domain.Tests`; `Domain.PortX` → `Domain.PortX.Tests`; `Domain.PortX.AdapterY` → `Domain.PortX.AdapterY.Tests`. Every layer of the onion has its own paired test project.
+- One test project per implementation project, namespaces mirrored along the DDD onion. `Domain` → `Domain.Tests`; `Domain.PortX` → `Domain.PortX.Tests`; `Domain.PortX.AdapterY` → `Domain.PortX.AdapterY.Tests`.
 - Coverage scoped per test project via `<Include>` in the test project's settings. `Domain.PortX.Tests` produces coverage for `Domain.PortX` only — never for `Domain` or for adapters beneath it. Per-layer coverage numbers stay meaningful, and the ratchet applies layer by layer.
 
 ### Make invalid states unrepresentable
