@@ -190,13 +190,25 @@ The golden rule: test what you own. The framework, the ORM, and the third-party 
 
 ### The validation loop
 
-A `build.sh` (or `build.ps1`) script encodes the loop and fails fast at the first non-zero exit. The agent runs one command and gets one clear signal — Boyd's OODA loop in a shell script. Tight feedback returns before the agent loses context.
+Run the build script to validate format, build, and test. One command, one three signals.
 
-1. Build. `dotnet build` with `TreatWarningsAsErrors` enabled.
-2. Format. `dotnet format --verify-no-changes`. Output-only; non-zero exit signals style drift.
-3. Tests. `dotnet test`. All assertions green; coverage thresholds hold; ArchUnit rules pass.
+1. Format (always solution-wide). `dotnet format --verify-no-changes --severity info --verbosity quiet`. Style drift anywhere is a defect; the agent never merges unscoped drift even when iterating on one layer.
+2. Build. `dotnet build --nologo --verbosity quiet`. Scope depends on args.
+3. Tests. `dotnet test --nologo --verbosity quiet --logger "console;verbosity=minimal"`. Pass/fail counts and failed-test names. Scope depends on args. `dotnet test` builds dependencies implicitly, so when only a test target is given the explicit build step is skipped — `dotnet test` covers it.
 
-Each step runs only when the prior step is green. The script's exit code is the gate.
+Each step runs only when the prior is green. The script's exit code is the gate.
+
+Output discipline: each step captures stdout and stderr. On success only the `==> step-name` label prints. On failure the captured output prints and the script exits with the command's code. Anything beyond the `==>` labels and a final `==> green` is failure output.
+
+The canonical script ships at `${CLAUDE_PLUGIN_ROOT}/skills/writing-csharp/scripts/build.sh`. Portable POSIX bash; runs on Linux, macOS, and Windows (Git Bash, WSL). Claude Code sets `${CLAUDE_PLUGIN_ROOT}` to the plugin's install path; the agent invokes the script from the consuming project's root, and the shell's working directory determines which solution gets operated on. The script lives outside any consuming repo, so an in-repo edit cannot silently neuter the gate.
+
+Arguments scope build and test:
+
+- `build.sh` — solution-wide: format, build, and test.
+- `build.sh <test-target>` — solution-wide format, then test scoped. The explicit build step is skipped; `dotnet test` builds dependencies (transitively including the project under test).
+- `build.sh <build-target> <test-target>` — solution-wide format, then build and test each scoped. Use when the test target is not the conventional `<X>.Tests` paired with `<X>`.
+
+Each target accepts anything `dotnet` accepts: a project name, a `.csproj` path, or a `.sln` path.
 
 ### Gate policies
 
@@ -275,8 +287,8 @@ When a gate fires, the rule is: fix the underlying cause. Suppression and exclus
 
 ### Build gates are signal
 
-- CI runs the same `build.sh` the agent runs locally. The contract is identical.
-- A pull request that disables a gate without an accompanying justification comment is rejected at review.
+- The validation-loop script is the agent's primary signal source — one tool call, one exit code.
+- Gates exist to provide feedback to the agent. Disabling one is tantamount to self-harm — the protection vanishes along with the noise. Use them wisely.
 
 ### The first slice sets the pattern
 
