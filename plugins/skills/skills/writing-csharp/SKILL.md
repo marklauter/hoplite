@@ -74,7 +74,7 @@ C#-specific patterns that operationalize the principles above. Each subsection m
 ### Make invalid states unrepresentable
 
 - `internal sealed` by default. Records and concrete classes are `internal sealed`. `internal sealed record Range { ... }`. Promote to `public` only when the type is part of the library's exported contract.
-- Public interfaces, internal implementations. Library exports a `public interface ITokenizer`; the implementation is `internal sealed class WhitespaceTokenizer(...) : ITokenizer`. Consumers depend on the interface; the implementation is registered in the DI container. The public contract is mockable for tests because callers see only the interface.
+- Public interfaces, internal implementations. Library exports a `public interface IFormatter`; the implementation is `internal sealed class MarkdownFormatter(FormatterOptions options) : IFormatter`. Consumers depend on the interface; the implementation is registered in the DI container. The public contract is mockable for tests because callers see only the interface.
 - `required` for construction-time invariants. `public required int Start { get; init; }`. Every construction site is forced to set the property.
 - `init` accessors only. Properties expose `init`, never `set`. Once constructed, the value is the value.
 - Smart constructors via static factory methods. Keep the constructor private or internal; expose `public static Result<Range> Create(int start, int end)` that runs validation (e.g., `start <= end`). Once a `Range` exists, its invariants hold.
@@ -94,7 +94,7 @@ C#-specific patterns that operationalize the principles above. Each subsection m
 
 ### Pure functions over procedures
 
-- Static factory methods for composition. `Pipeline.CreateBuilder()`, `Pipeline.Configure()` — pure factories with no side effects. Composition is a value, not an event.
+- Static factory methods for composition. Pure factories take parameters, return a configured object, perform no I/O. Composition is a value, not an event.
 - Imperative shell at the entry point. I/O (Console, file system, network, database) lives in `Program.cs`, the controller, the host. The core layer takes data in and returns data out.
 - `TimeProvider` injected instead of direct `DateTime.UtcNow` or `Stopwatch.GetTimestamp` calls. Time becomes testable and controllable in tests.
 - Static helpers for pure transformations (tokenize, normalize, parse, format). No state, no I/O, no logging — just data → data.
@@ -131,8 +131,8 @@ _Architectural treatment (bounded contexts, layer boundaries, mapper/DTO convent
 
 ### Modern idioms
 
-- Primary constructors on services and middleware. `internal sealed class WhitespaceTokenizer(TokenizerOptions options) : ITokenizer`. Captures immutable dependencies; no boilerplate constructor body.
-- Records for data carriers. `internal sealed record TokenizerOptions(...)` with primary constructor and static defaults.
+- Primary constructors on services and middleware. `internal sealed class MarkdownFormatter(FormatterOptions options) : IFormatter`. Captures immutable dependencies; no boilerplate constructor body.
+- Records for data carriers. `internal sealed record FormatterOptions(...)` with primary constructor and static defaults.
 - Collection expressions throughout. `[]`, `??= []`, `new(...)` in initializers, list patterns in `switch`.
 - `with` expressions for non-destructive update of records.
 - File-scoped namespaces. `namespace Foo.Bar;` at the top of every file.
@@ -189,8 +189,8 @@ _Architectural treatment (bounded contexts, layer boundaries, mapper/DTO convent
 ### The easy path is the correct path
 
 - Primary constructors for DI. The easy thing — declare a parameter — is the correct thing — capture an immutable dependency. No boilerplate constructor, no field-assignment ceremony.
-- Fluent builders with `WithX()` extension methods. `WithBuilder(...)`, `WithServices(...)`, `WithConfiguration(...)`, `WithInMemorySettings(...)`. The right configuration path is a chain of `WithX` calls; deviation requires writing a custom builder.
-- DI ownership tracked alongside construction. When a factory creates a provider it owns, an `ownsProvider` flag (or equivalent) ensures disposal lives in the same place as construction. `using var x = Factory.Create(...);` disposes correctly without the caller thinking about it.
+- Fluent builders with `WithX()` extension methods. `WithServices(...)`, `WithConfiguration(...)`, `WithInMemorySettings(...)`, and similar. The right configuration path is a chain of `WithX` calls; deviation requires writing a custom builder.
+- DI ownership tracked alongside construction. When a factory creates a resource it owns, an internal flag tracks ownership so disposal lives in the same place as construction. `using var x = Factory.Create(...);` disposes correctly without the caller thinking about it.
 - ArchUnitNET tests as forcing functions. When a structural rule is encoded as a test, deviation is harder than compliance — the build fails the moment someone tries.
 - Static factory methods over public constructors for types with validation invariants. The factory runs validation and returns the result; the public constructor is unavailable.
 
