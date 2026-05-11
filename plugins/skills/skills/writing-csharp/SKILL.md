@@ -29,7 +29,7 @@ Push side effects to the boundary; keep the interior computational. Pure functio
 
 ### Results, not exceptions
 
-If you can name the outcome — `NotFound`, `Conflict`, `InvalidInput` — it is not exceptional, it is a result variant. Exceptions are reserved for bugs and conditions no caller can sensibly handle. Use the real functional vocabulary: `Option`, `Either`, `bind`, `map`.
+Domain logic models named outcomes as result variants — `NotFound`, `Conflict`, `InvalidInput`. Exceptions are reserved for bugs and conditions no caller can handle. Infrastructure codebases that model no domain — frameworks, libraries, adapters, request pipelines — have no domain layer for Results to inhabit and use exceptions throughout. Use the real functional vocabulary: `Option`, `Either`, `bind`, `map`.
 
 ### Fail loud when prevention fails
 
@@ -102,10 +102,10 @@ C#-specific patterns that operationalize the principles above. Each subsection m
 
 ### Results, not exceptions
 
+- Identify the codebase first. Domain-modeling codebases apply Results in the domain layer; the rest of this section applies. Infrastructure-only codebases — frameworks, libraries, adapters, request pipelines — have no domain layer for Results to inhabit and use exceptions throughout. The rules below apply only to domain-modeling codebases.
 - ErrorOr for domain logic. Domain operations return `ErrorOr<T>`. Callers pattern match on success or error.
 - Domain error enum (or sealed hierarchy) in the domain layer only. The named failure shapes the domain knows how to act on: `Gone`, `NotFound`, `Conflict`, `Validation`. Each carries the context needed to handle it.
 - Adapters and ports throw. Database errors, network failures, file-system errors, deserialization failures, and any other infrastructure-layer failure throw. The domain layer does not see these directly.
-- Infrastructure-only codebases lean on exceptions. A framework, library, or adapter codebase with no domain to model (e.g., a request-pipeline library) uses exceptions throughout — there is no domain layer for Results to inhabit. Apply Results where there is a domain to name failures in.
 - Translation at the boundary. Adapters convert infrastructure exceptions into domain errors when the failure is something the domain can act on (e.g., row-not-found → `Gone`); they let true infrastructure failures propagate as exceptions to the host.
 - Pattern match the result, do not unwrap blindly. `result.Match(value => ..., errors => ...)` over `result.Value` access. The compiler keeps both paths visible.
 
