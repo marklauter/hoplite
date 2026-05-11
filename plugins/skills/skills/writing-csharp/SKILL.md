@@ -227,6 +227,14 @@ When a gate fires, the rule is: fix the underlying cause. Suppression and exclus
 - `#pragma warning disable` always carries a comment explaining what and why, paired with an explicit `#pragma warning restore` at the end of the affected scope.
 - Hints and warnings may be suppressed when the rule legitimately does not apply to the local context or fires a false positive, with `Justification`.
 - Errors are suppressed only with an explicit ticket and team acknowledgment in addition to the `Justification`.
+- Format fixes are a separate, scoped invocation. The validation loop verifies only — it uses `--verify-no-changes` and never modifies files. Re-running `build.sh` after a format failure changes nothing. To clear a violation the loop reported, run a scoped `dotnet format`:
+
+  ```
+  dotnet format style --diagnostics IDE0007 --include path/to/file.cs --severity info   # one rule, one file
+  dotnet format whitespace                                                              # whitespace, solution-wide
+  ```
+
+  Scope by rule (`--diagnostics <ID>`), by path (`--include` / `--exclude`), and by category (subcommands `style`, `whitespace`, `analyzers`). Pure-whitespace cleanups are safe solution-wide because the fixes never touch code structure. Style and analyzer fixes can restructure code, so scope them tightly by rule and path. Bare `dotnet format` runs every category against every file — formatting churn mixed into intentional edits, forbidden. The agent always passes at least a scope; a category subcommand counts as scope.
 - Coverage exclusion via `[ExcludeFromCodeCoverage]` requires a comment naming the reason. Acceptable: generated code (source generators, OpenAPI clients, EF migrations), trivial constant types, platform-specific code unreachable in CI. Hand-written logic is tested, not excluded.
 
 ### Tooling
