@@ -157,18 +157,6 @@ _Architectural treatment (bounded contexts, layer boundaries, mapper/DTO convent
 - Analyzer packs via `GlobalPackageReference` in `Directory.Packages.props` so every project picks them up automatically. No per-project drift.
 - ArchUnitNET tests as structural gates. Architectural invariants — sealed concrete classes, no public instance fields, namespace shape, layer dependencies, constructor visibility — encoded as xUnit tests. Drift trips the build.
 - Coverage threshold ratchet in `Directory.Build.props`. Line, branch, and method coverage minimums as MSBuild properties. Start at zero, measure the current value, lock the threshold in at that value, and ratchet up as coverage grows. The gate moves forward only.
-- Suppress at the lowest scope possible. Order of preference: `#pragma warning disable` around the offending lines → `[SuppressMessage(..., Justification = "...")]` attribute on a member → `<NoWarn>` in the project `.csproj` → `<NoWarn>` in `Directory.Build.props`. Push suppressions as close to the offending code as possible.
-- `[SuppressMessage]` always carries a `Justification`. An unjustified suppression is a defect.
-- Solution-wide suppressions in `Directory.Build.props` use `<NoWarn>$(NoWarn);1234;5678</NoWarn>` and must be preceded by one comment per warning, in the form:
-
-  ```xml
-  <!-- 1234 warn-description : justification -->
-  <!-- 5678 warn-description : justification -->
-  <NoWarn>$(NoWarn);1234;5678</NoWarn>
-  ```
-
-  One comment block per line. A suppression without its accompanying comment block is a defect.
-- `#pragma warning disable` always has a comment explaining what and why, paired with an explicit `#pragma warning restore` at the end of the affected scope.
 
 ### The first slice sets the pattern
 
@@ -196,42 +184,69 @@ _Architectural treatment (bounded contexts, layer boundaries, mapper/DTO convent
 
 ## Validation
 
-"Testing shows the presence of bugs, not their absence" (Dijkstra). Validation in this codebase is layered: types prevent what types can prevent, tests catch what slips through, and the build gates keep both honest. The discipline is using each layer for what it does well, and not asking any one of them to carry the others.
+"Testing shows the presence of bugs, not their absence" (Dijkstra). Validation is layered: types prevent what types can prevent, tests catch what slips through, and the build gates keep both honest. Each layer carries the load it can carry.
 
-The golden rule: test what you own. The framework, the ORM, and the third-party libraries beneath this code have their own test suites. This codebase's tests cover this codebase's logic — the code written here, maintained here.
+The golden rule: test what you own. The framework, the ORM, and the third-party libraries beneath this code have their own test suites. This codebase's tests cover this codebase's logic.
+
+### The validation loop
+
+A `build.sh` (or `build.ps1`) script encodes the loop and fails fast at the first non-zero exit. The agent runs one command and gets one clear signal — Boyd's OODA loop in a shell script. Tight feedback returns before the agent loses context.
+
+1. Build. `dotnet build` with `TreatWarningsAsErrors` enabled.
+2. Format. `dotnet format --verify-no-changes`. Output-only; non-zero exit signals style drift.
+3. Tests. `dotnet test`. All assertions green; coverage thresholds hold; ArchUnit rules pass.
+
+Each step runs only when the prior step is green. The script's exit code is the gate.
+
+### Gate policies
+
+When a gate fires, the rule is: fix the underlying cause. Suppression and exclusion are policy-controlled.
+
+- Suppression scope hierarchy. Order of preference: `#pragma warning disable` around the offending lines → `[SuppressMessage(..., Justification = "...")]` attribute on a member → `<NoWarn>` in the project `.csproj` → `<NoWarn>` in `Directory.Build.props`. Push suppressions as close to the offending code as possible.
+- `[SuppressMessage]` always carries a `Justification`. An unjustified suppression is a defect.
+- Solution-wide `<NoWarn>` in `Directory.Build.props` uses `<NoWarn>$(NoWarn);1234;5678</NoWarn>` and must be preceded by one comment per warning:
+
+  ```xml
+  <!-- 1234 warn-description : justification -->
+  <!-- 5678 warn-description : justification -->
+  <NoWarn>$(NoWarn);1234;5678</NoWarn>
+  ```
+
+  One comment block per line. A suppression without its accompanying comment block is a defect.
+- `#pragma warning disable` always carries a comment explaining what and why, paired with an explicit `#pragma warning restore` at the end of the affected scope.
+- Hints and warnings may be suppressed when the rule legitimately does not apply to the local context or fires a false positive, with `Justification`.
+- Errors are suppressed only with an explicit ticket and team acknowledgment in addition to the `Justification`.
+- Coverage exclusion via `[ExcludeFromCodeCoverage]` requires a comment naming the reason. Acceptable: generated code (source generators, OpenAPI clients, EF migrations), trivial constant types, platform-specific code unreachable in CI. Hand-written logic is tested, not excluded.
 
 ### Tooling
 
-- xUnit v3 as the test runner. `[Fact]` and `[Theory]`; async tests named `*Async`; chained Arrange → Act → Assert via the test's fluent builder where applicable.
+- xUnit v3 as the test runner. `[Fact]` and `[Theory]` attributes; async tests named `*Async`.
 - `TestContext.Current.CancellationToken` propagated into every async test so cancellation works correctly under the test runner's lifecycle.
-- ArchUnitNET tests for structural invariants — sealed concrete classes, immutable types, namespace shape, layer dependencies, no forbidden assembly references. These run as ordinary xUnit tests and fail the build when the architecture drifts.
-- Coverage threshold ratchet. Line, branch, and method coverage minimums set in `Directory.Build.props`. Start at zero, measure, lock the threshold in at the current value, then ratchet up as coverage grows. The threshold moves forward only.
+- ArchUnitNET tests run as xUnit tests. The test runner is the gate that fires on architectural drift.
 - One test project per implementation project, namespaces mirrored along the DDD onion. `Domain` → `Domain.Tests`; `Domain.PortX` → `Domain.PortX.Tests`; `Domain.PortX.AdapterY` → `Domain.PortX.AdapterY.Tests`.
-- Coverage scoped per test project via `<Include>` in the test project's settings. `Domain.PortX.Tests` produces coverage for `Domain.PortX` only — never for `Domain` or for adapters beneath it. Per-layer coverage numbers stay meaningful, and the ratchet applies layer by layer.
+- Coverage scoped per test project via `<Include>` in the test project's settings. `Domain.PortX.Tests` produces coverage for `Domain.PortX` only. Per-layer coverage numbers stay meaningful, and the ratchet applies layer by layer.
 
 ### Make invalid states unrepresentable
 
-- The type system carries the invariant. A construction path that bypasses validation is a defect, not a test miss.
-- Smart-constructor tests cover each validation branch — `Create` returns success for valid input and the correct error variant for each invalid case.
-- ArchUnitNET: validated types have no public parameterless constructor; the factory method is the only construction path.
+- Smart-constructor tests: each validation branch yields the correct error variant; `Create` returns success only for valid input.
+- ArchUnitNET: validated types expose no public parameterless constructor.
 
 ### Immutable by default
 
 - ArchUnitNET: no public instance fields; concrete domain types are sealed records or `readonly record struct`.
-- Properties expose `init`, never `set`. A `set;` in domain code is a smell.
+- A `set;` in domain code is a smell. Analyzer or grep flags it.
 - Tests verify `with` expressions return new instances; the original is unchanged.
 
 ### Pure functions over procedures
 
-- Pure functions test by direct invocation. A test that needs fixtures, mocks, or async setup signals the function is not pure.
+- A test that needs fixtures, mocks, or async setup signals the function is not pure.
 - ArchUnitNET: domain-layer assemblies do not reference `System.IO`, `System.Net.*`, `Microsoft.EntityFrameworkCore`, or `Microsoft.Extensions.Logging` directly.
-- `TimeProvider` substituted in tests via `FakeTimeProvider` (from `Microsoft.Extensions.TimeProvider.Testing`) so time is controlled.
 
 ### Results, not exceptions
 
-- Domain method signatures return `ErrorOr<T>` (or equivalent). A signature returning `T` that throws for domain failures is a defect.
+- A domain signature returning `T` that throws for domain failures is a defect.
 - Domain-layer tests pattern match the result; absence of `try`/`catch` is the sign.
-- ArchUnitNET: throwing methods exist only at adapter boundaries, not in domain types.
+- ArchUnitNET: throwing methods exist only at adapter boundaries.
 
 ### Fail loud when prevention fails
 
@@ -242,37 +257,36 @@ The golden rule: test what you own. The framework, the ORM, and the third-party 
 ### The domain doesn't know how it's stored
 
 - ArchUnitNET: domain assembly references zero of `Microsoft.EntityFrameworkCore.*`, `Dapper`, `Marten`, `Microsoft.Azure.Cosmos`, `System.Text.Json.Serialization.*Attribute`, `System.Runtime.Serialization`.
-- Round-trip serialization tests live in the adapter project, exercising the adapter's mapping. The domain test project references no serializer.
+- The domain test project references no serializer; round-trip tests live in the adapter project.
 
 ### Inference, not annotation
 
-- Analyzer IDE0007 (use `var`) set to `warning` or `error` in `.editorconfig`.
-- `.editorconfig`: `csharp_style_var_for_built_in_types`, `csharp_style_var_when_type_is_apparent`, `csharp_style_var_elsewhere` all set to `true:warning`.
+- Analyzer IDE0007 (use `var`) at `warning` or `error` in `.editorconfig`.
+- `.editorconfig` rules: `csharp_style_var_for_built_in_types`, `csharp_style_var_when_type_is_apparent`, `csharp_style_var_elsewhere` set to `true:warning`.
 
 ### Modern idioms
 
 - Analyzers enabled at `warning` or `error`: IDE0028 (collection initializer), IDE0090 (`new()`), IDE0300–IDE0305 (collection expression), IDE0161 (file-scoped namespace), and the rest of the IDE0* modernization family.
-- `LangVersion` set to `latest` (or the explicit current version) so the analyzers operate against the right syntax.
 
 ### Performance where it matters
 
 - BenchmarkDotNet project with regression thresholds. CI flags a benchmark whose mean or allocation crosses the configured budget.
-- Analyzers from the CA18xx performance family enabled: CA1827 (use `Any` over `Count() > 0`), CA1829 (use `Length`/`Count` property), CA1845 (span-based concat), and others.
+- CA18xx performance analyzers enabled: CA1827 (use `Any` over `Count() > 0`), CA1829 (use `Length`/`Count` property), CA1845 (span-based concat), and others.
 
 ### Build gates are signal
 
-- CI verifies every gate green before merge. A passing build is the contract.
+- CI runs the same `build.sh` the agent runs locally. The contract is identical.
 - A pull request that disables a gate without an accompanying justification comment is rejected at review.
 
 ### The first slice sets the pattern
 
-- ArchUnitNET rules are added in the same change set as the first instance of the pattern. The rule and the example land together.
-- Code review on the first slice is deeper than on subsequent slices — naming, layout, lifetime, dependencies.
+- ArchUnitNET rule ships in the same change set as the first instance of the pattern.
+- Code review on the first slice is deeper than on subsequent slices.
 
 ### One source of truth
 
 - CPM with `<CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>` — the build fails if a project declares its own package version.
-- Shared constants live in their declared type; duplicated literal values across files are flagged at review.
+- Duplicated literal values across files are flagged at review.
 
 ### The easy path is the correct path
 
