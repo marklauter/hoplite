@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 # Validation loop for writing-csharp.
-# format (solution-wide) -> build -> tests, fail fast, output only on failure.
+# format (solution-wide) -> build -> tests, fail fast.
 #
-# Each step's stdout+stderr is captured. On success the script emits only the
-# step label. On failure it emits the captured output and exits with the
-# command's exit code.
+# Output discipline:
+#   - format / build: silent on success, captured output on failure.
+#   - test: emits the test summary line and the coverage table row(s) on success,
+#           full captured output on failure.
 #
 # Usage:
 #   build.sh                                  whole solution: format, build, test
@@ -29,16 +30,27 @@ run_step() {
     output=$("$@" 2>&1) || { local code=$?; echo "$output"; exit $code; }
 }
 
+test_step() {
+    local label="$1"
+    shift
+    echo "==> $label"
+    local output
+    output=$("$@" 2>&1) || { local code=$?; echo "$output"; exit $code; }
+    # Surface the test summary line(s) and the coverage table row(s) on success.
+    echo "$output" | grep -E -i "(Failed|Passed|Skipped|Total):" | tail -10 || true
+    echo "$output" | grep -E "^\|.*%" || true
+}
+
 run_step "format (solution-wide)" dotnet format --verify-no-changes --severity info --verbosity quiet
 
 if [ -z "$ARG1" ]; then
     run_step "build (solution-wide)" dotnet build --nologo --verbosity quiet
-    run_step "test (solution-wide)" dotnet test --nologo --verbosity quiet --logger "console;verbosity=minimal"
+    test_step "test (solution-wide)" dotnet test --nologo --verbosity quiet --logger "console;verbosity=minimal"
 elif [ -z "$ARG2" ]; then
-    run_step "test $ARG1" dotnet test "$ARG1" --nologo --verbosity quiet --logger "console;verbosity=minimal"
+    test_step "test $ARG1" dotnet test "$ARG1" --nologo --verbosity quiet --logger "console;verbosity=minimal"
 else
     run_step "build $ARG1" dotnet build "$ARG1" --nologo --verbosity quiet
-    run_step "test $ARG2" dotnet test "$ARG2" --nologo --verbosity quiet --logger "console;verbosity=minimal"
+    test_step "test $ARG2" dotnet test "$ARG2" --nologo --verbosity quiet --logger "console;verbosity=minimal"
 fi
 
 echo "==> green"
