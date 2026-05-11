@@ -197,7 +197,7 @@ Run the build script to validate format, build, and test. One commnand, three si
 
 Each step runs only when the prior is green. The script's exit code is the gate.
 
-Output discipline: each step captures stdout and stderr. On success only the `==> step-name` label prints. On failure the captured output prints and the script exits with the command's code. Anything beyond the `==>` labels and a final `==> green` is failure output.
+Output discipline: each step captures stdout and stderr. Format and build are silent on success — only the `==> step-name` label prints. The test step also surfaces the test summary line and any coverage table rows on success, since those are signal the agent uses every iteration (pass/fail counts, per-module line/branch/method coverage). On failure, the full captured output prints and the script exits with the command's code.
 
 The canonical script ships at `${CLAUDE_PLUGIN_ROOT}/skills/writing-csharp/scripts/build.sh`. Portable POSIX bash; runs on Linux, macOS, and Windows (Git Bash, WSL). Claude Code sets `${CLAUDE_PLUGIN_ROOT}` to the plugin's install path; the agent invokes the script from the consuming project's root, and the shell's working directory determines which solution gets operated on. The script lives outside any consuming repo, so an in-repo edit cannot silently neuter the gate.
 
