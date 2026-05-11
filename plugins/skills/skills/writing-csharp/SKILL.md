@@ -45,7 +45,7 @@ Domain types describe meaning. If a reader can reverse-engineer the database, OR
 
 ### Modern idioms
 
-New code uses the newest stable language features: records, pattern matching, primary constructors, collection expressions, file-scoped namespaces, expression-bodied members, required members, raw string literals.
+New code is written in the language's current vocabulary. Stable modern features are defaults, not opt-ins.
 
 ### Performance where it matters
 
@@ -180,7 +180,6 @@ _Architectural treatment (bounded contexts, layer boundaries, mapper/DTO convent
 - Fluent builders with `WithX()` extension methods. `WithServices(...)`, `WithConfiguration(...)`, `WithInMemorySettings(...)`, and similar. The right configuration path is a chain of `WithX` calls; deviation requires writing a custom builder.
 - DI ownership tracked alongside construction. When a factory creates a resource it owns, an internal flag tracks ownership so disposal lives in the same place as construction. `using var x = Factory.Create(...);` disposes correctly without the caller thinking about it.
 - ArchUnitNET tests as forcing functions. When a structural rule is encoded as a test, deviation is harder than compliance — the build fails the moment someone tries.
-- Static factory methods over public constructors for types with validation invariants. The factory runs validation and returns the result; the public constructor is unavailable.
 
 ## Validation
 
@@ -190,7 +189,7 @@ The golden rule: test what you own. The framework, the ORM, and the third-party 
 
 ### The validation loop
 
-Run the build script to validate format, build, and test. One command, one three signals.
+Run the build script to validate format, build, and test. One commnand, three signals. Boyd's OODA loop.
 
 1. Format (always solution-wide). `dotnet format --verify-no-changes --severity info --verbosity quiet`. Style drift anywhere is a defect; the agent never merges unscoped drift even when iterating on one layer.
 2. Build. `dotnet build --nologo --verbosity quiet`. Scope depends on args.
@@ -288,7 +287,7 @@ When a gate fires, the rule is: fix the underlying cause. Suppression and exclus
 ### Build gates are signal
 
 - The validation-loop script is the agent's primary signal source — one tool call, one exit code.
-- Gates exist to provide feedback to the agent. Disabling one is tantamount to self-harm — the protection vanishes along with the noise. Use them wisely.
+- Disabling a gate is the agent blinding itself — the protection vanishes along with the signal. Use them wisely.
 
 ### The first slice sets the pattern
 
