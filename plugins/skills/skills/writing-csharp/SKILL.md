@@ -53,7 +53,7 @@ Hot paths get measured and optimized — allocations, branches, layout, all of i
 
 ### Build gates are signal
 
-Warnings, analyzers, nullability, tests, type checks — these tighten the feedback loop. Suppressing a gate to ship is self-harm dressed up as productivity. Fix what triggered the gate; suppression is a last resort that requires explicit acknowledgment.
+Warnings, analyzers, nullability, tests, type checks — these tighten the feedback loop and exist to help the agent. They are the ground truth between sessions, the most reliable signal that something is wrong before a human reviews. Disabling a gate erases that signal. Fix what triggered the gate; suppression is reserved for cases where the gate itself is wrong, with an explicit justification at the suppression site.
 
 ### The first slice sets the pattern
 
@@ -69,10 +69,212 @@ The right thing is the path of least resistance; the dangerous thing takes real 
 
 ## Guidance
 
-_Concrete patterns, idioms, and rules go here. Drafted next._
+C#-specific patterns that operationalize the principles above. Each subsection mirrors a philosophy heading so the mapping is direct.
+
+### Make invalid states unrepresentable
+
+- `internal sealed` by default. Records and concrete classes are `internal sealed`. `internal sealed record Range { ... }`. Promote to `public` only when the type is part of the library's exported contract.
+- Public interfaces, internal implementations. Library exports a `public interface ITokenizer`; the implementation is `internal sealed class WhitespaceTokenizer(...) : ITokenizer`. Consumers depend on the interface; the implementation is registered in the DI container. The public contract is mockable for tests because callers see only the interface.
+- `required` for construction-time invariants. `public required int Start { get; init; }`. Every construction site is forced to set the property.
+- `init` accessors only. Properties expose `init`, never `set`. Once constructed, the value is the value.
+- Smart constructors via static factory methods. Keep the constructor private or internal; expose `public static Result<Range> Create(int start, int end)` that runs validation (e.g., `start <= end`). Once a `Range` exists, its invariants hold.
+- `readonly record struct` for value-type wrappers. Wrap `string` → `FilePath`, `TimeSpan` → `Duration`, `decimal` → `Percent`. `public readonly record struct FilePath(string Value) : IValue<FilePath, string>`. Value semantics, no heap allocation, equality and `ToString` for free.
+- `IValue<TSelf, TValue>` interface (CRTP). `public interface IValue<TSelf, TValue> where TSelf : IValue<TSelf, TValue>` — the wrapper carries both its self-type and the underlying primitive as generic parameters. Enables `static abstract Create` on the interface, generic constraints across all value objects, and shared helpers without runtime reflection.
+- Discriminated unions for state machines. Model state as an abstract base record with sealed records per state (e.g., a `Connection` as `Disconnected`, `Connecting`, `Connected`, `Faulted`). Each state carries only the data valid in that state. Pattern match to handle.
+- Nullable reference types enabled. `<Nullable>enable</Nullable>` in `Directory.Build.props`. `string` means non-null; `string?` is the explicit opt-in for absence.
+- `NotNullWhen` / `MemberNotNull` attributes to carry nullability through helper methods and `Try*` patterns.
+
+### Immutable by default
+
+- `IReadOnlyList<T>` / `IReadOnlyDictionary<TK, TV>` as return types and field types for collections that should not be mutated by the consumer.
+- `ImmutableArray<T>` / `ImmutableDictionary<TK, TV>` for shared snapshots and lookup tables.
+- `with` expressions for non-destructive update of records: `range with { End = newEnd }`.
+- `readonly` modifier on fields and on struct types. `readonly record struct` for value types that should be immutable end-to-end.
+- `Unit` type (a `readonly record struct`) for fire-and-forget pipeline returns where no value is meaningful.
+
+### Pure functions over procedures
+
+- Static factory methods for composition. `Pipeline.CreateBuilder()`, `Pipeline.Configure()` — pure factories with no side effects. Composition is a value, not an event.
+- Imperative shell at the entry point. I/O (Console, file system, network, database) lives in `Program.cs`, the controller, the host. The core layer takes data in and returns data out.
+- `TimeProvider` injected instead of direct `DateTime.UtcNow` or `Stopwatch.GetTimestamp` calls. Time becomes testable and controllable in tests.
+- Static helpers for pure transformations (tokenize, normalize, parse, format). No state, no I/O, no logging — just data → data.
+- Logging is opt-in via constructor injection. A pure transformation does not log; a middleware that needs to log declares `ILogger<T>` in its primary constructor and does so explicitly.
+
+### Results, not exceptions
+
+- ErrorOr for domain logic. Domain operations return `ErrorOr<T>`. Callers pattern match on success or error and act accordingly.
+- Domain error enum (or sealed hierarchy) in the domain layer only. The named failure shapes the domain knows how to act on: `Gone`, `NotFound`, `Conflict`, `Validation`. Each carries the context needed to handle it.
+- Adapters and ports throw. Database errors, network failures, file-system errors, deserialization failures, and any other infrastructure-layer failure throw. The domain layer does not see these directly.
+- Infrastructure-only codebases lean on exceptions. A framework, library, or adapter codebase with no domain to model (e.g., a request-pipeline library) uses exceptions throughout — there is no domain layer for Results to inhabit. Apply Results where there is a domain to name failures in.
+- Translation at the boundary. Adapters convert infrastructure exceptions into domain errors when the failure is something the domain can act on (e.g., row-not-found → `Gone`); they let true infrastructure failures propagate as exceptions to the host.
+- Pattern match the result, do not unwrap blindly. `result.Match(value => ..., errors => ...)` over `result.Value` access. The compiler keeps both paths visible.
+
+### Fail loud when prevention fails
+
+- `ArgumentNullException.ThrowIfNull(param)` at every public API boundary. The failure names the parameter and stops the call dead.
+- Distinguish exception types. `TimeoutException` for elapsed-time failures, `OperationCanceledException` for caller-initiated cancellation, `InvalidOperationException` for misuse of the API, `ArgumentException` / `ArgumentNullException` for bad inputs. Do not conflate them.
+- Throw with named context. The exception message names what failed (which factory, which type, which step) so the stack trace explains itself without source diving.
+- No catch-all handlers. Catch specific exception types you can act on; let everything else propagate.
+
+### The domain doesn't know how it's stored
+
+- No persistence or serialization attributes on domain types. No `[Table]`, `[Column]`, `[Key]`, `[ForeignKey]`, `[JsonPropertyName]`, `[DataMember]`, `[XmlElement]`. Mapping happens at the adapter boundary.
+
+_Architectural treatment (bounded contexts, layer boundaries, mapper/DTO conventions) lives in the separate `writing-architecture` skill._
+
+### Inference, not annotation
+
+- `var` for locals when the right-hand side names the type. `var range = Range.Create(0, 10);`.
+- Target-typed `new(...)` in initializers and assignments where the target type is declared: `Range range = new(0, 10);` or `List<Range> ranges = [new(0, 10), new(1, 20)];`.
+- Collection expressions `[]` in place of `new List<T>()`, `Array.Empty<T>()`, and similar. `List<int> xs = [];`, `Data ??= [];`.
+- Method return types are explicit. API boundary; the type is part of the contract.
+
+### Modern idioms
+
+- Primary constructors on services and middleware. `internal sealed class WhitespaceTokenizer(TokenizerOptions options) : ITokenizer`. Captures immutable dependencies; no boilerplate constructor body.
+- Records for data carriers. `internal sealed record TokenizerOptions(...)` with primary constructor and static defaults.
+- Collection expressions throughout. `[]`, `??= []`, `new(...)` in initializers, list patterns in `switch`.
+- `with` expressions for non-destructive update of records.
+- File-scoped namespaces. `namespace Foo.Bar;` at the top of every file.
+- Raw string literals (`"""..."""`) for multi-line text, JSON fixtures, and SQL.
+- Pattern matching with property patterns, list patterns, and relational patterns. `switch` expressions for branching on shape.
+- Required members. `public required int Start { get; init; }` in place of constructor-validated invariants where the property genuinely must be set.
+- `LangVersion` set centrally in `Directory.Build.props` so every project has the same toolbox.
+
+### Performance where it matters
+
+- `readonly record struct` for small value types. Value semantics without heap allocation.
+- `TimeProvider` for monotonic, testable time over `DateTime.UtcNow` or `Stopwatch.GetTimestamp` direct calls. Avoids both correctness drift and test flakiness.
+- Hot-path techniques available when measurement justifies them: `Span<T>` / `ReadOnlySpan<T>` for slicing without allocation, `ArrayPool<T>` for buffer reuse, `[SkipLocalsInit]` for stack-allocated locals, `ref struct` for stack-only types, struct layout attributes for tight memory packing. Reach for them when a benchmark says to.
+- `ValueTask<T>` for hot async paths where the awaited work often completes synchronously.
+- Benchmark with BenchmarkDotNet before optimizing. Cold paths stay readable.
+
+### Build gates are signal
+
+- `<TreatWarningsAsErrors>true</TreatWarningsAsErrors>` in `Directory.Build.props`. A warning that survives is a failure that gets investigated immediately.
+- `<Nullable>enable</Nullable>` in `Directory.Build.props` so every project inherits it.
+- `<AnalysisMode>All</AnalysisMode>` and `<AnalysisLevel>latest-all</AnalysisLevel>` in `Directory.Build.props`. The strictest analyzer set against the latest language version.
+- Analyzer packs via `GlobalPackageReference` in `Directory.Packages.props` so every project picks them up automatically. No per-project drift.
+- ArchUnitNET tests as structural gates. Architectural invariants — sealed concrete classes, no public instance fields, namespace shape, layer dependencies, constructor visibility — encoded as xUnit tests. Drift trips the build.
+- Coverage threshold ratchet in `Directory.Build.props`. Line, branch, and method coverage minimums as MSBuild properties. Start at zero, measure the current value, lock the threshold in at that value, and ratchet up as coverage grows. The gate moves forward only — never back.
+- Suppress at the lowest scope possible. Order of preference: `#pragma warning disable` around the offending lines → `[SuppressMessage(..., Justification = "...")]` attribute on a member → `<NoWarn>` in the project `.csproj` → `<NoWarn>` in `Directory.Build.props`. Push suppressions as close to the offending code as possible.
+- `[SuppressMessage]` always carries a `Justification`. An unjustified suppression is a defect.
+- Solution-wide suppressions in `Directory.Build.props` use `<NoWarn>$(NoWarn);1234;5678</NoWarn>` and must be preceded by one comment per warning, in the form:
+
+  ```xml
+  <!-- 1234 warn-description : justification -->
+  <!-- 5678 warn-description : justification -->
+  <NoWarn>$(NoWarn);1234;5678</NoWarn>
+  ```
+
+  One comment block per line. A suppression without its accompanying comment block is a defect.
+- `#pragma warning disable` always has a comment explaining what and why, paired with an explicit `#pragma warning restore` at the end of the affected scope.
+
+### The first slice sets the pattern
+
+- ArchUnitNET tests encode the canonical pattern. When a new architectural rule is established (sealed concrete classes, namespace shape, forbidden references, immutability requirements), an ArchUnit test enforces it. Every subsequent slice is checked against the rule on every build.
+- The first instance of a new domain concept gets extra review. Naming, layout, dependencies, lifetime. The shape it takes becomes the shape ten copies will take.
+- Folder and file conventions are followed without negotiation. The first slice establishes them; following slices match.
+
+### One source of truth
+
+- Central Package Management (CPM). `<ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>`. Every package version declared once in `Directory.Packages.props`; project `.csproj` files reference packages by name only, no inline `Version=`.
+- `<CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>` so transitive dependencies cannot float and surprise the build.
+- `GlobalPackageReference` in `Directory.Packages.props` for solution-wide analyzer and source-generator packs.
+- `Directory.Build.props` for solution-wide MSBuild properties. Compiler flags (`LangVersion`, `Nullable`, `TreatWarningsAsErrors`, `AnalysisMode`), target framework, common properties. One declaration; every project inherits.
+- `Directory.Build.targets` for solution-wide build targets. Shared build steps and conditional logic.
+- Strongly-typed configuration via `IOptions<T>` or direct immutable record injection. Each configuration concept is one typed declaration; consumers receive the typed instance.
+- Constants declared in one place per concept. Magic numbers and strings live in a named type, referenced everywhere they apply.
+
+### The easy path is the correct path
+
+- Primary constructors for DI. The easy thing — declare a parameter — is the correct thing — capture an immutable dependency. No boilerplate constructor, no field-assignment ceremony.
+- Fluent builders with `WithX()` extension methods. `WithBuilder(...)`, `WithServices(...)`, `WithConfiguration(...)`, `WithInMemorySettings(...)`. The right configuration path is a chain of `WithX` calls; deviation requires writing a custom builder.
+- DI ownership tracked alongside construction. When a factory creates a provider it owns, an `ownsProvider` flag (or equivalent) ensures disposal lives in the same place as construction. `using var x = Factory.Create(...);` disposes correctly without the caller thinking about it.
+- ArchUnitNET tests as forcing functions. When a structural rule is encoded as a test, deviation is harder than compliance — the build fails the moment someone tries.
+- Static factory methods over public constructors for types with validation invariants. The factory runs validation and returns the result; the public constructor is unavailable.
 
 ## Validation
 
 "Testing shows the presence of bugs, not their absence" (Dijkstra). Validation in this codebase is layered: types prevent what types can prevent, tests catch what slips through, and the build gates keep both honest. The discipline is using each layer for what it does well, and not asking any one of them to carry the others.
 
-_Concrete validation steps and checks go here. Drafted last._
+The golden rule: test what you own. The framework, the ORM, and the third-party libraries beneath this code have their own test suites. This codebase's tests cover this codebase's logic — the code written here, maintained here.
+
+### Tooling
+
+- xUnit v3 as the test runner. `[Fact]` and `[Theory]`; async tests named `*Async`; chained Arrange → Act → Assert via the test's fluent builder where applicable.
+- `TestContext.Current.CancellationToken` propagated into every async test so cancellation works correctly under the test runner's lifecycle.
+- ArchUnitNET tests for structural invariants — sealed concrete classes, immutable types, namespace shape, layer dependencies, no forbidden assembly references. These run as ordinary xUnit tests and fail the build when the architecture drifts.
+- Coverage threshold ratchet. Line, branch, and method coverage minimums set in `Directory.Build.props`. Start at zero, measure, lock the threshold in at the current value, then ratchet up as coverage grows. The threshold moves forward only.
+- One test project per implementation project, namespaces mirrored along the DDD onion. `Domain` → `Domain.Tests`; `Domain.PortX` → `Domain.PortX.Tests`; `Domain.PortX.AdapterY` → `Domain.PortX.AdapterY.Tests`. Every layer of the onion has its own paired test project.
+- Coverage scoped per test project via `<Include>` in the test project's settings. `Domain.PortX.Tests` produces coverage for `Domain.PortX` only — never for `Domain` or for adapters beneath it. Per-layer coverage numbers stay meaningful, and the ratchet applies layer by layer.
+
+### Make invalid states unrepresentable
+
+- The type system carries the invariant. A construction path that bypasses validation is a defect, not a test miss.
+- Smart-constructor tests cover each validation branch — `Create` returns success for valid input and the correct error variant for each invalid case.
+- ArchUnitNET: validated types have no public parameterless constructor; the factory method is the only construction path.
+
+### Immutable by default
+
+- ArchUnitNET: no public instance fields; concrete domain types are sealed records or `readonly record struct`.
+- Properties expose `init`, never `set`. A `set;` in domain code is a smell.
+- Tests verify `with` expressions return new instances; the original is unchanged.
+
+### Pure functions over procedures
+
+- Pure functions test by direct invocation. A test that needs fixtures, mocks, or async setup signals the function is not pure.
+- ArchUnitNET: domain-layer assemblies do not reference `System.IO`, `System.Net.*`, `Microsoft.EntityFrameworkCore`, or `Microsoft.Extensions.Logging` directly.
+- `TimeProvider` substituted in tests via `FakeTimeProvider` (from `Microsoft.Extensions.TimeProvider.Testing`) so time is controlled.
+
+### Results, not exceptions
+
+- Domain method signatures return `ErrorOr<T>` (or equivalent). A signature returning `T` that throws for domain failures is a defect.
+- Domain-layer tests pattern match the result; absence of `try`/`catch` is the sign.
+- ArchUnitNET: throwing methods exist only at adapter boundaries, not in domain types.
+
+### Fail loud when prevention fails
+
+- Boundary tests verify `ArgumentNullException.ThrowIfNull(...)` fires for each public parameter.
+- ArchUnitNET: `catch (Exception)` without re-throw is forbidden outside the host's outermost handler.
+- Tests assert exception message content includes the named context (which factory, which type, which step).
+
+### The domain doesn't know how it's stored
+
+- ArchUnitNET: domain assembly references zero of `Microsoft.EntityFrameworkCore.*`, `Dapper`, `Marten`, `Microsoft.Azure.Cosmos`, `System.Text.Json.Serialization.*Attribute`, `System.Runtime.Serialization`.
+- Round-trip serialization tests live in the adapter project, exercising the adapter's mapping. The domain test project references no serializer.
+
+### Inference, not annotation
+
+- Analyzer IDE0007 (use `var`) set to `warning` or `error` in `.editorconfig`.
+- `.editorconfig`: `csharp_style_var_for_built_in_types`, `csharp_style_var_when_type_is_apparent`, `csharp_style_var_elsewhere` all set to `true:warning`.
+
+### Modern idioms
+
+- Analyzers enabled at `warning` or `error`: IDE0028 (collection initializer), IDE0090 (`new()`), IDE0300–IDE0305 (collection expression), IDE0161 (file-scoped namespace), and the rest of the IDE0* modernization family.
+- `LangVersion` set to `latest` (or the explicit current version) so the analyzers operate against the right syntax.
+
+### Performance where it matters
+
+- BenchmarkDotNet project with regression thresholds. CI flags a benchmark whose mean or allocation crosses the configured budget.
+- Analyzers from the CA18xx performance family enabled: CA1827 (use `Any` over `Count() > 0`), CA1829 (use `Length`/`Count` property), CA1845 (span-based concat), and others.
+
+### Build gates are signal
+
+- CI verifies every gate green before merge. A passing build is the contract.
+- A pull request that disables a gate without an accompanying justification comment is rejected at review.
+
+### The first slice sets the pattern
+
+- ArchUnitNET rules are added in the same change set as the first instance of the pattern. The rule and the example land together.
+- Code review on the first slice is deeper than on subsequent slices — naming, layout, lifetime, dependencies.
+
+### One source of truth
+
+- CPM with `<CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>` — the build fails if a project declares its own package version.
+- Shared constants live in their declared type; duplicated literal values across files are flagged at review.
+
+### The easy path is the correct path
+
+- ArchUnitNET: services in DI-managed assemblies declare dependencies via primary constructor.
+- Fluent builders are tested for chain validity — a builder test fails when the canonical `WithX` chain breaks.
