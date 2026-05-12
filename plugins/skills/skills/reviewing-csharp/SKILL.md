@@ -27,7 +27,7 @@ Review the lines that changed and the context required to understand them. Pre-e
 
 ### Findings discover principles
 
-A finding that cannot be tied to an existing writing-csharp principle is a candidate for promotion — either the canonical principle exists and the review surfaced new wording, or the writing skill should grow to cover the case. The human decides during triage. The review loop and the writing skill co-evolve.
+A finding that cannot be tied to an existing writing-csharp principle is a candidate for promotion — either the canonical principle exists and the review surfaced new wording, or the writing skill should grow to cover the case. The human decides during triage.
 
 ## Guidance
 
@@ -59,7 +59,6 @@ Concrete patterns for producing findings and running the workflow.
 
 ### Dedup before writing
 
-- `list-findings.sh` shows the current set. Scan it before composing a new finding.
 - Same defect on a different line: update the existing finding's Location to a comma-separated list with `report-finding.sh --force`, rather than creating a second file.
 - Same principle violation in a different shape: separate findings. The artifact is per-defect, not per-principle.
 

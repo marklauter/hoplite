@@ -1,6 +1,6 @@
 ---
 name: managing-github-issues
-description: Use when listing, searching, deduplicating, or filing GitHub issues. Covers gh CLI workflows, issue templates, label vocabulary, and the search-before-file discipline.
+description: Use when listing, searching, deduplicating, filing, triaging, labeling, closing, or commenting on GitHub issues.
 ---
 
 # Managing GitHub Issues
@@ -51,14 +51,14 @@ Concrete patterns for the `gh` CLI and the consolidated scripts. Each subsection
 
 ### Search before file
 
-- Run `find.sh` before any file operation. The script searches both open and closed issues and prints any hits with state markers.
+- Run `find.sh` before any file operation, and again during triage against each candidate's title and key terms. The script searches both open and closed issues and prints any hits with state markers.
 - Match on the underlying concept. A bug about "key serialization fails on nested maps" matches a prior issue titled "nested map keys produce malformed binary" — same concept, different wording.
 - When a match exists, show it to the user with the URL and state. Ask whether to comment on the existing issue, reopen if closed, or proceed with a new filing because the prior issue is genuinely distinct.
 - When no match exists, state that explicitly before composing the new issue. "No open or closed issues matched `<keywords>`." Announcing the gate result on every filing keeps the dedup discipline visible.
 
 ### The template is the schema
 
-- Discover templates first. `ls .github/ISSUE_TEMPLATE/` lists available templates; common filenames are `bug-report.yml`, `tech-debt.yml`, `feature-request.yml`. Repos with nested project roots may have templates at `<project>/.github/ISSUE_TEMPLATE/`.
+- Discover templates first. `templates.sh` lists available templates as `<name>  [<labels>]  <description>` so the schema and the labels are visible before composing. Common filenames are `bug-report.yml`, `tech-debt.yml`, `feature-request.yml`. Repos with nested project roots may have templates at `<project>/.github/ISSUE_TEMPLATE/`.
 - Read the template YAML before composing. Extract field `id` values, `label` text, `required` flags, and `options` arrays for dropdowns. The body must include every required field.
 - Build the body as `### Field Label` headings matching the template's `label` values, with the user-provided or inferred content beneath each heading. Optional fields with no content use `_No response_` — the gh tracker renders this consistently with the web form.
 - Dropdown values match the template's `options` exactly — gh validates against the array, so the body uses the literal text. When inferring a dropdown value, list the allowed options first to make the constraint visible.
@@ -90,7 +90,7 @@ Concrete patterns for the `gh` CLI and the consolidated scripts. Each subsection
 
 ### Confirm before mutating
 
-- List, search, and label-vocabulary operations run without prompting. `list.sh`, `find.sh`, `labels.sh`, and `triage-list.sh` are read-only.
+- List, search, and vocabulary-discovery operations run without prompting. `list.sh`, `find.sh`, `labels.sh`, `templates.sh`, and `triage-list.sh` are read-only.
 - Create, close, reopen, and comment operations show the full proposed payload before invoking the script. For creation: the rendered body, title, labels, and template name.
 - Edits go through `edit.sh`, which prints the resolved invocation before applying the change.
 
@@ -105,7 +105,7 @@ Triage decides six things for each candidate:
 - The priority. `priority: high` / `priority: medium` / `priority: low`, or the project's spelling. Triage assigns one — the agent picks the best fit from the body and resolves ambiguity by asking the human.
 - The state. Remain open, close, or reopen. The agent proposes close-as-resolved (with a commit reference), close-as-invalid (noise), and close-as-duplicate. Close-as-won't-fix is a human-only decision; the agent proposes it only when the user has named the rationale.
 
-A fully triaged issue carries a label on each axis — type, priority, area — and shows recent activity. The validation filters surface candidates that fall short on at least one axis:
+Triage aims for a label on each axis — type, priority, area — and recent activity. The validation filters surface candidates that fall short on at least one axis:
 
 - `unlabeled` — no labels at all.
 - `no-priority` — no label whose name begins with `priority`. Handles both `priority:high` and `priority: high`.
@@ -152,13 +152,14 @@ The scripts wrap these `gh` calls — reference for reading script output and ex
 
 ### The script set
 
-Nine scripts cover the workflow. All ship under `${CLAUDE_PLUGIN_ROOT}/skills/managing-github-issues/scripts/`. Portable POSIX bash; runs on Linux, macOS, and Windows (Git Bash, WSL).
+Ten scripts cover the workflow. All ship under `${CLAUDE_PLUGIN_ROOT}/skills/managing-github-issues/scripts/`. Portable POSIX bash; runs on Linux, macOS, and Windows (Git Bash, WSL).
 
 Every script that takes a body or comment reads it from stdin rather than as a CLI argument, so the agent composes content as a plain string in its tool call rather than escaping quotes, backticks, dollar signs, or newlines for the shell.
 
 - `list.sh [state] [label] [search]` — lists issues with optional filters. State defaults to `open`; pass `closed` or `all` to widen. Output is one line per issue: `#<number> [<state>] [<labels>] <title>  <url>`.
 - `find.sh <keywords...>` — the dedup gate, used before filing and during triage. Searches both open and closed issues and prints matches with state markers. Empty result prints `no matches`; exit code is `0` either way — a clean dedup result is success.
 - `labels.sh` — lists the repository's labels, one per line as `<name>  <description>`. The agent runs this before composing a filing or a triage entry so label names match exactly.
+- `templates.sh` — lists the repository's issue templates as `<name>  [<labels>]  <description>`, one per line. The agent runs this before composing a filing so the template name and its auto-applied labels are visible.
 - `create.sh <template-name> <title>` — reads the body from stdin. Locates the template under `.github/ISSUE_TEMPLATE/`, extracts its `labels:` declaration, merges with the `LABELS` env var, and passes the combined set to `gh`. (`gh` rejects `--template` with `--body-file`, hence reading labels from YAML.) The template name is required — it names the schema the body conforms to, and locating the YAML verifies the template exists. Example: `LABELS="priority:high,area:serialization" create.sh tech-debt.yml "title"`.
 - `triage-list.sh [filter]` — enumerates triage candidates. Filter is one of `unlabeled`, `no-priority`, `no-area`, `stale`, `noise-candidates`; default is `unlabeled`. Output matches `list.sh`. Filter semantics and environment overrides (`AREA_LABELS`, `STALE_DAYS`, `NOISE_BODY_CHARS`) are in the Triage Guidance subsection.
 - `edit.sh <number> [flags]` — wraps `gh issue edit` for a single issue. Flags pass through: `--add-label`, `--remove-label`, `--add-assignee`, `--remove-assignee`, `--title`, `--milestone`, `--body`, `--body-file`. Prints the resolved invocation before calling `gh` so the human sees the exact diff being applied. One issue per invocation — walking a triage document is the agent's job, not the script's, so the confirmation pause happens between entries.
@@ -173,6 +174,7 @@ Each script captures stdout and stderr from its underlying `gh` call. On failure
 - `list.sh` prints the formatted issue list.
 - `find.sh` prints matches or `no matches`.
 - `labels.sh` prints the label list or `no labels`.
+- `templates.sh` prints the template list or `no templates`.
 - `create.sh` prints the created issue's URL.
 - `triage-list.sh` prints the candidate list or `no candidates`.
 - `edit.sh` prints the resolved `gh issue edit` invocation, then the issue URL on success.
