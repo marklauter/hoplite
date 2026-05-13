@@ -1,6 +1,6 @@
 ---
 name: reviewing-documentation
-description: Use when reviewing local markdown diffs before commit. Produces structured findings classified as important, nit, or pre-existing, written as one file per finding under .findings/, tagged Type documentation with one of six lenses — Structure, Line, Copy, Accuracy, Coherence, References.
+description: Use when reviewing local markdown diffs before commit. Produces structured findings under .findings/ classified by severity (important / nit / pre-existing) and lens (Structure / Line / Copy / Accuracy / Coherence / References).
 ---
 
 # Reviewing documentation
