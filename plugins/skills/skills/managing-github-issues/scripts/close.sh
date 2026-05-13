@@ -18,7 +18,7 @@
 # Empty stdin is an error — every closure carries a comment that names
 # the reason, and the script enforces that gate.
 
-set -e
+set -eo pipefail
 
 NUMBER="${1:-}"
 

@@ -24,7 +24,7 @@
 #   query.sh --title cache --summary ttl
 #   query.sh --xtag retrospective --since 2026-05-01
 
-set -e
+set -eo pipefail
 
 TITLE=""
 TAG=""
@@ -66,6 +66,14 @@ while [ $# -gt 0 ]; do
     esac
 done
 
+# Portable case-insensitive substring match — bash 3.2 compatible.
+to_lower() {
+    printf '%s' "$1" | LC_ALL=C tr '[:upper:]' '[:lower:]'
+}
+
+TITLE_LC=$(to_lower "$TITLE")
+SUMMARY_LC=$(to_lower "$SUMMARY")
+
 if [ ! -d docs/journal ]; then
     echo "no entries"
     exit 0
@@ -97,9 +105,9 @@ for f in "${files[@]}"; do
     tags=$(sed -n '4s/^Tags: //p' "$f")
     summary=$(sed -n '5p' "$f")
 
-    if [ -n "$TITLE" ]; then
-        case "${title,,}" in
-            *"${TITLE,,}"*) ;;
+    if [ -n "$TITLE_LC" ]; then
+        case "$(to_lower "$title")" in
+            *"$TITLE_LC"*) ;;
             *) continue ;;
         esac
     fi
@@ -117,9 +125,9 @@ for f in "${files[@]}"; do
         esac
     fi
 
-    if [ -n "$SUMMARY" ]; then
-        case "${summary,,}" in
-            *"${SUMMARY,,}"*) ;;
+    if [ -n "$SUMMARY_LC" ]; then
+        case "$(to_lower "$summary")" in
+            *"$SUMMARY_LC"*) ;;
             *) continue ;;
         esac
     fi

@@ -26,7 +26,7 @@
 #   triage-list.sh noise-candidates
 #   NOISE_BODY_CHARS=400 triage-list.sh noise-candidates
 
-set -e
+set -eo pipefail
 
 FILTER="${1:-unlabeled}"
 

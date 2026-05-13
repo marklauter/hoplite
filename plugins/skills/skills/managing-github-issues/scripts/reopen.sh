@@ -17,7 +17,7 @@
 # Empty stdin is an error — every reopen carries a comment that names
 # what changed since closure.
 
-set -e
+set -eo pipefail
 
 NUMBER="${1:-}"
 

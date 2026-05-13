@@ -15,7 +15,7 @@
 #   list.sh <state> <label> <search>     filter by label and keyword search
 #   list.sh <state> "" <search>          filter by keyword only (empty label)
 
-set -e
+set -eo pipefail
 
 STATE="${1:-open}"
 LABEL="${2:-}"

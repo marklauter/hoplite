@@ -22,7 +22,7 @@
 #   list-journal.sh 2026-05-01
 #   list-journal.sh auth-investigation
 
-set -e
+set -eo pipefail
 
 FILTER="${1:-}"
 DATE_MODE=0

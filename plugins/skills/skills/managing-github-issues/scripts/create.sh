@@ -28,7 +28,7 @@
 #   cat body.md | create.sh tech-debt.yml "Refactor serialization layer"
 #   LABELS="priority:high" create.sh bug-report.yml "Nested map keys mis-serialized" < body.md
 
-set -e
+set -eo pipefail
 
 TEMPLATE="${1:-}"
 TITLE="${2:-}"
@@ -63,7 +63,15 @@ if [ -z "$TEMPLATE_PATH" ] || [ ! -f "$TEMPLATE_PATH" ]; then
     exit 2
 fi
 
+# Label extraction assumes the GitHub issue template style of double-quoted strings,
+# e.g. `labels: ["bug", "priority:high"]`. Single-quoted, unquoted, or YAML
+# flow-style alternatives silently yield empty labels — the sanity check below
+# warns when a `labels:` line is present but extraction produced nothing.
 TEMPLATE_LABELS=$(awk -F'"' '/^labels:/{for(i=2;i<=NF;i+=2) print $i}' "$TEMPLATE_PATH" | paste -sd, -)
+
+if [ -z "$TEMPLATE_LABELS" ] && grep -q '^labels:' "$TEMPLATE_PATH"; then
+    echo "create.sh: warning: template has a labels: line but no double-quoted labels were extracted; check the template's YAML quoting style" >&2
+fi
 
 if [ -n "${LABELS:-}" ] && [ -n "$TEMPLATE_LABELS" ]; then
     ALL_LABELS="${TEMPLATE_LABELS},${LABELS}"

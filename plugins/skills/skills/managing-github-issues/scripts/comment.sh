@@ -16,7 +16,7 @@
 #
 # Empty stdin is an error.
 
-set -e
+set -eo pipefail
 
 NUMBER="${1:-}"
 

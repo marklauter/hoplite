@@ -15,7 +15,7 @@
 #   query.sh "nested map serialization"
 #   query.sh tech-debt transactions
 
-set -e
+set -eo pipefail
 
 if [ $# -eq 0 ]; then
     echo "usage: query.sh <keywords...>" >&2

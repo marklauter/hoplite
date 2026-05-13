@@ -19,7 +19,7 @@
 #   edit.sh 42 --remove-label "wontfix" --add-assignee "@me"
 #   edit.sh 42 --title "New title" --milestone "v1.2"
 
-set -e
+set -eo pipefail
 
 if [ $# -lt 2 ]; then
     echo "usage: edit.sh <number> <gh-issue-edit-flags...>" >&2

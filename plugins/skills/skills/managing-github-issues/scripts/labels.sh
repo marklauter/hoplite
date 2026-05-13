@@ -11,7 +11,7 @@
 #                            triage entry so label names match the
 #                            project's existing vocabulary exactly.
 
-set -e
+set -eo pipefail
 
 TEMPLATE='{{if .}}{{range .}}{{.name}}  {{.description}}
 {{end}}{{else}}no labels

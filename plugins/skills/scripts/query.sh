@@ -33,7 +33,7 @@
 #   query.sh --severity nit --location src/
 #   query.sh --type documentation --xlens References
 
-set -e
+set -eo pipefail
 
 TITLE=""
 SEVERITY=""
@@ -127,19 +127,8 @@ while [ $# -gt 0 ]; do
     esac
 done
 
-get_field() {
-    local file="$1"
-    local field="$2"
-    grep -m1 "^${field}: " "$file" | sed "s/^${field}: //" || true
-}
-
-get_summary() {
-    local file="$1"
-    local principle_line
-    principle_line=$(grep -n -m1 '^Principle: ' "$file" | cut -d: -f1)
-    [ -n "$principle_line" ] || return 0
-    sed -n "$((principle_line + 1))p" "$file"
-}
+# shellcheck disable=SC1091
+source "$(dirname "${BASH_SOURCE[0]}")/_lib.sh"
 
 to_lower() {
     printf '%s' "$1" | LC_ALL=C tr '[:upper:]' '[:lower:]'

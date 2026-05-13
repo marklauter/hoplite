@@ -43,7 +43,7 @@
 #       'Opening paragraph uses might, perhaps, and basically in two sentences.' \
 #       < body.md
 
-set -e
+set -eo pipefail
 
 FORCE=0
 TYPE=""

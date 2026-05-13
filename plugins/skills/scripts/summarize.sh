@@ -22,13 +22,10 @@
 # Usage:
 #   summarize.sh
 
-set -e
+set -eo pipefail
 
-get_field() {
-    local file="$1"
-    local field="$2"
-    grep -m1 "^${field}: " "$file" | sed "s/^${field}: //" || true
-}
+# shellcheck disable=SC1091
+source "$(dirname "${BASH_SOURCE[0]}")/_lib.sh"
 
 if [ ! -d .findings ]; then
     echo "no findings"
@@ -79,6 +76,17 @@ else
     documentation_canonical=$(read_canonical "$documentation_skill")
     [ -f "$code_skill" ] && code_canonical_unreadable=0 || code_canonical_unreadable=1
     [ -f "$documentation_skill" ] && documentation_canonical_unreadable=0 || documentation_canonical_unreadable=1
+fi
+
+# Sanity check: if the SKILL.md was readable but no canonical principles were
+# extracted, the Philosophy heading structure has likely drifted from the
+# `### <heading>` shape this script depends on. Warn so the contract failure
+# is visible rather than silent.
+if [ "$code_canonical_unreadable" = "0" ] && [ -z "$code_canonical" ]; then
+    echo "summarize.sh: warning: $code_skill was readable but yielded no canonical principles; verify the Philosophy heading shape" >&2
+fi
+if [ "$documentation_canonical_unreadable" = "0" ] && [ -z "$documentation_canonical" ]; then
+    echo "summarize.sh: warning: $documentation_skill was readable but yielded no canonical principles; verify the Philosophy heading shape" >&2
 fi
 
 is_canonical() {

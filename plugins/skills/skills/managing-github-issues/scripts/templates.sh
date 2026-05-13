@@ -16,7 +16,7 @@
 #                               template name and label set are visible
 #                               at the call site for create.sh.
 
-set -e
+set -eo pipefail
 
 DIR=""
 GIT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || true)
@@ -44,6 +44,9 @@ for f in "$DIR"/*.yml "$DIR"/*.yaml; do
     [ -f "$f" ] || continue
     name=$(basename "$f")
     [ "$name" = "config.yml" ] || [ "$name" = "config.yaml" ] && continue
+    # Label extraction assumes GitHub's standard double-quoted YAML style.
+    # Other quoting styles silently yield empty labels — see create.sh for the
+    # canonical pattern and warning.
     labels=$(awk -F'"' '/^labels:/{for(i=2;i<=NF;i+=2) printf "%s%s", (printed?",":""), $i; printed=1}' "$f")
     description=$(awk '/^description:/ {sub(/^description:[ ]*/, "", $0); print $0; exit}' "$f")
     echo "$name  [$labels]  $description"

@@ -17,7 +17,7 @@
 #   list-notes.sh
 #   list-notes.sh auth-investigation
 
-set -e
+set -eo pipefail
 
 FILTER="${1:-}"
 

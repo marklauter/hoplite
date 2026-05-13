@@ -23,7 +23,7 @@
 #       'Confirmed the 300s TTL in appsettings.json; closes the stale-read thread.' \
 #       < body.md
 
-set -e
+set -eo pipefail
 
 TITLE="${1:-}"
 TAGS="${2-}"

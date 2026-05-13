@@ -20,13 +20,25 @@
 #       'Confirmed via appsettings.json; the stale read was a cold-start artifact, not a TTL bug.' \
 #       < body.md
 
-set -e
+set -eo pipefail
 
 FORCE=0
-if [ "${1:-}" = "--force" ]; then
-    FORCE=1
-    shift
-fi
+
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --force)
+            FORCE=1
+            shift ;;
+        --)
+            shift
+            break ;;
+        --*)
+            echo "take-note.sh: unknown flag '$1'" >&2
+            exit 2 ;;
+        *)
+            break ;;
+    esac
+done
 
 TITLE="${1:-}"
 TAGS="${2-}"

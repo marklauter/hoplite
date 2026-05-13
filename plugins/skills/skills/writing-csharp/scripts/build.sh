@@ -17,7 +17,7 @@
 #
 # Targets accept anything `dotnet` accepts: a project name, a .csproj path, or a .sln path.
 
-set -e
+set -eo pipefail
 
 ARG1="${1:-}"
 ARG2="${2:-}"

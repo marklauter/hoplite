@@ -17,7 +17,7 @@
 #   changes.sh <ref1> <ref2>       three-dot diff: what is on <ref2> since
 #                                  it diverged from <ref1>
 
-set -e
+set -eo pipefail
 
 ARG1="${1:-}"
 ARG2="${2:-}"
