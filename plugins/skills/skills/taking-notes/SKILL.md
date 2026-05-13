@@ -9,15 +9,13 @@ Wiki-style atomic notes under `docs/notes/` — one topic per page, titled by id
 
 ## Philosophy
 
-These principles draw on a few orienting threads. Cunningham on the wiki as a collective working memory — atomic pages, titles as identity, links as the spine. Pólya on observation before interpretation — record what is, then what it might mean, never both at once. Feynman on writing as thinking — a fact you cannot write is a fact you do not yet understand. Norman on forcing functions — the template carries the scannable head so every note declares its topic before its prose.
-
 Notes are the durable layer beneath the conversation. The conversation compacts; the notes do not. The next session reads what this one wrote.
 
 Notes represent the current state of an idea; the journal tells the story of how we got there. The two artifacts are siblings — a wiki page and an engineering notebook — and the taking-notes skill produces only the former. The journal — dated entries, append-only, ordered by time — is a separate skill with a separate shape.
 
 ### Externalize to survive compaction
 
-A fact that lives only in the conversation evaporates the moment the context window does. The note is the persistence layer. Anything worth remembering past the next compaction — a hypothesis, a measurement, a dead end, a decision, a reference — is worth a note. The friction of writing is the price of continuity.
+A fact that lives only in the conversation evaporates the moment the context window does. The note is the persistence layer. Anything worth remembering past the next compaction — a hypothesis, a measurement, a dead end, a decision, a reference — is worth a note.
 
 ### One topic, one page
 
@@ -41,7 +39,7 @@ A dead end documented prevents the dead end being repeated. The next session, or
 
 ### Open questions are notes too
 
-A question that goes unrecorded gets re-asked next session. Writing the question down — even with no answer yet — captures what is unknown, why the unknown matters, and what would resolve it. The note's title states the question; the body holds the current state of partial knowledge and the path toward an answer. Discoveries and open questions are peers in the note set: the discovery says "here is what is known," the question says "here is what is not known yet." Both deserve a page. When the answer arrives, the same note evolves to record it; the title may pivot from interrogative to declarative if the question framing no longer fits.
+A question that goes unrecorded gets re-asked next session. Writing it down — even with no answer yet — captures what is unknown, why it matters, and what would resolve it. The note's title states the question; the body holds partial knowledge and the path toward an answer. Discoveries and questions are peers: the discovery says "here is what is known," the question says "here is what is not known yet." When the answer arrives, the same note evolves to record it; the title may pivot from interrogative to declarative.
 
 ### Link liberally
 
@@ -49,11 +47,11 @@ Wiki notes earn their value from the graph. When a note references a concept tha
 
 ### Always the latest state; git is the history
 
-Notes are totally mutable. A note represents the current understanding of its topic — not a stratigraphic record of every prior belief, not a chronology of how the thinking evolved. When the understanding changes, the note changes; the old text goes away. No "previously we thought X" sections, no `-v2.md` companion files, no superseded markers. The revision history lives in git, and only in git. A new file is for a new topic; the same file evolves to reflect the current truth about its own topic.
+Notes are totally mutable. A note represents the current understanding of its topic — not a record of prior belief. When the understanding changes, the note changes; the old text goes away. No "previously we thought X" sections, no `-v2.md` companion files, no superseded markers. The revision history lives in git. A new file is for a new topic; the same file evolves to reflect the current truth about its own topic.
 
 ### The note is the artifact
 
-Once the note is written, the work of recording is done. The chat does not recite the note back to the user; the file is the deliverable. If the user wants to read what was noted, they open `docs/notes/`.
+Once the note is written, the work of recording is done. The chat does not recite the note back; the file under `docs/notes/` is the deliverable.
 
 ## Guidance
 

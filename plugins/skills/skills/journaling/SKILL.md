@@ -9,17 +9,15 @@ Engineering-notebook-style entries — dated, append-only records of what was at
 
 ## Philosophy
 
-These principles draw on a few orienting threads. The FIRST Robotics engineering notebook — dated entries, design iterations, decisions, rationale, read by judges as evidence of the team's journey. The lab-notebook tradition from Faraday, Edison, and Curie — bound, dated, ink-only, the notebook is evidence and is never rewritten. Boyd on OODA — each entry is one observe-orient-decide-act cycle, recorded so the next cycle can build on it. Feynman on writing as thinking — the entry exists so the thought is durable.
-
 Notes represent the current state of an idea; the journal tells the story of how we got there. The two skills are siblings — [[taking-notes]] is the wiki page, journaling is the engineering notebook. They cross-reference: an entry says "today we changed our understanding of X"; the note titled X carries the new state.
 
 ### Append-only; the past is fixed
 
-The journal is the audit trail. Once an entry is written, it is not edited. A correction, a revision, a "we were wrong about that yesterday" — these are new entries that reference the old. Editing an entry erases the record of what we believed when we believed it, and the record of belief is the whole point of keeping a notebook. The wiki page mutates because the current state is the deliverable; the journal entry stays because the journey is the deliverable.
+The journal is the audit trail. Once an entry is written, it is not edited. Corrections, revisions, "we were wrong about that yesterday" — these are new entries that reference the old. Editing an entry erases the record of what we believed when we believed it.
 
 ### Time is the spine
 
-Entries are ordered by time. The filename carries the date and the time-of-day; `ls` lists the journal chronologically by default. Topical structure is layered on with tags and cross-references, but the spine is time. To find what happened, you scan dates; to find what is current, you read the notes.
+Entries are ordered by time. The filename carries the date and the time-of-day; `ls` lists the journal chronologically by default. Topical structure is layered on with tags and cross-references, but the spine is time.
 
 ### The journey is the artifact
 
@@ -47,7 +45,7 @@ The entry is written for someone who has lost the context — the same person to
 
 ### The entry is the artifact
 
-Once the entry is written, the work of recording is done. The chat does not recite the entry back to the user; the file is the deliverable. If the user wants to read what was journalled, they open `docs/journal/`.
+Once the entry is written, the work of recording is done. The chat does not recite the entry back; the file under `docs/journal/` is the deliverable.
 
 ## Guidance
 

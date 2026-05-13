@@ -9,15 +9,11 @@ Pre-commit review of markdown diffs through six lenses — Structure, Line, Copy
 
 ## Philosophy
 
-These principles draw on a few orienting threads. Fagan on formal inspection — defect detection is the work, and severity calibration is the discipline that keeps it useful. Pólya on observation before interpretation — name what the prose does, then name the principle from which it departs. Strunk and White on the asymmetric cost of wasted words.
-
 The rubric is writing-documentation. Reviewing-documentation judges; writing-documentation prescribes. The two skills co-evolve. Every finding traces to a writing-documentation Philosophy anchor — the Philosophy section is the contract the reviewer enforces; the Guidance section applies it.
 
 ### Findings are observations, not commands
 
 The reviewer reports; the author decides. A finding describes what the prose does and why a principle is violated; it does not demand the fix. The Suggested fix section offers a path, not an instruction.
-
-The reviewer's authority comes from the rubric, not from preference. Every finding cites the contract.
 
 ### The diff is the scope
 
@@ -33,7 +29,7 @@ Quote enough to locate the issue and no more. A short quote plus a `path:line` i
 
 ### Severity encodes the action
 
-The vocabulary — important, nit, pre-existing — names the action the author should take, not how bad the prose is. Important means the diff does not ship without resolution. Nit means a fix is welcome but optional. Pre-existing means the defect is not from this diff. Naming the action keeps the author's attention budget on the changes that change shipability.
+The vocabulary — important, nit, pre-existing — names the action the author should take, not how bad the prose is. Naming the action keeps attention on what changes shipability. The definitions live in Guidance.
 
 ### Findings discover principles
 
@@ -90,7 +86,7 @@ A register mismatch is itself a finding — when the document's register does no
 
 ### Per-lens signals
 
-Each subsection names the kinds of defects the lens catches. The signals are not exhaustive — they are the patterns the reviewer's eye looks for first. Evaluate every signal against the operating register: a reference document is allowed third person and dry density; a tutorial is allowed walks-the-reader-through pacing. The register sets the floor for what counts as a violation.
+Each subsection names the kinds of defects the lens catches. The signals are not exhaustive — they are the patterns the reviewer's eye looks for first. Evaluate every signal against the operating register detected earlier.
 
 #### Structure
 
@@ -171,7 +167,7 @@ Link integrity and cross-reference correctness.
 
 ## Validation
 
-"Beware of bugs in the above code; I have only proved it correct, not tried it" (Knuth). Validation for review is the loop applied to prose: observe the diff, orient against the rubric, decide severity, act by writing the finding. The finding artifact is the loop's output.
+Findings are the artifact of the review pass. Each finding is one file under `.findings/`.
 
 ### The finding artifact
 
@@ -199,7 +195,7 @@ Principle: <writing-documentation Philosophy anchor>
 <corrected text for line/copy fixes, or prose describing the change>
 ```
 
-The H1 is line 1. The head fields are written by name, so the reader scripts find them by name rather than by line offset. The summary is the line immediately after `Principle:`. The body sections `## Observation`, `## Why it matters`, and `## Suggested fix` follow.
+The H1 is line 1. Head fields are read by name, not by line offset. The summary is the line immediately after `Principle:`. The body sections follow.
 
 The filename is the slug of the title: lowercase, non-alphanumeric replaced with dashes, leading and trailing dashes trimmed, capped at 80 characters.
 

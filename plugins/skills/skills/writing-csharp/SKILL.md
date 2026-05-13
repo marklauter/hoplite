@@ -9,51 +9,47 @@ Type-driven design, immutability, pure functions, Result-based error handling, p
 
 ## Philosophy
 
-These principles draw on several orienting threads. Evans for domain-driven design, boundaries between meaning and storage, ubiquitous language, and modeling the domain as types. Donald Norman for affordances, signifiers, and forcing functions — the world shapes behavior.
+These principles describe what good code looks like. They apply to new code without exception; existing code is updated to match when it's touched.
 
-Minsky on making illegal states unrepresentable. Hickey on values, immutability, the distinction between simple and easy, and state representation as a series of events. Brooks on essential versus accidental complexity. Kernighan and Pike on the rule of clarity.
+### Make invalid states unrepresentable (Minsky)
 
-They describe what good code looks like. They apply to new code without exception; existing code is updated to match when it's touched.
+The type system is the first line of defense. Construction is where invariants land — once a value exists, it is trustworthy, and downstream code does not re-verify. Runtime checking is for what types cannot express. Parse, don't validate.
 
-### Make invalid states unrepresentable
-
-The type system is the first line of defense, not a fallback. Construction is where invariants land — once a value exists, it is trustworthy, and downstream code does not re-verify what construction already guaranteed. Lean on the compiler to rule out the wrong thing entirely; runtime checking is for what types cannot express. Parse, don't validate. Make the incorrect inexpressible.
-
-### Immutable by default
+### Immutable by default (Hickey)
 
 Default to immutable — Hickey's values-not-state stance. Mutation is a deliberate carve-out, justified by a measured hot path or a domain concept that genuinely models change in place.
 
 ### Pure functions over procedures
 
-Push side effects to the boundary; keep the interior computational. Pure functions are testable by reading them. Impure functions require fixtures, fakes, and mocks — and that ceremony is a signal that the design wants to be purer.
+Push side effects to the boundary; keep the interior computational. Pure functions are testable by reading them; impure functions need fixtures, fakes, and mocks — and that ceremony signals the design wants to be purer.
 
 ### Results, not exceptions
 
-Domain logic models named outcomes as result variants — `NotFound`, `Conflict`, `InvalidInput`. Exceptions are reserved for bugs and conditions no caller can handle. Infrastructure codebases that model no domain — frameworks, libraries, adapters, request pipelines — have no domain layer for Results to inhabit and use exceptions throughout. Use the real functional vocabulary: `Option`, `Either`, `bind`, `map`.
+Domain logic models named outcomes as variants — `NotFound`, `Conflict`, `InvalidInput`. Exceptions are for bugs and conditions no caller can handle. Infrastructure-only codebases (frameworks, libraries, adapters) have no domain layer and use exceptions throughout. Use the real functional vocabulary: `Option`, `Either`, `bind`, `map`.
 
-### Fail loud when prevention fails
+### Fail loud when prevention fails (Armstrong)
 
-The first defense is making bad states unreachable. When something slips past anyway, the system crashes immediately with a stack trace — Armstrong's let-it-crash, applied at function granularity. A loud failure beats silent data corruption.
+The first defense is making bad states unreachable. When something slips past, the system crashes immediately — Armstrong's let-it-crash, at function granularity. A loud failure beats silent corruption.
 
-### The domain doesn't know how it's stored
+### The domain doesn't know how it's stored (Evans)
 
-Domain types describe meaning. If a reader can reverse-engineer the database, ORM, or wire format from a domain type, that is a leak — Evans's persistence ignorance, taken seriously. Persistence concerns live in their own layer and do not colonize the model.
+Domain types describe meaning. If a reader can reverse-engineer the database, ORM, or wire format from a domain type, that is a leak — Evans's persistence ignorance. Persistence concerns live in their own layer.
 
 ### Inference, not annotation
 
-`var` is the default. Clarity comes from good names — for variables, methods, and types — not from re-stating types the compiler already knows. Annotations the reader could derive at a glance are noise.
+`var` is the default. Clarity comes from good names — variables, methods, types — not from re-stating types the compiler already knows.
 
 ### Modern idioms
 
-New code is written in the language's current vocabulary. Stable modern features are defaults, not opt-ins.
+New code uses the language's current vocabulary; stable features are defaults, not opt-ins.
 
-### Performance where it matters
+### Performance where it matters (Knuth)
 
-Hot paths get measured and optimized — allocations, branches, layout, all of it. Cold paths stay readable. The discipline (per Knuth) is knowing which is which and not pretending every method is in the inner loop.
+Measure hot paths and optimize them — allocations, branches, layout. Cold paths stay readable. The discipline is knowing which is which.
 
 ### Build gates are signal
 
-Warnings, analyzers, nullability, tests, type checks — these tighten the feedback loop and exist to help the agent. They are the ground truth between sessions, the most reliable signal that something is wrong before a human reviews. Disabling a gate erases that signal. Fix what triggered the gate; suppression is reserved for cases where the gate itself is wrong, with an explicit justification at the suppression site.
+Warnings, analyzers, nullability, tests are the ground truth between sessions. Fix what triggered the gate; suppression requires an explicit justification at the suppression site.
 
 ### The first slice sets the pattern
 
@@ -63,9 +59,9 @@ The first implementation of a pattern becomes the example the next ten will copy
 
 Every fact has one authoritative representation. When the fact changes, one place changes. Duplicated knowledge — copy-pasted code, parallel hierarchies, values restated in both code and config — is a defect waiting to surface.
 
-### The easy path is the correct path
+### The easy path is the correct path (Norman)
 
-The right thing is the path of least resistance; the dangerous thing takes real effort. Norman's affordances and forcing functions, in code form. Friction in front of a risky operation buys a beat of attention, and that pause is the whole point.
+The right thing is the path of least resistance; the dangerous thing takes real effort. Norman's affordances and forcing functions, in code form: friction in front of a risky operation buys a beat of attention.
 
 ## Guidance
 
@@ -74,8 +70,8 @@ C#-specific patterns that operationalize the principles above. Each subsection m
 ### Make invalid states unrepresentable
 
 - `internal sealed` by default for records and concrete classes. `internal sealed record Range { ... }`. Promote to `public` only when the type is part of the library's exported contract.
-- Public interfaces, internal implementations. Library exports a `public interface IFormatter`; the implementation is `internal sealed class MarkdownFormatter(FormatterOptions options) : IFormatter`. Consumers depend on the interface; the implementation is registered in the DI container. The public contract is mockable for tests because callers see only the interface.
-- `required` for construction-time invariants. `public required int Start { get; init; }`. Every construction site is forced to set the property.
+- Public interfaces, internal implementations. Library exports a `public interface IFormatter`; the implementation is `internal sealed class MarkdownFormatter(FormatterOptions options) : IFormatter`. Consumers depend on the interface; the implementation is registered in the DI container.
+- `required` for construction-time invariants. `public required int Start { get; init; }`.
 - `init` accessors only. Properties expose `init`, never `set`. Once constructed, the value is the value.
 - Smart constructors via static factory methods. Keep the constructor private or internal; expose `public static Result<Range> Create(int start, int end)` that runs validation (e.g., `start <= end`). Once a `Range` exists, its invariants hold.
 - `readonly record struct` for value-type wrappers. Wrap `string` → `FilePath`, `TimeSpan` → `Duration`, `decimal` → `Percent`. `public readonly record struct FilePath(string Value) : IValue<FilePath, string>`. Value semantics, no heap allocation, equality and `ToString` for free.
@@ -181,13 +177,11 @@ C#-specific patterns that operationalize the principles above. Each subsection m
 
 ## Validation
 
-"Testing shows the presence of bugs, not their absence" (Dijkstra). Validation is layered: types prevent what types can prevent, tests catch what slips through, and the build gates keep both honest. Each layer carries the load it can carry.
-
-The golden rule: test what you own. The framework, the ORM, and the third-party libraries beneath this code have their own test suites. This codebase's tests cover this codebase's logic.
+Validation is layered: types prevent what types can prevent, tests catch what slips through, build gates keep both honest. Test what you own — the framework, the ORM, and third-party libraries have their own test suites.
 
 ### The validation loop
 
-Run the build script to validate format, build, and test. One commnand, three signals. Boyd's OODA loop.
+Run the build script to validate format, build, and test. One command, three signals.
 
 1. Format (always solution-wide). `dotnet format --verify-no-changes --severity info --verbosity quiet`. Style drift anywhere is a defect; the agent never merges unscoped drift even when iterating on one layer.
 2. Build. `dotnet build --nologo --verbosity quiet`. Scope depends on args.
@@ -197,13 +191,13 @@ Each step runs only when the prior is green. The script's exit code is the gate.
 
 Output discipline: each step captures stdout and stderr. Format and build are silent on success — only the `==> step-name` label prints. The test step also surfaces the test summary line and any coverage table rows on success, since those are signal the agent uses every iteration (pass/fail counts, per-module line/branch/method coverage). On failure, the full captured output prints and the script exits with the command's code.
 
-The canonical script ships at `${CLAUDE_PLUGIN_ROOT}/skills/writing-csharp/scripts/build.sh`. Portable POSIX bash; runs on Linux, macOS, and Windows (Git Bash, WSL). Claude Code sets `${CLAUDE_PLUGIN_ROOT}` to the plugin's install path; the agent invokes the script from the consuming project's root, and the shell's working directory determines which solution gets operated on. The script lives outside any consuming repo, so an in-repo edit cannot silently neuter the gate.
+The canonical script ships at `${CLAUDE_PLUGIN_ROOT}/skills/writing-csharp/scripts/build-gate.sh`. Portable POSIX bash; runs on Linux, macOS, and Windows (Git Bash, WSL). Claude Code sets `${CLAUDE_PLUGIN_ROOT}` to the plugin's install path; the agent invokes the script from the consuming project's root, and the shell's working directory determines which solution gets operated on. The script lives outside any consuming repo, so an in-repo edit cannot silently neuter the gate.
 
 Arguments scope build and test:
 
-- `build.sh` — solution-wide: format, build, and test.
-- `build.sh <test-target>` — solution-wide format, then test scoped. The explicit build step is skipped; `dotnet test` builds dependencies (transitively including the project under test).
-- `build.sh <build-target> <test-target>` — solution-wide format, then build and test each scoped. Use when the test target is not the conventional `<X>.Tests` paired with `<X>`.
+- `build-gate.sh` — solution-wide: format, build, and test.
+- `build-gate.sh <test-target>` — solution-wide format, then test scoped. The explicit build step is skipped; `dotnet test` builds dependencies (transitively including the project under test).
+- `build-gate.sh <build-target> <test-target>` — solution-wide format, then build and test each scoped. Use when the test target is not the conventional `<X>.Tests` paired with `<X>`.
 
 Each target accepts anything `dotnet` accepts: a project name, a `.csproj` path, or a `.sln` path.
 
@@ -225,7 +219,7 @@ When a gate fires, the rule is: fix the underlying cause. Suppression and exclus
 - `#pragma warning disable` always carries a comment explaining what and why, paired with an explicit `#pragma warning restore` at the end of the affected scope.
 - Hints and warnings may be suppressed when the rule legitimately does not apply to the local context or fires a false positive, with `Justification`.
 - Errors are suppressed only with an explicit ticket and team acknowledgment in addition to the `Justification`.
-- Format fixes are a separate, scoped invocation. The validation loop verifies only — it uses `--verify-no-changes` and never modifies files. Re-running `build.sh` after a format failure changes nothing. To clear a violation the loop reported, run a scoped `dotnet format`:
+- Format fixes are a separate, scoped invocation. The validation loop verifies only — it uses `--verify-no-changes` and never modifies files. Re-running `build-gate.sh` after a format failure changes nothing. To clear a violation the loop reported, run a scoped `dotnet format`:
 
   ```
   dotnet format style --diagnostics IDE0007 --include path/to/file.cs --severity info   # one rule, one file
@@ -293,7 +287,7 @@ When a gate fires, the rule is: fix the underlying cause. Suppression and exclus
 ### Build gates are signal
 
 - The validation-loop script is the agent's primary signal source — one tool call, one exit code.
-- Disabling a gate is the agent blinding itself — the protection vanishes along with the signal. Use them wisely.
+- Disabling a gate erases its signal.
 
 ### The first slice sets the pattern
 

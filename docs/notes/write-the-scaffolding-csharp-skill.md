@@ -15,7 +15,7 @@ A `scaffolding-csharp` skill would codify the "new project" workflow:
 - `Directory.Build.props` with `<Nullable>enable</Nullable>`, `<TreatWarningsAsErrors>true</TreatWarningsAsErrors>`, `<AnalysisMode>All</AnalysisMode>`, coverage thresholds.
 - `Directory.Packages.props` with CPM enabled and `CentralPackageTransitivePinningEnabled`.
 - Initial ArchUnitNET test scaffolding for the standard rules (sealed concrete classes, no public instance fields, namespace shape, layer dependencies).
-- The `build.sh` script wired in.
+- The `build-gate.sh` script wired in.
 - A starter `Domain` smart-constructor / Result type if appropriate.
 
 Open question: ship as a skill (instructions Claude follows) or as a real `dotnet new` template (one command bootstraps)? Probably the skill drives a `dotnet new` template once one exists — the skill teaches the standards, the template carries them out.

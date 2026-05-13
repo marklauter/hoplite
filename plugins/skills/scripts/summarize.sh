@@ -63,7 +63,12 @@ documentation_skill="${plugin_root}/skills/writing-documentation/SKILL.md"
 read_canonical() {
     local skill="$1"
     [ -f "$skill" ] || return 0
-    awk '/^## Philosophy/{flag=1; next} /^## /{flag=0} flag && /^### /{sub(/^### /, ""); print}' "$skill"
+    # Strip trailing ` (Source)` citation suffixes so principle matching ignores them.
+    awk '/^## Philosophy/{flag=1; next} /^## /{flag=0} flag && /^### /{sub(/^### /, ""); sub(/ \([^)]+\)$/, ""); print}' "$skill"
+}
+
+strip_citation() {
+    printf '%s' "$1" | sed -E 's/ \([^)]+\)$//'
 }
 
 if [ -z "$plugin_root" ]; then
@@ -90,7 +95,7 @@ if [ "$documentation_canonical_unreadable" = "0" ] && [ -z "$documentation_canon
 fi
 
 is_canonical() {
-    local p="$1"
+    local p; p=$(strip_citation "$1")
     local list="$2"
     while IFS= read -r line; do
         [ "$line" = "$p" ] && return 0

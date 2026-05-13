@@ -9,9 +9,7 @@ Filing, triaging, deduplicating, labeling, and closing GitHub issues via the `gh
 
 ## Philosophy
 
-These principles draw on a few orienting threads. Evans on ubiquitous language — labels and titles are the shared vocabulary between code, agents, and humans. Norman on affordances and forcing functions — templates make the right shape the easy shape. Hickey on values and one source of truth — the issue tracker is the canonical backlog, and every fact lives in exactly one issue.
-
-They describe what good issue hygiene looks like. They apply on every interaction with the tracker without exception.
+These principles describe what good issue hygiene looks like. They apply on every interaction with the tracker without exception.
 
 ### Search before file
 
@@ -23,7 +21,7 @@ Issue templates encode the project's intent — required fields, allowed values,
 
 ### One issue, one problem
 
-Each issue describes a single defect, a single piece of debt, or a single behavioral mismatch. A report that bundles three concerns is three issues. Atomic issues are searchable, prioritizable, and closable. Each split entry moves independently through triage and closure.
+Each issue describes a single defect, a single piece of debt, or a single behavioral mismatch. A report that bundles three concerns is three issues. Atomic issues are searchable, prioritizable, and closable.
 
 ### Concrete references over prose
 
@@ -43,7 +41,7 @@ Listing and searching are read-only and run freely. Creating, closing, commentin
 
 ### Triage is decision, not data entry
 
-Triage is the act of deciding what an issue is, where it belongs, and whether it should remain open. The agent surfaces candidates and proposes actions in a structured document; the human approves or redirects entry by entry; a script applies the approved mutations one at a time. Every triage decision is a judgment about the project's backlog, and judgment is what the human keeps. The document is the audit trail — the agent's reasoning is reviewable before any state changes.
+Triage is the act of deciding what an issue is, where it belongs, and whether it should remain open. The agent surfaces candidates and proposes actions in a structured document; the steward approves or redirects entry by entry; a script applies the approved mutations one at a time. The document is the audit trail — the agent's reasoning is reviewable before any state changes.
 
 ## Guidance
 

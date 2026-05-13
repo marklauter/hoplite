@@ -9,21 +9,15 @@ Durable markdown — wiki, README, ADR, design doc, reference, tutorial — writ
 
 ## Philosophy
 
-These principles draw on a few orienting threads. Strunk and White for economy and active voice. Norman for affordances — the document's first sentence is the first signifier the reader sees, and it teaches them how to read the rest. Hickey on simple versus easy, applied to prose: the simplest sentence is the one that says exactly one thing. Pólya on observation before interpretation — describe what is, then state what it implies.
-
-They apply to any durable prose the repo keeps. Structural conventions (skill shape, ADR shape, and note shape) live in per-artifact skills; the principles below are the spine those skills share.
+These principles apply to any durable prose the repo keeps. Structural conventions (skill shape, ADR shape, and note shape) live in per-artifact skills; the principles below are the spine those skills share.
 
 ### Source is the authority
 
-The document defers to the system it describes. Read the source code, the configuration, the schema, the running behavior before writing about it. When the prose and the source disagree, the prose is wrong. Fix the prose, never the source — and update it only after re-reading what it claims to describe.
-
-Renames and refactors follow the same rule. When a term, file path, or identifier changes, the document that mentions it goes stale the instant the change lands. Search the entire project for the old reference and update it in the same change set.
+The document defers to the system it describes. Read the source — code, configuration, schema, behavior — before writing about it. When prose and source disagree, fix the prose. When a term, file path, or identifier changes, every document mentioning it goes stale; update them in the same change set.
 
 ### Match the surrounding register
 
-A document inherits its register from its neighbors. A tutorial in a folder of tutorials is friendly and walks the reader through. A reference page in a folder of reference pages is dry, dense, and factual. A vision article in a folder of vision articles is authoritative and declarative. The agent reads the siblings before composing.
-
-When no siblings exist, the agent asks the user. Without an answer, the default is authoritative-declarative-terse — the voice of a contributor who has thought the design through.
+A document inherits its register from its neighbors. The agent reads siblings before composing. With no siblings, the agent asks; without an answer, the default is authoritative-declarative-terse — the voice of a contributor who has thought the design through.
 
 ### Lead with what the reader needs
 
@@ -35,15 +29,11 @@ Each page stands on its own. Link liberally to supporting concepts, but include 
 
 ### Define by presence
 
-Say what something is, then stop. The negative is implied by the positive being stated clearly. "The facilitator runs discovery across all three lenses" is a complete assertion; the reader does not need "and not across two lenses." Governance and proofreading own the boundaries; principles assert.
-
-Constraints and invariants sometimes read more naturally as negatives — name the negative outcome with a positive label ("invalid outcome" rather than "not a valid outcome") or leave the natural negation in place when the alternative is awkward.
+Say what something is, then stop. The negative is implied. "The facilitator runs discovery across all three lenses" needs no "and not across two lenses." Constraints sometimes read more naturally as negatives — phrase the negative outcome as a positive label ("invalid outcome", not "not a valid outcome").
 
 ### State each idea once
 
-Every fact has one authoritative location in the documentation. Other pages link to it; they do not restate it. When the fact changes, one page changes. Restating an idea across pages multiplies the surface area that must move when the idea evolves.
-
-Within a page, the same rule applies. A paragraph that restates an adjacent paragraph in different words is one paragraph too many. A sentence that restates the previous sentence is one sentence too many.
+Every fact has one authoritative location. Other pages link to it; they do not restate it. Within a page, the same rule applies — a paragraph that restates an adjacent paragraph is one too many.
 
 ### Every word must earn its place
 
@@ -53,9 +43,7 @@ Use as many words as the meaning needs and no more. Clarity outranks brevity at 
 
 ### Examples carry weight
 
-A concrete example outweighs an abstract claim. The reader who sees one worked example understands the principle better than the reader who sees three paraphrases of the abstract rule.
-
-One brief example per rule is enough, and only when the rule is not self-evident from its statement. A rule like "use sentence-case headings" needs no example; a rule about converting a table into headings and bullets benefits from showing the before and after.
+A concrete example outweighs an abstract claim. One brief example per rule is enough, and only when the rule is not self-evident. "Use sentence-case headings" needs no example; converting a table to headings and bullets benefits from showing before and after.
 
 ### Forms are the schema
 
@@ -184,7 +172,7 @@ Concrete rules for applying the principles above. Each subsection below mirrors 
 
 ## Validation
 
-"You don't write because you want to say something; you write because you have something to say" (Fitzgerald). Validation for prose is the three-step loop the writer runs before the formal review.
+Validation for prose is the loop the writer runs before formal review.
 
 ### The writing loop
 

@@ -8,11 +8,11 @@
 #           full captured output on failure.
 #
 # Usage:
-#   build.sh                                  whole solution: format, build, test
-#   build.sh <test-target>                    solution-wide format; test scoped
+#   build-gate.sh                                  whole solution: format, build, test
+#   build-gate.sh <test-target>                    solution-wide format; test scoped
 #                                             (dotnet test builds the test target's
 #                                             dependencies implicitly, so no explicit build)
-#   build.sh <build-target> <test-target>     solution-wide format; build scoped; test scoped
+#   build-gate.sh <build-target> <test-target>     solution-wide format; build scoped; test scoped
 #                                             (use for non-paired test targets)
 #
 # Targets accept anything `dotnet` accepts: a project name, a .csproj path, or a .sln path.

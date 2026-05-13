@@ -9,25 +9,27 @@ Pre-commit review of C# diffs against the writing-csharp rubric, producing sever
 
 ## Philosophy
 
-These principles draw on a few orienting threads. Fagan on formal inspection — defect detection is the work, and severity calibration is the discipline that keeps it useful. Pólya on observation before interpretation — state what the code does, then name the principle from which it departs. Norman on forcing functions — the finding template shapes the review so the principle reference rides with every finding.
-
 The rubric is the writing-csharp Philosophy. Reviewing-csharp judges; writing-csharp prescribes. The two skills co-evolve.
 
-### Severity calibration
+### Severity calibration (Fagan)
 
-The vocabulary — important, nit, pre-existing — encodes the action the author should take, not how bad the code is. Important means the diff does not ship without resolution. Nit means a fix is welcome but optional. Pre-existing means the defect is not from this diff. Naming the action keeps the author's attention budget on the changes that change shipability.
+The vocabulary — important, nit, pre-existing — encodes the action the author should take, not how bad the code is. Naming the action keeps attention on what changes shipability. The definitions live in Guidance.
 
 ### Findings are observations, not commands
 
-The reviewer reports; the author decides. A finding states what the code does and why a principle is violated; it does not demand the fix. Judgment lives with the author who reviews the artifact.
+The reviewer reports; the author decides. A finding states what the code does and why a principle is violated; it does not demand the fix.
 
 ### The diff is the scope
 
-Review the lines that changed and the context required to understand them. Pre-existing defects adjacent to the diff are surfaced as `pre-existing` findings, not chased upstream. Whole-codebase audit is a different activity with different output.
+Review the lines that changed and the context required to understand them. Pre-existing defects adjacent to the diff are surfaced as `pre-existing` findings, not chased upstream.
 
 ### Findings discover principles
 
-A finding that cannot be tied to an existing writing-csharp principle is a candidate for promotion — either the canonical principle exists and the review surfaced new wording, or the writing skill should grow to cover the case. The author decides during triage.
+A finding without a matching writing-csharp principle is a candidate for promotion — either the canonical principle exists under different wording, or the writing skill should grow.
+
+### Mechanical before judgment
+
+Mechanical checks (build, lint, analyzers, ArchUnitNET, EditorConfig) run via the build gate. Assume they are green; the reviewer focuses on what they can't capture — contextual judgment, principle interpretation, design intent. When a violation could plausibly be encoded mechanically, surface it as a candidate for the build gate — write a note, file a finding, or raise it in conversation. The steward decides whether to add the mechanical check.
 
 ## Guidance
 
@@ -35,11 +37,12 @@ Concrete patterns for producing findings and running the workflow.
 
 ### The workflow
 
-1. `changes.sh` produces the canonical diff plus the changed-file list. Read the diff and the surrounding context of each changed file before composing findings.
-2. For each changed line, evaluate against writing-csharp principles. When a principle is violated, compose a finding.
-3. `report-finding.sh --type code` writes the finding to `.findings/<slug>.md`. The slug comes from the title; the script validates the type and severity enums and refuses to overwrite without `--force`. C# findings always tag `--type code`.
-4. `list-findings.sh` enumerates the current findings by reading each file's head. Scan it before composing a new finding — match on title and summary, since the slug catches reworded duplicates. `query.sh --type code` is the tool for predicate-driven scans (filter by severity, principle, location, etc.) when the finding set has grown.
-5. `summarize.sh` collapses the directory to counts plus verdict. Run it when the review pass is complete.
+1. `build-gate.sh` runs first. Address every error and warning it surfaces — these are mechanical defects the reviewer should never write findings about. A red build means the diff is not ready for review.
+2. `changes.sh` produces the canonical diff plus the changed-file list. Read the diff and the surrounding context of each changed file before composing findings.
+3. For each changed line, evaluate against writing-csharp principles for what mechanical checks cannot see. When a principle is violated, compose a finding.
+4. `report-finding.sh --type code` writes the finding to `.findings/<slug>.md`. The slug comes from the title; the script validates the type and severity enums and refuses to overwrite without `--force`. C# findings always tag `--type code`.
+5. `list-findings.sh` enumerates the current findings by reading each file's head. Scan it before composing a new finding — match on title and summary, since the slug catches reworded duplicates. `query.sh --type code` is the tool for predicate-driven scans (filter by severity, principle, location, etc.) when the finding set has grown.
+6. `summarize.sh` collapses the directory to counts plus verdict. Run it when the review pass is complete.
 
 ### Severity calibration
 
@@ -62,91 +65,19 @@ Concrete patterns for producing findings and running the workflow.
 - Same defect on a different line: update the existing finding's Location to a comma-separated list with `report-finding.sh --force`, rather than creating a second file.
 - Same principle violation in a different shape: separate findings. The artifact is per-defect, not per-principle.
 
-### Per-principle signals
+### Where mechanical can't reach
 
-Each subsection mirrors a writing-csharp Philosophy heading. The signals listed are what the agent looks for in changed lines; they are not exhaustive.
+What writing-csharp's mechanical gates can't encode — the judgment-shaped parts of the review:
 
-#### Make invalid states unrepresentable
-
-- A public parameterless constructor on a domain type — smart constructor bypassed.
-- A property with `set;` on a domain type — invariants can be mutated post-construction.
-- A `Create` factory that returns `T` rather than `Result<T>` (or equivalent) — validation has no failure channel.
-- Primitive obsession: `int`, `string`, `DateTime` used directly for concepts that carry invariants.
-
-#### Immutable by default
-
-- `set;` on a domain property.
-- Public mutable fields on domain types.
-- A `List<T>` or `Dictionary<,>` exposed where `IReadOnlyList<T>` or `IReadOnlyDictionary<,>` would fit.
-- Assignment to instance state outside the constructor.
-
-#### Pure functions over procedures
-
-- A method in the domain layer that reaches for `DateTime.Now`, `Random`, `Console`, `File`, network, or the database.
-- An `ILogger` argument threaded into core domain logic.
-- A `void`-returning method outside constructors, registrations, and explicit side-effect boundaries.
-
-#### Results, not exceptions
-
-- A domain signature returning `T` whose body throws for a domain failure.
-- `try`/`catch` inside domain code translating between exception types instead of returning a Result.
-- An `ErrorOr` (or equivalent) return type whose error case is never pattern-matched at the call site.
-
-#### Fail loud when prevention fails
-
-- A `catch (Exception)` that swallows silently.
-- A `catch` that logs and continues without rethrowing or converting.
-- A constructor that accepts a null and stores it instead of guarding.
-
-#### The domain doesn't know how it's stored
-
-- `using Microsoft.EntityFrameworkCore;` (or `Dapper`, `Marten`, `Microsoft.Azure.Cosmos`) in a domain file.
-- `[JsonPropertyName]`, `[DataContract]`, `[Column]`, `[Table]`, `[Key]` on a domain type.
-- A `DbContext` or repository reference inside a domain method.
-
-#### Inference, not annotation
-
-- Explicit type annotations where `var` works (`string x = ...`, `List<Foo> z = new List<Foo>()`).
-- IDE0007-shaped patterns the analyzer would flag in writing.
-
-#### Modern idioms
-
-- `new List<T>()` instead of `[]` or `new()`.
-- `string.Format` or `+` concatenation instead of interpolated strings.
-- Block-scoped namespaces instead of file-scoped.
-- `if (x == null)` instead of `if (x is null)` or pattern matching.
-
-#### Performance where it matters
-
-- `.Count() > 0` instead of `.Any()`.
-- `.ToList()` or `.ToArray()` inside a hot loop.
-- A LINQ chain where a `Span<T>` or `for` would avoid allocations on a measured hot path.
-
-#### Build gates are signal
-
-- `#pragma warning disable` without a paired `restore` and a comment.
-- `[SuppressMessage]` without a `Justification` string.
-- `<NoWarn>1234</NoWarn>` in a `.csproj` or `Directory.Build.props` without the preceding comment block.
-- `[ExcludeFromCodeCoverage]` on hand-written logic.
-
-#### The first slice sets the pattern
-
-- A new aggregate that diverges from the existing pattern in the same layer — mutable state where peers are immutable, exception throwing where peers return Results.
-
-#### One source of truth
-
-- The same magic number, error message, or path literal appearing in more than one file.
-- Two type definitions for the same concept.
-- A configuration value restated in both code and config.
-
-#### The easy path is the correct path
-
-- A service registered manually instead of via the canonical factory.
-- Configuration that bypasses the fluent builder.
+- **Context-dependent applicability**: primitive obsession is the principle, but whether a specific `string` should be a `FilePath` value type depends on whether the concept carries invariants. Mechanical rules can't tell which `string`s are domain concepts.
+- **Domain vs infrastructure failure**: a method returning `T` that throws is correct in an adapter and wrong in domain logic. The reviewer reads the layer the code lives in.
+- **Design coherence**: whether a new shape matches its peers — mutable where peers are immutable, throwing where peers return Results — is judgment about surrounding code, not a syntactic check.
+- **Pattern divergence on first instances**: the first slice of any new pattern carries disproportionate weight. The reviewer asks whether the example being set is the example wanted.
+- **Severity calibration**: every finding names the action the author should take. Rules don't know what is shipping-blocking vs. skippable for this diff.
 
 ## Validation
 
-"Beware of bugs in the above code; I have only proved it correct, not tried it" (Knuth). Validation for review is Boyd's OODA applied to a diff: observe the changes, orient against the writing-csharp rubric, decide severity, act by writing the finding. The finding artifact is the loop's output.
+Findings are the artifact of the review pass. Each finding is one file under `.findings/`.
 
 ### The finding artifact
 
@@ -173,9 +104,9 @@ Principle: <writing-csharp principle name>
 <concrete code or prose>
 ```
 
-The H1 is line 1. The head fields are written by name (`Severity:`, `Type:`, `Location:`, `Principle:`), so reader scripts find them by name rather than by line offset. The summary is the line immediately after `Principle:`. The body sections `## Observation`, `## Why it matters`, and `## Suggested fix` follow.
+The H1 is line 1. Head fields (`Severity:`, `Type:`, `Location:`, `Principle:`) are read by name, not by line offset. The summary is the line immediately after `Principle:`. The body sections follow.
 
-C# findings always carry `Type: code`. The `Type:` field is the tag the shared infrastructure uses to distinguish C# findings from documentation findings under the same `.findings/` directory.
+C# findings always carry `Type: code`, distinguishing them from documentation findings in the same `.findings/` directory.
 
 The filename is the slug of the title: lowercase, non-alphanumeric replaced with dashes, leading and trailing dashes trimmed, capped at 80 characters.
 
