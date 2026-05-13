@@ -5,7 +5,7 @@ description: Use when the user asks to log this, journal this, add a journal ent
 
 # Journaling
 
-Philosophy, guidance, and validation for engineering-notebook-style journal entries — the dated, append-only record of how the work unfolded.
+Engineering-notebook-style entries — dated, append-only records of what was attempted, what happened, and what was decided. The chronological counterpart to the wiki notes; together they answer "where are we?" and "how did we get here?"
 
 ## Philosophy
 

@@ -5,7 +5,7 @@ description: Use when writing, refactoring, or reviewing durable markdown — wi
 
 # Writing documentation
 
-Philosophy, guidance, and validation for durable markdown — any artifact the repo keeps around for humans or LLMs to read later.
+Durable markdown — wiki, README, ADR, design doc, reference, tutorial — written for the reader who didn't witness the conversation. Voice, density, structure, formatting; register discovered at write-time.
 
 ## Philosophy
 

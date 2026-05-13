@@ -5,7 +5,7 @@ description: Use when reviewing local markdown diffs before commit. Produces str
 
 # Reviewing documentation
 
-Philosophy, guidance, and validation for reviewing durable markdown before commit.
+Pre-commit review of markdown diffs through six lenses — Structure, Line, Copy, Accuracy, Coherence, References — producing severity-classified findings under `.findings/` against the writing-documentation rubric.
 
 ## Philosophy
 

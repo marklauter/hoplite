@@ -5,7 +5,7 @@ description: Use when listing, searching, deduplicating, filing, triaging, label
 
 # Managing GitHub Issues
 
-Philosophy, guidance, and validation for working with GitHub issues via the `gh` CLI.
+Filing, triaging, deduplicating, labeling, and closing GitHub issues via the `gh` CLI. Dedup gates run before every file operation; template-driven creation keeps labels and schema consistent.
 
 ## Philosophy
 

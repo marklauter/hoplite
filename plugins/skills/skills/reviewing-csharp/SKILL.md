@@ -5,7 +5,7 @@ description: Use when reviewing local C# diffs before commit. Produces structure
 
 # Reviewing C#
 
-Philosophy, guidance, and validation for reviewing C# diffs before commit.
+Pre-commit review of C# diffs against the writing-csharp rubric, producing severity-classified findings under `.findings/`. The reviewer judges; the human decides.
 
 ## Philosophy
 

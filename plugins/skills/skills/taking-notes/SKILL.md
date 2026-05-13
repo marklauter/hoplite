@@ -5,7 +5,7 @@ description: Use when the user asks to write something down, save something for 
 
 # Taking Notes
 
-Philosophy, guidance, and validation for wiki-style notes that survive context compaction.
+Wiki-style atomic notes under `docs/notes/` — one topic per page, titled by identity, totally mutable, always representing the current state of an idea. Git carries the history.
 
 ## Philosophy
 

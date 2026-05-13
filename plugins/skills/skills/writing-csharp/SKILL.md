@@ -5,7 +5,7 @@ description: Use when writing, refactoring, or reviewing C# or .NET code. Covers
 
 # Writing C#
 
-Philosophy, guidance, and validation for idiomatic C# and .NET code.
+Type-driven design, immutability, pure functions, Result-based error handling, persistence ignorance, and the modern-C# idioms that operationalize them — backed by analyzer-strict build gates and ArchUnitNET structural tests.
 
 ## Philosophy
 
@@ -119,8 +119,6 @@ C#-specific patterns that operationalize the principles above. Each subsection m
 ### The domain doesn't know how it's stored
 
 - No persistence or serialization attributes on domain types. No `[Table]`, `[Column]`, `[Key]`, `[ForeignKey]`, `[JsonPropertyName]`, `[DataMember]`, `[XmlElement]`. Mapping happens at the adapter boundary.
-
-_Architectural treatment (bounded contexts, layer boundaries, mapper/DTO conventions) lives in the separate `writing-architecture` skill._
 
 ### Inference, not annotation
 
