@@ -11,13 +11,7 @@ Philosophy, guidance, and validation for reviewing durable markdown before commi
 
 These principles draw on a few orienting threads. Fagan on formal inspection — defect detection is the work, and severity calibration is the discipline that keeps it useful. Pólya on observation before interpretation — name what the prose does, then name the principle from which it departs. Strunk and White on the asymmetric cost of wasted words.
 
-The rubric is writing-documentation. Reviewing-documentation judges; writing-documentation prescribes. The two skills co-evolve.
-
-### The rubric is writing-documentation
-
-Every finding traces to a writing-documentation Philosophy anchor. The Philosophy section is the contract the reviewer enforces; the Guidance section is the operationalization. A finding cites the anchor in the `Principle:` field and quotes the offending prose as evidence.
-
-A finding that cannot be tied to an existing anchor is a candidate for promotion — either the canonical principle exists and the review surfaced new wording, or the writing skill should grow to cover the case. `summarize.sh` flags non-canonical principles for triage.
+The rubric is writing-documentation. Reviewing-documentation judges; writing-documentation prescribes. The two skills co-evolve. Every finding traces to a writing-documentation Philosophy anchor — the Philosophy section is the contract the reviewer enforces; the Guidance section applies it.
 
 ### Findings are observations, not commands
 
@@ -39,7 +33,7 @@ Quote enough to locate the issue and no more. A short quote plus a `path:line` i
 
 ### Severity encodes the action
 
-The vocabulary — important, nit, pre-existing — names the action the author should take, not how bad the prose is. Important means the diff does not commit without this changing. Nit means a fix is welcome but optional. Pre-existing means the defect is not from this diff. Naming the action keeps the author's attention budget on the changes that change shipability.
+The vocabulary — important, nit, pre-existing — names the action the author should take, not how bad the prose is. Important means the diff does not ship without resolution. Nit means a fix is welcome but optional. Pre-existing means the defect is not from this diff. Naming the action keeps the author's attention budget on the changes that change shipability.
 
 ### Findings discover principles
 
@@ -55,9 +49,8 @@ Concrete patterns for producing findings and running the workflow.
 2. Detect the register from sibling documents before judging. A tutorial-friendly opening is not a defect in a tutorial folder.
 3. For each changed line, evaluate against writing-documentation principles through each of the six lenses. When a principle is violated, compose a finding.
 4. `report-finding.sh --type documentation --lens <name>` writes the finding to `.findings/<slug>.md`. The slug comes from the title; the script enforces the type, severity, and lens enums and refuses to overwrite without `--force`.
-5. `list-findings.sh` enumerates the current findings by reading each file's head. Scan it before composing a new finding — match on title, principle, and lens, since the slug catches reworded duplicates.
-6. `query.sh --type documentation --lens <name>` filters when the finding count grows. Use it to scan all findings in one lens at a time.
-7. `summarize.sh` collapses the directory to counts plus verdict. Run it when the review pass is complete.
+5. `list-findings.sh` enumerates the current findings by reading each file's head. Scan it before composing a new finding — match on title, principle, and lens, since the slug catches reworded duplicates. `query.sh --type documentation --lens <name>` is the tool for predicate-driven scans (filter by lens, severity, principle, etc.) when the finding set has grown.
+6. `summarize.sh` collapses the directory to counts plus verdict. Run it when the review pass is complete.
 
 ### Severity calibration
 
@@ -75,7 +68,7 @@ The reviewer's first move is to read the sibling documents and the parent direct
 - Reference-register documents are allowed to be terse, declarative, and organized for lookup.
 - Vision-register documents are allowed to take positions and assert opinions.
 
-A finding about register fit is itself a finding — when the document's register does not match its directory, flag it as a Structure or Line lens finding depending on whether the mismatch is page-wide or sentence-level.
+A register mismatch is itself a finding — when the document's register does not match its directory, flag it under the Structure lens for page-wide mismatch or the Line lens for sentence-level drift.
 
 ### The Principle and Lens fields
 

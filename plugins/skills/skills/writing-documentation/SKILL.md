@@ -15,19 +15,19 @@ They apply to any durable prose the repo keeps. Structural conventions (skill sh
 
 ### Source is the authority
 
-The document defers to the system it describes. Read the source code, the configuration, the schema, the running behavior before writing about it. When the prose and the source disagree, the prose is wrong. Fix the prose, never the source — and only update the prose after re-reading what it claims to describe.
+The document defers to the system it describes. Read the source code, the configuration, the schema, the running behavior before writing about it. When the prose and the source disagree, the prose is wrong. Fix the prose, never the source — and update it only after re-reading what it claims to describe.
 
-This also governs renames and refactors. When a term, file path, or identifier changes, the document that mentions it goes stale the instant the change lands. Search the entire project for the old reference and update it in the same change set.
+Renames and refactors follow the same rule. When a term, file path, or identifier changes, the document that mentions it goes stale the instant the change lands. Search the entire project for the old reference and update it in the same change set.
 
 ### Match the surrounding register
 
-A document inherits its tone from its neighbors. A tutorial in a folder of tutorials is friendly and walks the reader through. A reference page in a folder of reference pages is dry, dense, and factual. A vision article in a folder of vision articles is authoritative and declarative. The agent reads the siblings before composing.
+A document inherits its register from its neighbors. A tutorial in a folder of tutorials is friendly and walks the reader through. A reference page in a folder of reference pages is dry, dense, and factual. A vision article in a folder of vision articles is authoritative and declarative. The agent reads the siblings before composing.
 
 When no siblings exist, the agent asks the user. Without an answer, the default is authoritative-declarative-terse — the voice of a contributor who has thought the design through.
 
 ### Lead with what the reader needs
 
-The first sentence of any page names what the page is for and what the reader gets by reading it. Usage and behavior come before architecture and internals. The conclusion comes before the justification. The reader who stops after the first paragraph still leaves with the right impression.
+The first sentence of any page names what the page is for and what the reader gets from it. Usage and behavior come before architecture and internals. The conclusion comes before the justification. The reader who stops after the first paragraph still leaves with the right impression.
 
 ### Self-contained pages
 
@@ -49,7 +49,7 @@ Within a page, the same rule applies. A paragraph that restates an adjacent para
 
 Push for density. Cut hedges, filler, transitions that announce, sentences that restate the previous sentence. Every removed word raises the signal-to-noise ratio of what remains.
 
-Stop cutting at the line where the next removal muddies the meaning. Use as many words as the meaning needs and no more. Clarity outranks brevity at the cut-line; the goal is the shortest version that still carries the idea cleanly.
+Use as many words as the meaning needs and no more. Clarity outranks brevity at the cut-line.
 
 ### Examples carry weight
 
@@ -67,11 +67,11 @@ When a structural skill exists for an artifact type, that skill owns the shape. 
 
 Durable prose in the repo is markdown. Not HTML, not docx, not a wiki engine's bespoke markup. The format is human-readable in source, LLM-readable without a renderer, and diffable in git.
 
-This is a deliberate choice. A document that requires a tool to read it drifts silently from the source it describes.
+A document that requires a tool to read it drifts silently from the source it describes.
 
 ### The first page sets the pattern
 
-The first instance of any page type teaches the next ten. Naming, structure, tone, depth of detail — the patterns established on the first page become the patterns subsequent pages copy, intended or not. Invest disproportionate care in the first instance of any new artifact type or new section within an artifact.
+The first instance of any page type teaches the next ten. Naming, structure, register, depth of detail — the patterns established on the first page become the patterns subsequent pages copy, intended or not. Invest disproportionate care in the first instance.
 
 ## Guidance
 
@@ -87,7 +87,7 @@ Concrete rules for applying the principles above. Each subsection below mirrors 
 ### Match the surrounding register
 
 - Read the sibling documents in the target directory before composing. The siblings define the operating register.
-- When no siblings exist, ask the user about audience and tone. Save the answer in the document or in a directory-level hint file rather than re-asking next time.
+- When no siblings exist, ask the user about audience and register. Save the answer in the document or in a directory-level hint file rather than re-asking next time.
 - The named registers and their tells:
   - Tutorial — friendly, walks the reader through one task at a time, builds understanding in sequence, second person, present tense, imperative steps.
   - Reference — dry, dense, factual, organized for lookup rather than reading, declarative, third person where appropriate, exhaustive on the surface area it covers.
@@ -168,7 +168,7 @@ Concrete rules for applying the principles above. Each subsection below mirrors 
 - Links use `[text](path)` form. The link text describes what the target is, not "click here" or "this page."
 - Sentence-case headings — only the first word and proper nouns capitalized.
 - Numbered steps for procedures, bullets for unordered options, prose for reasoning.
-- Skip bold. Headings, prose, bullets, and numbered lists carry structure on their own; bold adds visual noise without changing how a reader (human or LLM) processes the text.
+- Skip bold. Headings, lists, and prose carry structure on their own; bold adds noise without changing how a reader (human or LLM) processes the text.
 - Skip tables. Markdown tables are unreadable for humans in source form and add no value over headings and bullets.
 
 ### Terminology hygiene
@@ -189,7 +189,7 @@ Concrete rules for applying the principles above. Each subsection below mirrors 
 ### The writing loop
 
 1. Read the diff's surroundings — the sibling documents and the parent directory's tone. Confirm the register before judging your own prose.
-2. Reread the changed prose against the Guidance checklist. Voice, tense, density, hedges, filler, transitions that announce, sentence-case headings, em dashes, Oxford commas, link mechanics, terminology consistency. The check is mechanical; the agent's eye catches what the principles describe.
+2. Reread the changed prose against the Guidance checklist. Voice, tense, density, hedges, filler, transitions that announce, sentence-case headings, em dashes, Oxford commas, link mechanics, terminology consistency. The check is mechanical.
 3. Run `reviewing-documentation` for the formal pass. Address findings before commit.
 
 ### Self-review heuristics
