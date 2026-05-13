@@ -15,11 +15,11 @@ The rubric is the writing-csharp Philosophy. Reviewing-csharp judges; writing-cs
 
 ### Severity calibration
 
-The vocabulary — important, nit, pre-existing — encodes the action the author should take, not how bad the code is. Important means the diff does not commit without this changing. Nit means a fix is welcome but optional. Pre-existing means the defect is not from this diff. Naming the action keeps the human's attention budget on the changes that change shipability.
+The vocabulary — important, nit, pre-existing — encodes the action the author should take, not how bad the code is. Important means the diff does not ship without resolution. Nit means a fix is welcome but optional. Pre-existing means the defect is not from this diff. Naming the action keeps the author's attention budget on the changes that change shipability.
 
 ### Findings are observations, not commands
 
-The reviewer reports; the human decides. A finding states what the code does and why a principle is violated; it does not demand the fix. Judgment lives at the human review of the artifact.
+The reviewer reports; the author decides. A finding states what the code does and why a principle is violated; it does not demand the fix. Judgment lives with the author who reviews the artifact.
 
 ### The diff is the scope
 
@@ -27,7 +27,7 @@ Review the lines that changed and the context required to understand them. Pre-e
 
 ### Findings discover principles
 
-A finding that cannot be tied to an existing writing-csharp principle is a candidate for promotion — either the canonical principle exists and the review surfaced new wording, or the writing skill should grow to cover the case. The human decides during triage.
+A finding that cannot be tied to an existing writing-csharp principle is a candidate for promotion — either the canonical principle exists and the review surfaced new wording, or the writing skill should grow to cover the case. The author decides during triage.
 
 ## Guidance
 
@@ -37,8 +37,8 @@ Concrete patterns for producing findings and running the workflow.
 
 1. `changes.sh` produces the canonical diff plus the changed-file list. Read the diff and the surrounding context of each changed file before composing findings.
 2. For each changed line, evaluate against writing-csharp principles. When a principle is violated, compose a finding.
-3. `report-finding.sh` writes the finding to `.findings/<slug>.md`. The slug comes from the title; the script enforces the severity enum and refuses to overwrite without `--force`.
-4. `list-findings.sh` enumerates the current findings by reading each file's head. Scan it before composing a new finding — match on title and summary, since the slug catches reworded duplicates.
+3. `report-finding.sh --type code` writes the finding to `.findings/<slug>.md`. The slug comes from the title; the script validates the type and severity enums and refuses to overwrite without `--force`. C# findings always tag `--type code`.
+4. `list-findings.sh` enumerates the current findings by reading each file's head. Scan it before composing a new finding — match on title and summary, since the slug catches reworded duplicates. `query.sh --type code` is the tool for predicate-driven scans (filter by severity, principle, location, etc.) when the finding set has grown.
 5. `summarize.sh` collapses the directory to counts plus verdict. Run it when the review pass is complete.
 
 ### Severity calibration
@@ -158,6 +158,7 @@ File shape:
 # <one-line title — the H1>
 
 Severity: <important | nit | pre-existing>
+Type: code
 Location: `path/to/file.cs:42`
 Principle: <writing-csharp principle name>
 <one-line summary>
@@ -172,26 +173,30 @@ Principle: <writing-csharp principle name>
 <concrete code or prose>
 ```
 
-Line 1 is the H1. Line 2 is blank. Lines 3-6 are the scannable head — severity, location, principle, summary. Line 7 is blank, then the `## Observation` body and its siblings.
+The H1 is line 1. The head fields are written by name (`Severity:`, `Type:`, `Location:`, `Principle:`), so reader scripts find them by name rather than by line offset. The summary is the line immediately after `Principle:`. The body sections `## Observation`, `## Why it matters`, and `## Suggested fix` follow.
+
+C# findings always carry `Type: code`. The `Type:` field is the tag the shared infrastructure uses to distinguish C# findings from documentation findings under the same `.findings/` directory.
 
 The filename is the slug of the title: lowercase, non-alphanumeric replaced with dashes, leading and trailing dashes trimmed, capped at 80 characters.
 
 ### The script set
 
-Four scripts ship under `${CLAUDE_PLUGIN_ROOT}/skills/reviewing-csharp/scripts/`. Portable POSIX bash; runs on Linux, macOS, and Windows (Git Bash, WSL).
+Five scripts ship under `${CLAUDE_PLUGIN_ROOT}/scripts/`, shared with reviewing-documentation. Portable bash 3.2+; runs on Linux, macOS, and Windows (Git Bash, WSL).
 
 - `changes.sh [<ref> | <ref1> <ref2>]` — produces the diff for the review. No args shows uncommitted changes against `HEAD` and the untracked-file list. One ref shows the diff against that ref. Two refs show the three-dot diff (PR-style: what is on `ref2` since it diverged from `ref1`).
-- `report-finding.sh [--force] <title> <severity> <location> <principle> <summary>` — body piped on stdin. Slugifies the title for the filename, validates severity, refuses to overwrite without `--force`, writes `.findings/<slug>.md`.
-- `list-findings.sh` — reads the first six lines of each `.findings/*.md` and emits one entry per finding: title, severity, location, principle, summary, slug filename. Use to dedup before composing a new finding.
-- `summarize.sh` — counts findings by severity, prints the counts line and a verdict. Reads writing-csharp's Philosophy headings and flags any finding whose `Principle:` value is not a canonical heading; the mismatch is signal for the writing skill, not a defect.
+- `report-finding.sh [--force] --type <code|documentation> [--lens <name>] <title> <severity> <location> <principle> <summary>` — body piped on stdin. For C# findings, pass `--type code`; `--lens` is forbidden. Slugifies the title for the filename, validates the type, severity, and lens enums, refuses to overwrite without `--force`, writes `.findings/<slug>.md`.
+- `list-findings.sh` — reads the head fields of each `.findings/*.md` and emits one entry per finding: title, severity, type, lens (when present), location, principle, summary, slug filename. Use to dedup before composing a new finding.
+- `query.sh [--title PAT] [--severity LEVEL] [--xseverity LEVEL] [--type KIND] [--xtype KIND] [--lens NAME] [--xlens NAME] [--location PAT] [--principle PAT] [--summary PAT]` — multi-predicate scan. Each flag is optional; flags AND together. Severity, type, and lens match exactly against their enums; the `--x*` flags exclude matches on the same enums; title, location, principle, and summary match substring case-insensitive. Output mirrors `list-findings.sh`. Filter by `--type code` when scanning C# findings in a mixed `.findings/` directory; legacy findings without a `Type:` field are treated as code. Use `--xseverity pre-existing` to focus on actionable findings on the current diff.
+- `summarize.sh` — counts findings by severity per type, prints a verdict, and flags any finding whose `Principle:` value is not a canonical heading from the matching writing skill (`writing-csharp` for `Type: code`, `writing-documentation` for `Type: documentation`); the mismatch is signal for the writing skill, not a defect.
 
 ### Output discipline
 
-- Findings persist until the human deletes them; cleanup is manual.
-- Filing is handled by `managing-github-issues` after human triage. The finding shape and the triage-proposal shape in that skill are deliberately compatible.
+- Findings persist until the author deletes them; cleanup is manual.
+- Filing is handled by `managing-github-issues` after author triage. The finding shape and the triage-proposal shape in that skill are deliberately compatible.
 - `changes.sh`: success prints the three sections (files, diff, untracked when applicable). Failure prints git's error and exits with git's code.
 - `report-finding.sh`: success is silent — the file is the artifact. Failure prints the validation error and exits non-zero.
 - `list-findings.sh`: success prints the formatted finding list, or `no findings` when `.findings/` is empty or missing.
+- `query.sh`: success prints the formatted matches in the same block format as `list-findings.sh`, or `no matches` when nothing satisfies the predicates. Exit code is 0 in both cases.
 - `summarize.sh`: success prints the counts line, the verdict line, and the non-canonical-principle line when any apply.
 
 ### Gate policies
@@ -199,6 +204,7 @@ Four scripts ship under `${CLAUDE_PLUGIN_ROOT}/skills/reviewing-csharp/scripts/`
 When a finding is malformed, the rule is: fix the finding.
 
 - A finding without a `Principle:` line is a defect. Every finding traces to a principle, canonical or free-form.
+- A C# finding without `Type: code` is a defect. The shared infrastructure relies on the type tag to distinguish C# findings from documentation findings.
 - An `important` finding without a `## Suggested fix` is a defect. The author needs the path forward.
-- A `pre-existing` finding for a line inside the diff is a defect. The scope is mis-classified — the line did change, so the finding is `important` or `nit`.
-- A finding citing a non-canonical principle is a candidate for promotion into writing-csharp. `summarize.sh` surfaces it; the human decides during triage.
+- A `pre-existing` finding for a line the diff modified is a defect. The scope is mis-classified — the line did change, so the finding is `important` or `nit`.
+- A finding citing a non-canonical principle is a candidate for promotion into writing-csharp. `summarize.sh` surfaces it; the author decides during triage.

@@ -9,16 +9,16 @@
 # Exit code is 0 in both match and no-match cases — a clean dedup result is success.
 #
 # Usage:
-#   find.sh <keywords...>
+#   query.sh <keywords...>
 #
 # Examples:
-#   find.sh "nested map serialization"
-#   find.sh tech-debt transactions
+#   query.sh "nested map serialization"
+#   query.sh tech-debt transactions
 
 set -e
 
 if [ $# -eq 0 ]; then
-    echo "usage: find.sh <keywords...>" >&2
+    echo "usage: query.sh <keywords...>" >&2
     exit 2
 fi
 

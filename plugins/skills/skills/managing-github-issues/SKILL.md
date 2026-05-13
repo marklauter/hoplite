@@ -51,7 +51,7 @@ Concrete patterns for the `gh` CLI and the consolidated scripts. Each subsection
 
 ### Search before file
 
-- Run `find.sh` before any file operation, and again during triage against each candidate's title and key terms. The script searches both open and closed issues and prints any hits with state markers.
+- Run `query.sh` before any file operation, and again during triage against each candidate's title and key terms. The script searches both open and closed issues and prints any hits with state markers.
 - Match on the underlying concept. A bug about "key serialization fails on nested maps" matches a prior issue titled "nested map keys produce malformed binary" — same concept, different wording.
 - When a match exists, show it to the user with the URL and state. Ask whether to comment on the existing issue, reopen if closed, or proceed with a new filing because the prior issue is genuinely distinct.
 - When no match exists, state that explicitly before composing the new issue. "No open or closed issues matched `<keywords>`." Announcing the gate result on every filing keeps the dedup discipline visible.
@@ -90,7 +90,7 @@ Concrete patterns for the `gh` CLI and the consolidated scripts. Each subsection
 
 ### Confirm before mutating
 
-- List, search, and vocabulary-discovery operations run without prompting. `list.sh`, `find.sh`, `labels.sh`, `templates.sh`, and `triage-list.sh` are read-only.
+- List, search, and vocabulary-discovery operations run without prompting. `list.sh`, `query.sh`, `labels.sh`, `templates.sh`, and `triage-list.sh` are read-only.
 - Create, close, reopen, and comment operations show the full proposed payload before invoking the script. For creation: the rendered body, title, labels, and template name.
 - Edits go through `edit.sh`, which prints the resolved invocation before applying the change.
 
@@ -99,7 +99,7 @@ Concrete patterns for the `gh` CLI and the consolidated scripts. Each subsection
 Triage decides six things for each candidate:
 
 - Whether the issue describes a real, actionable problem. A report carrying enough signal to act on names what happened, where, and how to observe it; reports that fall short of that bar close with the comment `invalid: insufficient detail`. The `noise-candidates` filter surfaces filed-and-forgotten one-liners so the agent reads them first.
-- Whether the issue is a duplicate. `find.sh` runs against the candidate's title and key terms; a match closes the candidate with `duplicate of #N`, or reopens the prior issue when it had been closed prematurely.
+- Whether the issue is a duplicate. `query.sh` runs against the candidate's title and key terms; a match closes the candidate with `duplicate of #N`, or reopens the prior issue when it had been closed prematurely.
 - The type. `bug`, `tech-debt`, `enhancement`, `feature-gap`, `documentation`, or whatever the project's type vocabulary is. Triage picks exactly one.
 - The area. The project's area vocabulary applies; triage assigns one. When the issue's location falls outside it, the agent surfaces the gap so the human can decide whether to introduce a new label.
 - The priority. `priority: high` / `priority: medium` / `priority: low`, or the project's spelling. Triage assigns one — the agent picks the best fit from the body and resolves ambiguity by asking the human.
@@ -113,7 +113,7 @@ Triage aims for a label on each axis — type, priority, area — and recent act
 - `stale` — no activity in N days (default 90). Activity is `updatedAt`, which includes comments and label changes, not just the original filing date.
 - `noise-candidates` — no labels, zero comments, and body shorter than `NOISE_BODY_CHARS` (default 200) or empty. Catches filed-and-forgotten one-liners.
 
-The triage workflow runs in three steps. First, the agent enumerates candidates with `triage-list.sh <filter>` and runs `find.sh` against each candidate's title and key terms to surface duplicates. Second, the agent composes a triage proposal document — one entry per candidate, in heading order matching the list output. Third, the human reviews the document and approves entries individually or as a set; the agent then runs `edit.sh`, `close.sh`, or `reopen.sh` once per approved entry.
+The triage workflow runs in three steps. First, the agent enumerates candidates with `triage-list.sh <filter>` and runs `query.sh` against each candidate's title and key terms to surface duplicates. Second, the agent composes a triage proposal document — one entry per candidate, in heading order matching the list output. Third, the human reviews the document and approves entries individually or as a set; the agent then runs `edit.sh`, `close.sh`, or `reopen.sh` once per approved entry.
 
 The triage proposal document uses one heading per candidate, in this exact shape:
 
@@ -157,7 +157,7 @@ Ten scripts cover the workflow. All ship under `${CLAUDE_PLUGIN_ROOT}/skills/man
 Every script that takes a body or comment reads it from stdin rather than as a CLI argument, so the agent composes content as a plain string in its tool call rather than escaping quotes, backticks, dollar signs, or newlines for the shell.
 
 - `list.sh [state] [label] [search]` — lists issues with optional filters. State defaults to `open`; pass `closed` or `all` to widen. Output is one line per issue: `#<number> [<state>] [<labels>] <title>  <url>`.
-- `find.sh <keywords...>` — the dedup gate, used before filing and during triage. Searches both open and closed issues and prints matches with state markers. Empty result prints `no matches`; exit code is `0` either way — a clean dedup result is success.
+- `query.sh <keywords...>` — the dedup gate, used before filing and during triage. Searches both open and closed issues and prints matches with state markers. Empty result prints `no matches`; exit code is `0` either way — a clean dedup result is success.
 - `labels.sh` — lists the repository's labels, one per line as `<name>  <description>`. The agent runs this before composing a filing or a triage entry so label names match exactly.
 - `templates.sh` — lists the repository's issue templates as `<name>  [<labels>]  <description>`, one per line. The agent runs this before composing a filing so the template name and its auto-applied labels are visible.
 - `create.sh <template-name> <title>` — reads the body from stdin. Locates the template under `.github/ISSUE_TEMPLATE/`, extracts its `labels:` declaration, merges with the `LABELS` env var, and passes the combined set to `gh`. (`gh` rejects `--template` with `--body-file`, hence reading labels from YAML.) The template name is required — it names the schema the body conforms to, and locating the YAML verifies the template exists. Example: `LABELS="priority:high,area:serialization" create.sh tech-debt.yml "title"`.
@@ -172,7 +172,7 @@ Every script that takes a body or comment reads it from stdin rather than as a C
 Each script captures stdout and stderr from its underlying `gh` call. On failure, the captured output prints in full and the script exits with the command's code. On success:
 
 - `list.sh` prints the formatted issue list.
-- `find.sh` prints matches or `no matches`.
+- `query.sh` prints matches or `no matches`.
 - `labels.sh` prints the label list or `no labels`.
 - `templates.sh` prints the template list or `no templates`.
 - `create.sh` prints the created issue's URL.
@@ -186,7 +186,7 @@ Each script has one underlying `gh` call, so the script name labels its output �
 
 When a gate fires, the rule is the same as in any other skill: fix the underlying cause.
 
-- The tracker holds one canonical issue per problem. `find.sh` runs before every `create.sh` to keep that invariant.
+- The tracker holds one canonical issue per problem. `query.sh` runs before every `create.sh` to keep that invariant.
 - The body conforms to the template: every required field present, every dropdown value drawn from the template's `options` array. The agent reads the template YAML before composing.
 - Template-declared labels apply automatically through `create.sh`; the `LABELS` env var carries any extras.
 - Every closure and reopen carries a comment that names the reason — `close.sh` and `reopen.sh` enforce this by treating empty stdin as an error.
