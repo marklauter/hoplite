@@ -99,6 +99,14 @@ test_verdict_blocked_combines_with_preexisting() {
     assert_contains "$out" "diff is blocked on important findings; pre-existing triage pending"
 }
 
+test_verdict_aggregates_across_types() {
+    # Important documentation finding + nit code finding → aggregate is blocked.
+    make_finding "code-nit" "Code nit" nit code "" "Some principle"
+    make_finding "doc-imp" "Doc important" important documentation Line "Every word must earn its place"
+    local out; out=$("$SUMMARIZE" 2>/dev/null)
+    assert_contains "$out" "diff is blocked on important findings"
+}
+
 # ---- backward-compat: legacy findings without Type: ----
 
 test_legacy_finding_counts_as_code() {
@@ -143,4 +151,20 @@ test_unset_plugin_root_still_produces_counts() {
     make_finding "a" "A" nit code "" "Some principle"
     local stdout; stdout=$(CLAUDE_PLUGIN_ROOT="" "$SUMMARIZE" 2>/dev/null)
     assert_contains "$stdout" "code: 0 important, 1 nit, 0 pre-existing"
+}
+
+test_warning_only_emitted_for_types_with_findings() {
+    # Only code findings exist; the documentation warning must not appear.
+    make_finding "a" "A" nit code "" "Some principle"
+    local stderr; stderr=$(CLAUDE_PLUGIN_ROOT="" "$SUMMARIZE" 2>&1 >/dev/null)
+    assert_contains "$stderr" "for code findings"
+    assert_not_contains "$stderr" "for documentation findings"
+}
+
+test_warning_when_skill_file_missing_path_set() {
+    # CLAUDE_PLUGIN_ROOT is set but points where SKILL.md doesn't live.
+    make_finding "a" "A" nit code "" "Some principle"
+    local stderr; stderr=$(CLAUDE_PLUGIN_ROOT="/nonexistent/path" "$SUMMARIZE" 2>&1 >/dev/null)
+    assert_contains "$stderr" "not found"
+    assert_contains "$stderr" "for code findings"
 }

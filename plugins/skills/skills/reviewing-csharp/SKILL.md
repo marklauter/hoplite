@@ -23,6 +23,10 @@ The reviewer reports; the author decides. A finding states what the code does an
 
 Review the lines that changed and the context required to understand them. Pre-existing defects adjacent to the diff are surfaced as `pre-existing` findings, not chased upstream.
 
+### Evidence-based
+
+Every finding quotes the offending code and cites the principle. The form is: "this code deviates from {principle} because {observation}." Specificity makes findings actionable; vague findings ("this method feels off") fail the test. A short code excerpt plus `path:line` is sufficient.
+
 ### Findings discover principles
 
 A finding without a matching writing-csharp principle is a candidate for promotion — either the canonical principle exists under different wording, or the writing skill should grow.

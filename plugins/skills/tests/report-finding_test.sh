@@ -135,6 +135,30 @@ test_force_allows_overwrite() {
     assert_equal "Second." "$sum"
 }
 
+# ---- slug pipeline under LC_ALL=C ----
+
+test_slug_collapses_em_dash_to_dash() {
+    # Em-dash is non-ASCII; under LC_ALL=C tr/sed treats it as non-alphanumeric
+    # and the slug collapses it to a dash with surrounding word chars preserved.
+    echo "body" | "$REPORT" --type code "Foo — Bar" nit "src/x.cs:1" "Principle" "Summary."
+    assert_file_exists ".findings/foo-bar.md"
+}
+
+test_slug_handles_pure_non_ascii_predictably() {
+    # Pure non-ASCII title: every char is non-alphanumeric → slug is empty → error.
+    local rc=0
+    echo "body" | "$REPORT" --type code "日本語" nit "src/x.cs:1" "Principle" "Summary." 2>/dev/null || rc=$?
+    assert_exit_code 2 "$rc"
+}
+
+test_slug_caps_at_80_chars() {
+    local long_title; long_title=$(printf 'a%.0s' {1..120})
+    echo "body" | "$REPORT" --type code "$long_title" nit "src/x.cs:1" "Principle" "Summary."
+    # The slug is the first 80 lowercase chars of the title (all 'a').
+    local expected; expected=$(printf 'a%.0s' {1..80})
+    assert_file_exists ".findings/${expected}.md"
+}
+
 # ---- body ----
 
 test_body_appended_after_head() {
