@@ -90,7 +90,7 @@ A register mismatch is itself a finding — when the document's register does no
 
 ### Per-lens signals
 
-Each subsection names the kinds of defects the lens catches. The signals are not exhaustive — they are the patterns the reviewer's eye looks for first.
+Each subsection names the kinds of defects the lens catches. The signals are not exhaustive — they are the patterns the reviewer's eye looks for first. Evaluate every signal against the operating register: a reference document is allowed third person and dry density; a tutorial is allowed walks-the-reader-through pacing. The register sets the floor for what counts as a violation.
 
 #### Structure
 
