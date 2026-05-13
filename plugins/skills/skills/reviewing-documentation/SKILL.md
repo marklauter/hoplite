@@ -211,7 +211,7 @@ Five scripts ship under `${CLAUDE_PLUGIN_ROOT}/scripts/`, shared with reviewing-
 - `report-finding.sh [--force] --type <code|documentation> [--lens <name>] <title> <severity> <location> <principle> <summary>` — body piped on stdin. For documentation findings, `--type documentation` and `--lens <name>` are required. Slugifies the title for the filename, validates the type, severity, and lens enums, refuses to overwrite without `--force`, writes `.findings/<slug>.md`.
 - `list-findings.sh` — reads the head fields of each `.findings/*.md` and emits one entry per finding: title, severity, type, lens (when present), location, principle, summary, slug filename. Use to dedup before composing a new finding.
 - `query.sh [--title PAT] [--severity LEVEL] [--xseverity LEVEL] [--type KIND] [--xtype KIND] [--lens NAME] [--xlens NAME] [--location PAT] [--principle PAT] [--summary PAT]` — filters findings by structured predicates. Multiple predicates AND together; no predicates matches every finding. The `--x*` flags exclude matches on the enum fields (severity, type, lens). Use `--type documentation` to scan only doc findings; `--xlens References` to filter out reference-checking output; `--xseverity pre-existing` to focus on actionable findings.
-- `summarize.sh` — counts findings by severity per type, prints a lens breakdown when documentation findings are present, prints the verdict line, and flags any finding whose `Principle:` value is not a canonical writing-documentation heading.
+- `summarize.sh` — counts findings by severity per type, prints a lens breakdown when documentation findings are present, prints the verdict line, and flags any finding whose `Principle:` value is not a canonical writing-documentation heading. When `CLAUDE_PLUGIN_ROOT` is unset or the writing-documentation skill file is unreadable, the canonical-principle check is skipped and a warning prints to stderr.
 
 ### Output discipline
 
@@ -221,7 +221,7 @@ Five scripts ship under `${CLAUDE_PLUGIN_ROOT}/scripts/`, shared with reviewing-
 - `report-finding.sh`: success is silent — the file is the artifact. Failure prints the validation error and exits non-zero.
 - `list-findings.sh`: success prints the formatted finding list, or `no findings` when `.findings/` is empty or missing.
 - `query.sh`: success prints matching findings in `list-findings.sh` format, or `no matches` when predicates exclude everything.
-- `summarize.sh`: success prints the per-type counts, the lens breakdown when documentation findings exist, the verdict line, and any non-canonical-principle lines.
+- `summarize.sh`: success prints the per-type counts, the lens breakdown when documentation findings exist, the verdict line, and any non-canonical-principle lines. Stderr carries a warning when the rubric file is unreadable.
 
 ### Gate policies
 

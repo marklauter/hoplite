@@ -187,7 +187,7 @@ Five scripts ship under `${CLAUDE_PLUGIN_ROOT}/scripts/`, shared with reviewing-
 - `report-finding.sh [--force] --type <code|documentation> [--lens <name>] <title> <severity> <location> <principle> <summary>` — body piped on stdin. For C# findings, pass `--type code`; `--lens` is forbidden. Slugifies the title for the filename, validates the type, severity, and lens enums, refuses to overwrite without `--force`, writes `.findings/<slug>.md`.
 - `list-findings.sh` — reads the head fields of each `.findings/*.md` and emits one entry per finding: title, severity, type, lens (when present), location, principle, summary, slug filename. Use to dedup before composing a new finding.
 - `query.sh [--title PAT] [--severity LEVEL] [--xseverity LEVEL] [--type KIND] [--xtype KIND] [--lens NAME] [--xlens NAME] [--location PAT] [--principle PAT] [--summary PAT]` — multi-predicate scan. Each flag is optional; flags AND together. Severity, type, and lens match exactly against their enums; the `--x*` flags exclude matches on the same enums; title, location, principle, and summary match substring case-insensitive. Output mirrors `list-findings.sh`. Filter by `--type code` when scanning C# findings in a mixed `.findings/` directory; legacy findings without a `Type:` field are treated as code. Use `--xseverity pre-existing` to focus on actionable findings on the current diff.
-- `summarize.sh` — counts findings by severity per type, prints a verdict, and flags any finding whose `Principle:` value is not a canonical heading from the matching writing skill (`writing-csharp` for `Type: code`, `writing-documentation` for `Type: documentation`); the mismatch is signal for the writing skill, not a defect.
+- `summarize.sh` — counts findings by severity per type, prints a verdict, and flags any finding whose `Principle:` value is not a canonical heading from the matching writing skill (`writing-csharp` for `Type: code`, `writing-documentation` for `Type: documentation`); the mismatch is signal for the writing skill, not a defect. When `CLAUDE_PLUGIN_ROOT` is unset or the writing-X skill file is unreadable, the canonical-principle check for that type is skipped and a warning prints to stderr.
 
 ### Output discipline
 
@@ -197,7 +197,7 @@ Five scripts ship under `${CLAUDE_PLUGIN_ROOT}/scripts/`, shared with reviewing-
 - `report-finding.sh`: success is silent — the file is the artifact. Failure prints the validation error and exits non-zero.
 - `list-findings.sh`: success prints the formatted finding list, or `no findings` when `.findings/` is empty or missing.
 - `query.sh`: success prints the formatted matches in the same block format as `list-findings.sh`, or `no matches` when nothing satisfies the predicates. Exit code is 0 in both cases.
-- `summarize.sh`: success prints the counts line, the verdict line, and the non-canonical-principle line when any apply.
+- `summarize.sh`: success prints the counts line, the verdict line, and the non-canonical-principle line when any apply. Stderr carries a warning when the rubric file is unreadable.
 
 ### Gate policies
 
