@@ -154,7 +154,7 @@ Findings live as one file per finding under `.findings/` at the repo root. The d
 
 File shape:
 
-```
+```markdown
 # <one-line title — the H1>
 
 Severity: <important | nit | pre-existing>

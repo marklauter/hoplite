@@ -54,7 +54,7 @@ Concrete patterns for producing findings and running the workflow.
 
 ### Severity calibration
 
-- important — the prose contradicts source code (Accuracy), breaks a hard editorial rule that changes how the reader understands the page (factual claim, broken cross-reference, malformed page structure that prevents the page from doing its job), or violates a writing-documentation Philosophy anchor with real cost. The diff does not ship without resolution.
+- important — the prose contradicts source code (Accuracy), breaks a hard editorial rule that changes how the reader understands the page (factual claim, broken cross-reference, or malformed page structure that prevents the page from doing its job), or violates a writing-documentation Philosophy anchor with real cost. The diff does not ship without resolution.
 - nit — style miss, idiom miss, or judgment call without behavioral consequence (a sentence that could be tighter, a heading that could be sharper, a missing Oxford comma). The author may fix or skip.
 - pre-existing — defect on prose the diff did not touch, surfaced because the reviewer's eye fell on it while reviewing nearby changes. Not blocking. Natural input to triage for follow-up work.
 
@@ -179,7 +179,7 @@ Findings live as one file per finding under `.findings/` at the repo root. The d
 
 File shape for documentation findings:
 
-```
+```markdown
 # <one-line title — the H1>
 
 Severity: <important | nit | pre-existing>

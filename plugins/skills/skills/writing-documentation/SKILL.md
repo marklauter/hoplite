@@ -11,7 +11,7 @@ Philosophy, guidance, and validation for durable markdown — any artifact the r
 
 These principles draw on a few orienting threads. Strunk and White for economy and active voice. Norman for affordances — the document's first sentence is the first signifier the reader sees, and it teaches them how to read the rest. Hickey on simple versus easy, applied to prose: the simplest sentence is the one that says exactly one thing. Pólya on observation before interpretation — describe what is, then state what it implies.
 
-They apply to any durable prose the repo keeps. Structural conventions (skill shape, ADR shape, note shape) live in per-artifact skills; the principles below are the spine those skills share.
+They apply to any durable prose the repo keeps. Structural conventions (skill shape, ADR shape, and note shape) live in per-artifact skills; the principles below are the spine those skills share.
 
 ### Source is the authority
 
@@ -134,7 +134,7 @@ Concrete rules for applying the principles above. Each subsection below mirrors 
 
   Before:
 
-  ```
+  ```markdown
   | Name | Purpose |
   |---|---|
   | foo | does X |
@@ -143,7 +143,7 @@ Concrete rules for applying the principles above. Each subsection below mirrors 
 
   After:
 
-  ```
+  ```markdown
   ### foo
   Does X.
 
@@ -202,6 +202,6 @@ Concrete rules for applying the principles above. Each subsection below mirrors 
 
 ### When to defer to a structural skill
 
-- The shape of the artifact (sections, ordering, naming conventions) is the structural skill's territory. Skill files have a four-section shape; ADRs have context/decision/consequences; notes are atomic. This skill governs the prose inside the shape.
+- The shape of the artifact (sections, ordering, and naming conventions) is the structural skill's territory. Skill files have a four-section shape; ADRs have context/decision/consequences; notes are atomic. This skill governs the prose inside the shape.
 - When a structural skill exists for the artifact you are writing, load it alongside this one. This skill plus the structural skill together carry the contract.
 - When no structural skill exists yet and the artifact is recurring, the first instance is the seed. Codify the shape in a structural skill once the pattern is clear.
