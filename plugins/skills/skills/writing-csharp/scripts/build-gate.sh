@@ -22,6 +22,14 @@ set -eo pipefail
 ARG1="${1:-}"
 ARG2="${2:-}"
 
+# Preflight: dotnet format runs solution-wide and auto-discovers a workspace at CWD.
+# Bail with a clear message instead of letting dotnet emit a stack trace.
+if ! compgen -G "*.sln*" > /dev/null && ! compgen -G "*.csproj" > /dev/null; then
+    echo "build-gate: no .sln/.slnx/.slnf/.csproj found in $PWD" >&2
+    echo "  cd into the directory that contains your solution or project file, then re-run." >&2
+    exit 2
+fi
+
 run_step() {
     local label="$1"
     shift
