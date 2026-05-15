@@ -21,13 +21,15 @@ set -eo pipefail
 # shellcheck disable=SC1091
 source "$(dirname "${BASH_SOURCE[0]}")/_lib.sh"
 
-if [ ! -d .findings ]; then
+dir=$(findings_dir)
+
+if [ ! -d "$dir" ]; then
     echo "no findings"
     exit 0
 fi
 
 shopt -s nullglob
-files=(.findings/*.md)
+files=("$dir"/*.md)
 
 if [ ${#files[@]} -eq 0 ]; then
     echo "no findings"

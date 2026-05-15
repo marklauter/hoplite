@@ -45,6 +45,9 @@
 
 set -eo pipefail
 
+# shellcheck disable=SC1091
+source "$(dirname "${BASH_SOURCE[0]}")/_lib.sh"
+
 FORCE=0
 TYPE=""
 LENS=""
@@ -146,8 +149,9 @@ if [ -z "$slug" ]; then
     exit 2
 fi
 
-mkdir -p .findings
-target=".findings/${slug}.md"
+dir=$(findings_dir)
+mkdir -p "$dir"
+target="${dir}/${slug}.md"
 
 if [ -e "$target" ] && [ "$FORCE" != "1" ]; then
     echo "report-finding.sh: $target already exists (use --force to overwrite)" >&2

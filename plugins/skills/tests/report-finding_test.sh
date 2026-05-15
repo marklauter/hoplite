@@ -174,3 +174,18 @@ test_success_silent() {
     local out; out=$(echo "body" | "$REPORT" --type code "Title" nit "src/x.cs:1" "Principle" "Summary." 2>/dev/null)
     assert_equal "" "$out"
 }
+
+# ---- repo-root anchoring ----
+# When invoked from a subdirectory of a git repo, the finding must land at the
+# repo root, not in a `.findings/` under the caller's CWD. The bug being
+# prevented: build-gate.sh anchors at the solution directory (often `src/`), so
+# follow-up `report-finding.sh` calls inherit that CWD.
+
+test_writes_to_repo_root_from_subdirectory() {
+    git init -q
+    mkdir -p src
+    cd src
+    echo "body" | "$REPORT" --type code "Anchored" nit "src/x.cs:1" "Principle" "Summary."
+    assert_file_exists "../.findings/anchored.md"
+    assert_file_not_exists ".findings/anchored.md"
+}

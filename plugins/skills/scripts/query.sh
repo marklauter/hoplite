@@ -139,13 +139,15 @@ LOCATION_LC=$(to_lower "$LOCATION")
 PRINCIPLE_LC=$(to_lower "$PRINCIPLE")
 SUMMARY_LC=$(to_lower "$SUMMARY")
 
-if [ ! -d .findings ]; then
+dir=$(findings_dir)
+
+if [ ! -d "$dir" ]; then
     echo "no findings"
     exit 0
 fi
 
 shopt -s nullglob
-files=(.findings/*.md)
+files=("$dir"/*.md)
 
 if [ ${#files[@]} -eq 0 ]; then
     echo "no findings"

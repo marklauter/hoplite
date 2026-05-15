@@ -21,6 +21,22 @@
 # positional rule is the summary line, which is read by offset from the
 # Principle: line.
 
+# Resolve the .findings directory. Anchors at the git repo root so reviewers
+# get the same target regardless of which subdirectory they invoke from
+# (e.g. after `cd src` to run build-gate against the solution there). Falls
+# back to CWD-relative `.findings` when the caller is outside a git repo,
+# which keeps the test runner — which executes each test in a fresh tmpdir —
+# working without requiring it to `git init`.
+findings_dir() {
+    local root
+    root=$(git rev-parse --show-toplevel 2>/dev/null) || true
+    if [ -n "$root" ]; then
+        printf '%s/.findings' "$root"
+    else
+        printf '.findings'
+    fi
+}
+
 # Extract a typed-field value by its label. Returns empty string if absent.
 get_field() {
     local file="$1"
