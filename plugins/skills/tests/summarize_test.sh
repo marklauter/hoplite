@@ -76,13 +76,13 @@ test_no_lens_breakdown_when_only_code() {
 test_verdict_blocked_when_any_important() {
     make_finding "a" "A" important code "" "Immutable by default"
     local out; out=$("$SUMMARIZE" 2>/dev/null)
-    assert_contains "$out" "diff is blocked on important findings"
+    assert_contains "$out" "review blocked on important findings"
 }
 
 test_verdict_shippable_nits_optional_when_only_nits() {
     make_finding "a" "A" nit code "" "Immutable by default"
     local out; out=$("$SUMMARIZE" 2>/dev/null)
-    assert_contains "$out" "diff is shippable; nits optional"
+    assert_contains "$out" "review passes; nits optional"
 }
 
 test_verdict_appends_preexisting_pending() {
@@ -96,7 +96,7 @@ test_verdict_blocked_combines_with_preexisting() {
     make_finding "a" "A" important code "" "Some principle"
     make_finding "b" "B" pre-existing code "" "Some principle"
     local out; out=$("$SUMMARIZE" 2>/dev/null)
-    assert_contains "$out" "diff is blocked on important findings; pre-existing triage pending"
+    assert_contains "$out" "review blocked on important findings; pre-existing triage pending"
 }
 
 test_verdict_aggregates_across_types() {
@@ -104,7 +104,7 @@ test_verdict_aggregates_across_types() {
     make_finding "code-nit" "Code nit" nit code "" "Some principle"
     make_finding "doc-imp" "Doc important" important documentation Line "Every word must earn its place"
     local out; out=$("$SUMMARIZE" 2>/dev/null)
-    assert_contains "$out" "diff is blocked on important findings"
+    assert_contains "$out" "review blocked on important findings"
 }
 
 # ---- backward-compat: legacy findings without Type: ----

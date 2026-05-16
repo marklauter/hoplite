@@ -6,7 +6,7 @@
 # all parse by name).
 #
 # Required:
-#   --type        code | documentation
+#   --type        code | documentation | wiki
 #   <title>       used to slug the filename
 #   <severity>    important | nit | pre-existing
 #   <location>    `path:line` or comma-separated `path:line, other:line`
@@ -14,18 +14,23 @@
 #   <summary>     one line
 #   <body>        piped on stdin (## Observation, ## Why it matters, ## Suggested fix)
 #
-# Required for --type documentation:
+# Required for --type documentation and --type wiki:
 #   --lens        Structure | Line | Copy | Accuracy | Coherence | References
 #
 # Forbidden for --type code:
-#   --lens (lens classification belongs to documentation review only)
+#   --lens (lens classification belongs to documentation and wiki review)
 #
 # Output discipline:
 #   - Success: silent. The file at .findings/<slug>.md is the artifact.
 #   - Failure: validation error to stderr, non-zero exit.
 #
+# Slug collision: when .findings/<slug>.md already exists, the new finding
+# is written to .findings/<slug>-2.md (or -3, -4, ... as needed). Writes
+# always succeed; triage handles dedup. Audit runs can re-find the same
+# defect across passes without losing prior findings.
+#
 # Usage:
-#   report-finding.sh [--force] --type <code|documentation> [--lens <name>] \
+#   report-finding.sh --type <code|documentation|wiki> [--lens <name>] \
 #       <title> <severity> <location> <principle> <summary> < body.md
 #
 # Examples:
@@ -42,22 +47,31 @@
 #       'Every word must earn its place' \
 #       'Opening paragraph uses might, perhaps, and basically in two sentences.' \
 #       < body.md
+#
+#   report-finding.sh --type wiki --lens Structure \
+#       "Recipe page in Reference section" important \
+#       '_Sidebar.md:14, Recipe-Webhook-Receiver.md:1' \
+#       'Sections own the triple' \
+#       'Recipe-register page filed under the Reference section; register mismatch with siblings.' \
+#       < body.md
 
 set -eo pipefail
+
+case "${1:-}" in
+    --help|-h)
+        awk 'NR==1 {next} /^#/ {sub(/^#/, ""); sub(/^ /, ""); print; next} {exit}' "${BASH_SOURCE[0]}"
+        exit 0
+        ;;
+esac
 
 # shellcheck disable=SC1091
 source "$(dirname "${BASH_SOURCE[0]}")/_lib.sh"
 
-FORCE=0
 TYPE=""
 LENS=""
 
 while [ $# -gt 0 ]; do
     case "$1" in
-        --force)
-            FORCE=1
-            shift
-            ;;
         --type)
             [ $# -ge 2 ] || { echo "report-finding.sh: --type requires a value" >&2; exit 2; }
             TYPE="$2"
@@ -89,7 +103,7 @@ PRINCIPLE="${4:-}"
 SUMMARY="${5:-}"
 
 if [ -z "$TYPE" ] || [ -z "$TITLE" ] || [ -z "$SEVERITY" ] || [ -z "$LOCATION" ] || [ -z "$PRINCIPLE" ] || [ -z "$SUMMARY" ]; then
-    echo "usage: report-finding.sh [--force] --type <code|documentation> [--lens <name>] <title> <severity> <location> <principle> <summary>  (body on stdin)" >&2
+    echo "usage: report-finding.sh --type <code|documentation|wiki> [--lens <name>] <title> <severity> <location> <principle> <summary>  (body on stdin)" >&2
     exit 2
 fi
 
@@ -99,9 +113,9 @@ LOCATION="${LOCATION#\`}"
 LOCATION="${LOCATION%\`}"
 
 case "$TYPE" in
-    code|documentation) ;;
+    code|documentation|wiki) ;;
     *)
-        echo "report-finding.sh: invalid type '$TYPE' (must be code or documentation)" >&2
+        echo "report-finding.sh: invalid type '$TYPE' (must be code, documentation, or wiki)" >&2
         exit 2
         ;;
 esac
@@ -114,9 +128,9 @@ case "$SEVERITY" in
         ;;
 esac
 
-if [ "$TYPE" = "documentation" ]; then
+if [ "$TYPE" = "documentation" ] || [ "$TYPE" = "wiki" ]; then
     if [ -z "$LENS" ]; then
-        echo "report-finding.sh: --lens is required when --type is documentation" >&2
+        echo "report-finding.sh: --lens is required when --type is $TYPE" >&2
         exit 2
     fi
     case "$LENS" in
@@ -128,7 +142,7 @@ if [ "$TYPE" = "documentation" ]; then
     esac
 else
     if [ -n "$LENS" ]; then
-        echo "report-finding.sh: --lens applies to --type documentation only" >&2
+        echo "report-finding.sh: --lens applies to --type documentation or --type wiki only" >&2
         exit 2
     fi
 fi
@@ -151,12 +165,14 @@ fi
 
 dir=$(findings_dir)
 mkdir -p "$dir"
-target="${dir}/${slug}.md"
 
-if [ -e "$target" ] && [ "$FORCE" != "1" ]; then
-    echo "report-finding.sh: $target already exists (use --force to overwrite)" >&2
-    exit 2
-fi
+# Auto-suffix on slug collision: -2, -3, -4, ... Writes always succeed.
+target="${dir}/${slug}.md"
+counter=2
+while [ -e "$target" ]; do
+    target="${dir}/${slug}-${counter}.md"
+    counter=$((counter + 1))
+done
 
 body=$(cat)
 

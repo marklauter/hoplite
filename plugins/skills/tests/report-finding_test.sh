@@ -117,22 +117,27 @@ test_missing_summary_fails() {
     assert_exit_code 2 "$rc"
 }
 
-# ---- --force / overwrite ----
+# ---- slug collision: auto-suffix ----
 
-test_refuses_overwrite_without_force() {
+test_collision_auto_suffixes_with_counter() {
     echo "first body" | "$REPORT" --type code "Title" nit "src/x.cs:1" "Principle" "First summary."
-    local rc=0
-    echo "second body" | "$REPORT" --type code "Title" nit "src/x.cs:1" "Principle" "Second summary." 2>/dev/null || rc=$?
-    assert_exit_code 2 "$rc"
-    local sum; sum=$(grep '^First' .findings/title.md | head -1)
-    assert_equal "First summary." "$sum"
+    echo "second body" | "$REPORT" --type code "Title" nit "src/x.cs:2" "Principle" "Second summary."
+    echo "third body" | "$REPORT" --type code "Title" nit "src/x.cs:3" "Principle" "Third summary."
+    assert_file_exists ".findings/title.md"
+    assert_file_exists ".findings/title-2.md"
+    assert_file_exists ".findings/title-3.md"
+    local first; first=$(grep '^First' .findings/title.md | head -1)
+    assert_equal "First summary." "$first"
+    local second; second=$(grep '^Second' .findings/title-2.md | head -1)
+    assert_equal "Second summary." "$second"
+    local third; third=$(grep '^Third' .findings/title-3.md | head -1)
+    assert_equal "Third summary." "$third"
 }
 
-test_force_allows_overwrite() {
-    echo "first" | "$REPORT" --type code "Title" nit "src/x.cs:1" "Principle" "First."
-    echo "second" | "$REPORT" --force --type code "Title" nit "src/x.cs:1" "Principle" "Second."
-    local sum; sum=$(grep '^Second' .findings/title.md | head -1)
-    assert_equal "Second." "$sum"
+test_force_flag_rejected_as_unknown() {
+    local rc=0
+    echo "body" | "$REPORT" --force --type code "Title" nit "src/x.cs:1" "Principle" "Summary." 2>/dev/null || rc=$?
+    assert_exit_code 2 "$rc"
 }
 
 # ---- slug pipeline under LC_ALL=C ----

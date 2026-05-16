@@ -15,11 +15,16 @@ The rubric is writing-documentation. Reviewing-documentation judges; writing-doc
 
 The reviewer reports; the author decides. A finding describes what the prose does and why a principle is violated; it does not demand the fix. The Suggested fix section offers a path, not an instruction.
 
-### The diff is the scope
+### The scope must be explicit
 
-Review the lines that changed and the surrounding context required to understand them. Pre-existing defects on lines the diff did not touch are surfaced as `pre-existing` findings, not chased into adjacent work. A whole-corpus audit is a different activity with different output.
+Every review pass declares its scope. Two modes:
 
-The Coherence and References lenses are exceptions in degree — they require reading sibling documents to detect drift and link integrity, but the findings still attach to lines in the diff.
+- **Diff mode** — the default for pre-commit documentation review. `changes.sh` (no args) produces the canonical diff against `HEAD`. Findings attach to lines in the diff. Pre-existing defects on lines the diff did not touch are surfaced as `pre-existing` findings, not chased into adjacent work.
+- **Audit mode** — opt-in via `--all [<dir>]` or `--paths <p>...` for whole-corpus passes (a docs site audit, a pre-release sweep, a one-shot consistency check). In audit mode `pre-existing` does not apply (no diff to be "outside of"); findings are `important` or `nit` only.
+
+When invoked with no args against a clean tree, `changes.sh` emits a structured hint and exits non-zero. The reviewer surfaces the hint to the user and waits for an explicit scope — diff mode is the default for documentation review, but the reviewer does not silently switch to audit on the user's behalf.
+
+The Coherence and References lenses are exceptions in degree — they require reading sibling documents to detect drift and link integrity. In diff mode the findings attach to lines in the diff; in audit mode they attach to whatever document or structural file the defect lives in.
 
 ### Evidence-based
 
@@ -41,18 +46,19 @@ Concrete patterns for producing findings and running the workflow.
 
 ### The workflow
 
-1. `changes.sh` produces the canonical diff plus the changed-file list. Read the diff and enough surrounding context of each changed page to detect the operating register.
-2. Detect the register from sibling documents before judging. A tutorial-friendly opening is not a defect in a tutorial folder.
-3. For each changed line, evaluate against writing-documentation principles through each of the six lenses. When a principle is violated, compose a finding.
-4. `report-finding.sh --type documentation --lens <name>` writes the finding to `.findings/<slug>.md`. The slug comes from the title; the script enforces the type, severity, and lens enums and refuses to overwrite without `--force`.
-5. `list-findings.sh` enumerates the current findings by reading each file's head. Scan it before composing a new finding — match on title, principle, and lens, since the slug catches reworded duplicates. `query.sh --type documentation --lens <name>` is the tool for predicate-driven scans (filter by lens, severity, principle, etc.) when the finding set has grown.
-6. `summarize.sh` collapses the directory to counts plus verdict. Run it when the review pass is complete.
+1. Pick the scope. For documentation review, the default is diff mode: `changes.sh` (no args) produces the diff plus the changed-file list. For whole-corpus audits, use `changes.sh --all [<dir>]` or `changes.sh --paths <p>...`. When `changes.sh` exits with the no-diff hint, surface it to the user — do not silently switch modes.
+2. Read enough surrounding context of each in-scope page to detect the operating register.
+3. Detect the register from sibling documents before judging. A tutorial-friendly opening is not a defect in a tutorial folder.
+4. For each in-scope line (diff mode) or page (audit mode), evaluate against writing-documentation principles through each of the six lenses. When a principle is violated, compose a finding.
+5. `report-finding.sh --type documentation --lens <name>` writes the finding to `.findings/<slug>.md`. The slug comes from the title; the script enforces the type, severity, and lens enums. Slug collisions auto-suffix (`-2`, `-3`, ...) — writes always succeed, so repeated audit passes accumulate findings rather than silently dropping them.
+6. `list-findings.sh` enumerates the current findings by reading each file's head. Scan it before composing a new finding — match on title, principle, and lens, since the slug catches reworded duplicates. `query.sh --type documentation --lens <name>` is the tool for predicate-driven scans (filter by lens, severity, principle, etc.) when the finding set has grown.
+7. `summarize.sh` collapses the directory to counts plus verdict. Run it when the review pass is complete. The verdict reads `review passes`, `review passes; nits optional`, or `review blocked on important findings` — same vocabulary in diff and audit modes.
 
 ### Severity calibration
 
-- important — the prose contradicts source code (Accuracy), breaks a hard editorial rule that changes how the reader understands the page (factual claim, broken cross-reference, or malformed page structure that prevents the page from doing its job), or violates a writing-documentation Philosophy anchor with real cost. The diff does not ship without resolution.
+- important — the prose contradicts source code (Accuracy), breaks a hard editorial rule that changes how the reader understands the page (factual claim, broken cross-reference, or malformed page structure that prevents the page from doing its job), or violates a writing-documentation Philosophy anchor with real cost. Blocks the review.
 - nit — style miss, idiom miss, or judgment call without behavioral consequence (a sentence that could be tighter, a heading that could be sharper, a missing Oxford comma). The author may fix or skip.
-- pre-existing — defect on prose the diff did not touch, surfaced because the reviewer's eye fell on it while reviewing nearby changes. Not blocking. Natural input to triage for follow-up work.
+- pre-existing — diff-mode only. Defect on prose the diff did not touch, surfaced because the reviewer's eye fell on it while reviewing nearby changes. Not blocking. Natural input to triage for follow-up work. In audit mode `pre-existing` does not apply — there is no diff to be "outside of"; every defect is `important` or `nit`.
 
 Calibration check — would a skilled technical editor flag this? If "probably not," skip it.
 
@@ -80,7 +86,7 @@ A register mismatch is itself a finding — when the document's register does no
 
 ### Dedup before writing
 
-- Same defect on a different line: update the existing finding's Location to a comma-separated list with `report-finding.sh --force`, rather than creating a second file.
+- Same defect on a different line: update the existing finding's Location to a comma-separated list by editing the file directly, rather than creating a second file. (`report-finding.sh` auto-suffixes on slug collision, so a re-file would create `<slug>-2.md` rather than overwrite. Edit the original.)
 - Same principle violation in a different shape: separate findings. The artifact is per-defect, not per-principle.
 - Same defect in two different lenses: this is rare and usually means the lens choice was wrong. Pick the more specific lens and merge.
 
@@ -203,8 +209,8 @@ The filename is the slug of the title: lowercase, non-alphanumeric replaced with
 
 Five scripts ship under `${CLAUDE_PLUGIN_ROOT}/scripts/`, shared with reviewing-csharp. Portable bash 3.2+; runs on Linux, macOS, and Windows (Git Bash, WSL).
 
-- `changes.sh [<ref> | <ref1> <ref2>]` — produces the diff for the review. No args shows uncommitted changes against `HEAD` and the untracked-file list. One ref shows the diff against that ref. Two refs show the three-dot diff (PR-style: what is on `ref2` since it diverged from `ref1`).
-- `report-finding.sh [--force] --type <code|documentation> [--lens <name>] <title> <severity> <location> <principle> <summary>` — body piped on stdin. For documentation findings, `--type documentation` and `--lens <name>` are required. Slugifies the title for the filename, validates the type, severity, and lens enums, refuses to overwrite without `--force`, writes `.findings/<slug>.md`.
+- `changes.sh [<ref> | <ref1> <ref2> | --all [<dir>] | --paths <p>...]` — produces the canonical scope. No args shows uncommitted changes against `HEAD` and the untracked-file list (diff mode). One ref shows the diff against that ref; two refs show the three-dot diff (PR-style). `--all [<dir>]` walks the filesystem (default `.`), respects `.gitignore`, skips hidden and symlinked entries; output is the file list only. `--paths <p>...` enumerates the given files and directories (directories expand recursively under the same walker); errors on a missing path. When invoked with no args against a clean tree or outside a git repo, the script emits a structured hint and exits non-zero — the calling skill picks a default from there.
+- `report-finding.sh --type <code|documentation> [--lens <name>] <title> <severity> <location> <principle> <summary>` — body piped on stdin. For documentation findings, `--type documentation` and `--lens <name>` are required. Slugifies the title for the filename, validates the type, severity, and lens enums, writes `.findings/<slug>.md`. On slug collision, auto-suffixes (`-2`, `-3`, ...) — every call succeeds.
 - `list-findings.sh` — reads the head fields of each `.findings/*.md` and emits one entry per finding: title, severity, type, lens (when present), location, principle, summary, slug filename. Use to dedup before composing a new finding.
 - `query.sh [--title PAT] [--severity LEVEL] [--xseverity LEVEL] [--type KIND] [--xtype KIND] [--lens NAME] [--xlens NAME] [--location PAT] [--principle PAT] [--summary PAT]` — filters findings by structured predicates. Multiple predicates AND together; no predicates matches every finding. The `--x*` flags exclude matches on the enum fields (severity, type, lens). Use `--type documentation` to scan only doc findings; `--xlens References` to filter out reference-checking output; `--xseverity pre-existing` to focus on actionable findings.
 - `summarize.sh` — counts findings by severity per type, prints a lens breakdown when documentation findings are present, prints the verdict line, and flags any finding whose `Principle:` value is not a canonical writing-documentation heading. When `CLAUDE_PLUGIN_ROOT` is unset or the writing-documentation skill file is unreadable, the canonical-principle check is skipped and a warning prints to stderr.
@@ -227,5 +233,6 @@ When a finding is malformed, the rule is: fix the finding.
 - A documentation finding without a `Lens:` line is a defect. Every documentation finding belongs to one of the six lenses.
 - An `important` finding without a `## Suggested fix` is a defect. The author needs the path forward.
 - A `pre-existing` finding for a line the diff modified is a defect. The scope is mis-classified — the line did change, so the finding is `important` or `nit`.
+- A `pre-existing` finding produced in audit mode is a defect. Audit mode has no diff; every defect is `important` or `nit`.
 - A finding citing a non-canonical principle is a candidate for promotion into writing-documentation. `summarize.sh` surfaces it; the author decides during triage.
 - An Accuracy finding without a source `path:line` in the Location field is malformed. The whole point of the Accuracy lens is the source citation.

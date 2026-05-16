@@ -18,6 +18,13 @@
 
 set -eo pipefail
 
+case "${1:-}" in
+    --help|-h)
+        awk 'NR==1 {next} /^#/ {sub(/^#/, ""); sub(/^ /, ""); print; next} {exit}' "${BASH_SOURCE[0]}"
+        exit 0
+        ;;
+esac
+
 # shellcheck disable=SC1091
 source "$(dirname "${BASH_SOURCE[0]}")/_lib.sh"
 

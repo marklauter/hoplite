@@ -8,7 +8,7 @@
 #   --title PAT       substring, case-insensitive, against the H1 title
 #   --severity LEVEL  exact match: important | nit | pre-existing
 #   --xseverity LEVEL exclude findings with this severity
-#   --type KIND       exact match: code | documentation
+#   --type KIND       exact match: code | documentation | wiki
 #   --xtype KIND      exclude findings with this type
 #   --lens NAME       exact match: Structure | Line | Copy | Accuracy | Coherence | References
 #   --xlens NAME      exclude findings with this lens
@@ -34,6 +34,13 @@
 #   query.sh --type documentation --xlens References
 
 set -eo pipefail
+
+case "${1:-}" in
+    --help|-h)
+        awk 'NR==1 {next} /^#/ {sub(/^#/, ""); sub(/^ /, ""); print; next} {exit}' "${BASH_SOURCE[0]}"
+        exit 0
+        ;;
+esac
 
 TITLE=""
 SEVERITY=""
@@ -75,9 +82,9 @@ while [ $# -gt 0 ]; do
             [ $# -ge 2 ] || { echo "query.sh: --type requires a value" >&2; exit 2; }
             TYPE="$2"
             case "$TYPE" in
-                code|documentation) ;;
+                code|documentation|wiki) ;;
                 *)
-                    echo "query.sh: invalid type '$TYPE' (must be code or documentation)" >&2
+                    echo "query.sh: invalid type '$TYPE' (must be code, documentation, or wiki)" >&2
                     exit 2 ;;
             esac
             shift 2 ;;
@@ -85,9 +92,9 @@ while [ $# -gt 0 ]; do
             [ $# -ge 2 ] || { echo "query.sh: --xtype requires a value" >&2; exit 2; }
             XTYPE="$2"
             case "$XTYPE" in
-                code|documentation) ;;
+                code|documentation|wiki) ;;
                 *)
-                    echo "query.sh: invalid xtype '$XTYPE' (must be code or documentation)" >&2
+                    echo "query.sh: invalid xtype '$XTYPE' (must be code, documentation, or wiki)" >&2
                     exit 2 ;;
             esac
             shift 2 ;;

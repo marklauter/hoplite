@@ -9,7 +9,7 @@
 #   <blank>                ← line 2
 #   Severity: <level>      ← typed fields in any order
 #   Type: <kind>
-#   Lens: <name>           ← (documentation findings only)
+#   Lens: <name>           ← (documentation and wiki findings only)
 #   Location: <ref>
 #   Principle: <text>
 #   <summary>              ← line immediately after Principle:
