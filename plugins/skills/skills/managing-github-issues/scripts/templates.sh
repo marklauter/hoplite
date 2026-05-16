@@ -18,6 +18,13 @@
 
 set -eo pipefail
 
+case "${1:-}" in
+    --help|-h)
+        awk 'NR==1 {next} /^#/ {sub(/^#/, ""); sub(/^ /, ""); print; next} {exit}' "${BASH_SOURCE[0]}"
+        exit 0
+        ;;
+esac
+
 DIR=""
 GIT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || true)
 for candidate in \

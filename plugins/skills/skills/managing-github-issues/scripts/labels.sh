@@ -13,6 +13,13 @@
 
 set -eo pipefail
 
+case "${1:-}" in
+    --help|-h)
+        awk 'NR==1 {next} /^#/ {sub(/^#/, ""); sub(/^ /, ""); print; next} {exit}' "${BASH_SOURCE[0]}"
+        exit 0
+        ;;
+esac
+
 TEMPLATE='{{if .}}{{range .}}{{.name}}  {{.description}}
 {{end}}{{else}}no labels
 {{end}}'

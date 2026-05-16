@@ -17,6 +17,13 @@
 
 set -eo pipefail
 
+case "${1:-}" in
+    --help|-h)
+        awk 'NR==1 {next} /^#/ {sub(/^#/, ""); sub(/^ /, ""); print; next} {exit}' "${BASH_SOURCE[0]}"
+        exit 0
+        ;;
+esac
+
 if [ $# -eq 0 ]; then
     echo "usage: query.sh <keywords...>" >&2
     exit 2

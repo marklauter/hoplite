@@ -21,6 +21,13 @@
 
 set -eo pipefail
 
+case "${1:-}" in
+    --help|-h)
+        awk 'NR==1 {next} /^#/ {sub(/^#/, ""); sub(/^ /, ""); print; next} {exit}' "${BASH_SOURCE[0]}"
+        exit 0
+        ;;
+esac
+
 if [ $# -lt 2 ]; then
     echo "usage: edit.sh <number> <gh-issue-edit-flags...>" >&2
     exit 2
