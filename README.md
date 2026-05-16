@@ -1,6 +1,6 @@
-# marklauter — personal Claude Code marketplace
+# msl.armory — a collection of skills
 
-A single git repo to centrally maintain my Claude Code skills, replacing copies spread across many project repos.
+A single git repo to centrally maintain Claude Code skills, replacing copies spread across many project repos.
 
 ## Structure (subject to drift)
 
@@ -21,11 +21,11 @@ docs/
 
 ## Install locally
 
-From any directory inside Claude Code:
+From any directory inside Claude Code, with `<repo>` set to the absolute path of your clone of this repo (the directory containing `.claude-plugin/marketplace.json`):
 
 ```
-/plugin marketplace add D:/claude
-/plugin install skills@marklauter
+/plugin marketplace add <repo>
+/plugin install skills@msl.armory
 ```
 
 After editing a skill, run `/reload-plugins` to apply.
@@ -105,8 +105,8 @@ Bash test runner at `plugins/skills/tests/run-tests.sh`:
 Push this repo to GitHub, then update the marketplace source in consumers:
 
 ```
-/plugin marketplace remove marklauter
-/plugin marketplace add marklauter/<repo-name>
+/plugin marketplace remove msl.armory
+/plugin marketplace add <github-user>/<repo-name>
 ```
 
 No restructuring needed.
