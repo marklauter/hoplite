@@ -71,9 +71,9 @@ Concrete rules for applying the principles. Each subsection mirrors a Philosophy
 
 ### Source code is the accuracy authority
 
-- The wiki's source project is a sibling directory by GitHub convention: a wiki checked out at `<path>/<repo>.wiki` has its code at `<path>/<repo>`. When invoked inside a `*.wiki` directory, locate the sibling before writing and treat it as the authority for every page. If the sibling is absent, stop and ask — do not write from memory.
+- Locate the source clone before writing. The standard layout is sibling clones — when CWD is `{project}.wiki/`, the source clone is the sibling directory `{project}/` (strip the `.wiki` suffix from CWD's name). When the wiki lives inside the source repo instead (a `docs/` subdirectory or a self-hosted wiki engine), source paths resolve normally within the repo. If neither layout applies and no source location is configured, stop and ask — do not write from memory.
 - Read the relevant source files before writing about them. Documenting from memory is the most common way pages drift from reality.
-- Cite source files with `path:line` notation when claiming a specific behavior or signature. The citation is what makes the claim verifiable on the next sync.
+- Cite source files with `path:line` notation when claiming a specific behavior or signature: `(source: ../{project}/path/to/file:line)` for sibling-clone wikis, or the in-repo `path:line` when the wiki and source share a tree. The citation is what makes the claim verifiable on the next sync, and it is the form `reviewing-wiki`'s Accuracy lens checks for.
 - Code samples in wiki pages compile against the current source. When a type, method, or signature changes, every page that mentions it goes stale; update them in the same change set.
 - External references the wiki depends on (RFCs, vendor docs, spec URLs) are also accuracy authorities. When they change, the page that depends on them is stale.
 - When a claim cannot be verified against any authority, flag it in the page or remove it. Unverified claims accumulate into wikis the reader cannot trust.
