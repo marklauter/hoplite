@@ -37,6 +37,8 @@ Concrete patterns for the scan-prioritize-feed loop and the disposition scripts.
 
 ### Scan
 
+The scan scripts (`list-findings.sh`, `query.sh`, `summarize.sh`) ship under `${CLAUDE_PLUGIN_ROOT}/scripts/` — one level above the per-skill `scripts/` directory — because they are shared with the reviewer skills. The triage-owned mutations (`drop.sh`, `file.sh`) live under this skill's own `scripts/` directory.
+
 `summarize.sh` first — counts per severity per type, so the agent knows the queue shape before walking it. `query.sh` then slices by predicate: `--severity important`, `--severity nit`, `--severity pre-existing`. The readers emit the head fields (title, severity, type, lens, location, principle, summary, slug); the file body is opened only when the head fields aren't enough to propose a disposition.
 
 `--severity` and `--xseverity` are mutually exclusive in intent — pick `--severity LEVEL` to walk one bucket or `--xseverity LEVEL` to exclude one bucket. `--severity important --xseverity pre-existing` is a no-op redundancy.
@@ -80,12 +82,18 @@ Findings carry the triage outcome — `drop.sh` deletes, `file.sh` deletes after
 
 ### The script set
 
-Two scripts ship under `${CLAUDE_PLUGIN_ROOT}/skills/triaging-findings/scripts/`. Portable bash 3.2+; runs on Linux, macOS, and Windows (Git Bash, WSL).
+Triage uses scripts from two locations. Portable bash 3.2+; runs on Linux, macOS, and Windows (Git Bash, WSL).
+
+Mutations — `${CLAUDE_PLUGIN_ROOT}/skills/triaging-findings/scripts/`:
 
 - `drop.sh <slug>` — deletes `.findings/<slug>.md`. Silent on success; the conversation is the audit trail.
 - `file.sh <slug> <template-name>` — reads the issue body from stdin, extracts the H1 title from `.findings/<slug>.md`, invokes `managing-github-issues/create.sh`, and deletes the finding when `create.sh` exits zero. The `LABELS` env var passes through.
 
-The scan scripts (`list-findings.sh`, `query.sh`, `summarize.sh`) are reused from the reviewer skill set. Triage adds the two mutations above and reuses the readers; severity recalibration and other head-field updates are direct file edits, since `report-finding.sh` cannot rewrite an existing finding.
+Scan readers — `${CLAUDE_PLUGIN_ROOT}/scripts/` (shared with the reviewer skills):
+
+- `list-findings.sh`, `query.sh`, `summarize.sh` — emit head-field views over `.findings/`.
+
+Triage adds the two mutations above and reuses the readers; severity recalibration and other head-field updates are direct file edits, since `report-finding.sh` cannot rewrite an existing finding.
 
 ### Output discipline
 
