@@ -71,6 +71,7 @@ Concrete rules for applying the principles. Each subsection mirrors a Philosophy
 
 ### Source code is the accuracy authority
 
+- The wiki's source project is a sibling directory by GitHub convention: a wiki checked out at `<path>/<repo>.wiki` has its code at `<path>/<repo>`. When invoked inside a `*.wiki` directory, locate the sibling before writing and treat it as the authority for every page. If the sibling is absent, stop and ask — do not write from memory.
 - Read the relevant source files before writing about them. Documenting from memory is the most common way pages drift from reality.
 - Cite source files with `path:line` notation when claiming a specific behavior or signature. The citation is what makes the claim verifiable on the next sync.
 - Code samples in wiki pages compile against the current source. When a type, method, or signature changes, every page that mentions it goes stale; update them in the same change set.
