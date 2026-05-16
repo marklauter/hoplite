@@ -64,7 +64,11 @@ For each finding in the priority walk, the agent presents the head fields the re
 
 ### Severity recalibration
 
-When the steward downgrades or upgrades a finding's severity, rewrite the head field with `report-finding.sh --force` from the reviewer skill set rather than editing the file directly. The reshaped finding stays canonical; the next scan picks up the new severity.
+When the steward downgrades or upgrades a finding's severity, edit the `Severity:` head field in the finding file directly. `report-finding.sh` always writes — it auto-suffixes on slug collision (`<slug>-2.md`, `-3.md`, ...) — so it cannot rewrite an existing finding. In-place edits are the only way to update a finding after it's been written. The next scan picks up the new severity.
+
+### Duplicates from audit re-runs
+
+`report-finding.sh`'s auto-suffix behavior means the same defect can appear multiple times in `.findings/` when a reviewer re-runs an audit pass — `<slug>.md` and `<slug>-2.md` for the same observation. The duplicates show up in the priority walk; Drop is the natural disposition for the redundant ones (the steward picks the one to keep, drops the rest).
 
 ### Promotion candidates
 
@@ -81,7 +85,7 @@ Two scripts ship under `${CLAUDE_PLUGIN_ROOT}/skills/triaging-findings/scripts/`
 - `drop.sh <slug>` — deletes `.findings/<slug>.md`. Silent on success; the conversation is the audit trail.
 - `file.sh <slug> <template-name>` — reads the issue body from stdin, extracts the H1 title from `.findings/<slug>.md`, invokes `managing-github-issues/create.sh`, and deletes the finding when `create.sh` exits zero. The `LABELS` env var passes through.
 
-The scan scripts (`list-findings.sh`, `query.sh`, `summarize.sh`) and the severity-rewrite script (`report-finding.sh --force`) are reused from the reviewer skill set. Triage adds two mutations and reuses the rest.
+The scan scripts (`list-findings.sh`, `query.sh`, `summarize.sh`) are reused from the reviewer skill set. Triage adds the two mutations above and reuses the readers; severity recalibration and other head-field updates are direct file edits, since `report-finding.sh` cannot rewrite an existing finding.
 
 ### Output discipline
 
@@ -92,4 +96,4 @@ The scan scripts (`list-findings.sh`, `query.sh`, `summarize.sh`) and the severi
 
 - A finding selected for File must have a body composed against a real template — `file.sh` does not transform the body. The agent owns the reshape; `create.sh` rejects malformed templates.
 - Tracker dedup runs before File. `managing-github-issues/query.sh` is the gate; a match means comment-on-existing, not file-new.
-- The reviewer's contract is settled. Triage edits only the `Severity` head field, and does so via `report-finding.sh --force` so the reshaped finding stays canonical.
+- The reviewer's contract is settled. Triage edits only the `Severity` head field, and does so in-place on the finding file — `report-finding.sh` always writes a new file (auto-suffixing on slug collision), so it cannot serve as a severity-rewrite tool.
