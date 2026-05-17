@@ -1,6 +1,6 @@
 ---
 name: writing-wiki
-description: Use when writing, refactoring, or reviewing pages in a software-project wiki — GitHub wiki, docs site, or any partitioned set of pages organized by a sidebar. Treats sections as the unit that owns audience, tone, and register; pages inherit from their section. Loads alongside writing-documentation, which owns the universal prose spine.
+description: Use when writing, refactoring, or reviewing pages in a software-project wiki — GitHub wiki, docs site, or any partitioned set of pages organized by a sidebar. Treats sections as the unit that owns audience, tone, and register; pages inherit from their section. Loads alongside writing-prose, which owns the universal prose spine.
 ---
 
 # Writing wiki pages
@@ -9,7 +9,7 @@ A software-project wiki is a partitioned document — sections like "Getting Sta
 
 ## Philosophy
 
-These principles describe what makes a wiki coherent across many pages, many sections, and many readers. The universal prose principles — voice, density, sentence-case headings, em dashes, no bold, no tables, link mechanics — live in `writing-documentation` and apply unchanged. The principles below are the wiki-shaped concerns layered on top.
+These principles describe what makes a wiki coherent across many pages, many sections, and many readers. The universal prose principles — voice, density, sentence-case headings, em dashes, no bold, no tables, link mechanics — live in `writing-prose` and apply unchanged. The principles below are the wiki-shaped concerns layered on top.
 
 ### Sections own the triple
 
@@ -169,6 +169,6 @@ Address every must-fix before commit; prioritize suggestions by impact.
 
 ### When to defer to other skills
 
-- Universal prose concerns — voice, density, sentence-case, em dashes, link mechanics, prose-level terminology hygiene — are owned by `writing-documentation`. Load it alongside this skill.
+- Universal prose concerns — voice, density, sentence-case, em dashes, link mechanics, prose-level terminology hygiene — are owned by `writing-prose`. Load it alongside this skill.
 - Formal editorial review across an existing wiki is owned by `reviewing-documentation`. Use it after the writing loop, not as a substitute for it.
 - Decisions about whether a wiki should exist for a project, or what its top-level sections should be, belong in a planning artifact (a note or journal entry), not the wiki itself.

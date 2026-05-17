@@ -20,8 +20,8 @@
 #   - any pre-existing           → appended "; pre-existing triage pending"
 #
 # Non-canonical principles are reported per type. Type code is checked against
-# writing-csharp Philosophy headings; type documentation against writing-documentation;
-# type wiki against the union of writing-wiki and writing-documentation (wiki findings
+# writing-csharp Philosophy headings; type documentation against writing-prose;
+# type wiki against the union of writing-wiki and writing-prose (wiki findings
 # may cite either rubric).
 #
 # Empty or missing .findings/ prints `no findings` and exits 0.
@@ -84,7 +84,7 @@ declare -a wiki_noncanonical
 
 plugin_root="${CLAUDE_PLUGIN_ROOT:-}"
 code_skill="${plugin_root}/skills/writing-csharp/SKILL.md"
-documentation_skill="${plugin_root}/skills/writing-documentation/SKILL.md"
+documentation_skill="${plugin_root}/skills/writing-prose/SKILL.md"
 wiki_skill="${plugin_root}/skills/writing-wiki/SKILL.md"
 
 read_canonical() {
@@ -114,7 +114,7 @@ else
     [ -f "$wiki_skill" ] && wiki_canonical_unreadable=0 || wiki_canonical_unreadable=1
 fi
 
-# Wiki findings may cite anchors from either writing-wiki or writing-documentation.
+# Wiki findings may cite anchors from either writing-wiki or writing-prose.
 # The union of both rubrics is the canonical set for wiki type. The unreadable
 # flag fires only when both rubrics are missing — one is enough to check against.
 if [ "$wiki_canonical_unreadable" = "0" ] || [ "$documentation_canonical_unreadable" = "0" ]; then
@@ -286,7 +286,7 @@ if [ "$documentation_total" -gt 0 ] && [ "$documentation_canonical_unreadable" =
 fi
 
 if [ ${#documentation_noncanonical[@]} -gt 0 ]; then
-    echo "${#documentation_noncanonical[@]} documentation finding(s) cite a non-canonical principle — candidate(s) for writing-documentation:"
+    echo "${#documentation_noncanonical[@]} documentation finding(s) cite a non-canonical principle — candidate(s) for writing-prose:"
     for entry in "${documentation_noncanonical[@]}"; do
         echo "  $entry"
     done
@@ -301,7 +301,7 @@ if [ "$wiki_total" -gt 0 ] && [ "$wiki_check_unreadable" = "1" ]; then
 fi
 
 if [ ${#wiki_noncanonical[@]} -gt 0 ]; then
-    echo "${#wiki_noncanonical[@]} wiki finding(s) cite a non-canonical principle — candidate(s) for writing-wiki or writing-documentation:"
+    echo "${#wiki_noncanonical[@]} wiki finding(s) cite a non-canonical principle — candidate(s) for writing-wiki or writing-prose:"
     for entry in "${wiki_noncanonical[@]}"; do
         echo "  $entry"
     done

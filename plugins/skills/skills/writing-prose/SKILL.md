@@ -1,15 +1,13 @@
 ---
-name: writing-documentation
-description: Use when writing, refactoring, or reviewing durable markdown — wiki, README, ADR, design doc, reference, tutorial, notes. Covers editorial principles for voice, density, structure, and formatting. Universal across artifact types; register is discovered at write-time.
+name: writing-prose
+description: Use when writing, refactoring, or composing prose for markdown-based artifacts. Covers editorial guidance for rhetorical context, density, structure, and formatting.
 ---
 
-# Writing documentation
+# Writing prose
 
-Durable markdown — wiki, README, ADR, design doc, reference, tutorial — written for the reader who didn't witness the conversation. Voice, density, structure, formatting; register discovered at write-time.
+Foundational editorial knowledge lives here — the authoring virtues that apply across all markdown-based artifacts. Downstream skills specify the rhetorical context for the artifact under composition — writer, voice, ethos, stance, audience, subject, genre, tone, register, intent. Downstream skills may override with justification.
 
-## Philosophy
-
-These principles apply to any durable prose the repo keeps. Structural conventions (skill shape, ADR shape, and note shape) live in per-artifact skills; the principles below are the spine those skills share.
+## Composition — principles that hold across all artifacts
 
 ### Source is the authority
 
@@ -53,7 +51,7 @@ When a structural skill exists for an artifact type, that skill owns the shape. 
 
 ### Markdown is the wire format
 
-Durable prose in the repo is markdown. Not HTML, not docx, not a wiki engine's bespoke markup. The format is human-readable in source, LLM-readable without a renderer, and diffable in git.
+Prose in the repo is markdown. Not HTML, not docx, not a wiki engine's bespoke markup. The format is human-readable in source, LLM-readable without a renderer, and diffable in git.
 
 A document that requires a tool to read it drifts silently from the source it describes.
 
@@ -61,9 +59,7 @@ A document that requires a tool to read it drifts silently from the source it de
 
 The first instance of any page type teaches the next ten. Naming, structure, register, depth of detail — the patterns established on the first page become the patterns subsequent pages copy, intended or not. Invest disproportionate care in the first instance.
 
-## Guidance
-
-Concrete rules for applying the principles above. Each subsection below mirrors a Philosophy heading, with one exception — Terminology hygiene runs across the mirrored sections.
+## Guidance — concrete application of philosophy
 
 ### Source is the authority
 
@@ -149,7 +145,7 @@ Concrete rules for applying the principles above. Each subsection below mirrors 
 
 ### Markdown is the wire format
 
-- All durable prose is markdown. Use standard markdown — headings, lists, code fences, links, em dashes, blockquotes.
+- All prose is markdown. Use standard markdown — headings, lists, code fences, links, em dashes, blockquotes.
 - Use the em dash character (—) for parenthetical breaks, definitions, and appositives. Not double hyphens.
 - Use the Oxford comma in lists of three or more — "nodes, edges, and memos."
 - Code, paths, identifiers, and CLI commands go in backticks. Multi-line code samples go in fenced code blocks with the language tag.
@@ -170,9 +166,7 @@ Concrete rules for applying the principles above. Each subsection below mirrors 
 - The first instance of any new artifact type or new section type gets extra review. The shape, naming, depth, and tone become the template the next instances copy.
 - When deviating from an established pattern, name the deviation in the document and explain the reason briefly. Undocumented deviation teaches the next author to copy the wrong pattern.
 
-## Validation
-
-Validation for prose is the loop the writer runs before formal review.
+## Validation — edit your own work before handing off
 
 ### The writing loop
 

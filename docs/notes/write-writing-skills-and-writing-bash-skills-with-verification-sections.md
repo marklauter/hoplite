@@ -17,7 +17,7 @@ Two new skills to create; each must include a Validation section that names runn
 - The miss happened because the writing-loop discipline does not currently include "run any existing test suite against your change." If the skill encodes that step, future sessions inherit the discipline.
 - writing-skills owns the meta-pattern. Its Validation section self-references: when you write a skill, validate it the way the skill says to validate its own outputs — read sibling SKILL.md files, run the test suite for the skill's scripts, verify `--help` on every script.
 - writing-bash owns the bash-script pattern used across the reviewer scripts. Validation here is concrete: shellcheck, `tests/run-tests.sh`, the `--help` smoke (every script answers `--help`), and the canonical script-set behavior (silent on success, structured stderr on failure).
-- Both skills reuse the writing-documentation Philosophy as the universal prose spine (per the `feedback_philosophy_vs_guidance` memory: Philosophy is language-agnostic, Guidance is language-specific).
+- Both skills reuse the writing-prose Philosophy as the universal prose spine (per the `feedback_philosophy_vs_guidance` memory: Philosophy is language-agnostic, Guidance is language-specific).
 
 ## Next
 

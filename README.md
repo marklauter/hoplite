@@ -82,8 +82,8 @@ Individual skills drift from this template; the canonical reference is `plugins/
 Writers — produce durable artifacts:
 
 - `writing-csharp` — C# and .NET; type-driven design, immutability, Result-based error handling.
-- `writing-documentation` — durable markdown of every kind; the prose spine other writer skills compose with.
-- `writing-wiki` — pages in a software-project wiki; loads alongside `writing-documentation`.
+- `writing-prose` — foundation for skills that produce prose artifacts; the editorial spine other writer skills compose with.
+- `writing-wiki` — pages in a software-project wiki; loads alongside `writing-prose`.
 - `taking-notes` — atomic wiki pages under `docs/notes/`, each representing the current state of an idea.
 - `journaling` — dated, append-only entries under `docs/journal/`.
 

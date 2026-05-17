@@ -16,7 +16,7 @@ A `knowledge-extraction` skill (working name) reads the note set and journal, id
 
 Likely shape:
 
-- Loads `writing-documentation` for the editorial spine — the wiki output is durable prose for humans.
+- Loads `writing-prose` for the editorial spine — the wiki output is durable prose for humans.
 - Adds Guidance specific to extraction-and-synthesis: which threads warrant a wiki page, how to collapse multiple notes into one canonical page, when to retire a note that the wiki now supersedes.
 - May load a future `writing-skills` / `writing-adrs` for structural conventions if the wiki ends up with multiple page types.
 
@@ -28,4 +28,4 @@ Open questions:
 
 ## Next
 
-Deferred until the `writing-skills` / `reviewing-skills` pair lands. Extraction-into-wiki implies a writing-skill genre that is itself mature; without it, the knowledge skill is just writing-documentation invoked with a curation prompt — not yet skill-worthy.
+Deferred until the `writing-skills` / `reviewing-skills` pair lands. Extraction-into-wiki implies a writing-skill genre that is itself mature; without it, the knowledge skill is just writing-prose invoked with a curation prompt — not yet skill-worthy.

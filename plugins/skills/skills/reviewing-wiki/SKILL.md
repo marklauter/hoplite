@@ -5,11 +5,11 @@ description: Use when reviewing local markdown diffs in a software-project wiki 
 
 # Reviewing wiki
 
-Pre-commit review of wiki diffs through six lenses — Structure, Line, Copy, Accuracy, Coherence, References — producing severity-classified findings under `.findings/` against the writing-wiki and writing-documentation rubrics. Self-contained: the per-lens signals below cover both wiki-shaped concerns and general prose concerns, so the reviewer applies one rubric in one pass.
+Pre-commit review of wiki diffs through six lenses — Structure, Line, Copy, Accuracy, Coherence, References — producing severity-classified findings under `.findings/` against the writing-wiki and writing-prose rubrics. Self-contained: the per-lens signals below cover both wiki-shaped concerns and general prose concerns, so the reviewer applies one rubric in one pass.
 
 ## Philosophy
 
-The rubric is writing-wiki layered on writing-documentation. Reviewing-wiki judges; the writing skills prescribe. Every finding traces to a Philosophy anchor — `writing-wiki` for wiki-shaped violations (section assignment, sidebar partition, register bleed, source-grounded claims) and `writing-documentation` for general prose violations (voice, density, sentence-case, define-by-presence). The skill copies and refines the reviewing-documentation rubric rather than composing with it at runtime; runtime composition of signal sets across two reviewer skills is unreliable.
+The rubric is writing-wiki layered on writing-prose. Reviewing-wiki judges; the writing skills prescribe. Every finding traces to a Philosophy anchor — `writing-wiki` for wiki-shaped violations (section assignment, sidebar partition, register bleed, source-grounded claims) and `writing-prose` for general prose violations (voice, density, sentence-case, define-by-presence). The skill copies and refines the reviewing-documentation rubric rather than composing with it at runtime; runtime composition of signal sets across two reviewer skills is unreliable.
 
 ### Findings are observations, not commands
 
@@ -44,7 +44,7 @@ The vocabulary — important, nit, pre-existing — names the action the author 
 
 ### Findings discover principles
 
-A finding that cites a non-canonical principle is a candidate for promotion into writing-wiki or writing-documentation. The reviewer can free-form the `Principle:` field when no canonical anchor fits; `summarize.sh` surfaces these for the author to triage. The writing skills grow from review pressure rather than from speculative additions.
+A finding that cites a non-canonical principle is a candidate for promotion into writing-wiki or writing-prose. The reviewer can free-form the `Principle:` field when no canonical anchor fits; `summarize.sh` surfaces these for the author to triage. The writing skills grow from review pressure rather than from speculative additions.
 
 ## Guidance
 
@@ -56,14 +56,14 @@ Concrete patterns for producing findings and running the workflow.
 2. Pick the scope. For wiki review, the default is audit mode: `changes.sh --all .` enumerates the wiki's files. When a fresh diff exists (uncommitted page edits), `changes.sh` with no args produces the diff view instead. Diff mode is the pre-commit gate; audit mode is the routine whole-wiki pass before publishing.
 3. Read enough surrounding context of each in-scope page to detect the operating triple (audience, tone, register).
 4. For each in-scope page, open `_Sidebar.md` to confirm which section it belongs to. Read at least two sibling pages in the same section to detect the section's triple. A page whose register does not match its section's is itself a finding.
-5. Evaluate each in-scope page against the writing-wiki and writing-documentation principles through each of the six lenses. When a principle is violated, compose a finding.
+5. Evaluate each in-scope page against the writing-wiki and writing-prose principles through each of the six lenses. When a principle is violated, compose a finding.
 6. `report-finding.sh --type wiki --lens <name>` writes the finding to `.findings/<slug>.md`. The slug comes from the title; the script enforces the type, severity, and lens enums. Slug collisions auto-suffix (`-2`, `-3`, ...) — writes always succeed, so repeated audit passes accumulate findings rather than silently dropping them.
 7. `list-findings.sh` enumerates the current findings by reading each file's head. Scan it before composing a new finding — match on title, principle, and lens, since the slug catches reworded duplicates. `query.sh --type wiki --lens <name>` is the tool for predicate-driven scans (filter by lens, severity, principle, etc.) when the finding set has grown.
 8. `summarize.sh` collapses the directory to counts plus verdict. Run it when the review pass is complete. The verdict reads `review passes`, `review passes; nits optional`, or `review blocked on important findings` — same vocabulary in diff and audit modes.
 
 ### Severity calibration
 
-- important — the prose contradicts source code (Accuracy), breaks a hard editorial rule that changes how the reader understands the page (factual claim, broken cross-reference, malformed page structure, register mismatch with the section, orphaned page, broken sidebar link), or violates a writing-wiki or writing-documentation Philosophy anchor with real cost. Blocks the review.
+- important — the prose contradicts source code (Accuracy), breaks a hard editorial rule that changes how the reader understands the page (factual claim, broken cross-reference, malformed page structure, register mismatch with the section, orphaned page, broken sidebar link), or violates a writing-wiki or writing-prose Philosophy anchor with real cost. Blocks the review.
 - nit — style miss, idiom miss, or judgment call without behavioral consequence (a sentence that could be tighter, a heading that could be sharper, a missing Oxford comma). The author may fix or skip.
 - pre-existing — diff-mode only. Defect on prose the diff did not touch, surfaced because the reviewer's eye fell on it while reviewing nearby changes. Not blocking. Natural input to triage for follow-up work. In audit mode `pre-existing` does not apply — there is no diff to be "outside of"; every defect is `important` or `nit`.
 
@@ -82,8 +82,8 @@ A register mismatch is itself a finding — when the page's register does not ma
 
 ### The Principle and Lens fields
 
-- `Principle:` prefers a writing-wiki or writing-documentation Philosophy anchor verbatim. The match links the finding to the rubric and keeps the vocabulary stable.
-- When no existing anchor fits, use a free-form descriptor. `summarize.sh` flags the mismatch; these findings are candidates for promotion into writing-wiki or writing-documentation.
+- `Principle:` prefers a writing-wiki or writing-prose Philosophy anchor verbatim. The match links the finding to the rubric and keeps the vocabulary stable.
+- When no existing anchor fits, use a free-form descriptor. `summarize.sh` flags the mismatch; these findings are candidates for promotion into writing-wiki or writing-prose.
 - `Lens:` is required and is one of the six. The lens names the kind of defect; the principle names the rule violated. A single defect maps to one lens — when it could map to two, choose the lens whose signals (listed in Per-lens signals below) catch it most directly.
 
 ### Location
@@ -219,7 +219,7 @@ Severity: <important | nit | pre-existing>
 Type: wiki
 Lens: <Structure | Line | Copy | Accuracy | Coherence | References>
 Location: `path/to/Page-Name.md:42`
-Principle: <writing-wiki or writing-documentation Philosophy anchor>
+Principle: <writing-wiki or writing-prose Philosophy anchor>
 <one-line summary>
 
 ## Observation
@@ -244,9 +244,9 @@ The same scripts as reviewing-documentation and reviewing-csharp ship under `${C
 - `report-finding.sh --type wiki [--lens <name>] <title> <severity> <location> <principle> <summary>` — body piped on stdin. For wiki findings, `--type wiki` and `--lens <name>` are required. Slugifies the title for the filename, validates the type, severity, and lens enums, writes `.findings/<slug>.md`. On slug collision, auto-suffixes (`-2`, `-3`, ...) — every call succeeds.
 - `list-findings.sh` — reads the head fields of each `.findings/*.md` and emits one entry per finding: title, severity, type, lens (when present), location, principle, summary, slug filename. Use to dedup before composing a new finding.
 - `query.sh [--title PAT] [--severity LEVEL] [--xseverity LEVEL] [--type KIND] [--xtype KIND] [--lens NAME] [--xlens NAME] [--location PAT] [--principle PAT] [--summary PAT]` — filters findings by structured predicates. Multiple predicates AND together; no predicates matches every finding. The `--x*` flags exclude matches on the enum fields (severity, type, lens). Use `--type wiki` to scan only wiki findings; `--xlens References` to filter out reference-checking output; `--xseverity pre-existing` to focus on actionable findings.
-- `summarize.sh` — counts findings by severity per type, prints a lens breakdown when wiki findings are present, prints the verdict line, and flags any finding whose `Principle:` value is not a canonical writing-wiki or writing-documentation heading. When `CLAUDE_PLUGIN_ROOT` is unset or the writing skill files are unreadable, the canonical-principle check is skipped and a warning prints to stderr.
+- `summarize.sh` — counts findings by severity per type, prints a lens breakdown when wiki findings are present, prints the verdict line, and flags any finding whose `Principle:` value is not a canonical writing-wiki or writing-prose heading. When `CLAUDE_PLUGIN_ROOT` is unset or the writing skill files are unreadable, the canonical-principle check is skipped and a warning prints to stderr.
 
-The `wiki` type is registered in `report-finding.sh`'s type enum. `summarize.sh` checks wiki findings' `Principle:` field against the union of `writing-wiki/SKILL.md` and `writing-documentation/SKILL.md` Philosophy headings — a wiki finding may legitimately cite either rubric. `query.sh --type wiki` filters to wiki findings only.
+The `wiki` type is registered in `report-finding.sh`'s type enum. `summarize.sh` checks wiki findings' `Principle:` field against the union of `writing-wiki/SKILL.md` and `writing-prose/SKILL.md` Philosophy headings — a wiki finding may legitimately cite either rubric. `query.sh --type wiki` filters to wiki findings only.
 
 ### Output discipline
 
@@ -267,6 +267,6 @@ When a finding is malformed, the rule is: fix the finding.
 - An `important` finding without a `## Suggested fix` is a defect. The author needs the path forward.
 - A `pre-existing` finding for a line the diff modified is a defect. The scope is mis-classified — the line did change, so the finding is `important` or `nit`.
 - A `pre-existing` finding produced in audit mode is a defect. Audit mode has no diff; every defect is `important` or `nit`.
-- A finding citing a non-canonical principle is a candidate for promotion into writing-wiki or writing-documentation. `summarize.sh` surfaces it; the author decides during triage.
+- A finding citing a non-canonical principle is a candidate for promotion into writing-wiki or writing-prose. `summarize.sh` surfaces it; the author decides during triage.
 - An Accuracy finding without a source `path:line` in the Location field is malformed. The whole point of the Accuracy lens is the source citation.
 - A Structure finding about section assignment, sidebar partition, or Home shape that does not name the affected structural file (`_Sidebar.md` or `Home.md`) in the Location field is malformed. The reviewer needs to know which structural file is broken.

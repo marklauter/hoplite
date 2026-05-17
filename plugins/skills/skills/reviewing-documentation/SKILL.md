@@ -5,11 +5,11 @@ description: Use when reviewing local markdown diffs before commit. Produces str
 
 # Reviewing documentation
 
-Pre-commit review of markdown diffs through six lenses — Structure, Line, Copy, Accuracy, Coherence, References — producing severity-classified findings under `.findings/` against the writing-documentation rubric.
+Pre-commit review of markdown diffs through six lenses — Structure, Line, Copy, Accuracy, Coherence, References — producing severity-classified findings under `.findings/` against the writing-prose rubric.
 
 ## Philosophy
 
-The rubric is writing-documentation. Reviewing-documentation judges; writing-documentation prescribes. The two skills co-evolve. Every finding traces to a writing-documentation Philosophy anchor — the Philosophy section is the contract the reviewer enforces; the Guidance section applies it.
+The rubric is writing-prose. Reviewing-documentation judges; writing-prose prescribes. The two skills co-evolve. Every finding traces to a writing-prose Philosophy anchor — the Philosophy section is the contract the reviewer enforces; the Guidance section applies it.
 
 ### Findings are observations, not commands
 
@@ -38,7 +38,7 @@ The vocabulary — important, nit, pre-existing — names the action the author 
 
 ### Findings discover principles
 
-A finding that cites a non-canonical principle is a candidate for promotion into writing-documentation. The reviewer can free-form the `Principle:` field when no canonical anchor fits; `summarize.sh` surfaces these for the author to triage. The writing skill grows from review pressure rather than from speculative additions.
+A finding that cites a non-canonical principle is a candidate for promotion into writing-prose. The reviewer can free-form the `Principle:` field when no canonical anchor fits; `summarize.sh` surfaces these for the author to triage. The writing skill grows from review pressure rather than from speculative additions.
 
 ## Guidance
 
@@ -49,14 +49,14 @@ Concrete patterns for producing findings and running the workflow.
 1. Pick the scope. For documentation review, the default is diff mode: `changes.sh` (no args) produces the diff plus the changed-file list. For whole-corpus audits, use `changes.sh --all [<dir>]` or `changes.sh --paths <p>...`. When `changes.sh` exits with the no-diff hint, surface it to the user — do not silently switch modes.
 2. Read enough surrounding context of each in-scope page to detect the operating register.
 3. Detect the register from sibling documents before judging. A tutorial-friendly opening is not a defect in a tutorial folder.
-4. For each in-scope line (diff mode) or page (audit mode), evaluate against writing-documentation principles through each of the six lenses. When a principle is violated, compose a finding.
+4. For each in-scope line (diff mode) or page (audit mode), evaluate against writing-prose principles through each of the six lenses. When a principle is violated, compose a finding.
 5. `report-finding.sh --type documentation --lens <name>` writes the finding to `.findings/<slug>.md`. The slug comes from the title; the script enforces the type, severity, and lens enums. Slug collisions auto-suffix (`-2`, `-3`, ...) — writes always succeed, so repeated audit passes accumulate findings rather than silently dropping them.
 6. `list-findings.sh` enumerates the current findings by reading each file's head. Scan it before composing a new finding — match on title, principle, and lens, since the slug catches reworded duplicates. `query.sh --type documentation --lens <name>` is the tool for predicate-driven scans (filter by lens, severity, principle, etc.) when the finding set has grown.
 7. `summarize.sh` collapses the directory to counts plus verdict. Run it when the review pass is complete. The verdict reads `review passes`, `review passes; nits optional`, or `review blocked on important findings` — same vocabulary in diff and audit modes.
 
 ### Severity calibration
 
-- important — the prose contradicts source code (Accuracy), breaks a hard editorial rule that changes how the reader understands the page (factual claim, broken cross-reference, or malformed page structure that prevents the page from doing its job), or violates a writing-documentation Philosophy anchor with real cost. Blocks the review.
+- important — the prose contradicts source code (Accuracy), breaks a hard editorial rule that changes how the reader understands the page (factual claim, broken cross-reference, or malformed page structure that prevents the page from doing its job), or violates a writing-prose Philosophy anchor with real cost. Blocks the review.
 - nit — style miss, idiom miss, or judgment call without behavioral consequence (a sentence that could be tighter, a heading that could be sharper, a missing Oxford comma). The author may fix or skip.
 - pre-existing — diff-mode only. Defect on prose the diff did not touch, surfaced because the reviewer's eye fell on it while reviewing nearby changes. Not blocking. Natural input to triage for follow-up work. In audit mode `pre-existing` does not apply — there is no diff to be "outside of"; every defect is `important` or `nit`.
 
@@ -74,8 +74,8 @@ A register mismatch is itself a finding — when the document's register does no
 
 ### The Principle and Lens fields
 
-- `Principle:` prefers a writing-documentation Philosophy anchor verbatim. The match links the finding to the rubric and keeps the vocabulary stable.
-- When no existing anchor fits, use a free-form descriptor. `summarize.sh` flags the mismatch; these findings are candidates for promotion into writing-documentation.
+- `Principle:` prefers a writing-prose Philosophy anchor verbatim. The match links the finding to the rubric and keeps the vocabulary stable.
+- When no existing anchor fits, use a free-form descriptor. `summarize.sh` flags the mismatch; these findings are candidates for promotion into writing-prose.
 - `Lens:` is required and is one of the six. The lens names the kind of defect; the principle names the rule violated. A single defect maps to one lens — when it could map to two, choose the lens whose signals (listed in Per-lens signals below) catch it most directly.
 
 ### Location
@@ -188,7 +188,7 @@ Severity: <important | nit | pre-existing>
 Type: documentation
 Lens: <Structure | Line | Copy | Accuracy | Coherence | References>
 Location: `path/to/page.md:42`
-Principle: <writing-documentation Philosophy anchor>
+Principle: <writing-prose Philosophy anchor>
 <one-line summary>
 
 ## Observation
@@ -213,7 +213,7 @@ Five scripts ship under `${CLAUDE_PLUGIN_ROOT}/scripts/`, shared with reviewing-
 - `report-finding.sh --type <code|documentation> [--lens <name>] <title> <severity> <location> <principle> <summary>` — body piped on stdin. For documentation findings, `--type documentation` and `--lens <name>` are required. Slugifies the title for the filename, validates the type, severity, and lens enums, writes `.findings/<slug>.md`. On slug collision, auto-suffixes (`-2`, `-3`, ...) — every call succeeds.
 - `list-findings.sh` — reads the head fields of each `.findings/*.md` and emits one entry per finding: title, severity, type, lens (when present), location, principle, summary, slug filename. Use to dedup before composing a new finding.
 - `query.sh [--title PAT] [--severity LEVEL] [--xseverity LEVEL] [--type KIND] [--xtype KIND] [--lens NAME] [--xlens NAME] [--location PAT] [--principle PAT] [--summary PAT]` — filters findings by structured predicates. Multiple predicates AND together; no predicates matches every finding. The `--x*` flags exclude matches on the enum fields (severity, type, lens). Use `--type documentation` to scan only doc findings; `--xlens References` to filter out reference-checking output; `--xseverity pre-existing` to focus on actionable findings.
-- `summarize.sh` — counts findings by severity per type, prints a lens breakdown when documentation findings are present, prints the verdict line, and flags any finding whose `Principle:` value is not a canonical writing-documentation heading. When `CLAUDE_PLUGIN_ROOT` is unset or the writing-documentation skill file is unreadable, the canonical-principle check is skipped and a warning prints to stderr.
+- `summarize.sh` — counts findings by severity per type, prints a lens breakdown when documentation findings are present, prints the verdict line, and flags any finding whose `Principle:` value is not a canonical writing-prose heading. When `CLAUDE_PLUGIN_ROOT` is unset or the writing-prose skill file is unreadable, the canonical-principle check is skipped and a warning prints to stderr.
 
 ### Output discipline
 
@@ -234,5 +234,5 @@ When a finding is malformed, the rule is: fix the finding.
 - An `important` finding without a `## Suggested fix` is a defect. The author needs the path forward.
 - A `pre-existing` finding for a line the diff modified is a defect. The scope is mis-classified — the line did change, so the finding is `important` or `nit`.
 - A `pre-existing` finding produced in audit mode is a defect. Audit mode has no diff; every defect is `important` or `nit`.
-- A finding citing a non-canonical principle is a candidate for promotion into writing-documentation. `summarize.sh` surfaces it; the author decides during triage.
+- A finding citing a non-canonical principle is a candidate for promotion into writing-prose. `summarize.sh` surfaces it; the author decides during triage.
 - An Accuracy finding without a source `path:line` in the Location field is malformed. The whole point of the Accuracy lens is the source citation.

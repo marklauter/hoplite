@@ -1,16 +1,16 @@
 # Write the writing-skills and reviewing-skills pair
 
 Tags: todo,skills
-LLM-targeted structural pair layered on the writing-documentation editorial spine; lands now that the documentation pair has settled.
+LLM-targeted structural pair layered on the writing-prose editorial spine; lands now that the documentation pair has settled.
 
 
 ## Observation
 
-The `writing-documentation` / `reviewing-documentation` pair settled across commits `e9cda8c` through `ea53d33`. During design we agreed that skills, agent prompts, and slash commands form a distinct genre — LLM-targeted prose with extreme density requirements, the canonical four-section shape, and no bold/tables — and that the dedicated pair lands after the documentation pair stabilizes. The documentation pair has now stabilized.
+The `writing-prose` / `reviewing-documentation` pair settled across commits `e9cda8c` through `ea53d33`. During design we agreed that skills, agent prompts, and slash commands form a distinct genre — LLM-targeted prose with extreme density requirements, the canonical four-section shape, and no bold/tables — and that the dedicated pair lands after the documentation pair stabilizes. The documentation pair has now stabilized.
 
 ## Interpretation
 
-`writing-skills` loads `writing-documentation` as the editorial spine and layers the structural conventions for skill files on top:
+`writing-skills` loads `writing-prose` as the editorial spine and layers the structural conventions for skill files on top:
 
 - The canonical four-section shape (intro → Philosophy → Guidance → Validation).
 - Named-anchor Philosophy intro with one paragraph of orienting threads, then `###` headings.
