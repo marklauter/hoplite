@@ -1,10 +1,23 @@
+![MSL Armory](https://raw.githubusercontent.com/marklauter/claude/main/images/msl.armory.small.png "MSL Armory")
+
 # msl.armory — a collection of skills
 
-A single git repo to centrally maintain Claude Code skills, replacing copies spread across many project repos.
+A single git repo to maintain Claude Code skills, replacing copies spread across many project repos.
 
-## Structure (subject to drift)
+## Install locally
 
+From inside Claude Code, with `<repo>` as the absolute path to your clone (the directory holding `.claude-plugin/marketplace.json`):
+
+```text
+/plugin marketplace add <repo>
+/plugin install skills@msl.armory
 ```
+
+After editing a skill, run `/reload-plugins` to apply.
+
+## Structure
+
+```text
 .claude-plugin/marketplace.json           # marketplace manifest
 plugins/skills/                           # the "skills" plugin
   .claude-plugin/plugin.json
@@ -19,20 +32,9 @@ docs/
   journal/                                # journaling output
 ```
 
-## Install locally
-
-From any directory inside Claude Code, with `<repo>` set to the absolute path of your clone of this repo (the directory containing `.claude-plugin/marketplace.json`):
-
-```
-/plugin marketplace add <repo>
-/plugin install skills@msl.armory
-```
-
-After editing a skill, run `/reload-plugins` to apply.
-
 ## Skill template
 
-Every skill is a single `SKILL.md` that looks roughly like this:
+Every skill is a single `SKILL.md` that looks like this:
 
 ```markdown
 ---
@@ -57,11 +59,11 @@ Concrete patterns, idioms, and rules. The dense reference material.
 How to verify the work meets the philosophy and guidance.
 ```
 
-- Skill name: gerund form per Anthropic best practices (`writing-X`, `reviewing-X`, `triaging-X`).
+- Skill name: gerund form (`writing-X`, `reviewing-X`, `triaging-X`).
 - Description: the trigger. Claude reads this to decide whether to load the skill — invest in it.
 - Body: the domain knowledge that gets injected when the skill activates.
 
-Individual skills drift from this template as their domain demands; the canonical reference is `plugins/skills/skills/writing-csharp/SKILL.md`.
+Individual skills drift from this template; the canonical reference is `plugins/skills/skills/writing-csharp/SKILL.md`.
 
 ## Adding a skill
 
@@ -89,7 +91,7 @@ GitHub:
 
 - `managing-github-issues` — list, search, dedupe, file, triage, comment.
 
-Shared scripts at `plugins/skills/scripts/` — the runtime index over `.findings/`:
+Shared scripts at `plugins/skills/scripts/` — the writer and readers over `.findings/`:
 
 - `report-finding.sh` — writes a `.findings/<slug>.md` with the canonical head-field shape.
 - `list-findings.sh`, `query.sh`, `summarize.sh` — read the head fields; reviewer skills and `triaging-findings` invoke these instead of enumerating the directory.
@@ -100,11 +102,11 @@ Bash test runner at `plugins/skills/tests/run-tests.sh`:
 - Discovers `*_test.sh` files anywhere under the plugin and runs each `test_*` function in a fresh tmpdir under `set -e`.
 - Ships an assertion library (`assert_equal`, `assert_contains`, `assert_match`, `assert_exit_code`, `assert_file_exists`, ...) documented inline at the top of the file.
 
-## Publishing to GitHub later
+## Publishing to GitHub
 
 Push this repo to GitHub, then update the marketplace source in consumers:
 
-```
+```text
 /plugin marketplace remove msl.armory
 /plugin marketplace add <github-user>/<repo-name>
 ```
