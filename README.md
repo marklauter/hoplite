@@ -1,6 +1,11 @@
+[![claude code](https://img.shields.io/badge/Claude%20Code-plugin-d97757?logo=anthropic)](https://docs.claude.com/en/docs/claude-code/plugins)
+[![license](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+
 ![MSL Armory](https://raw.githubusercontent.com/marklauter/claude/main/images/msl.armory.small.png "MSL Armory")
 
-# msl.armory — a collection of skills
+# claude plugin
+
+*Another weapon from the MSL Armory.*
 
 A single git repo to maintain Claude Code skills, replacing copies spread across many project repos.
 
