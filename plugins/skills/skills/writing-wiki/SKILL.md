@@ -120,6 +120,18 @@ Concrete rules for applying the principles. Each subsection mirrors a Philosophy
 - The same concept is named the same way across the entire wiki. Pick one of "request handler" or "pipeline handler" and use it everywhere.
 - When a term's meaning differs by context, name the context: "the handler (the user code)" vs "the handler (the framework's `RequestHandler`)."
 
+### Link mechanics on GitHub-hosted wikis
+
+When the wiki is a GitHub repository wiki (the `{project}.wiki` repo paired with `{project}`), link form follows GitHub's wiki renderer, not general markdown. A link that works locally but breaks at github.com helps no one — the wiki is read in the browser, not on disk.
+
+- Detect the host. A CWD ending in `.wiki` is a GitHub wiki repo by convention; assume GitHub link rules unless existing pages contradict. Wikis published through other engines (Docusaurus, MkDocs, self-hosted) resolve links differently — read the existing pages to confirm the form before writing new links.
+- Wiki-to-wiki page links omit the `.md` extension: `[text](Page-Name)`, not `[text](Page-Name.md)`. GitHub resolves the bare slug. Including `.md` renders as a broken link.
+- Page filenames use `Title-Case-With-Hyphens.md`. The link target is the basename without extension, matching the on-disk filename. A page renamed on disk needs the same rename in every link.
+- In-page and cross-page anchors use GitHub's heading-slug transform: lowercase, spaces and punctuation to hyphens, leading hyphens stripped. `## Picking a Strategy` becomes `#picking-a-strategy`. Cross-page form is `[text](Page-Name#picking-a-strategy)`.
+- Links into the companion source repository — when the wiki wants to send the reader to a specific source file — use absolute GitHub URLs: `https://github.com/<owner>/<repo>/blob/<ref>/<path>#L42`. Prefer a tagged release or commit SHA for `<ref>` when stability matters; `main` is acceptable for living references. Relative `../` paths from the wiki repo do not resolve at render time.
+- The Accuracy-lens source citation form `(source: ../{project}/path/to/file:line)` is a verification breadcrumb for the reviewer, not a reader-facing link. When the page also wants the reader to be able to click through to the source, add the GitHub URL alongside or in place of the citation.
+- `_Sidebar.md` and `Home.md` follow the same rules — entries are `[Page Name](Page-Name)` with no `.md`.
+
 ## Validation
 
 Validation for wiki pages is the loop the author runs before commit. The reviewer runs the same loop across the whole wiki.

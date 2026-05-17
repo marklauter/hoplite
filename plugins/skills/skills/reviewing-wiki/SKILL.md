@@ -52,7 +52,7 @@ Concrete patterns for producing findings and running the workflow.
 
 ### The workflow
 
-1. Locate the source clone. The standard layout is sibling clones — when CWD is `{project}.wiki/`, the source clone is the sibling directory `{project}/` (strip the `.wiki` suffix from CWD's name). The Accuracy lens cites source as `(source: ../{project}/path/to/file:line)`. When the wiki lives inside the source repo instead (a `docs/` subdirectory or a self-hosted wiki engine), source paths resolve normally within the repo.
+1. Locate the source clone and detect the host. The standard layout is sibling clones — when CWD is `{project}.wiki/`, the source clone is the sibling directory `{project}/` (strip the `.wiki` suffix from CWD's name), and the host is GitHub by convention (the `.wiki` repo is paired with the GitHub repo of the same name). The Accuracy lens cites source as `(source: ../{project}/path/to/file:line)`. The References lens applies GitHub wiki link rules — see the References signals below. When the wiki lives inside the source repo instead (a `docs/` subdirectory or a self-hosted wiki engine), source paths resolve normally within the repo and link rules follow whichever renderer the docs site uses.
 2. Pick the scope. For wiki review, the default is audit mode: `changes.sh --all .` enumerates the wiki's files. When a fresh diff exists (uncommitted page edits), `changes.sh` with no args produces the diff view instead. Diff mode is the pre-commit gate; audit mode is the routine whole-wiki pass before publishing.
 3. Read enough surrounding context of each in-scope page to detect the operating triple (audience, tone, register).
 4. For each in-scope page, open `_Sidebar.md` to confirm which section it belongs to. Read at least two sibling pages in the same section to detect the section's triple. A page whose register does not match its section's is itself a finding.
@@ -197,6 +197,10 @@ Link integrity, sidebar partition integrity, and cross-reference correctness.
 - `Home.md` points at a section heading that does not exist in `_Sidebar.md`.
 - Anchor links to headings within a page do not resolve to actual headings.
 - An external link (vendor doc, RFC, repo, package registry) returns 404 or has been redirected to unrelated content.
+- On a GitHub-hosted wiki (CWD ending in `.wiki`), a wiki-to-wiki link includes the `.md` extension — `[text](Page-Name.md)` renders broken; the form GitHub resolves is `[text](Page-Name)`.
+- On a GitHub-hosted wiki, a cross-page or in-page anchor uses a fragment that does not match GitHub's heading-slug transform (lowercase, spaces and punctuation to hyphens). `#Picking-A-Strategy` does not resolve; `#picking-a-strategy` does.
+- On a GitHub-hosted wiki, a link into the companion source repo uses a relative `../{project}/path` path that does not resolve at render time. The form that works in the browser is an absolute `https://github.com/<owner>/<repo>/blob/<ref>/<path>` URL, optionally with `#L42`.
+- `_Sidebar.md` or `Home.md` entries on a GitHub-hosted wiki include `.md` in link targets, producing a broken sidebar.
 
 ## Validation
 
