@@ -5,7 +5,7 @@
 
 # claude plugin
 
-*Another weapon from the MSL Armory.*
+*Another weapon from the MSL Armory*
 
 A single git repo to maintain Claude Code skills, replacing copies spread across many project repos.
 
