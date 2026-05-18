@@ -52,7 +52,7 @@ Concrete patterns for producing findings and running the workflow.
 
 ### The workflow
 
-1. Locate the source clone and detect the host. The standard layout is sibling clones — when CWD is `{project}.wiki/`, the source clone is the sibling directory `{project}/` (strip the `.wiki` suffix from CWD's name), and the host is GitHub by convention (the `.wiki` repo is paired with the GitHub repo of the same name). The Accuracy lens cites source as `(source: ../{project}/path/to/file:line)`. The References lens applies GitHub wiki link rules — see the References signals below. When the wiki lives inside the source repo instead (a `docs/` subdirectory or a self-hosted wiki engine), source paths resolve normally within the repo and link rules follow whichever renderer the docs site uses.
+1. Locate the source clone and detect the host. The standard layout is sibling clones — when CWD is `{project}.wiki/`, the source clone is the sibling directory `{project}/` (strip the `.wiki` suffix from CWD's name), and the host is GitHub by convention (the `.wiki` repo is paired with the GitHub repo of the same name). The Accuracy lens reads source citations as `(source: ../{project}/path/to/file.cs Symbol)` — file plus a stable identifier (class, type, method, exported function) — and resolves them by opening the file and locating the symbol. The References lens applies GitHub wiki link rules — see the References signals below. When the wiki lives inside the source repo instead (a `docs/` subdirectory or a self-hosted wiki engine), source paths resolve normally within the repo and link rules follow whichever renderer the docs site uses.
 2. Pick the scope. For wiki review, the default is audit mode: `changes.sh --all .` enumerates the wiki's files. When a fresh diff exists (uncommitted page edits), `changes.sh` with no args produces the diff view instead. Diff mode is the pre-commit gate; audit mode is the routine whole-wiki pass before publishing.
 3. Read enough surrounding context of each in-scope page to detect the operating triple (audience, tone, register).
 4. For each in-scope page, open `_Sidebar.md` to confirm which section it belongs to. Read at least two sibling pages in the same section to detect the section's triple. A page whose register does not match its section's is itself a finding.
@@ -90,7 +90,7 @@ A register mismatch is itself a finding — when the page's register does not ma
 
 - Single location is the default: `` `path/to/Page-Name.md:42` ``. Repo-relative path, the most relevant line.
 - Multiple locations for the same defect are comma-separated: `` `docs/A.md:10, docs/B.md:25` ``. Use only when the locations share the exact same defect; distinct defects get distinct findings even when they violate the same principle in the same lens.
-- Accuracy findings cite both the doc line and the source `path:line` that the doc contradicts: `` `Building-A-Pipeline.md:14 (source: src/Pipeline/Builder.cs:88)` ``.
+- Accuracy findings cite both the doc line (where the wiki claim lives) and the source symbol (file plus class, type, or method name) the doc contradicts: `` `Building-A-Pipeline.md:14 (source: src/Pipeline/Builder.cs Build method)` ``. The doc-side `path:line` is point-in-time defect-location metadata; the source-side citation is a symbol so the reference survives the next refactor.
 - Sidebar and Home findings cite the structural file plus the affected entry: `` `_Sidebar.md:18 (page: Recipe-Webhook-Receiver.md)` ``.
 
 ### Dedup before writing
@@ -157,16 +157,28 @@ Grammar, formatting, mechanical consistency.
 
 Claims that contradict the source code or the authoritative artifact.
 
-- A function signature, parameter list, or return type that does not match the source.
+The Accuracy lens runs against symbol-based citations — published prose cites source as a file plus a stable identifier (class, type, method, exported function), not a line number. Line numbers shift on every commit; symbols survive refactors. The reviewer's discipline is to follow each cited symbol back to source and verify the wiki's claim still holds.
+
+Drift-detection workflow:
+
+1. Spot a checkable claim in the prose — a signature, default, flag, behavior assertion, code sample.
+2. Read the page's source citation. The form is `(source: path/to/file.ext Symbol)` — for a sibling-clone wiki the path is relative to the wiki dir (`../{project}/...`); for an in-repo wiki it is repo-relative.
+3. Open the cited file and resolve the symbol. If the symbol is present, compare the wiki's claim against what the symbol actually does. If the symbol is renamed, moved to a different file, or removed, that is drift.
+4. File a finding when the claim and the source disagree, when the citation is missing for a checkable claim, or when the symbol no longer resolves.
+
+Signals:
+
+- A function signature, parameter list, or return type that does not match the source at the cited symbol.
 - A configuration key, default value, or environment variable that does not match what the code reads.
 - A command-line flag, argument order, or required flag that the implementation does not support.
 - A version number, dependency, or feature claim that does not match the actual state of the system.
 - A path, file name, or URL that does not exist.
-- A behavior description that contradicts what the code does.
+- A behavior description that contradicts what the code does at the cited symbol.
 - A code sample that does not compile against the current source.
 - An external reference (RFC, vendor doc, spec URL) the page depends on that has changed or is unreachable.
-- A claim about behavior, signature, or default that lacks a source citation — accuracy is verifiable only when the citation is present.
-- Findings in this lens require the source citation in the Location field: `` `Building-A-Pipeline.md:14 (source: src/Pipeline/Builder.cs:88)` ``.
+- A claim about behavior, signature, or default that lacks a source citation — accuracy is verifiable only when the citation is present. The citation form is `(source: path/to/file.ext Symbol)`; a citation that names only a file (no symbol) or that uses a `:line` suffix is also a defect, since neither form anchors the claim to something the reviewer can resolve and re-verify after a refactor.
+- Symbol drift — the cited symbol has been renamed or removed. Even when the new code happens to behave the same way the wiki describes, the citation no longer resolves and the next reviewer cannot verify the claim. Symbol drift is an `important` Accuracy finding; the suggested fix updates the citation to the current symbol (and the prose, when the rename also changes the reader-facing name).
+- Findings in this lens require the source citation in the Location field, with the source side using the symbol form: `` `Building-A-Pipeline.md:14 (source: src/Pipeline/Builder.cs Build method)` ``. The wiki-side `path:line` is defect-location metadata; the source-side citation is a symbol.
 
 #### Coherence
 
@@ -268,5 +280,5 @@ When a finding is malformed, the rule is: fix the finding.
 - A `pre-existing` finding for a line the diff modified is a defect. The scope is mis-classified — the line did change, so the finding is `important` or `nit`.
 - A `pre-existing` finding produced in audit mode is a defect. Audit mode has no diff; every defect is `important` or `nit`.
 - A finding citing a non-canonical principle is a candidate for promotion into writing-wiki or writing-prose. `summarize.sh` surfaces it; the author decides during triage.
-- An Accuracy finding without a source `path:line` in the Location field is malformed. The whole point of the Accuracy lens is the source citation.
+- An Accuracy finding without a source symbol citation in the Location field is malformed. The form is `(source: path/to/file.ext Symbol)` — file plus class, type, method, or exported function name. A `:line` suffix on the source side is the antipattern the lens was redesigned to reject; the wiki-side `path:line` (defect location) stays.
 - A Structure finding about section assignment, sidebar partition, or Home shape that does not name the affected structural file (`_Sidebar.md` or `Home.md`) in the Location field is malformed. The reviewer needs to know which structural file is broken.

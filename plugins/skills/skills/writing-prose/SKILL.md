@@ -11,7 +11,7 @@ Foundational editorial knowledge lives here — the authoring virtues that apply
 
 Register emerges from the artifact's intent and audience. Downstream skills may explicitly name it; otherwise, derive it.
 
-Downstream skills declare their full rhetorical context as a `## Rhetorical context` section in their own SKILL.md — a bulleted list with one `Slot: value` line per slot, covering all ten: writer, voice, ethos, stance, audience, subject, genre, tone, register, intent.
+Downstream skills declare their full rhetorical context as a `## Rhetorical context` section in their own SKILL.md — a bulleted list with one `Slot: value` line per slot, covering all ten: writer, voice, ethos, stance, audience, subject, genre, tone, register, intent. Slots a downstream omits inherit from [default-rhetorical-context.md](${CLAUDE_PLUGIN_ROOT}/skills/writing-prose/default-rhetorical-context.md); subject and intent have no universal default and every downstream must declare them.
 
 ### Deriving a register
 

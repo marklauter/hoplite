@@ -73,7 +73,7 @@ Concrete rules for applying the principles. Each subsection mirrors a Philosophy
 
 - Locate the source clone before writing. The standard layout is sibling clones — when CWD is `{project}.wiki/`, the source clone is the sibling directory `{project}/` (strip the `.wiki` suffix from CWD's name). When the wiki lives inside the source repo instead (a `docs/` subdirectory or a self-hosted wiki engine), source paths resolve normally within the repo. If neither layout applies and no source location is configured, stop and ask — do not write from memory.
 - Read the relevant source files before writing about them. Documenting from memory is the most common way pages drift from reality.
-- Cite source files with `path:line` notation when claiming a specific behavior or signature: `(source: ../{project}/path/to/file:line)` for sibling-clone wikis, or the in-repo `path:line` when the wiki and source share a tree. The citation is what makes the claim verifiable on the next sync, and it is the form `reviewing-wiki`'s Accuracy lens checks for.
+- Cite source files by symbol when claiming a specific behavior or signature — name the file plus a stable identifier (class, type, method, exported function) the reviewer can resolve in source: `(source: ../{project}/src/Pipeline/Builder.cs Build method)` for sibling-clone wikis, or the in-repo equivalent (`(source: src/Pipeline/Builder.cs Build method)`) when the wiki and source share a tree. Symbols survive refactors that move code around within a file; line numbers do not. Renames are real drift and the Accuracy lens treats them as such — see `reviewing-wiki`.
 - Code samples in wiki pages compile against the current source. When a type, method, or signature changes, every page that mentions it goes stale; update them in the same change set.
 - External references the wiki depends on (RFCs, vendor docs, spec URLs) are also accuracy authorities. When they change, the page that depends on them is stale.
 - When a claim cannot be verified against any authority, flag it in the page or remove it. Unverified claims accumulate into wikis the reader cannot trust.
@@ -129,7 +129,7 @@ When the wiki is a GitHub repository wiki (the `{project}.wiki` repo paired with
 - Page filenames use `Title-Case-With-Hyphens.md`. The link target is the basename without extension, matching the on-disk filename. A page renamed on disk needs the same rename in every link.
 - In-page and cross-page anchors use GitHub's heading-slug transform: lowercase, spaces and punctuation to hyphens, leading hyphens stripped. `## Picking a Strategy` becomes `#picking-a-strategy`. Cross-page form is `[text](Page-Name#picking-a-strategy)`.
 - Links into the companion source repository — when the wiki wants to send the reader to a specific source file — use absolute GitHub URLs: `https://github.com/<owner>/<repo>/blob/<ref>/<path>#L42`. Prefer a tagged release or commit SHA for `<ref>` when stability matters; `main` is acceptable for living references. Relative `../` paths from the wiki repo do not resolve at render time.
-- The Accuracy-lens source citation form `(source: ../{project}/path/to/file:line)` is a verification breadcrumb for the reviewer, not a reader-facing link. When the page also wants the reader to be able to click through to the source, add the GitHub URL alongside or in place of the citation.
+- The Accuracy-lens source citation form `(source: ../{project}/path/to/file.cs Symbol)` is a verification breadcrumb for the reviewer, not a reader-facing link. When the page also wants the reader to be able to click through to the source, add the GitHub URL alongside or in place of the citation — and prefer linking to the symbol via a tagged release or commit SHA so the link does not rot.
 - `_Sidebar.md` and `Home.md` follow the same rules — entries are `[Page Name](Page-Name)` with no `.md`.
 
 ## Validation
@@ -156,7 +156,7 @@ Address every must-fix before commit; prioritize suggestions by impact.
 
 1. Read the section's siblings before composing. Confirm the triple before judging your own prose.
 2. Read the relevant source files. Documenting from memory is the most common way pages drift.
-3. Compose the page. Lede first; usage before internals; cite sources with `path:line`.
+3. Compose the page. Lede first; usage before internals; cite sources by symbol (file plus class, type, or method name) — never by line number.
 4. Reread the changed prose against the four lenses. The check is mechanical.
 5. Run `reviewing-documentation` for the formal pass. Address findings before commit.
 
