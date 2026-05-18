@@ -9,7 +9,7 @@ Pre-commit review of markdown diffs through six lenses — Structure, Line, Copy
 
 ## Philosophy
 
-The rubric is writing-prose. Reviewing-documentation judges; writing-prose prescribes. The two skills co-evolve. Every finding traces to a writing-prose Philosophy anchor — the Philosophy section is the contract the reviewer enforces; the Guidance section applies it.
+The rubric is writing-prose. Reviewing-documentation judges; writing-prose prescribes. The two skills co-evolve. Every finding traces to a writing-prose principle name — the canonical phrase before the em-dash on each principle bullet under Composition, Grammar/structure/referential integrity, or the Validation judgement subsection. Those principles are the contract the reviewer enforces.
 
 ### Findings are observations, not commands
 
@@ -56,7 +56,7 @@ Concrete patterns for producing findings and running the workflow.
 
 ### Severity calibration
 
-- important — the prose contradicts source code (Accuracy), breaks a hard editorial rule that changes how the reader understands the page (factual claim, broken cross-reference, or malformed page structure that prevents the page from doing its job), or violates a writing-prose Philosophy anchor with real cost. Blocks the review.
+- important — the prose contradicts source code (Accuracy), breaks a hard editorial rule that changes how the reader understands the page (factual claim, broken cross-reference, or malformed page structure that prevents the page from doing its job), or violates a writing-prose principle with real cost. Blocks the review.
 - nit — style miss, idiom miss, or judgment call without behavioral consequence (a sentence that could be tighter, a heading that could be sharper, a missing Oxford comma). The author may fix or skip.
 - pre-existing — diff-mode only. Defect on prose the diff did not touch, surfaced because the reviewer's eye fell on it while reviewing nearby changes. Not blocking. Natural input to triage for follow-up work. In audit mode `pre-existing` does not apply — there is no diff to be "outside of"; every defect is `important` or `nit`.
 
@@ -74,7 +74,7 @@ A register mismatch is itself a finding — when the document's register does no
 
 ### The Principle and Lens fields
 
-- `Principle:` prefers a writing-prose Philosophy anchor verbatim. The match links the finding to the rubric and keeps the vocabulary stable.
+- `Principle:` prefers a writing-prose principle name verbatim — the phrase before the em-dash on a bullet under Composition, Grammar/structure/referential integrity, or the Validation judgement subsection. The match links the finding to the rubric and keeps the vocabulary stable.
 - When no existing anchor fits, use a free-form descriptor. `summarize.sh` flags the mismatch; these findings are candidates for promotion into writing-prose.
 - `Lens:` is required and is one of the six. The lens names the kind of defect; the principle names the rule violated. A single defect maps to one lens — when it could map to two, choose the lens whose signals (listed in Per-lens signals below) catch it most directly.
 
@@ -188,7 +188,7 @@ Severity: <important | nit | pre-existing>
 Type: documentation
 Lens: <Structure | Line | Copy | Accuracy | Coherence | References>
 Location: `path/to/page.md:42`
-Principle: <writing-prose Philosophy anchor>
+Principle: <writing-prose principle name>
 <one-line summary>
 
 ## Observation
@@ -213,7 +213,7 @@ Five scripts ship under `${CLAUDE_PLUGIN_ROOT}/scripts/`, shared with reviewing-
 - `report-finding.sh --type <code|documentation> [--lens <name>] <title> <severity> <location> <principle> <summary>` — body piped on stdin. For documentation findings, `--type documentation` and `--lens <name>` are required. Slugifies the title for the filename, validates the type, severity, and lens enums, writes `.findings/<slug>.md`. On slug collision, auto-suffixes (`-2`, `-3`, ...) — every call succeeds.
 - `list-findings.sh` — reads the head fields of each `.findings/*.md` and emits one entry per finding: title, severity, type, lens (when present), location, principle, summary, slug filename. Use to dedup before composing a new finding.
 - `query.sh [--title PAT] [--severity LEVEL] [--xseverity LEVEL] [--type KIND] [--xtype KIND] [--lens NAME] [--xlens NAME] [--location PAT] [--principle PAT] [--summary PAT]` — filters findings by structured predicates. Multiple predicates AND together; no predicates matches every finding. The `--x*` flags exclude matches on the enum fields (severity, type, lens). Use `--type documentation` to scan only doc findings; `--xlens References` to filter out reference-checking output; `--xseverity pre-existing` to focus on actionable findings.
-- `summarize.sh` — counts findings by severity per type, prints a lens breakdown when documentation findings are present, prints the verdict line, and flags any finding whose `Principle:` value is not a canonical writing-prose heading. When `CLAUDE_PLUGIN_ROOT` is unset or the writing-prose skill file is unreadable, the canonical-principle check is skipped and a warning prints to stderr.
+- `summarize.sh` — counts findings by severity per type, prints a lens breakdown when documentation findings are present, prints the verdict line, and flags any finding whose `Principle:` value is not a canonical writing-prose principle name. When `CLAUDE_PLUGIN_ROOT` is unset or the writing-prose skill file is unreadable, the canonical-principle check is skipped and a warning prints to stderr.
 
 ### Output discipline
 

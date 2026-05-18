@@ -20,9 +20,10 @@
 #   - any pre-existing           → appended "; pre-existing triage pending"
 #
 # Non-canonical principles are reported per type. Type code is checked against
-# writing-csharp Philosophy headings; type documentation against writing-prose;
-# type wiki against the union of writing-wiki and writing-prose (wiki findings
-# may cite either rubric).
+# writing-csharp Philosophy headings; type documentation against writing-prose
+# principle bullets; type wiki against the union of writing-wiki Philosophy
+# headings and writing-prose principle bullets (wiki findings may cite either
+# rubric).
 #
 # Empty or missing .findings/ prints `no findings` and exits 0.
 #
@@ -94,6 +95,31 @@ read_canonical() {
     awk '/^## Philosophy/{flag=1; next} /^## /{flag=0} flag && /^### /{sub(/^### /, ""); sub(/ \([^)]+\)$/, ""); print}' "$skill"
 }
 
+# writing-prose holds principles as bulleted list items under three H2 sections
+# rather than as `### ` anchors. The canonical name is the text between the
+# leading `- ` and the first ` — ` (space-em-dash-space). Citation suffixes are
+# stripped so authors may cite either form.
+read_canonical_prose() {
+    local skill="$1"
+    [ -f "$skill" ] || return 0
+    awk '
+        /^## Composition/ { flag=1; next }
+        /^## Grammar, structure, and referential integrity/ { flag=1; next }
+        /^### Self-review — apply judgement/ { flag=1; next }
+        /^## / { flag=0 }
+        /^### / && !/^### Self-review — apply judgement/ { if (flag) flag=0 }
+        flag && /^- / {
+            line = substr($0, 3)
+            idx = index(line, " — ")
+            if (idx > 0) {
+                name = substr(line, 1, idx - 1)
+                sub(/ \([^)]+\)$/, "", name)
+                print name
+            }
+        }
+    ' "$skill"
+}
+
 strip_citation() {
     printf '%s' "$1" | sed -E 's/ \([^)]+\)$//'
 }
@@ -107,7 +133,7 @@ if [ -z "$plugin_root" ]; then
     wiki_canonical_unreadable=1
 else
     code_canonical=$(read_canonical "$code_skill")
-    documentation_canonical=$(read_canonical "$documentation_skill")
+    documentation_canonical=$(read_canonical_prose "$documentation_skill")
     wiki_canonical_own=$(read_canonical "$wiki_skill")
     [ -f "$code_skill" ] && code_canonical_unreadable=0 || code_canonical_unreadable=1
     [ -f "$documentation_skill" ] && documentation_canonical_unreadable=0 || documentation_canonical_unreadable=1
@@ -126,14 +152,13 @@ else
 fi
 
 # Sanity check: if the SKILL.md was readable but no canonical principles were
-# extracted, the Philosophy heading structure has likely drifted from the
-# `### <heading>` shape this script depends on. Warn so the contract failure
-# is visible rather than silent.
+# extracted, the section structure has likely drifted from the shape this
+# script depends on. Warn so the contract failure is visible rather than silent.
 if [ "$code_canonical_unreadable" = "0" ] && [ -z "$code_canonical" ]; then
     echo "summarize.sh: warning: $code_skill was readable but yielded no canonical principles; verify the Philosophy heading shape" >&2
 fi
 if [ "$documentation_canonical_unreadable" = "0" ] && [ -z "$documentation_canonical" ]; then
-    echo "summarize.sh: warning: $documentation_skill was readable but yielded no canonical principles; verify the Philosophy heading shape" >&2
+    echo "summarize.sh: warning: $documentation_skill was readable but yielded no canonical principles; verify the principle-bullet shape under Composition, Grammar/structure/referential integrity, and Validation" >&2
 fi
 if [ "$wiki_canonical_unreadable" = "0" ] && [ -z "$wiki_canonical_own" ]; then
     echo "summarize.sh: warning: $wiki_skill was readable but yielded no canonical principles; verify the Philosophy heading shape" >&2

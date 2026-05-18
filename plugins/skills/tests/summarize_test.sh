@@ -139,6 +139,34 @@ test_canonical_principle_matches_without_citation_suffix() {
     assert_not_contains "$out" "cite a non-canonical principle"
 }
 
+# ---- writing-prose principle bullets ----
+
+test_documentation_canonical_prose_bullet_not_flagged() {
+    # Canonical principle names come from the bullets under Composition,
+    # Grammar/structure/referential integrity, and the Validation judgement
+    # subsection of writing-prose/SKILL.md.
+    make_finding "a" "A" nit documentation Line "Active voice over passive"
+    make_finding "b" "B" nit documentation Copy "Em-dash usage"
+    make_finding "c" "C" nit documentation Structure "Lede check"
+    local out; out=$(CLAUDE_PLUGIN_ROOT="$PLUGIN_ROOT" "$SUMMARIZE" 2>/dev/null)
+    assert_not_contains "$out" "cite a non-canonical principle"
+}
+
+test_documentation_non_canonical_prose_principle_flagged() {
+    make_finding "wonky" "Wonky" nit documentation Line "Made up prose rule"
+    local out; out=$(CLAUDE_PLUGIN_ROOT="$PLUGIN_ROOT" "$SUMMARIZE" 2>/dev/null)
+    assert_contains "$out" "1 documentation finding(s) cite a non-canonical principle"
+    assert_contains "$out" "wonky.md: Made up prose rule"
+}
+
+test_documentation_canonical_includes_validation_judgement_bullets() {
+    # Validation has two subsections; only the judgement bullets are canonical.
+    make_finding "a" "A" nit documentation Line "Negation grep"
+    make_finding "b" "B" nit documentation Line "Source verification"
+    local out; out=$(CLAUDE_PLUGIN_ROOT="$PLUGIN_ROOT" "$SUMMARIZE" 2>/dev/null)
+    assert_not_contains "$out" "cite a non-canonical principle"
+}
+
 # ---- stderr warning when CLAUDE_PLUGIN_ROOT is unset ----
 
 test_unset_plugin_root_emits_stderr_warning() {

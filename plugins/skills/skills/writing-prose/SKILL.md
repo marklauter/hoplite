@@ -83,7 +83,7 @@ Each principle bullet has an expansion file at `${CLAUDE_PLUGIN_ROOT}/skills/wri
 
 ### Self-review — mechanical checks
 
-Run `reviewing-prose` for the formal pass; address findings before commit.
+Run `reviewing-documentation` for the formal pass; address findings before commit.
 
 ### Self-review — apply judgement 
 

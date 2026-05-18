@@ -9,7 +9,7 @@ Pre-commit review of wiki diffs through six lenses — Structure, Line, Copy, Ac
 
 ## Philosophy
 
-The rubric is writing-wiki layered on writing-prose. Reviewing-wiki judges; the writing skills prescribe. Every finding traces to a Philosophy anchor — `writing-wiki` for wiki-shaped violations (section assignment, sidebar partition, register bleed, source-grounded claims) and `writing-prose` for general prose violations (voice, density, sentence-case, define-by-presence). The skill copies and refines the reviewing-documentation rubric rather than composing with it at runtime; runtime composition of signal sets across two reviewer skills is unreliable.
+The rubric is writing-wiki layered on writing-prose. Reviewing-wiki judges; the writing skills prescribe. Every finding traces to a canonical principle — a `writing-wiki` Philosophy anchor for wiki-shaped violations (section assignment, sidebar partition, register bleed, source-grounded claims) or a `writing-prose` principle name for general prose violations (voice, density, sentence-case, define-by-presence). The skill copies and refines the reviewing-documentation rubric rather than composing with it at runtime; runtime composition of signal sets across two reviewer skills is unreliable.
 
 ### Findings are observations, not commands
 
@@ -63,7 +63,7 @@ Concrete patterns for producing findings and running the workflow.
 
 ### Severity calibration
 
-- important — the prose contradicts source code (Accuracy), breaks a hard editorial rule that changes how the reader understands the page (factual claim, broken cross-reference, malformed page structure, register mismatch with the section, orphaned page, broken sidebar link), or violates a writing-wiki or writing-prose Philosophy anchor with real cost. Blocks the review.
+- important — the prose contradicts source code (Accuracy), breaks a hard editorial rule that changes how the reader understands the page (factual claim, broken cross-reference, malformed page structure, register mismatch with the section, orphaned page, broken sidebar link), or violates a writing-wiki Philosophy anchor or a writing-prose principle with real cost. Blocks the review.
 - nit — style miss, idiom miss, or judgment call without behavioral consequence (a sentence that could be tighter, a heading that could be sharper, a missing Oxford comma). The author may fix or skip.
 - pre-existing — diff-mode only. Defect on prose the diff did not touch, surfaced because the reviewer's eye fell on it while reviewing nearby changes. Not blocking. Natural input to triage for follow-up work. In audit mode `pre-existing` does not apply — there is no diff to be "outside of"; every defect is `important` or `nit`.
 
@@ -82,7 +82,7 @@ A register mismatch is itself a finding — when the page's register does not ma
 
 ### The Principle and Lens fields
 
-- `Principle:` prefers a writing-wiki or writing-prose Philosophy anchor verbatim. The match links the finding to the rubric and keeps the vocabulary stable.
+- `Principle:` prefers a canonical name verbatim — a writing-wiki Philosophy anchor or a writing-prose principle name (the phrase before the em-dash on a bullet under Composition, Grammar/structure/referential integrity, or the Validation judgement subsection). The match links the finding to the rubric and keeps the vocabulary stable.
 - When no existing anchor fits, use a free-form descriptor. `summarize.sh` flags the mismatch; these findings are candidates for promotion into writing-wiki or writing-prose.
 - `Lens:` is required and is one of the six. The lens names the kind of defect; the principle names the rule violated. A single defect maps to one lens — when it could map to two, choose the lens whose signals (listed in Per-lens signals below) catch it most directly.
 
@@ -219,7 +219,7 @@ Severity: <important | nit | pre-existing>
 Type: wiki
 Lens: <Structure | Line | Copy | Accuracy | Coherence | References>
 Location: `path/to/Page-Name.md:42`
-Principle: <writing-wiki or writing-prose Philosophy anchor>
+Principle: <writing-wiki Philosophy anchor or writing-prose principle name>
 <one-line summary>
 
 ## Observation
@@ -244,9 +244,9 @@ The same scripts as reviewing-documentation and reviewing-csharp ship under `${C
 - `report-finding.sh --type wiki [--lens <name>] <title> <severity> <location> <principle> <summary>` — body piped on stdin. For wiki findings, `--type wiki` and `--lens <name>` are required. Slugifies the title for the filename, validates the type, severity, and lens enums, writes `.findings/<slug>.md`. On slug collision, auto-suffixes (`-2`, `-3`, ...) — every call succeeds.
 - `list-findings.sh` — reads the head fields of each `.findings/*.md` and emits one entry per finding: title, severity, type, lens (when present), location, principle, summary, slug filename. Use to dedup before composing a new finding.
 - `query.sh [--title PAT] [--severity LEVEL] [--xseverity LEVEL] [--type KIND] [--xtype KIND] [--lens NAME] [--xlens NAME] [--location PAT] [--principle PAT] [--summary PAT]` — filters findings by structured predicates. Multiple predicates AND together; no predicates matches every finding. The `--x*` flags exclude matches on the enum fields (severity, type, lens). Use `--type wiki` to scan only wiki findings; `--xlens References` to filter out reference-checking output; `--xseverity pre-existing` to focus on actionable findings.
-- `summarize.sh` — counts findings by severity per type, prints a lens breakdown when wiki findings are present, prints the verdict line, and flags any finding whose `Principle:` value is not a canonical writing-wiki or writing-prose heading. When `CLAUDE_PLUGIN_ROOT` is unset or the writing skill files are unreadable, the canonical-principle check is skipped and a warning prints to stderr.
+- `summarize.sh` — counts findings by severity per type, prints a lens breakdown when wiki findings are present, prints the verdict line, and flags any finding whose `Principle:` value is not a canonical writing-wiki Philosophy anchor or writing-prose principle name. When `CLAUDE_PLUGIN_ROOT` is unset or the writing skill files are unreadable, the canonical-principle check is skipped and a warning prints to stderr.
 
-The `wiki` type is registered in `report-finding.sh`'s type enum. `summarize.sh` checks wiki findings' `Principle:` field against the union of `writing-wiki/SKILL.md` and `writing-prose/SKILL.md` Philosophy headings — a wiki finding may legitimately cite either rubric. `query.sh --type wiki` filters to wiki findings only.
+The `wiki` type is registered in `report-finding.sh`'s type enum. `summarize.sh` checks wiki findings' `Principle:` field against the union of `writing-wiki/SKILL.md` Philosophy headings and `writing-prose/SKILL.md` principle bullets — a wiki finding may legitimately cite either rubric. `query.sh --type wiki` filters to wiki findings only.
 
 ### Output discipline
 
