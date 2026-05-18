@@ -23,3 +23,16 @@ This pattern matches existing Validation heuristics in the original SKILL.md ("S
 - Land the Validation section of writing-prose (task #5 covers this) with the negation-grep heuristic as one of its bullets.
 - Consider also adding a transform-pattern catalog (negative → positive rewrite examples) so the LLM has concrete patterns to match against: `Don't bury the lede` → `Front-load the lede.` etc.
 - Once Validation lands, propagate the same heuristic into reviewing-prose (the paired reviewer skill, post task #6) so findings can cite the negation as a violation of the golden rule.
+
+## Other desired features for the same script
+
+The negation-grep is the seed for a broader mechanical self-review script under writing-prose's Validation section. Additional checks the script should cover, all of the same shape (grep for trigger pattern, report candidates, judgment applies to fix):
+
+- **Em-dash discipline** — flag single dashes (` - `, hyphen with spaces) used where em-dashes are required for parenthetical breaks, definitions, and appositives. Replace with ` — `. Edge case: compound modifiers like `verb-plus-adverb` use hyphens correctly and must not false-positive.
+- **Hedge and filler grep** — `might`, `perhaps`, `could be`, `it's worth noting`, `basically`, `simply`, `just`, `actually`, `really`, `quite`, `very`.
+- **Tense drift grep** — `will`, `would`. Most uses are tense drift; replace with present tense.
+- **Marketing language grep** — `seamless`, `robust`, `powerful`, `revolutionary`, `easy`, `simple`, `intuitive`.
+- **Latin abbreviation grep** — `e.g.`, `i.e.`, `etc.` — replace with English equivalents.
+- **Bold and table grep** — `**`, `|---|` — both expected to return zero hits except in worked examples that demonstrate what to remove.
+
+The script reports candidates per check; the user (or downstream agent) applies judgment to each hit, since natural-negation and demonstration-example exceptions exist for several patterns.
