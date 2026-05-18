@@ -11,6 +11,8 @@ Foundational editorial knowledge lives here — the authoring virtues that apply
 
 Register emerges from the artifact's intent and audience. Downstream skills may explicitly name it; otherwise, derive it.
 
+Downstream skills declare their full rhetorical context as a `## Rhetorical context` section in their own SKILL.md — a bulleted list with one `Slot: value` line per slot, covering all ten: writer, voice, ethos, stance, audience, subject, genre, tone, register, intent.
+
 ### Deriving a register
 
 1. Identify the artifact's intent (its purpose) and audience (who reads it). The register follows.
