@@ -12,7 +12,10 @@ This note is the canonical task list. The conversation task system is transient;
 ## Milestones
 
 - **SKILL.draft.md → SKILL.md swap completed.** The new SKILL.md is live.
-- **Broken-references sweep landed via Opus sub-agent.** `summarize.sh` now parses the new structure; `reviewing-prose` and `reviewing-wiki` rubric language uses "principle name" instead of "Philosophy anchor"; `writing-prose/SKILL.md` line 86 corrected to `reviewing-prose`. All 212 tests pass.
+- **Broken-references sweep landed via Opus sub-agent.** `summarize.sh` now parses the new structure; reviewer rubric language uses "principle name" instead of "Philosophy anchor". All 212 tests pass.
+- **Wiki path:line citation antipattern removed.** writing-wiki citation guidance switched to symbol-based form; reviewing-wiki Accuracy lens redesigned with drift detection.
+- **Rhetorical-context contract landed.** Downstream skills declare a `## Rhetorical context` section with bulleted `Slot: value` lines; Register is bundled shorthand; defaults inline in writing-prose/SKILL.md.
+- **reviewing-documentation renamed to reviewing-prose.** Full sweep across all references (skill directory, frontmatter, sibling SKILL.mds, README, notes). 212 tests pass.
 
 ## Completed
 
@@ -26,18 +29,17 @@ This note is the canonical task list. The conversation task system is transient;
 - **#12 Extract named registers to sidecar reference doc** — was completed; subsequently the `registers.md` sidecar was *removed* and the named-registers catalog was re-inlined in the SKILL.md (the catalog is needed every load, so on-demand was the wrong call). `positive-transforms.md` remains as the sole sidecar.
 - **#14 Establish writing-prose deep/ expansion convention** — convention statement added to Composition intro; `deep/` directory created with 48 placeholder files; shared `bash plugins/skills/scripts/slugify.sh` utility written with 21 passing tests; convention round-trip verified against every principle bullet.
 - **#10 Decide writing-csharp structural alignment** — decided: writing-csharp is a special case, structural divergence between prose and code families is accepted, reviewer scripts already handle both shapes. No further work unless friction emerges.
-- **#11 Design the rhetorical-context memo contract** — landed in two commits. (1) Each downstream skill declares a `## Rhetorical context` section in its own SKILL.md, bulleted list, one `Slot: value` line per slot. No sidecar, no YAML frontmatter, no per-directory override. (2) Foundation defaults live at `default-rhetorical-context.md`; unmentioned downstream slots fall back to those defaults. Subject and intent are too artifact-specific to default; every downstream must declare them.
+- **#11 Design the rhetorical-context memo contract** — landed. (1) Each downstream skill declares a `## Rhetorical context` section in its own SKILL.md, bulleted list, one `Slot: value` line per slot. No YAML frontmatter, no per-directory override. (2) Foundation defaults live inline in writing-prose/SKILL.md under the Rhetorical context section (was a sidecar; inlined because needed every load). Subject and intent are too artifact-specific to default; every downstream must declare them. (3) Register is bundled shorthand atop the defaults: declaring a named register overrides only the few slots that distinguish it from defaults; the rest stay at default. Inheritance precedence: explicit slot declaration > register bundle > defaults.
+- **#6 Rename reviewing-documentation to reviewing-prose** — full sweep landed in one commit. Directory git-mv'd; frontmatter, H1, internal self-references updated; sweep across writing-prose, reviewing-wiki, writing-wiki, README, seven docs/notes/ files. Incidental cross-reference from reviewing-csharp removed. Finding type stays as `documentation` (names the artifact reviewed, not the rubric).
 - **#13 Sweep path:line citation guidance** — landed. writing-prose family clean. writing-wiki citation guidance now symbol-based (file plus class/type/method/exported-function name). reviewing-wiki Accuracy lens redesigned around symbol citations with explicit drift-detection workflow and a dedicated symbol-drift signal. Finding location-field convention preserved.
 
 ## Partially completed
 
-- **#6 Rename reviewing-prose to reviewing-prose** — only the one-word `reviewing-prose` → `reviewing-prose` patch in writing-prose line 86 has landed (a temporary downgrade to match reality). The full rename across the codebase has not started.
 - **#15 Seed deep/ expansions** — 30 of 48 deep files have content extracted from the original SKILL.md. The remaining 18 are new principles with no original to extract (active voice, present tense, second person, systems behave, verbs over nominalizations, strong verbs, concrete over abstract, substance over superlatives, assertions over commentary, English over Latin, Global English, one idea per sentence, parallel construction, cohesion across documents, action-oriented headings, plus a few Validation checks). Fill lazily as patterns and examples emerge.
 
 ## Pending
 
-- **#6 (remainder)** — full reviewing-prose → reviewing-prose rename across the codebase. Includes filename rename, frontmatter `name:` field, every reference in other SKILL.md files, notes, scripts. Bundled rename, not piecemeal.
-- **#7 Refactor downstream skills as foundation consumers** — taking-notes, journaling, writing-wiki, reviewing-wiki should explicitly load writing-prose, declare their rhetorical-context slots (per the contract in #11), and name their overrides. Largest scope task. Unblocked.
+- **#7 Refactor downstream skills as foundation consumers** — taking-notes, journaling, writing-wiki, reviewing-wiki declare their rhetorical-context slots per the contract: a `## Rhetorical context` section in each downstream's SKILL.md, bulleted `Slot: value` lines, slot overrides on top of the foundation defaults. Largest remaining task. Unblocked.
 - **#15 (remainder)** — lazy seed of the 18 empty `deep/` files for new principles with no original source. Fill as patterns and examples emerge in practice. Never blocking.
 - **Wiki backfill follow-up** — existing project wikis that cite source by `path:line` will be flagged by the redesigned Accuracy lens on next review. Worth a single sweep across active wikis once #13's lens redesign is exercised.
 
