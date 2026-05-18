@@ -13,7 +13,20 @@ Register emerges from the artifact's intent and audience. Downstream skills may 
 
 Downstream skills declare their full rhetorical context as a `## Rhetorical context` section in their own SKILL.md — a bulleted list with one `Slot: value` line per slot, covering all ten: writer, voice, ethos, stance, audience, subject, genre, tone, register, intent.
 
-The Register slot is bundled shorthand: declaring a named register (catalog below) overrides only the few slots that distinguish that register from the defaults; the rest stay at default. Inheritance precedence, highest to lowest: explicit slot declaration > register bundle > [default-rhetorical-context.md](${CLAUDE_PLUGIN_ROOT}/skills/writing-prose/default-rhetorical-context.md). Subject and intent have no default; every downstream must declare them.
+The Register slot is bundled shorthand: declaring a named register (catalog below) overrides only the few slots that distinguish that register from the defaults; the rest stay at default. Inheritance precedence, highest to lowest: explicit slot declaration > register bundle > the default values below. Subject and intent have no default; every downstream must declare them.
+
+### Default rhetorical context
+
+- Writer: contributor — someone with stake in the project, presumed knowledgeable about the subject.
+- Voice: declarative, terse — direct claims without hedging.
+- Ethos: expert — the writer is presumed authoritative within the subject's scope.
+- Stance: neutral — describes rather than advocates, except in vision and design genres where position-taking is the point.
+- Audience: another engineer — developer-facing by default; downstream may narrow to learner, operator, oncall, end user, etc.
+- Subject: varies by artifact type — downstream must declare.
+- Genre: reference — the most general technical-writing default; downstream may pick tutorial, how-to, explanation, vision or design, specification, ADR, note, or journal.
+- Tone: professional, even-keeled — neither warm nor cold; addresses the reader as a colleague.
+- Register: authoritative-declarative-terse — direct, position-taking, no hedging.
+- Intent: varies by artifact type — downstream must declare.
 
 ### Deriving a register
 
@@ -89,7 +102,7 @@ Each principle bullet has an expansion file at `${CLAUDE_PLUGIN_ROOT}/skills/wri
 
 ### Self-review — mechanical checks
 
-Run `reviewing-documentation` for the formal pass; address findings before commit.
+Run `reviewing-prose` for the formal pass; address findings before commit.
 
 ### Self-review — apply judgement 
 

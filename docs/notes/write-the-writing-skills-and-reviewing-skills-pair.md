@@ -6,7 +6,7 @@ LLM-targeted structural pair layered on the writing-prose editorial spine; lands
 
 ## Observation
 
-The `writing-prose` / `reviewing-documentation` pair settled across commits `e9cda8c` through `ea53d33`. During design we agreed that skills, agent prompts, and slash commands form a distinct genre — LLM-targeted prose with extreme density requirements, the canonical four-section shape, and no bold/tables — and that the dedicated pair lands after the documentation pair stabilizes. The documentation pair has now stabilized.
+The `writing-prose` / `reviewing-prose` pair settled across commits `e9cda8c` through `ea53d33`. During design we agreed that skills, agent prompts, and slash commands form a distinct genre — LLM-targeted prose with extreme density requirements, the canonical four-section shape, and no bold/tables — and that the dedicated pair lands after the documentation pair stabilizes. The documentation pair has now stabilized.
 
 ## Interpretation
 
@@ -18,13 +18,13 @@ The `writing-prose` / `reviewing-documentation` pair settled across commits `e9c
 - Frontmatter contract: `name`, `description` only; description carries the trigger language.
 - The skill body intro: describes file content only; never narrates loading or repeats the trigger.
 
-`reviewing-skills` mirrors with lens additions on top of `reviewing-documentation`:
+`reviewing-skills` mirrors with lens additions on top of `reviewing-prose`:
 
 - A structural lens (canonical four sections present, Philosophy/Guidance mirroring, frontmatter shape).
 - A trigger-language lens (description verbs match the skill's actual scope).
 - Reuses the shared `scripts/` infrastructure under the existing `Type: <code|documentation|skill?>` taxonomy — likely add a third `Type:` value (`skill`) and a corresponding rubric in `summarize.sh`.
 
-Both pairs operate on `.md` files under `**/skills/<name>/SKILL.md`. The Per-lens signals borrow heavily from `reviewing-documentation` but tighten the bar — bold and tables in a skill are always violations; in a doc they have documented worked-example exceptions.
+Both pairs operate on `.md` files under `**/skills/<name>/SKILL.md`. The Per-lens signals borrow heavily from `reviewing-prose` but tighten the bar — bold and tables in a skill are always violations; in a doc they have documented worked-example exceptions.
 
 ## Next
 

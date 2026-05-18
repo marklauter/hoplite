@@ -26,4 +26,4 @@ Abandon the per-skill philosophy/guidance/validation split in favor of foundatio
 - Refactor `taking-notes` and `journaling` to stop restating general writing guidance — keep only what is artifact-specific plus named overrides of foundation rules.
 - Rebalance `taking-notes` and `journaling` from command-shaped to knowledge-shaped: lead with the editorial content (what the artifact is, how it reads well), demote the trigger phrases to a short "when this skill applies" section the agent consults to decide whether the user's request fits.
 - Refactor `writing-wiki` and `reviewing-wiki` to share the foundation; verify philosophy no longer duplicates between the pair.
-- Decide whether `reviewing-documentation` becomes a sibling foundation for review skills or just inherits directly from `writing-prose`.
+- Decide whether `reviewing-prose` becomes a sibling foundation for review skills or just inherits directly from `writing-prose`.

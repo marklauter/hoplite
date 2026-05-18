@@ -5,7 +5,7 @@ SKILL.md text declares each reviewer's default invocation (audit for wiki, diff 
 
 ## Observation
 
-- Decision #2 from the audit-mode interview (2026-05-16): each skill picks its default. reviewing-wiki defaults to `changes.sh --all .`; reviewing-csharp and reviewing-documentation print the hint and stop.
+- Decision #2 from the audit-mode interview (2026-05-16): each skill picks its default. reviewing-wiki defaults to `changes.sh --all .`; reviewing-csharp and reviewing-prose print the hint and stop.
 - `changes.sh` emits the structured hint on the clean-tree no-args path, but the hint is identical regardless of caller — the script does not know which skill invoked it.
 - The "skill picks the default" lives entirely in SKILL.md prose. A future Claude session that runs `changes.sh` by reflex (because that is the muscle memory from reviewing-csharp) gets the hint and then has to remember to run `changes.sh --all .` instead.
 

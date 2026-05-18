@@ -1,4 +1,4 @@
-# Apply mechanical-vs-judgment split to reviewing-documentation Line and Copy lenses
+# Apply mechanical-vs-judgment split to reviewing-prose Line and Copy lenses
 
 Tags: todo,skills,documentation,linting
 Once a prose linter (Vale, alex, write-good) is wired in, much of the Line and Copy per-lens signal lists belongs in the linter config, not the reviewer's eye.
@@ -44,7 +44,7 @@ Candidate tools:
 
 When the linter lands, the parallel work is:
 1. Add a `build-gate.sh`-equivalent for prose (run the linter, fail on configured rules).
-2. Add a "Mechanical before judgment" Philosophy bullet to reviewing-documentation mirroring the reviewing-csharp one.
+2. Add a "Mechanical before judgment" Philosophy bullet to reviewing-prose mirroring the reviewing-csharp one.
 3. Compress the Line and Copy lens signal lists to only the judgment-heavy entries.
 4. The reviewer assumes mechanical signals are caught by the linter.
 

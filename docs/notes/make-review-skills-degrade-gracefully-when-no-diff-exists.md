@@ -15,7 +15,7 @@ Closed 2026-05-16. The reviewer scripts now support explicit-scope audit modes; 
 When invoked with no args against a clean tree or outside a git repo, `changes.sh` emits a structured hint and exits non-zero. The calling skill picks a default from there:
 
 - `reviewing-wiki` defaults to `changes.sh --all .` — audit is the routine mode for wikis.
-- `reviewing-documentation` and `reviewing-csharp` surface the hint to the user and wait — diff is the routine mode; audit is opt-in.
+- `reviewing-prose` and `reviewing-csharp` surface the hint to the user and wait — diff is the routine mode; audit is opt-in.
 
 Severity vocabulary: `pre-existing` collapses in audit mode (no diff to be "outside of"). Audit findings are `important` or `nit` only. The gate-policies sections of all three reviewer skills flag a `pre-existing` produced in audit mode as malformed.
 
@@ -33,5 +33,5 @@ The standard wiki layout is sibling clones: source at `D:\{project}\{project}\` 
 - `plugins/skills/scripts/report-finding.sh`
 - `plugins/skills/scripts/summarize.sh`
 - `plugins/skills/skills/reviewing-wiki/SKILL.md`
-- `plugins/skills/skills/reviewing-documentation/SKILL.md`
+- `plugins/skills/skills/reviewing-prose/SKILL.md`
 - `plugins/skills/skills/reviewing-csharp/SKILL.md`

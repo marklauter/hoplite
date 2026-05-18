@@ -13,7 +13,7 @@ Constraint: npm on the local dev box is a non-starter (supply-chain risk). CI ru
 
 - `DavidAnson/markdownlint-cli2-action` — markdownlint wrapped as an action. npm under the hood, but isolated to the runner.
 - `super-linter/super-linter` — GitHub's meta-linter, runs in Docker, bundles markdownlint plus ~40 others. Container is the isolation boundary.
-- `errata-ai/vale-action` — Vale (Go binary, no npm) for prose rules. Closest mechanical counterpart to what [[apply-mechanical-vs-judgment-split-to-reviewing-documentation-line-and-copy-lens]] is pulling out of the editorial reviewers.
+- `errata-ai/vale-action` — Vale (Go binary, no npm) for prose rules. Closest mechanical counterpart to what [[apply-mechanical-vs-judgment-split-to-reviewing-prose-line-and-copy-lens]] is pulling out of the editorial reviewers.
 
 ## Proposed layered workflow
 

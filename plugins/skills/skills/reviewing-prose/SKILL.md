@@ -1,15 +1,15 @@
 ---
-name: reviewing-documentation
+name: reviewing-prose
 description: Use when reviewing local markdown diffs before commit. Produces structured findings under .findings/ classified by severity (important / nit / pre-existing) and lens (Structure / Line / Copy / Accuracy / Coherence / References).
 ---
 
-# Reviewing documentation
+# Reviewing prose
 
 Pre-commit review of markdown diffs through six lenses — Structure, Line, Copy, Accuracy, Coherence, References — producing severity-classified findings under `.findings/` against the writing-prose rubric.
 
 ## Philosophy
 
-The rubric is writing-prose. Reviewing-documentation judges; writing-prose prescribes. The two skills co-evolve. Every finding traces to a writing-prose principle name — the canonical phrase before the em-dash on each principle bullet under Composition, Grammar/structure/referential integrity, or the Validation judgement subsection. Those principles are the contract the reviewer enforces.
+The rubric is writing-prose. Reviewing-prose judges; writing-prose prescribes. The two skills co-evolve. Every finding traces to a writing-prose principle name — the canonical phrase before the em-dash on each principle bullet under Composition, Grammar/structure/referential integrity, or the Validation judgement subsection. Those principles are the contract the reviewer enforces.
 
 ### Findings are observations, not commands
 

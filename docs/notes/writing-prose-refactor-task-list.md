@@ -12,7 +12,7 @@ This note is the canonical task list. The conversation task system is transient;
 ## Milestones
 
 - **SKILL.draft.md → SKILL.md swap completed.** The new SKILL.md is live.
-- **Broken-references sweep landed via Opus sub-agent.** `summarize.sh` now parses the new structure; `reviewing-documentation` and `reviewing-wiki` rubric language uses "principle name" instead of "Philosophy anchor"; `writing-prose/SKILL.md` line 86 corrected to `reviewing-documentation`. All 212 tests pass.
+- **Broken-references sweep landed via Opus sub-agent.** `summarize.sh` now parses the new structure; `reviewing-prose` and `reviewing-wiki` rubric language uses "principle name" instead of "Philosophy anchor"; `writing-prose/SKILL.md` line 86 corrected to `reviewing-prose`. All 212 tests pass.
 
 ## Completed
 
@@ -22,7 +22,7 @@ This note is the canonical task list. The conversation task system is transient;
 - **#4 Draft Validation section summary** — H2 summary fused into the heading.
 - **#5 Restructure writing-prose into Rhetorical context / Composition / Validation** — full restructure with merged Philosophy+Guidance into Composition; new Grammar/structure/referential-integrity section between Composition and Validation; principle mapping applied; bullets-with-blurbs format. Swap to live SKILL.md completed.
 - **#8 Update summarize.sh for the new writing-prose section structure** — `read_canonical_prose()` parses principle bullets from Composition, Grammar/structure/referential integrity, and Validation's judgement subsection. Original `read_canonical()` retained for writing-csharp and writing-wiki. Three new tests added; all 212 pass.
-- **#9 Update reviewing-documentation rubric citations** — four references in `reviewing-documentation/SKILL.md` and five in `reviewing-wiki/SKILL.md` updated from "Philosophy anchor / heading / section" to "principle name." Reviewer skills' own `## Philosophy` H2 sections left intact (their internal structure has not been ported to the new spine; revisit when #6 lands).
+- **#9 Update reviewing-prose rubric citations** — four references in `reviewing-prose/SKILL.md` and five in `reviewing-wiki/SKILL.md` updated from "Philosophy anchor / heading / section" to "principle name." Reviewer skills' own `## Philosophy` H2 sections left intact (their internal structure has not been ported to the new spine; revisit when #6 lands).
 - **#12 Extract named registers to sidecar reference doc** — was completed; subsequently the `registers.md` sidecar was *removed* and the named-registers catalog was re-inlined in the SKILL.md (the catalog is needed every load, so on-demand was the wrong call). `positive-transforms.md` remains as the sole sidecar.
 - **#14 Establish writing-prose deep/ expansion convention** — convention statement added to Composition intro; `deep/` directory created with 48 placeholder files; shared `bash plugins/skills/scripts/slugify.sh` utility written with 21 passing tests; convention round-trip verified against every principle bullet.
 - **#10 Decide writing-csharp structural alignment** — decided: writing-csharp is a special case, structural divergence between prose and code families is accepted, reviewer scripts already handle both shapes. No further work unless friction emerges.
@@ -31,12 +31,12 @@ This note is the canonical task list. The conversation task system is transient;
 
 ## Partially completed
 
-- **#6 Rename reviewing-documentation to reviewing-prose** — only the one-word `reviewing-prose` → `reviewing-documentation` patch in writing-prose line 86 has landed (a temporary downgrade to match reality). The full rename across the codebase has not started.
+- **#6 Rename reviewing-prose to reviewing-prose** — only the one-word `reviewing-prose` → `reviewing-prose` patch in writing-prose line 86 has landed (a temporary downgrade to match reality). The full rename across the codebase has not started.
 - **#15 Seed deep/ expansions** — 30 of 48 deep files have content extracted from the original SKILL.md. The remaining 18 are new principles with no original to extract (active voice, present tense, second person, systems behave, verbs over nominalizations, strong verbs, concrete over abstract, substance over superlatives, assertions over commentary, English over Latin, Global English, one idea per sentence, parallel construction, cohesion across documents, action-oriented headings, plus a few Validation checks). Fill lazily as patterns and examples emerge.
 
 ## Pending
 
-- **#6 (remainder)** — full reviewing-documentation → reviewing-prose rename across the codebase. Includes filename rename, frontmatter `name:` field, every reference in other SKILL.md files, notes, scripts. Bundled rename, not piecemeal.
+- **#6 (remainder)** — full reviewing-prose → reviewing-prose rename across the codebase. Includes filename rename, frontmatter `name:` field, every reference in other SKILL.md files, notes, scripts. Bundled rename, not piecemeal.
 - **#7 Refactor downstream skills as foundation consumers** — taking-notes, journaling, writing-wiki, reviewing-wiki should explicitly load writing-prose, declare their rhetorical-context slots (per the contract in #11), and name their overrides. Largest scope task. Unblocked.
 - **#15 (remainder)** — lazy seed of the 18 empty `deep/` files for new principles with no original source. Fill as patterns and examples emerge in practice. Never blocking.
 - **Wiki backfill follow-up** — existing project wikis that cite source by `path:line` will be flagged by the redesigned Accuracy lens on next review. Worth a single sweep across active wikis once #13's lens redesign is exercised.
@@ -66,7 +66,7 @@ Quick orientation:
   context` section in its SKILL.md (bulleted Slot: value lines). Unmentioned
   slots fall back to writing-prose/default-rhetorical-context.md. Subject
   and intent have no default; every downstream must declare them.
-- summarize.sh parses the new section structure. reviewing-documentation
+- summarize.sh parses the new section structure. reviewing-prose
   and reviewing-wiki rubric language updated. Wiki Accuracy lens now uses
   symbol-based citations with explicit drift detection. 212 tests pass.
 - positive-transforms.md and default-rhetorical-context.md are the sidecars.
@@ -76,7 +76,7 @@ Remaining work (no decisions needed; pick by leverage):
 - #7 downstream refactor — taking-notes, journaling, writing-wiki, reviewing-wiki
   load writing-prose and declare their rhetorical-context slots per the contract.
   Largest scope; biggest leverage.
-- #6 full reviewing-documentation → reviewing-prose rename — mechanical sweep
+- #6 full reviewing-prose → reviewing-prose rename — mechanical sweep
   across the codebase. Includes filename rename, frontmatter name: field,
   references in other SKILL.md files, notes, scripts.
 - #15 lazy seed of remaining 18 deep/ expansions — fill as patterns and

@@ -158,7 +158,7 @@ Address every must-fix before commit; prioritize suggestions by impact.
 2. Read the relevant source files. Documenting from memory is the most common way pages drift.
 3. Compose the page. Lede first; usage before internals; cite sources by symbol (file plus class, type, or method name) — never by line number.
 4. Reread the changed prose against the four lenses. The check is mechanical.
-5. Run `reviewing-documentation` for the formal pass. Address findings before commit.
+5. Run `reviewing-prose` for the formal pass. Address findings before commit.
 
 ### Per-page checks
 
@@ -170,5 +170,5 @@ Address every must-fix before commit; prioritize suggestions by impact.
 ### When to defer to other skills
 
 - Universal prose concerns — voice, density, sentence-case, em dashes, link mechanics, prose-level terminology hygiene — are owned by `writing-prose`. Load it alongside this skill.
-- Formal editorial review across an existing wiki is owned by `reviewing-documentation`. Use it after the writing loop, not as a substitute for it.
+- Formal editorial review across an existing wiki is owned by `reviewing-prose`. Use it after the writing loop, not as a substitute for it.
 - Decisions about whether a wiki should exist for a project, or what its top-level sections should be, belong in a planning artifact (a note or journal entry), not the wiki itself.

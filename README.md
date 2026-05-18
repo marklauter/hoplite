@@ -89,7 +89,7 @@ Writers — produce durable artifacts:
 
 Reviewers — surface findings under `.findings/`:
 
-- `reviewing-csharp`, `reviewing-documentation`, `reviewing-wiki` — pre-commit review of local diffs.
+- `reviewing-csharp`, `reviewing-prose`, `reviewing-wiki` — pre-commit review of local diffs.
 - `triaging-findings` — walks `.findings/` in severity order; the steward decides each disposition.
 
 GitHub:

@@ -1,6 +1,6 @@
 ---
 name: reviewing-wiki
-description: Use when reviewing local markdown diffs in a software-project wiki before commit — GitHub wiki, docs site, or any partitioned set of pages organized by a sidebar. Produces structured findings under .findings/ classified by severity (important / nit / pre-existing) and lens (Structure / Line / Copy / Accuracy / Coherence / References). Self-contained rubric — does not load reviewing-documentation.
+description: Use when reviewing local markdown diffs in a software-project wiki before commit — GitHub wiki, docs site, or any partitioned set of pages organized by a sidebar. Produces structured findings under .findings/ classified by severity (important / nit / pre-existing) and lens (Structure / Line / Copy / Accuracy / Coherence / References). Self-contained rubric — does not load reviewing-prose.
 ---
 
 # Reviewing wiki
@@ -9,7 +9,7 @@ Pre-commit review of wiki diffs through six lenses — Structure, Line, Copy, Ac
 
 ## Philosophy
 
-The rubric is writing-wiki layered on writing-prose. Reviewing-wiki judges; the writing skills prescribe. Every finding traces to a canonical principle — a `writing-wiki` Philosophy anchor for wiki-shaped violations (section assignment, sidebar partition, register bleed, source-grounded claims) or a `writing-prose` principle name for general prose violations (voice, density, sentence-case, define-by-presence). The skill copies and refines the reviewing-documentation rubric rather than composing with it at runtime; runtime composition of signal sets across two reviewer skills is unreliable.
+The rubric is writing-wiki layered on writing-prose. Reviewing-wiki judges; the writing skills prescribe. Every finding traces to a canonical principle — a `writing-wiki` Philosophy anchor for wiki-shaped violations (section assignment, sidebar partition, register bleed, source-grounded claims) or a `writing-prose` principle name for general prose violations (voice, density, sentence-case, define-by-presence). The skill copies and refines the reviewing-prose rubric rather than composing with it at runtime; runtime composition of signal sets across two reviewer skills is unreliable.
 
 ### Findings are observations, not commands
 
@@ -250,7 +250,7 @@ The filename is the slug of the title: lowercase, non-alphanumeric replaced with
 
 ### The script set
 
-The same scripts as reviewing-documentation and reviewing-csharp ship under `${CLAUDE_PLUGIN_ROOT}/scripts/`. Portable bash 3.2+; runs on Linux, macOS, and Windows (Git Bash, WSL).
+The same scripts as reviewing-prose and reviewing-csharp ship under `${CLAUDE_PLUGIN_ROOT}/scripts/`. Portable bash 3.2+; runs on Linux, macOS, and Windows (Git Bash, WSL).
 
 - `changes.sh [<ref> | <ref1> <ref2> | --all [<dir>] | --paths <p>...]` — produces the canonical scope. No args shows uncommitted changes against `HEAD` and the untracked-file list (diff mode). One ref shows the diff against that ref; two refs show the three-dot diff (PR-style). `--all [<dir>]` walks the filesystem (default `.`), respects `.gitignore`, skips hidden and symlinked entries; output is the file list only. `--paths <p>...` enumerates the given files and directories (directories expand recursively under the same walker); errors on a missing path. When invoked with no args against a clean tree or outside a git repo, the script emits a structured hint and exits non-zero — the calling skill picks a default from there.
 - `report-finding.sh --type wiki [--lens <name>] <title> <severity> <location> <principle> <summary>` — body piped on stdin. For wiki findings, `--type wiki` and `--lens <name>` are required. Slugifies the title for the filename, validates the type, severity, and lens enums, writes `.findings/<slug>.md`. On slug collision, auto-suffixes (`-2`, `-3`, ...) — every call succeeds.
