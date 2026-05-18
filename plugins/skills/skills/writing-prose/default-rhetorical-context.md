@@ -1,6 +1,6 @@
 # Default rhetorical context
 
-Defaults for the ten rhetorical-context slots, used when a downstream skill is silent on a slot. Downstream skills override per-slot in their own `## Rhetorical context` section in SKILL.md; unmentioned slots fall back to the values here.
+Defaults for the ten rhetorical-context slots. Most slots take their value from here in most downstream skills. Inheritance precedence, highest to lowest: explicit slot declaration in a downstream's `## Rhetorical context` section > register bundle (per the named-registers catalog in SKILL.md) > these defaults. A register name (Tutorial, Reference, How-to, etc.) overrides only the few slots that distinguish it from the defaults; everything else still falls back here.
 
 - Writer: contributor — someone with stake in the project, presumed knowledgeable about the subject.
 - Voice: declarative, terse — direct claims without hedging.

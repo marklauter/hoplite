@@ -11,7 +11,9 @@ Foundational editorial knowledge lives here — the authoring virtues that apply
 
 Register emerges from the artifact's intent and audience. Downstream skills may explicitly name it; otherwise, derive it.
 
-Downstream skills declare their full rhetorical context as a `## Rhetorical context` section in their own SKILL.md — a bulleted list with one `Slot: value` line per slot, covering all ten: writer, voice, ethos, stance, audience, subject, genre, tone, register, intent. Slots a downstream omits inherit from [default-rhetorical-context.md](${CLAUDE_PLUGIN_ROOT}/skills/writing-prose/default-rhetorical-context.md); subject and intent have no universal default and every downstream must declare them.
+Downstream skills declare their full rhetorical context as a `## Rhetorical context` section in their own SKILL.md — a bulleted list with one `Slot: value` line per slot, covering all ten: writer, voice, ethos, stance, audience, subject, genre, tone, register, intent.
+
+The Register slot is bundled shorthand: declaring a named register (catalog below) overrides only the few slots that distinguish that register from the defaults; the rest stay at default. Inheritance precedence, highest to lowest: explicit slot declaration > register bundle > [default-rhetorical-context.md](${CLAUDE_PLUGIN_ROOT}/skills/writing-prose/default-rhetorical-context.md). Subject and intent have no default; every downstream must declare them.
 
 ### Deriving a register
 
@@ -21,6 +23,8 @@ Downstream skills declare their full rhetorical context as a `## Rhetorical cont
 4. When the register cannot be determined, use the default: authoritative-declarative-terse — direct, position-taking, no hedging.
 
 ### The named registers and their tells
+
+Each entry below is a bundled shorthand. Declaring the register name in a downstream's Rhetorical context section implies the voice, tone, audience, and approach described in the entry. Explicit slot declarations override the bundle.
 
 - Tutorial — friendly, walks the reader through one task at a time, builds understanding in sequence, second person, present tense, imperative steps.
 - How-to — task-oriented, assumes the reader knows what they want, terse imperative steps, no teaching framing.
