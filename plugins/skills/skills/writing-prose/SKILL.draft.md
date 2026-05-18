@@ -9,16 +9,16 @@ Foundational editorial knowledge lives here — the authoring virtues that apply
 
 ## Rhetorical context — meta-rules for downstream skills
 
-### Register follows intent and audience
-
 Register emerges from the artifact's intent and audience. Downstream skills may explicitly name it; otherwise, derive it.
+
+### Deriving a register
 
 1. Identify the artifact's intent (its purpose) and audience (who reads it). The register follows.
 2. Verify against siblings — they should be consistent with the derived register. If they aren't, something is off (yours or theirs).
 3. When the intent or audience is unclear, ask the user.
 4. When the register cannot be determined, use the default: authoritative-declarative-terse — direct, position-taking, no hedging.
 
-The named registers and their tells:
+### The named registers and their tells
 
 - Tutorial — friendly, walks the reader through one task at a time, builds understanding in sequence, second person, present tense, imperative steps.
 - How-to — task-oriented, assumes the reader knows what they want, terse imperative steps, no teaching framing.
@@ -30,25 +30,39 @@ The named registers and their tells:
 - Note — rough, exploratory, no audience commitment, ephemeral scratch that may be rewritten or deleted freely.
 - Journal — observation-based, internal-facing, chronological, dated, append-only, immutable once written, first-person acceptable, records discoveries and issues at a point in time.
 
-### Lead with what the reader needs
-
-The reader who stops after the first paragraph still leaves with the right impression.
-
-- Open with a lede — one or two sentences naming what the document is for and what the reader gets from reading it.
-- Usage before internals. Public surface before architecture. How to do it before how it works.
-- Conclusions before justifications. State the position, then explain.
-
-### Self-contained pages
-
-Each page stands on its own.
-
-- Include enough context that a reader who follows zero links still understands the page. The link is for the reader who wants depth.
-- Link to canonical definitions for shared terms; do not restate them inline. The page that defines the term owns the definition.
-- When a concept is genuinely page-specific, define it inline on its first use.
-
 ## Composition — authoring virtues and how to apply them
 
-(TODO)
+Above all: positively framed assertions. Say what is, not what it isn't. Positive constructions strengthen the message. Negative constructions weaken it. Weak writing circles around what something isn't. It gestures rather than delivers.
+
+See `${CLAUDE_PLUGIN_ROOT}/skills/writing-prose/positive-transforms.md` for examples of negative to positive transformations when you need help forming a positive frame.
+
+- Source is the authority — defer to the subject; verify against it before claiming; cite by stable reference.
+- Active voice over passive — agency stays with the actor; "the user signs in," not "sign-in is performed by the user."
+- Present tense for current behavior — "the function returns," not "the function will return" or "the function returned."
+- Second person for instructions — address the reader directly with "you"; avoid "the user" or "one."
+- Systems behave — describe what they do; "wants" and "decides" belong to people.
+- Every word must earn its place — cut hedges, filler, transitions that announce; clarity outranks brevity at the cut-line.
+- Verbs over nominalizations — "decide" beats "make a decision"; the verb is shorter and stronger.
+- Strong verbs over verb-plus-adverb — "sprint" beats "run quickly"; the verb carries the meaning.
+- Concrete over abstract — "the cache" beats "the caching mechanism" unless the distinction is the point.
+- Substance over superlatives — the reader judges, not the writer; avoid hollow words like "seamless," "robust," "powerful."
+- English over Latin — "for example" beats "e.g."; "that is" beats "i.e."; "and so on" beats "etc."
+- Global English — avoid regional idioms, cultural references, sports metaphors; many readers aren't native speakers.
+- One idea per sentence — every sentence carries one claim; complex sentences split into simple ones.
+- State each idea once — every fact has one home; link to it rather than restating it; no paragraph restates an adjacent paragraph.
+- Parallel construction in series — items in a list share grammatical shape; one verb form, one sentence pattern.
+- Expository ordering — main idea before mechanics; conclusions before justifications.
+- Anticipate the reader's question — write what they need to know next, not what's next in the writer's head.
+- Front-load important words — the most informative word goes first in the sentence and first in the bullet.
+- Self-contained artifacts — each page stands on its own; link to canonical definitions rather than restate, or define on first use.
+- Action-oriented headings — "Configure the database" beats "Database configuration"; the heading names what the section does.
+- Sentence-style capitalization — first word and proper nouns only in headings; title case is visual noise.
+- Examples carry weight — one brief example per rule, only when the rule isn't self-evident; before-and-after when the rule transforms shape.
+- Forms are the schema — every recurring artifact has a canonical shape; the shape is the contract; the prose fills it.
+- The first page sets the pattern — the first instance teaches the next ten; invest disproportionate care.
+- Markdown is the wire format — human-readable in source, LLM-readable without a renderer, diffable in git; no HTML, no bespoke markup.
+- Descriptive link text — the link text names what the target is; never "click here" or "this page."
+- Terminology hygiene — capitalize defined role names; domain terms used across pages belong in a glossary; expand acronyms on first use; name the context when meaning differs.
 
 ## Validation — edit your own work before handing off
 
