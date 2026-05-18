@@ -39,7 +39,7 @@ This note is the canonical task list. The conversation task system is transient;
 
 ## Pending
 
-- **#7 Refactor downstream skills as foundation consumers** — taking-notes, journaling, writing-wiki, reviewing-wiki declare their rhetorical-context slots per the contract: a `## Rhetorical context` section in each downstream's SKILL.md, bulleted `Slot: value` lines, slot overrides on top of the foundation defaults. Largest remaining task. Unblocked.
+- **#7 Refactor downstream skills as foundation consumers** — taking-notes, journaling, writing-wiki, reviewing-wiki, **and reviewing-prose** declare their rhetorical-context slots per the contract: a `## Rhetorical context` section in each downstream's SKILL.md, bulleted `Slot: value` lines, slot overrides on top of the foundation defaults. Reviewing-prose is itself a downstream of writing-prose (it produces findings, which are prose artifacts, and judges against the writing-prose rubric). reviewing-csharp is out of scope per #10. Largest remaining task. Unblocked.
 - **#15 (remainder)** — lazy seed of the 18 empty `deep/` files for new principles with no original source. Fill as patterns and examples emerge in practice. Never blocking.
 - **Wiki backfill follow-up** — existing project wikis that cite source by `path:line` will be flagged by the redesigned Accuracy lens on next review. Worth a single sweep across active wikis once #13's lens redesign is exercised.
 
