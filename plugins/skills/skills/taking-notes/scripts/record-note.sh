@@ -13,10 +13,10 @@
 #   - Failure: validation error to stderr, non-zero exit.
 #
 # Usage:
-#   take-note.sh [--force] <title> <tags> <summary> < body.md
+#   record-note.sh [--force] <title> <tags> <summary> < body.md
 #
 # Examples:
-#   take-note.sh "Cache TTL is 300s" 'auth-investigation,cache' \
+#   record-note.sh "Cache TTL is 300s" 'auth-investigation,cache' \
 #       'Confirmed via appsettings.json; the stale read was a cold-start artifact, not a TTL bug.' \
 #       < body.md
 
@@ -40,7 +40,7 @@ while [ $# -gt 0 ]; do
             shift
             break ;;
         --*)
-            echo "take-note.sh: unknown flag '$1'" >&2
+            echo "record-note.sh: unknown flag '$1'" >&2
             exit 2 ;;
         *)
             break ;;
@@ -52,12 +52,12 @@ TAGS="${2-}"
 SUMMARY="${3:-}"
 
 if [ -z "$TITLE" ] || [ -z "$SUMMARY" ]; then
-    echo "usage: take-note.sh [--force] <title> <tags> <summary>  (body on stdin)" >&2
+    echo "usage: record-note.sh [--force] <title> <tags> <summary>  (body on stdin)" >&2
     exit 2
 fi
 
 if [ -t 0 ]; then
-    echo "take-note.sh: body must be piped on stdin" >&2
+    echo "record-note.sh: body must be piped on stdin" >&2
     exit 2
 fi
 
@@ -68,7 +68,7 @@ slug=$(printf '%s' "$TITLE" \
     | cut -c1-80)
 
 if [ -z "$slug" ]; then
-    echo "take-note.sh: title slug is empty after sanitization" >&2
+    echo "record-note.sh: title slug is empty after sanitization" >&2
     exit 2
 fi
 
@@ -76,7 +76,7 @@ mkdir -p docs/notes
 target="docs/notes/${slug}.md"
 
 if [ -e "$target" ] && [ "$FORCE" != "1" ]; then
-    echo "take-note.sh: $target already exists (use --force to overwrite)" >&2
+    echo "record-note.sh: $target already exists (use --force to overwrite)" >&2
     exit 2
 fi
 

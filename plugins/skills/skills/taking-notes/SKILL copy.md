@@ -6,7 +6,7 @@ Head field roles:
 - Summary: prose context, agent-readable
 
 Body:
-- Presence is known to the skill — take-note.sh accepts body on stdin and writes it.
+- Presence is known to the skill — record-note.sh accepts body on stdin and writes it.
 - Structure is silent — the skill prescribes no body template. The agent decides shape from context and intent.
 
 Triggers:
@@ -41,7 +41,7 @@ Title discipline:
 - User may specify the title; otherwise the agent derives it from topic, content, and conversation.
 - General English composition guidance comes from writing-prose (concrete-over-abstract, front-load-important-words, action-oriented-headings) — taking-notes inherits, does not re-prescribe.
 - Taking-notes-specific: title is also identity, slug, URL, and search anchor — make it discriminating enough that exact-match and slug derivation give a useful result.
-- When a question note gets its answer, the title may pivot from interrogative to declarative. The same note evolves; renaming the title regenerates the slug via take-note.sh.
+- When a question note gets its answer, the title may pivot from interrogative to declarative. The same note evolves; renaming the title regenerates the slug via record-note.sh.
 
 Summary discipline:
 - One sentence; front-loads the most informative phrase.
@@ -82,12 +82,12 @@ Trigger 3 — auto-capture mode:
 
 Note format:
 - Notes live under docs/notes/ at the repo root.
-- Filename is <slug>.md. Slug rule: title lowercased, non-alphanumerics replaced with dashes, runs of dashes collapsed, leading/trailing dashes trimmed, capped at 80 characters. The slug is mechanically derived from the title — never hand-edited. Renaming a note means changing the title and regenerating the file via take-note.sh.
-- The head is owned by take-note.sh. The script composes H1, blank line, Tags: line, and summary line from its arguments. The agent supplies <title>, <tags>, and <summary> as args; the script lays them out.
+- Filename is <slug>.md. Slug rule: title lowercased, non-alphanumerics replaced with dashes, runs of dashes collapsed, leading/trailing dashes trimmed, capped at 80 characters. The slug is mechanically derived from the title — never hand-edited. Renaming a note means changing the title and regenerating the file via record-note.sh.
+- The head is owned by record-note.sh. The script composes H1, blank line, Tags: line, and summary line from its arguments. The agent supplies <title>, <tags>, and <summary> as args; the script lays them out.
 - The body is everything piped on stdin. Body has H2 sections; titles and contents are the agent's choice (OIN is one option among many).
 - References between notes: plain text (see {slug}.md) inline; never markdown links. Notes live on web and on disk; links break across contexts.
 
-Template (what take-note.sh produces):
+Template (what record-note.sh produces):
 ```
 # <one-line title — the H1>
 
@@ -140,7 +140,7 @@ Intentionally omitted (don't re-introduce):
 
 Script operations (signature + output discipline, one section):
 - The scripts under ${CLAUDE_PLUGIN_ROOT}/skills/taking-notes/scripts/ are the agent's interface to the note set. Composition, enumeration, and retrieval go through them so the head structure stays uniform and the document graph stays scannable.
-- take-note.sh [--force] <title> <tags> <summary> — body piped on stdin. Slugifies the title, refuses to overwrite without --force, writes docs/notes/<slug>.md. Success is silent (file is the artifact); failure prints validation error to stderr and exits non-zero.
+- record-note.sh [--force] <title> <tags> <summary> — body piped on stdin. Slugifies the title, refuses to overwrite without --force, writes docs/notes/<slug>.md. Success is silent (file is the artifact); failure prints validation error to stderr and exits non-zero.
 - scan.sh [--title PAT] [--tag TAG] [--xtag TAG] [--summary PAT] — emits head blocks for every docs/notes/*.md (title, tags, summary, filename). Each flag is an optional predicate; flags AND together. No predicates lists every note. Title and summary match substring case-insensitive; --tag exact-match within the comma-separated Tags: line; --xtag excludes. Empty docs/notes/ prints "no notes"; predicates that match nothing print "no notes matching <predicates>". Exit 0 either way — a clean empty result is success.
 
 === Intro material (for didactic meta-discourse — not a body principle) ===

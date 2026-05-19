@@ -156,12 +156,12 @@ The content to capture is whatever the user just said, observed, decided, or won
 
 Two scripts ship under `${CLAUDE_PLUGIN_ROOT}/skills/taking-notes/scripts/`. Portable POSIX bash; runs on Linux, macOS, and Windows (Git Bash, WSL).
 
-- `take-note.sh [--force] <title> <tags> <summary>` — body piped on stdin. Slugifies the title, refuses to overwrite without `--force`, writes `docs/notes/<slug>.md`. The slug is mechanically derived; the writer does not choose it.
+- `record-note.sh [--force] <title> <tags> <summary>` — body piped on stdin. Slugifies the title, refuses to overwrite without `--force`, writes `docs/notes/<slug>.md`. The slug is mechanically derived; the writer does not choose it.
 - `scan.sh [--title PAT] [--tag TAG] [--xtag TAG] [--summary PAT]` — reads the head of each `docs/notes/*.md` and emits one block per note: title, tags, summary, filename. Each flag is an optional predicate; flags AND together. With no predicates, lists every note. `--title` and `--summary` match substring case-insensitive; `--tag` matches exactly within the comma-separated `Tags:` line; `--xtag` excludes notes where the named tag is present.
 
 ### Output discipline
 
-- `take-note.sh`: success is silent — the file is the artifact. Failure prints the validation error to stderr and exits non-zero.
+- `record-note.sh`: success is silent — the file is the artifact. Failure prints the validation error to stderr and exits non-zero.
 - `scan.sh`: success prints the formatted matches as block-per-note. With no predicates, lists every note; with predicates, only matches. Empty `docs/notes/` prints `no notes`; predicates that match nothing print `no notes matching <predicates>`. Exit code is 0 in both cases — a clean empty result is success.
 
 ### Gate policies

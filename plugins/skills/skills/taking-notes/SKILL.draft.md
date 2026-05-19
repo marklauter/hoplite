@@ -24,30 +24,34 @@ Ensure the companion skill, `writing-prose` is loaded before composing a note.
 
 ## Recording a note
 
+1. when to record a note
+2. check for existing note
+3. how to record the note (before the note format)
+
+### When to record a note
+
 You record a note when one of three things happens:
 
 1. **The user asks.** They request a note; you write one.
 2. **A discovery surfaces.** A new graph connection between concepts: resolving an open question in conversation context, uncovering a connection between previously-unconnected ideas, comprehending a mechanism for the first time, unpacking a complex idea into parts, packing related ideas into a unified concept, ruling out a dead end, or crystallizing an unknown into a precise question. You propose a note; the user approves or denies before you write.
-3. **Auto-capture mode is on.** The user has put you in a mode that captures discoveries without the approval gate. The discovery signals are the same as #2.
+3. **Auto-capture mode is on.** The user has asked you to auto-capture discoveries without the approval gate; discovery signals are the same as #2.
 
-### Decide if it belongs in a note
+Notes may cover any topic related to host repo. Memory covers cross-repo facts, user profile, and persistent preferences — anything that spans repos and sessions. Subject and topic determine routing, not the trigger phrase.
 
-Notes cover any topic related to this repo — its plugins, skills, scripts, structure, and design. Memory covers cross-repo facts, user profile, and persistent preferences — anything that spans repos and sessions. Subject decides routing, not the trigger phrase.
+Exclude from notes:
 
-Do not write a note when:
-
-- The authoritative source (code, CLAUDE.md, git history) already says it. Reference the source by stable identifier instead. Detail that is both discoverable elsewhere and prone to drift belongs at its source, not duplicated in the note.
-- The content is conversational ephemera — recap of what was just said, transcript of what was tried. Capture the durable finding, not the path to it.
+- Discoverable content — anything the authoritative source (code, CLAUDE.md, git history, other notes, directory structure) already states. Reference by stable identifier; duplication drifts as the source changes.
+- Conversational ephemera — recap of what was just said, transcript of what was tried. Capture the durable finding, not the path to it.
 
 ### Check for an existing note
 
-Before writing, scan for an existing note on the topic via `scan.sh`.
+Before writing, scan for an existing note on the topic via [`scan.sh`](#scanning-finding-and-reading-notes).
 
 - **Same topic exists.** Update or edit the existing note in place.
-- **Adjacent topic exists.** Write a new note and co-reference. Adjacent is not the same.
+- **Adjacent topic exists.** Write a new note and co-reference (see [Tags](#tags)).
 - **Existing note covers the content with nothing to add.** Surface "there's already a note on this topic" instead of writing a duplicate.
 
-Avoid information loss. User-requested change can mutate freely; agent-initiated change is additive. Don't overwrite without being asked.
+Avoid information loss. User-requested change can mutate freely; agent-initiated change is additive. Don't overwrite without being asked or securing user approval.
 
 ### Note format
 
@@ -57,13 +61,13 @@ A note has two parts: a four-line header and a content body.
 
 The header is: H1 title line, blank line, `Tags:` line (comma-separated), one-line summary.
 
-The filename and header are owned by `take-note.sh`. You supply `<title>`, `<tags>`, and `<summary>` as arguments; the script slugifies the title into the filename and composes the four header lines. The slug is never hand-edited; renaming a note means changing the title and regenerating the file via `take-note.sh`.
+The filename and header are owned by [`record-note.sh`](#write-the-file). You supply `<title>`, `<tags>`, and `<summary>` as arguments; the script slugifies the title into the filename and composes the four header lines. The slug is never hand-edited; renaming a note means changing the title and regenerating the file via `record-note.sh`.
 
 The body is everything you pipe on stdin. Body has H2 sections; titles and content are yours to choose. Observation/Interpretation/Next is one shape that fits investigation notes; references, decisions, and todo notes take whatever shape fits the intent.
 
 References between notes are plain text inline — `(see {slug}.md)`. Never markdown links: notes live on web and on disk, and links break across contexts.
 
-The template `take-note.sh` produces:
+The template `record-note.sh` produces:
 
 ```
 # <one-line title — the H1>
@@ -84,7 +88,7 @@ Name the topic explicitly. Concrete over abstract. The title is identity, slug, 
 
 When the user supplies a title, use it. Otherwise derive from topic, content, and conversation. General English composition guidance — concrete over abstract, front-load important words, action-oriented heading — comes from `writing-prose`.
 
-When a question note gets its answer, the title may pivot from interrogative to declarative. The same note evolves; renaming the title regenerates the slug via `take-note.sh`.
+When a question note gets its answer, the title may pivot from interrogative to declarative. The same note evolves; renaming the title regenerates the slug via `record-note.sh`.
 
 ### Tags
 
@@ -108,7 +112,7 @@ The skill prescribes no body template. Section titles and content are yours to c
 
 ### Write the file
 
-Call `take-note.sh [--force] <title> <tags> <summary>` with the body piped on stdin. The script slugifies the title, refuses to overwrite without `--force`, and writes `docs/notes/<slug>.md`. Success is silent — the file is the artifact. Failure prints the validation error to stderr and exits non-zero.
+Call `record-note.sh [--force] <title> <tags> <summary>` with the body piped on stdin. The script slugifies the title, refuses to overwrite without `--force`, and writes `docs/notes/<slug>.md`. Success is silent — the file is the artifact. Failure prints the validation error to stderr and exits non-zero.
 
 After writing, confirm with a minimal acknowledgment — for example, `note written here: {slug}.md` — and let the file stand. No recital or recap.
 
