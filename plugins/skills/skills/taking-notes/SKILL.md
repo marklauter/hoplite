@@ -5,7 +5,11 @@ description: Use when the user asks to write something down, save something for 
 
 # Taking notes
 
-Wiki-style atomic notes under `docs/notes/` — one topic per page, titled by identity, totally mutable, always representing the current state of an idea. Git carries the history.
+Note-authoring knowledge for markdown notes. Loads alongside `writing-prose` and specializes the rhetorical context for the note artifact: audience is the next session, intent is to externalize one idea per file so the work outlives the conversation. Each note represents the current state of an idea; git carries the history. Read the patterns below as the form the note artifact takes under those constraints — the template is the default shape, the discipline is the durable rule.
+
+## Instructions
+
+Ensure the `writing-prose` skill has been load before composing any notes.
 
 ## Philosophy
 
