@@ -8,12 +8,12 @@ Eight more scripts need *_test.sh files after Phase 1 (taking-notes/query, 16 ca
 - Single test file exists: `plugins/skills/skills/taking-notes/tests/query_test.sh` — 16 cases, all green.
 - Harness lives at `plugins/skills/tests/run-tests.sh`. Convention: file names end in `_test.sh`; each test is a function named `test_<something>`; tests run in subshells with cwd at a fresh tmpdir and `$PLUGIN_ROOT` exported.
 - Untested scripts by location:
-  - `plugins/skills/skills/taking-notes/scripts/`: `take-note.sh`, `list-notes.sh`
   - `plugins/skills/skills/journaling/scripts/`: `journal-entry.sh`, `list-journal.sh`, `query.sh`
   - `plugins/skills/scripts/`: `report-finding.sh`, `list-findings.sh`, `query.sh`, `summarize.sh`
   - `plugins/skills/skills/managing-github-issues/scripts/`: 10 scripts, all wrapping `gh`
   - `plugins/skills/skills/writing-csharp/scripts/`: `build-gate.sh`
   - `plugins/skills/scripts/`: `changes.sh`
+- taking-notes tests are complete: `take-note_test.sh` and `scan_test.sh` cover the two scripts.
 
 ## Interpretation
 
@@ -24,7 +24,7 @@ Eight more scripts need *_test.sh files after Phase 1 (taking-notes/query, 16 ca
 
 ## Next
 
-- Phase 2: write the 9 easy local-file tests in one batch — `take-note_test.sh`, `list-notes_test.sh`, `journal-entry_test.sh`, `list-journal_test.sh`, `journaling/query_test.sh`, `report-finding_test.sh`, `list-findings_test.sh`, `findings-query_test.sh`, `summarize_test.sh`.
+- Phase 2: write the remaining local-file tests in one batch — `journal-entry_test.sh`, `list-journal_test.sh`, `journaling/query_test.sh`, `report-finding_test.sh`, `list-findings_test.sh`, `findings-query_test.sh`, `summarize_test.sh`.
 - Phase 3: design a `gh` mock pattern (PATH stub or sourced helper) and write tests for the 10 managing-github-issues scripts.
 - Phase 4: git-fixture pattern for `changes.sh`.
 - Skip `build-gate.sh` for now; revisit if it grows non-trivial logic that isn't `dotnet` orchestration.

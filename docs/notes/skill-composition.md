@@ -13,3 +13,7 @@ Example — `writing-prose/SKILL.md`: "Foundational editorial knowledge lives he
 ## Soft on procedure
 
 A skill is content, not a recipe. Offer principles that let the agent exercise judgment, not strict step-by-step workflows. The reader is an agent with context the skill author can't anticipate; rigid procedures will break against cases the author never imagined, while principles travel.
+
+## Direct instruction
+
+A skill teaches the agent about a topic or task. It is an instructional block — direct in its assertions, not allusive. Say what something is and how to do it: "this is how you preserve durable ideas — write a note." "This is how you compose a note." Indirection and meta-framing dilute the teaching; direct prose carries it. Pairs with [Soft on procedure](#soft-on-procedure) — that one governs the form (principles over rigid workflows); this one governs the voice (direct over allusive).

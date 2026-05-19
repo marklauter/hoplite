@@ -99,7 +99,7 @@ Tags: <comma-separated, optional>
 <more content>
 ```
 
-Line 1 is the H1. Line 2 is blank. Lines 3-4 are the scannable head — tags, summary. Line 5 is blank, then the body sections. `list-notes.sh` reads the head; the body is for humans and future sessions.
+Line 1 is the H1. Line 2 is blank. Lines 3-4 are the scannable head — tags, summary. Line 5 is blank, then the body sections. `scan.sh` reads the head; the body is for humans and future sessions.
 
 The Observation/Interpretation/Next split is the default shape for investigation notes. Reference notes and decision notes use the sections that fit the topic — the template is a starting point, not a straightjacket. Question notes use the same default sections with a different reading: Observation = what is known so far, Interpretation = current guesses, Next = what would answer the question. The scannable head is non-negotiable; the body shape adapts.
 
@@ -137,7 +137,7 @@ The content to capture is whatever the user just said, observed, decided, or won
 
 ### Dedup before writing
 
-- `list-notes.sh` or `query.sh` is the first stop. Scan for an existing note on the topic before opening a new one — `query.sh` lets you intersect title, tag, and summary predicates.
+- `scan.sh` is the first stop. Scan for an existing note on the topic before opening a new one — predicates intersect title, tag, and summary. With no predicates it lists every note.
 - A note on the same topic exists: open it and update it. Wiki pages evolve; do not write `cache-ttl-300s-v2.md`.
 - A note on an adjacent topic exists: write the new note and link the two. Adjacent is not same.
 - The topic does not warrant its own page: link from the existing note to the underlying source instead.
@@ -145,7 +145,7 @@ The content to capture is whatever the user just said, observed, decided, or won
 ### Linking notes
 
 - Reference another note by filename in prose: `see [cache-ttl-300s](cache-ttl-300s.md)`.
-- Use `Tags:` for thread membership: a tag like `auth-investigation` lets `list-notes.sh` filter all notes on the thread.
+- Use `Tags:` for thread membership: a tag like `auth-investigation` lets `scan.sh --tag auth-investigation` retrieve every note on the thread.
 - Dangling links to pages that do not yet exist are acceptable — they mark candidates for future notes.
 
 ## Validation
@@ -154,17 +154,15 @@ The content to capture is whatever the user just said, observed, decided, or won
 
 ### The script set
 
-Three scripts ship under `${CLAUDE_PLUGIN_ROOT}/skills/taking-notes/scripts/`. Portable POSIX bash; runs on Linux, macOS, and Windows (Git Bash, WSL).
+Two scripts ship under `${CLAUDE_PLUGIN_ROOT}/skills/taking-notes/scripts/`. Portable POSIX bash; runs on Linux, macOS, and Windows (Git Bash, WSL).
 
 - `take-note.sh [--force] <title> <tags> <summary>` — body piped on stdin. Slugifies the title, refuses to overwrite without `--force`, writes `docs/notes/<slug>.md`. The slug is mechanically derived; the writer does not choose it.
-- `list-notes.sh [<tag>]` — reads the head of each `docs/notes/*.md` and emits one block per note: title, tags, summary, filename. With a tag argument, filters to notes whose `Tags:` line contains that tag.
-- `query.sh [--title PAT] [--tag TAG] [--xtag TAG] [--summary PAT]` — multi-predicate scan. Each flag is optional; flags AND together. Title and summary match substring case-insensitive; `--tag` matches exactly within the comma-separated `Tags:` line; `--xtag` excludes notes where the named tag is present. Output mirrors `list-notes.sh`.
+- `scan.sh [--title PAT] [--tag TAG] [--xtag TAG] [--summary PAT]` — reads the head of each `docs/notes/*.md` and emits one block per note: title, tags, summary, filename. Each flag is an optional predicate; flags AND together. With no predicates, lists every note. `--title` and `--summary` match substring case-insensitive; `--tag` matches exactly within the comma-separated `Tags:` line; `--xtag` excludes notes where the named tag is present.
 
 ### Output discipline
 
 - `take-note.sh`: success is silent — the file is the artifact. Failure prints the validation error to stderr and exits non-zero.
-- `list-notes.sh`: success prints the formatted note list, or `no notes` when `docs/notes/` is empty or missing. Tag filter prints only matches; no matches prints an explanatory line.
-- `query.sh`: success prints the formatted matches in the same block format as `list-notes.sh`, or `no matches` when nothing satisfies the predicates. Exit code is 0 in both cases — a clean empty result is success.
+- `scan.sh`: success prints the formatted matches as block-per-note. With no predicates, lists every note; with predicates, only matches. Empty `docs/notes/` prints `no notes`; predicates that match nothing print `no notes matching <predicates>`. Exit code is 0 in both cases — a clean empty result is success.
 
 ### Gate policies
 
