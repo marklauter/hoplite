@@ -3,8 +3,6 @@ name: taking-notes
 description: Use when the user asks to write something down, save something for later, record something, take a note, or capture an open question — or when a discovery worth preserving emerges in conversation. Composes on writing-prose; produces durable, structured notes under docs/notes/ retrieved via the script set.
 ---
 
-# Taking notes
-
 <!-- design scratch — raw material from the dialogue, distributed into sections later
 
 Head field roles:
@@ -160,20 +158,24 @@ Script operations (signature + output discipline, one section):
 [more facts added as the dialogue progresses]
 -->
 
-Note-authoring knowledge for the durable layer beneath the conversation. Notes externalize what is worth surviving compaction — the durable finding, never the transcript that produced it. Load `writing-prose` before composing notes; this skill specializes the rhetorical context that `writing-prose` declares, and the foundation must be in context for the override semantics to apply. The sections below install the patterns the agent applies when writing, reading, and maintaining notes — note format, the script set, routing, triggers, duplicate hygiene, head discipline, body principles, and the defect rules that keep the note graph scannable.
+# Taking notes
+
+A note is a durable, structured artifact stored in `docs/notes/`. Notes survive beyond the scope of short term memory and context windows. Anything worth remembering belongs in a note: a hypothesis, a measurement, a decision, an open question, a reference, and so on.
+
+Ensure the companion skill, `writing-prose` is loaded before composing a note.
 
 ## Rhetorical context
 
-- Writer: contributor (default)
-- Voice: declarative, terse (default)
-- Ethos: expert (default)
-- Stance: neutral (default)
-- Audience: the next session — the same agent after compaction, a later session, or the user revisiting (override)
+- Writer: contributor
+- Voice: declarative, terse
+- Ethos: expert
+- Stance: neutral
+- Audience: a future reader picking up where this session left off — the same agent after compaction, a different agent in a later session, or the user revisiting
 - Subject: any repo-scoped topic worth a durable record — discoveries, decisions, observations, open questions, dead ends, design fragments
 - Genre: note
-- Tone: professional, even-keeled (default)
-- Register: ADR — declarative, present-tense, mutable but always current; the note evolves as understanding does and replaces prior content rather than versioning it (override)
-- Intent: externalize repo-scoped findings into structured artifacts the script set can index and the next session can read
+- Tone: professional, even-keeled
+- Register: ADR — declarative, present-tense, mutable but always current; the note evolves as understanding does and replaces prior content rather than versioning it
+- Intent: externalize repo-scoped findings into structured, retrievable artifacts that survive context compaction
 
 ## Note format
 
