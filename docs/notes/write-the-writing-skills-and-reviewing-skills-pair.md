@@ -6,21 +6,19 @@ LLM-targeted structural pair layered on the writing-prose editorial spine; lands
 
 ## Observation
 
-The `writing-prose` / `reviewing-prose` pair settled across commits `e9cda8c` through `ea53d33`. During design we agreed that skills, agent prompts, and slash commands form a distinct genre — LLM-targeted prose with extreme density requirements, the canonical four-section shape, and no bold/tables — and that the dedicated pair lands after the documentation pair stabilizes. The documentation pair has now stabilized.
+The `writing-prose` / `reviewing-prose` pair settled across commits `e9cda8c` through `ea53d33`. During design we agreed that skills, agent prompts, and slash commands form a distinct genre — LLM-targeted prose with extreme density requirements and no bold/tables — and that the dedicated pair lands after the documentation pair stabilizes. The documentation pair has now stabilized.
 
 ## Interpretation
 
 `writing-skills` loads `writing-prose` as the editorial spine and layers the structural conventions for skill files on top:
 
-- The canonical four-section shape (intro → Philosophy → Guidance → Validation).
-- Named-anchor Philosophy intro with one paragraph of orienting threads, then `###` headings.
-- 1:1 Philosophy/Guidance mirror as the default; document any deviation explicitly.
+- The foundation/downstream shape inherited from `writing-prose`: the foundation owns `## Rhetorical context` (defaults plus the downstream contract), `## Composition`, `## Grammar, structure, and referential integrity`, and `## Validation`; downstream skills declare a `## Rhetorical context` section per the contract and keep whatever body shape fits the artifact.
 - Frontmatter contract: `name`, `description` only; description carries the trigger language.
 - The skill body intro: describes file content only; never narrates loading or repeats the trigger.
 
 `reviewing-skills` mirrors with lens additions on top of `reviewing-prose`:
 
-- A structural lens (canonical four sections present, Philosophy/Guidance mirroring, frontmatter shape).
+- A structural lens (downstream declares its `## Rhetorical context` section per the contract; frontmatter shape).
 - A trigger-language lens (description verbs match the skill's actual scope).
 - Reuses the shared `scripts/` infrastructure under the existing `Type: <code|documentation|skill?>` taxonomy — likely add a third `Type:` value (`skill`) and a corresponding rubric in `summarize.sh`.
 

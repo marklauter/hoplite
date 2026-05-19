@@ -24,5 +24,5 @@ Open question: ship as a skill (instructions Claude follows) or as a real `dotne
 
 - Inventory the projects Mark already builds against these standards; extract the common scaffold from the most recent example.
 - Decide skill vs. template (or both — skill that invokes the template, then customizes).
-- Draft following the canonical four-section structure.
+- Draft as a code-family skill alongside `writing-csharp` (which has its own shape; structural divergence between prose and code families is accepted per the `writing-prose` refactor decisions).
 - Coordinate with `writing-csharp` — scaffolding sets up the environment that writing-csharp's rules then apply to.

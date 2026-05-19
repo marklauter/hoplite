@@ -28,6 +28,6 @@ Cross-references:
 
 ## Next
 
-- Draft the skill following the canonical four-section structure (intro → Philosophy → Guidance → Validation).
+- Draft the skill; if it covers prose artifacts, compose on `writing-prose` and declare a `## Rhetorical context` section per the foundation contract. Body section shape fits the artifact (architecture rules, patterns, anti-patterns).
 - Decide whether a `reviewing-architecture` skill ships at the same time (architecture findings would slot into the existing `.findings/` shape with a new `--type architecture` and possibly a lens vocabulary).
 - After it ships, the memory `project_writing_architecture_rules.md` can be deleted — its content lives here now and the skill itself becomes the authoritative source.

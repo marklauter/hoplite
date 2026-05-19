@@ -10,7 +10,7 @@ Search for negation trigger words. Each hit is a candidate for positive rewrite 
 
 1. Grep for each trigger word in the page.
 2. For each hit, ask: "What is this sentence actually trying to say?"
-3. Rewrite to state that directly. See [positive-transforms.md](../positive-transforms.md) for transform examples.
+3. Rewrite to state that directly. See [positive-transforms.md](positive-transforms.md) for transform examples.
 
 ## When to keep the negation
 

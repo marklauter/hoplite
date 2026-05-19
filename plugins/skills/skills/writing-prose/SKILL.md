@@ -53,9 +53,9 @@ Each entry below is a bundled shorthand. Declaring the register name in a downst
 
 Above all: prefer positively framed assertions. Say what is, not what it isn't. Positive constructions strengthen the message. Negative constructions weaken it. Weak writing circles around what something isn't. It gestures rather than delivers.
 
-See [positive-transforms.md](${CLAUDE_PLUGIN_ROOT}/skills/writing-prose/positive-transforms.md) for examples of negative to positive transformations when you need help forming a positive frame.
+See [positive-transforms.md](${CLAUDE_PLUGIN_ROOT}/skills/writing-prose/reference/positive-transforms.md) for examples of negative to positive transformations when you need help forming a positive frame.
 
-Each principle bullet has an expansion file at `${CLAUDE_PLUGIN_ROOT}/skills/writing-prose/deep/<slug>.md`, where the slug is the principle phrase lowercased with non-alphanumerics replaced by dashes (use `bash ${CLAUDE_PLUGIN_ROOT}/scripts/slugify.sh '<principle phrase>'` to derive deterministically). Consult when depth, examples, or patterns are needed. For example, in "- Source is the authority — defer to the subject;", "Source is the authority" is the phrase.
+Each principle bullet has an expansion file at `${CLAUDE_PLUGIN_ROOT}/skills/writing-prose/reference/<slug>.md`, where the slug is the principle phrase lowercased with non-alphanumerics replaced by dashes (use `bash ${CLAUDE_PLUGIN_ROOT}/scripts/slugify.sh '<principle phrase>'` to derive deterministically). Consult when depth, examples, or patterns are needed. For example, in "- Source is the authority — defer to the subject;", "Source is the authority" is the phrase.
 
 - Source is the authority — defer to the subject; verify against it before claiming; cite by stable reference.
 - Active voice over passive — agency stays with the actor; "the user signs in," not "sign-in is performed by the user."
@@ -110,7 +110,7 @@ Run `reviewing-prose` for the formal pass; address findings before commit.
 - Within-document cohesion read — read paragraph transitions; does each pick up from the previous, or do paragraphs sit as independent claims?
 - Cross-document cohesion read — compare against sibling artifacts; do register, terminology, and structural pattern hold across them?
 - Link-strip test — read the page imagining every link is broken; does the core message still come through? If not, more context is needed inline.
-- Negation grep — `not`, `don't`, `didn't`, `wasn't`, `won't`, `can't`, `cannot`, `never`, `avoid`, `should not`, `didn't seem`, `wasn't very`. Each hit is a candidate for positive rewrite; see [positive-transforms.md](${CLAUDE_PLUGIN_ROOT}/skills/writing-prose/positive-transforms.md).
+- Negation grep — `not`, `don't`, `didn't`, `wasn't`, `won't`, `can't`, `cannot`, `never`, `avoid`, `should not`, `didn't seem`, `wasn't very`. Each hit is a candidate for positive rewrite; see [positive-transforms.md](${CLAUDE_PLUGIN_ROOT}/skills/writing-prose/reference/positive-transforms.md).
 - Hedge and filler grep — `might`, `perhaps`, `could be`, `it's worth noting`, `basically`, `simply`, `just`, `actually`, `really`, `quite`, `very`. Each hit is a candidate for removal.
 - Tense drift grep — `will`, `would`. Most uses are tense drift; replace with present tense.
 - Marketing language grep — `seamless`, `robust`, `powerful`, `revolutionary`, `easy`, `simple`, `intuitive`. Cut or replace with substance.

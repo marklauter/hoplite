@@ -3,7 +3,7 @@ name: taking-notes
 description: Use when the user asks to write something down, save something for later, record something, take a note, or capture an open question. Produces atomic, titled wiki pages under docs/notes/ — discoveries and unresolved questions are equally first-class — that always represent the latest state of the idea; git keeps the history.
 ---
 
-# Taking Notes
+# Taking notes
 
 Wiki-style atomic notes under `docs/notes/` — one topic per page, titled by identity, totally mutable, always representing the current state of an idea. Git carries the history.
 

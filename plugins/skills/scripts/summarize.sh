@@ -95,10 +95,12 @@ read_canonical() {
     awk '/^## Philosophy/{flag=1; next} /^## /{flag=0} flag && /^### /{sub(/^### /, ""); sub(/ \([^)]+\)$/, ""); print}' "$skill"
 }
 
-# writing-prose holds principles as bulleted list items under three H2 sections
-# rather than as `### ` anchors. The canonical name is the text between the
-# leading `- ` and the first ` — ` (space-em-dash-space). Citation suffixes are
-# stripped so authors may cite either form.
+# writing-prose holds principles as bulleted list items in three places:
+# the Composition section, the Grammar/structure/referential-integrity section,
+# and the judgement subsection of Validation — rather than as `### ` anchors.
+# The canonical name is the text between the leading `- ` and the first
+# ` — ` (space-em-dash-space). Citation suffixes are stripped so authors may
+# cite either form.
 read_canonical_prose() {
     local skill="$1"
     [ -f "$skill" ] || return 0

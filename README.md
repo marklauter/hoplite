@@ -39,7 +39,7 @@ docs/
 
 ## Skill template
 
-Every skill is a single `SKILL.md` that looks like this:
+Every skill is a single `SKILL.md`. The frontmatter and the H1 are universal; section structure varies by skill family.
 
 ```markdown
 ---
@@ -51,24 +51,14 @@ description: When this skill should activate. Be specific about trigger phrases 
 
 Brief prose describing what this skill covers.
 
-## Philosophy
-
-The principles behind the domain. Why this works the way it does.
-
-## Guidance
-
-Concrete patterns, idioms, and rules. The dense reference material.
-
-## Validation
-
-How to verify the work meets the philosophy and guidance.
+<body sections — shape varies by family; see examples below>
 ```
 
 - Skill name: gerund form (`writing-X`, `reviewing-X`, `triaging-X`).
 - Description: the trigger. Claude reads this to decide whether to load the skill — invest in it.
 - Body: the domain knowledge that gets injected when the skill activates.
 
-Individual skills drift from this template; the canonical reference is `plugins/skills/skills/writing-csharp/SKILL.md`.
+Section shape varies by family. Prose-artifact skills compose on `writing-prose`: the foundation owns `## Rhetorical context` (defaults plus the downstream contract), `## Composition`, `## Grammar, structure, and referential integrity`, and `## Validation`; downstreams declare a `## Rhetorical context` section per the contract and keep whatever body shape fits the artifact. Code-family skills like `writing-csharp` have their own shape. Representative examples: `plugins/skills/skills/writing-prose/SKILL.md` (foundation), `plugins/skills/skills/writing-wiki/SKILL.md` (prose downstream), `plugins/skills/skills/writing-csharp/SKILL.md` (code family).
 
 ## Adding a skill
 
