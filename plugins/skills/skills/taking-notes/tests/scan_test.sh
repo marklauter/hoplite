@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# Tests for plugins/skills/skills/taking-notes/scripts/query.sh
+# Tests for plugins/skills/skills/taking-notes/scripts/scan.sh
 #
 # Sourced by run-tests.sh; each test_* runs in a subshell with cwd at a fresh
 # tmpdir and $PLUGIN_ROOT pointing at the plugin root.
 
-QUERY="$PLUGIN_ROOT/skills/taking-notes/scripts/query.sh"
+SCAN="$PLUGIN_ROOT/skills/taking-notes/scripts/scan.sh"
 
 # Build a fixture note at docs/notes/<slug>.md with the canonical head shape.
 make_note() {
@@ -28,17 +28,34 @@ setup() {
 # ---- no flags ----
 
 test_no_flags_returns_every_note() {
-    local out; out=$("$QUERY")
+    local out; out=$("$SCAN")
     assert_contains "$out" "Cache TTL is 300s"
     assert_contains "$out" "Redirect loop on logout"
     assert_contains "$out" "Caching strategy spike"
     assert_contains "$out" "Untagged note"
 }
 
+# ---- output format ----
+
+test_output_includes_tags_line() {
+    local out; out=$("$SCAN")
+    assert_contains "$out" "  tags: auth,cache"
+}
+
+test_output_includes_summary() {
+    local out; out=$("$SCAN")
+    assert_contains "$out" "  Confirmed via appsettings.json."
+}
+
+test_output_includes_filename_arrow() {
+    local out; out=$("$SCAN")
+    assert_contains "$out" "  -> cache-ttl.md"
+}
+
 # ---- --tag (positive) ----
 
 test_tag_matches_when_tag_present() {
-    local out; out=$("$QUERY" --tag cache)
+    local out; out=$("$SCAN" --tag cache)
     assert_contains "$out" "Cache TTL is 300s"
     assert_contains "$out" "Caching strategy spike"
     assert_not_contains "$out" "Redirect loop on logout"
@@ -46,20 +63,20 @@ test_tag_matches_when_tag_present() {
 }
 
 test_tag_misses_when_tag_absent() {
-    local out; out=$("$QUERY" --tag nonexistent)
-    assert_equal "no matches" "$out"
+    local out; out=$("$SCAN" --tag nonexistent)
+    assert_equal "no notes matching --tag 'nonexistent'" "$out"
 }
 
 test_tag_does_not_match_partial() {
     # 'cach' should not match 'cache' — --tag is exact match within the comma list
-    local out; out=$("$QUERY" --tag cach)
-    assert_equal "no matches" "$out"
+    local out; out=$("$SCAN" --tag cach)
+    assert_equal "no notes matching --tag 'cach'" "$out"
 }
 
 # ---- --xtag (exclude) ----
 
 test_xtag_excludes_notes_with_that_tag() {
-    local out; out=$("$QUERY" --xtag cache)
+    local out; out=$("$SCAN" --xtag cache)
     assert_not_contains "$out" "Cache TTL is 300s"
     assert_not_contains "$out" "Caching strategy spike"
     assert_contains "$out" "Redirect loop on logout"
@@ -68,13 +85,13 @@ test_xtag_excludes_notes_with_that_tag() {
 
 test_xtag_treats_missing_tags_as_satisfied() {
     # An untagged note has the tag "missing" — exclusion is trivially satisfied.
-    local out; out=$("$QUERY" --xtag missing)
+    local out; out=$("$SCAN" --xtag missing)
     assert_contains "$out" "Untagged note"
 }
 
 test_tag_and_xtag_compose() {
     # --tag cache --xtag draft → notes tagged cache but not draft
-    local out; out=$("$QUERY" --tag cache --xtag draft)
+    local out; out=$("$SCAN" --tag cache --xtag draft)
     assert_contains "$out" "Cache TTL is 300s"
     assert_not_contains "$out" "Caching strategy spike"
 }
@@ -83,21 +100,21 @@ test_tag_and_xtag_compose() {
 
 test_title_substring_match() {
     # 'cach' is a substring of both 'Cache' and 'Caching'
-    local out; out=$("$QUERY" --title cach)
+    local out; out=$("$SCAN" --title cach)
     assert_contains "$out" "Cache TTL is 300s"
     assert_contains "$out" "Caching strategy spike"
     assert_not_contains "$out" "Redirect loop on logout"
 }
 
 test_title_match_is_case_insensitive() {
-    local out; out=$("$QUERY" --title CACHE)
+    local out; out=$("$SCAN" --title CACHE)
     assert_contains "$out" "Cache TTL is 300s"
 }
 
 # ---- --summary (substring, case-insensitive) ----
 
 test_summary_substring_match() {
-    local out; out=$("$QUERY" --summary appsettings)
+    local out; out=$("$SCAN" --summary appsettings)
     assert_contains "$out" "Cache TTL is 300s"
     assert_not_contains "$out" "Caching strategy spike"
 }
@@ -105,23 +122,30 @@ test_summary_substring_match() {
 # ---- AND combination ----
 
 test_multiple_flags_and_together() {
-    local out; out=$("$QUERY" --tag cache --title TTL)
+    local out; out=$("$SCAN" --tag cache --title TTL)
     assert_contains "$out" "Cache TTL is 300s"
     assert_not_contains "$out" "Caching strategy spike"
+}
+
+test_empty_result_message_lists_active_predicates() {
+    # Predicate order in the message is fixed (title, tag, xtag, summary),
+    # not the invocation order.
+    local out; out=$("$SCAN" --tag cache --title nope)
+    assert_equal "no notes matching --title 'nope' --tag 'cache'" "$out"
 }
 
 # ---- empty / missing directory ----
 
 test_missing_docs_notes_prints_no_notes() {
     rm -rf docs/notes
-    local out; out=$("$QUERY")
+    local out; out=$("$SCAN")
     assert_equal "no notes" "$out"
 }
 
 test_empty_docs_notes_prints_no_notes() {
     rm -rf docs/notes
     mkdir -p docs/notes
-    local out; out=$("$QUERY")
+    local out; out=$("$SCAN")
     assert_equal "no notes" "$out"
 }
 
@@ -129,13 +153,13 @@ test_empty_docs_notes_prints_no_notes() {
 
 test_unknown_flag_exits_non_zero() {
     local rc=0
-    "$QUERY" --bogus 2>/dev/null || rc=$?
+    "$SCAN" --bogus 2>/dev/null || rc=$?
     assert_exit_code 2 "$rc"
 }
 
 test_flag_without_value_exits_non_zero() {
     local rc=0
-    "$QUERY" --tag 2>/dev/null || rc=$?
+    "$SCAN" --tag 2>/dev/null || rc=$?
     assert_exit_code 2 "$rc"
 }
 
@@ -143,6 +167,6 @@ test_flag_without_value_exits_non_zero() {
 
 test_exit_code_is_zero_on_no_match() {
     local rc=0
-    "$QUERY" --tag nonexistent >/dev/null || rc=$?
+    "$SCAN" --tag nonexistent >/dev/null || rc=$?
     assert_exit_code 0 "$rc"
 }

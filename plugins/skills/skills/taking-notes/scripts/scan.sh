@@ -10,17 +10,18 @@
 #   --xtag TAG      exclude notes where this tag is present in the Tags line
 #   --summary PAT   substring, case-insensitive, against the one-line summary
 #
-# Output: same block-per-match format as list-notes.sh.
+# Output: one block per match — title, tags, summary, filename.
+# Empty result prints `no notes matching <predicates>` (or `no notes` if docs/notes is missing/empty).
 # Exit code is 0 whether or not there are matches — a clean empty result is success.
 #
 # Usage:
-#   query.sh [--title PAT] [--tag TAG] [--xtag TAG] [--summary PAT]
+#   scan.sh [--title PAT] [--tag TAG] [--xtag TAG] [--summary PAT]
 #
 # Examples:
-#   query.sh --tag auth-investigation
-#   query.sh --title cache --summary ttl
-#   query.sh --tag cache --xtag draft
-#   query.sh --xtag stale
+#   scan.sh --tag auth-investigation
+#   scan.sh --title cache --summary ttl
+#   scan.sh --tag cache --xtag draft
+#   scan.sh --xtag stale
 
 set -eo pipefail
 
@@ -39,20 +40,20 @@ SUMMARY=""
 while [ $# -gt 0 ]; do
     case "$1" in
         --title)
-            [ $# -ge 2 ] || { echo "query.sh: --title requires a value" >&2; exit 2; }
+            [ $# -ge 2 ] || { echo "scan.sh: --title requires a value" >&2; exit 2; }
             TITLE="$2"; shift 2 ;;
         --tag)
-            [ $# -ge 2 ] || { echo "query.sh: --tag requires a value" >&2; exit 2; }
+            [ $# -ge 2 ] || { echo "scan.sh: --tag requires a value" >&2; exit 2; }
             TAG="$2"; shift 2 ;;
         --xtag)
-            [ $# -ge 2 ] || { echo "query.sh: --xtag requires a value" >&2; exit 2; }
+            [ $# -ge 2 ] || { echo "scan.sh: --xtag requires a value" >&2; exit 2; }
             XTAG="$2"; shift 2 ;;
         --summary)
-            [ $# -ge 2 ] || { echo "query.sh: --summary requires a value" >&2; exit 2; }
+            [ $# -ge 2 ] || { echo "scan.sh: --summary requires a value" >&2; exit 2; }
             SUMMARY="$2"; shift 2 ;;
         *)
-            echo "query.sh: unknown argument '$1'" >&2
-            echo "usage: query.sh [--title PAT] [--tag TAG] [--xtag TAG] [--summary PAT]" >&2
+            echo "scan.sh: unknown argument '$1'" >&2
+            echo "usage: scan.sh [--title PAT] [--tag TAG] [--xtag TAG] [--summary PAT]" >&2
             exit 2 ;;
     esac
 done
@@ -124,5 +125,10 @@ for f in "${files[@]}"; do
 done
 
 if [ "$matched" = "0" ]; then
-    echo "no matches"
+    preds=""
+    [ -n "$TITLE" ]   && preds="$preds --title '$TITLE'"
+    [ -n "$TAG" ]     && preds="$preds --tag '$TAG'"
+    [ -n "$XTAG" ]    && preds="$preds --xtag '$XTAG'"
+    [ -n "$SUMMARY" ] && preds="$preds --summary '$SUMMARY'"
+    echo "no notes matching${preds}"
 fi
