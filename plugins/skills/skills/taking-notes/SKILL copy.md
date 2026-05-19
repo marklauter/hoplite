@@ -103,31 +103,6 @@ Line 1 is the H1. Line 2 is blank. Lines 3-4 are the scannable head — tags, su
 
 The Observation/Interpretation/Next split is the default shape for investigation notes. Reference notes and decision notes use the sections that fit the topic — the template is a starting point, not a straightjacket. Question notes use the same default sections with a different reading: Observation = what is known so far, Interpretation = current guesses, Next = what would answer the question. The scannable head is non-negotiable; the body shape adapts.
 
-### When to write a note
-
-Notes are user-directed, not agent-autonomous. The trigger is an explicit request from the user. Watch for phrases like:
-
-Discovery-shaped triggers:
-
-- "write this down"
-- "save this for later"
-- "record this"
-- "take a note"
-- "note that..."
-- "let's not forget..."
-- "remember this for the repo" (distinct from memory — see below)
-
-Question-shaped triggers:
-
-- "open question:"
-- "we should figure out..."
-- "we don't know X yet"
-- "track this as a question"
-- "park this for later"
-- "outstanding question:"
-
-The content to capture is whatever the user just said, observed, decided, or wondered — the request points back to it. When the request is ambiguous, ask once: "as one note titled X, or split across topics?" The user's framing is the title; do not invent a title that abstracts away from what they said. For a question, the title is the question itself, phrased interrogatively.
-
 ### When not to write a note
 
 - The user did not ask. Notes are explicit-request artifacts. The autonomous version of this is the memory system — different scope, different mechanism.

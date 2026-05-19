@@ -5,7 +5,7 @@ Canonical task list driving the writing-prose foundation/downstream restructure;
 
 ## Context
 
-writing-prose is being restructured from a single skill (Philosophy/Guidance/Validation with bullet pairs) into a foundation for prose-artifact skills. The new shape is Rhetorical context / Composition / Grammar-structure-referential-integrity / Validation. Downstream skills (taking-notes, journaling, writing-wiki, reviewing-wiki, and a future reviewing-prose) compose on top of the foundation. The work spans the SKILL.md itself, the `positive-transforms.md` sidecar, the per-principle `deep/` expansion directory, the reviewer scripts under `plugins/skills/scripts/`, and the paired reviewing-* skills.
+writing-prose is being restructured from a single skill (Philosophy/Guidance/Validation with bullet pairs) into a foundation for prose-artifact skills. The new shape is Rhetorical context / Composition / Grammar-structure-referential-integrity / Validation. Downstream skills (taking-notes, journaling, writing-wiki, reviewing-wiki, and a future reviewing-prose) compose on top of the foundation. The work spans the SKILL.md itself, the `positive-transforms.md` sidecar, the per-principle `reference/` expansion directory, the reviewer scripts under `plugins/skills/scripts/`, and the paired reviewing-* skills.
 
 This note is the canonical task list. The conversation task system is transient; this note is durable and updated as work proceeds.
 
@@ -87,7 +87,7 @@ Remaining work (no decisions needed; pick by leverage):
 - #6 full reviewing-prose → reviewing-prose rename — mechanical sweep
   across the codebase. Includes filename rename, frontmatter name: field,
   references in other SKILL.md files, notes, scripts.
-- #15 lazy seed of remaining 18 deep/ expansions — fill as patterns and
+- #15 lazy seed of remaining 18 reference/ expansions — fill as patterns and
   examples emerge.
 - Wiki backfill — existing project wikis citing path:line will be flagged
   by the redesigned Accuracy lens; sweep when next reviewed.

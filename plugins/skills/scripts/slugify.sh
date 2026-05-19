@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # slugify.sh — convert a string to a URL-safe lowercase slug.
 #
-# Slug rule (matches the writing-prose deep/ filename convention):
+# Slug rule (matches the writing-prose reference/ filename convention):
 #   1. Lowercase
 #   2. Replace non-alphanumerics with dashes
 #   3. Collapse runs of dashes into one

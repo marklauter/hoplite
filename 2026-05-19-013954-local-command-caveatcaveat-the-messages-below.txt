@@ -1,0 +1,2508 @@
+ ▐▛███▜▌   Claude Code v2.1.143
+▝▜█████▛▘  Opus 4.7 · Claude Max
+  ▘▘ ▝▝    D:\claude\claude
+
+> /clear                                                                        
+  ⎿  (no content)
+
+> /skills:writing-prose                                                         
+
+● The writing-prose skill is loaded. What would you like to write or refactor?
+
+✻ Cogitated for 2s
+
+> /skills:taking-notes                                                          
+
+● Taking-notes skill loaded. What's the note?
+
+✻ Cogitated for 5s
+
+> we are in the middle of a writing-* skills refactor.                          
+  @docs/notes/writing-prose-refactor-task-list.md                               
+  ⎿  Read docs\notes\writing-prose-refactor-task-list.md (92 lines)
+
+● Oriented. Current state per the task list:
+
+  - Foundation (writing-prose/SKILL.md) is live with the new shape.
+  - Rhetorical-context contract (#11) landed; defaults inline, Register as
+  bundled shorthand.
+  - reviewing-prose rename (#6) complete.
+
+  Pending:
+  - #7 downstream refactor — taking-notes, journaling, writing-wiki,
+  reviewing-wiki, reviewing-prose each declare a ## Rhetorical context section
+  per the contract. Largest leverage.
+  - #15 remainder — lazy seed of 18 empty deep/ files.
+  - Wiki backfill — sweep wikis citing path:line once Accuracy lens is
+  exercised.
+
+  What's the move?
+
+✻ Crunched for 11s
+
+> we'll focus on item 7 downstream refactor. we're focused on skills that       
+  generate markdown-based artifacts, and corresponding reviewer skills.         
+  taking-notes, journaling, writing-wiki. we'll start with those. please create 
+   a task list and then update the task list as we discover things to do and    
+  also keep refactor todo note up-to-date as we go. let's start with the task   
+  list for taking-notes refactor                                                
+
+  Searched for 2 patterns, read 1 file (ctrl+o to expand)
+
+● Drafting the taking-notes refactor task list. The minimum contract from #11 is
+   just "declare a ## Rhetorical context section"; the larger #7 implies
+  cohesion work — cut what writing-prose already says, name deviations.
+
+● Task list created. Now adding a taking-notes sub-block under #7 in the
+  refactor note so it stays the canonical record.
+
+● Update(docs\notes\writing-prose-refactor-task-list.md)
+  ⎿  Added 5 lines, removed 1 line
+      39  
+      40  ## Pending
+      41  
+      42 -- **#7 Refactor downstream skills as foundation consumers** — t
+         -aking-notes, journaling, writing-wiki, reviewing-wiki, **and re
+         -viewing-prose** declare their rhetorical-context slots per the 
+         -contract: a `## Rhetorical context` section in each downstream'
+         -s SKILL.md, bulleted `Slot: value` lines, slot overrides on top
+         - of the foundation defaults. Reviewing-prose is itself a downst
+         -ream of writing-prose (it produces findings, which are prose ar
+         -tifacts, and judges against the writing-prose rubric). reviewin
+         -g-csharp is out of scope per #10. Largest remaining task. Unblo
+         -cked.                                                          
+      42 +- **#7 Refactor downstream skills as foundation consumers** — t
+         +aking-notes, journaling, writing-wiki, reviewing-wiki, **and re
+         +viewing-prose** declare their rhetorical-context slots per the 
+         +contract: a `## Rhetorical context` section in each downstream'
+         +s SKILL.md, bulleted `Slot: value` lines, slot overrides on top
+         + of the foundation defaults. Reviewing-prose is itself a downst
+         +ream of writing-prose (it produces findings, which are prose ar
+         +tifacts, and judges against the writing-prose rubric). reviewin
+         +g-csharp is out of scope per #10. Largest remaining task. **In 
+         +flight:** starting with the markdown-artifact generators — taki
+         +ng-notes first, then journaling, then writing-wiki; correspondi
+         +ng reviewer skills follow.                                     
+      43 +  - **#7a taking-notes refactor — in flight.** Sub-tasks: (i) r
+         +esolve register choice — catalog's "Note" is ephemeral scratch,
+         + but taking-notes notes are durable wiki pages closer to ADR se
+         +mantics; (ii) draft `## Rhetorical context` section with all te
+         +n slots (subject and intent required; likely Audience override 
+         +to next-session/future-self); (iii) cut composition duplication
+         + and declare loads-alongside-writing-prose; (iv) update frontma
+         +tter description per writing-wiki precedent; (v) self-review wi
+         +th writing-prose mechanical greps; (vi) run test suite; (vii) u
+         +pdate this note as work proceeds.                              
+      44 +  - **#7b journaling refactor — pending.** Same pattern; regist
+         +er likely "Journal" per the catalog (observation-based, chronol
+         +ogical, append-only, first-person acceptable). Subject and inte
+         +nt required.                                                   
+      45 +  - **#7c writing-wiki refactor — pending.** Already declares "
+         +Loads alongside writing-prose" in frontmatter; needs the `## Rh
+         +etorical context` section added per the #11 contract.          
+      46 +  - **#7d reviewer skills — deferred.** reviewing-wiki and revi
+         +ewing-prose follow once the generator skills land.             
+      47  - **#15 (remainder)** — lazy seed of the 18 empty `deep/` files
+           for new principles with no original source. Fill as patterns a
+          nd examples emerge in practice. Never blocking.
+      48  - **Wiki backfill follow-up** — existing project wikis that cit
+          e source by `path:line` will be flagged by the redesigned Accur
+          acy lens on next review. Worth a single sweep across active wik
+          is once #13's lens redesign is exercised.
+      49  
+> we've abandoned the three philosophy, guidance, verification idea. we've merged philosophy and guidance. if there are any memories concerning the skill structure, or notes related to skill structure, or maybe the readme or claude files, we can purge them of that idea. 
+
+● Task list creation complete. Now addressing the new instruction — purging the
+  three-section Philosophy/Guidance/Validation idea from memories, notes,
+  README, and CLAUDE files.
+
+  Searched for 1 pattern, read 2 files, recalled 1 memory, searched memories (ctrl+o to expand)
+
+● Found references in the README skill template, the memory, three notes, and a
+  comment in summarize.sh. Let me read the rest before editing.
+
+  Read 4 files (ctrl+o to expand)
+
+● Adding a task for the purge work and starting it.
+
+● Making the edits. Starting with the README skill template, then the memory,
+  the two design notes, and the summarize.sh comment — in parallel since they
+  touch different files.
+
+● Update(README.md)
+  ⎿  Added 3 lines, removed 13 lines
+      39  
+      40  ## Skill template
+      41  
+      42 -Every skill is a single `SKILL.md` that looks like this:       
+      42 +Every skill is a single `SKILL.md`. The frontmatter and the H1 
+         +are universal; section structure varies by skill family.       
+      43  
+      44  ```markdown
+      45  ---
+     ...
+      51  
+      52  Brief prose describing what this skill covers.
+      53  
+      54 -## Philosophy                                                  
+      55 -                                                               
+      56 -The principles behind the domain. Why this works the way it doe
+         -s.                                                             
+      57 -                                                               
+      58 -## Guidance                                                    
+      59 -                                                               
+      60 -Concrete patterns, idioms, and rules. The dense reference mater
+         -ial.                                                           
+      61 -                                                               
+      62 -## Validation                                                  
+      63 -                                                               
+      64 -How to verify the work meets the philosophy and guidance.      
+      54 +<body sections — shape varies by family; see examples below>   
+      55  ```
+      56  
+      57  - Skill name: gerund form (`writing-X`, `reviewing-X`, `triagin
+          g-X`).
+      58  - Description: the trigger. Claude reads this to decide whether
+           to load the skill — invest in it.
+      59  - Body: the domain knowledge that gets injected when the skill 
+          activates.
+      60  
+      71 -Individual skills drift from this template; the canonical refer
+         -ence is `plugins/skills/skills/writing-csharp/SKILL.md`.       
+      61 +Section shape varies by family. Prose-artifact skills compose o
+         +n `writing-prose`: the foundation owns `## Rhetorical context` 
+         +(defaults plus the downstream contract), `## Composition`, `## 
+         +Grammar, structure, and referential integrity`, and `## Validat
+         +ion`; downstreams declare a `## Rhetorical context` section per
+         + the contract and keep whatever body shape fits the artifact. C
+         +ode-family skills like `writing-csharp` have their own shape. R
+         +epresentative examples: `plugins/skills/skills/writing-prose/SK
+         +ILL.md` (foundation), `plugins/skills/skills/writing-wiki/SKILL
+         +.md` (prose downstream), `plugins/skills/skills/writing-csharp/
+         +SKILL.md` (code family).                                       
+      62  
+      63  ## Adding a skill
+      64  
+
+  Wrote 1 memory (ctrl+o to expand)
+
+● Update(docs\notes\write-the-writing-skills-and-reviewing-skills-pair.md)
+  ⎿  Added 3 lines, removed 5 lines
+       6  
+       7  ## Observation
+       8  
+       9 -The `writing-prose` / `reviewing-prose` pair settled across com
+         -mits `e9cda8c` through `ea53d33`. During design we agreed that 
+         -skills, agent prompts, and slash commands form a distinct genre
+         - — LLM-targeted prose with extreme density requirements, the ca
+         -nonical four-section shape, and no bold/tables — and that the d
+         -edicated pair lands after the documentation pair stabilizes. Th
+         -e documentation pair has now stabilized.                       
+       9 +The `writing-prose` / `reviewing-prose` pair settled across com
+         +mits `e9cda8c` through `ea53d33`. During design we agreed that 
+         +skills, agent prompts, and slash commands form a distinct genre
+         + — LLM-targeted prose with extreme density requirements and no 
+         +bold/tables — and that the dedicated pair lands after the docum
+         +entation pair stabilizes. The documentation pair has now stabil
+         +ized.                                                          
+      10  
+      11  ## Interpretation
+      12  
+      13  `writing-skills` loads `writing-prose` as the editorial spine a
+          nd layers the structural conventions for skill files on top:
+      14  
+      15 -- The canonical four-section shape (intro → Philosophy → Guidan
+         -ce → Validation).                                              
+      16 -- Named-anchor Philosophy intro with one paragraph of orienting
+         - threads, then `###` headings.                                 
+      17 -- 1:1 Philosophy/Guidance mirror as the default; document any d
+         -eviation explicitly.                                           
+      15 +- The foundation/downstream shape inherited from `writing-prose
+         +`: the foundation owns `## Rhetorical context` (defaults plus t
+         +he downstream contract), `## Composition`, `## Grammar, structu
+         +re, and referential integrity`, and `## Validation`; downstream
+         + skills declare a `## Rhetorical context` section per the contr
+         +act and keep whatever body shape fits the artifact.            
+      16  - Frontmatter contract: `name`, `description` only; description
+           carries the trigger language.
+      17  - The skill body intro: describes file content only; never narr
+          ates loading or repeats the trigger.
+      18  
+      19  `reviewing-skills` mirrors with lens additions on top of `revie
+          wing-prose`:
+      20  
+      23 -- A structural lens (canonical four sections present, Philosoph
+         -y/Guidance mirroring, frontmatter shape).                      
+      21 +- A structural lens (downstream declares its `## Rhetorical con
+         +text` section per the contract; frontmatter shape).            
+      22  - A trigger-language lens (description verbs match the skill's 
+          actual scope).
+      23  - Reuses the shared `scripts/` infrastructure under the existin
+          g `Type: <code|documentation|skill?>` taxonomy — likely add a t
+          hird `Type:` value (`skill`) and a corresponding rubric in `sum
+          marize.sh`.
+      24  
+
+● Update(docs\notes\write-the-writing-architecture-skill.md)
+  ⎿  Added 1 line, removed 1 line
+      28  
+      29  ## Next
+      30  
+      31 -- Draft the skill following the canonical four-section structur
+         -e (intro → Philosophy → Guidance → Validation).                
+      31 +- Draft the skill; if it covers prose artifacts, compose on `wr
+         +iting-prose` and declare a `## Rhetorical context` section per 
+         +the foundation contract. Body section shape fits the artifact (
+         +architecture rules, patterns, anti-patterns).                  
+      32  - Decide whether a `reviewing-architecture` skill ships at the 
+          same time (architecture findings would slot into the existing `
+          .findings/` shape with a new `--type architecture` and possibly
+           a lens vocabulary).
+      33  - After it ships, the memory `project_writing_architecture_rule
+          s.md` can be deleted — its content lives here now and the skill
+           itself becomes the authoritative source.
+
+● Update(plugins\skills\scripts\summarize.sh)
+  ⎿  Added 6 lines, removed 4 lines
+       95      awk '/^## Philosophy/{flag=1; next} /^## /{flag=0} flag &&
+            /^### /{sub(/^### /, ""); sub(/ \([^)]+\)$/, ""); print}' "$s
+           kill"
+       96  }
+       97  
+       98 -# writing-prose holds principles as bulleted list items under 
+          -three H2 sections                                             
+       99 -# rather than as `### ` anchors. The canonical name is the tex
+          -t between the                                                 
+      100 -# leading `- ` and the first ` — ` (space-em-dash-space). Cita
+          -tion suffixes are                                             
+      101 -# stripped so authors may cite either form.                   
+       98 +# writing-prose holds principles as bulleted list items in thr
+          +ee places:                                                    
+       99 +# the Composition section, the Grammar/structure/referential-i
+          +ntegrity section,                                             
+      100 +# and the judgement subsection of Validation — rather than as 
+          +`### ` anchors.                                               
+      101 +# The canonical name is the text between the leading `- ` and 
+          +the first                                                     
+      102 +# ` — ` (space-em-dash-space). Citation suffixes are stripped 
+          +so authors may                                                
+      103 +# cite either form.                                           
+      104  read_canonical_prose() {
+      105      local skill="$1"
+      106      [ -f "$skill" ] || return 0
+
+● Sweeping again to catch anything missed.
+
+  Searched for 3 patterns (ctrl+o to expand)
+
+● Two more design notes still prescribe the trio. Let me read and fix.
+
+  Read 2 files, searched memories (ctrl+o to expand)
+
+● The referenced memory no longer exists either. Fixing both notes.
+
+● Update(docs\notes\write-writing-skills-and-writing-bash-skills-with-verificati
+        on-sections.md)
+  ⎿  Added 1 line, removed 1 line
+       8  - 2026-05-16 audit-mode implementation declared done after a fo
+          cused smoke test but before running the existing `tests/run-tes
+          ts.sh` suite. Six tests in `report-finding_test.sh` and `summar
+          ize_test.sh` failed against the new `--force`-removed and verdi
+          ct-copy behavior. A second agent caught the miss.
+       9  - The miss: script changes need to grep for `*test*.sh` before 
+          declaring done; the existing test suite is the verification bas
+          eline.
+      10  - Two new skills to create:
+      11 -  - `writing-skills` — the meta-skill about authoring SKILL.md 
+         -files (four-section structure, Philosophy/Guidance scope, named
+         --anchor philosophy intro, intro discipline).                   
+      11 +  - `writing-skills` — the meta-skill about authoring SKILL.md 
+         +files (foundation/downstream shape inherited from `writing-pros
+         +e`, frontmatter contract, intro discipline, downstream declarat
+         +ion of `## Rhetorical context`).                               
+      12    - `writing-bash` — the skill for the bash scripts that back o
+          ther skills (bash 3.2+ portability, `--help` convention, output
+           discipline, sourced-vs-executed distinction, the canonical scr
+          ipt-set shape).
+      13  - Both skills must include a Validation section that explicitly
+           names running the existing test suite as part of the writing l
+          oop — encoding the verification step into the skill so future s
+          essions inherit the discipline.
+      14  
+
+● Update(docs\notes\write-writing-skills-and-writing-bash-skills-with-verificati
+        on-sections.md)
+  ⎿  Added 1 line, removed 1 line
+      17  - The miss happened because the writing-loop discipline does no
+          t currently include "run any existing test suite against your c
+          hange." If the skill encodes that step, future sessions inherit
+           the discipline.
+      18  - writing-skills owns the meta-pattern. Its Validation section 
+          self-references: when you write a skill, validate it the way th
+          e skill says to validate its own outputs — read sibling SKILL.m
+          d files, run the test suite for the skill's scripts, verify `--
+          help` on every script.
+      19  - writing-bash owns the bash-script pattern used across the rev
+          iewer scripts. Validation here is concrete: shellcheck, `tests/
+          run-tests.sh`, the `--help` smoke (every script answers `--help
+          `), and the canonical script-set behavior (silent on success, s
+          tructured stderr on failure).
+      20 -- Both skills reuse the writing-prose Philosophy as the univers
+         -al prose spine (per the `feedback_philosophy_vs_guidance` memor
+         -y: Philosophy is language-agnostic, Guidance is language-specif
+         -ic).                                                           
+      20 +- Both skills load `writing-prose` as the universal prose spine
+         + and declare their own `## Rhetorical context` per the foundati
+         +on contract; skill-specific patterns (structural conventions fo
+         +r SKILL.md, bash-portability rules) layer on top.              
+      21  
+      22  ## Next
+      23  
+
+● Update(docs\notes\write-writing-skills-and-writing-bash-skills-with-verificati
+        on-sections.md)
+  ⎿  Added 1 line, removed 1 line
+      21  
+      22  ## Next
+      23  
+      24 -- Draft writing-skills with the four-section structure as the c
+         -ontent. Validation section names: read sibling SKILL.md files, 
+         -run any existing test suite for the skill's scripts, verify `--
+         -help` on every script.                                         
+      24 +- Draft writing-skills as a downstream of `writing-prose`: decl
+         +are its `## Rhetorical context` section per the contract, then 
+         +layer skill-authoring conventions (frontmatter shape, intro dis
+         +cipline, downstream contract literacy). Validation section name
+         +s: read sibling SKILL.md files, run any existing test suite for
+         + the skill's scripts, verify `--help` on every script.         
+      25  - Draft writing-bash with bash-3.2+ portability, `--help` conve
+          ntion, output discipline, sourced-vs-executed distinction, and 
+          (load-bearing) "run the existing test suite" as a Validation st
+          ep.
+      26  - Consider whether the existing `taking-notes/scripts/take-note
+          .sh` needs `--help` retrofit too (the earlier "every script sho
+          uld have help" request was scoped to the shared reviewer script
+          s and `build-gate.sh`, but the principle is universal).
+
+● Update(docs\notes\write-the-scaffolding-csharp-skill.md)  ⎿  Added 1 line, removed 1 line
+      24  
+      25  - Inventory the projects Mark already builds against these stan
+          dards; extract the common scaffold from the most recent example
+          .
+      26  - Decide skill vs. template (or both — skill that invokes the t
+          emplate, then customizes).
+      27 -- Draft following the canonical four-section structure.        
+      27 +- Draft as a code-family skill alongside `writing-csharp` (whic
+         +h has its own shape; structural divergence between prose and co
+         +de families is accepted per the `writing-prose` refactor decisi
+         +ons).                                                          
+      28  - Coordinate with `writing-csharp` — scaffolding sets up the en
+          vironment that writing-csharp's rules then apply to.
+
+  Searched for 1 pattern (ctrl+o to expand)
+
+> read this restructure-prose-skills-as-foundation-and-downstream-composition.md 
+
+● Purge sweep complete. Marking the task done.
+
+● Re-read complete. The note docs/notes/restructure-prose-skills-as-foundation-a
+  nd-downstream-composition.md is the original design proposal that drove the
+  current refactor — it argued for abandoning the per-skill
+  Philosophy/Guidance/Validation split in favor of foundation + downstream
+  composition. State of its claims today:
+
+  - Implemented: writing-prose as foundation; one-way coupling; downstream
+  skills load foundation and override; pair-coupling for writing/reviewing.
+  - Implemented, different mechanism: "load writing-prose first" — now expressed
+   via the ## Rhetorical context contract (#11), not a literal load instruction.
+  - Deferred: MUST/SHOULD/MAY strength markers — per the refactor task list,
+  "deferred until the refactor surfaces whether the structure helps or hinders."
+  - In flight: taking-notes/journaling/writing-wiki/reviewing-wiki refactor (#7
+  in the task list).
+  - Open: "Decide whether reviewing-prose becomes a sibling foundation for
+  review skills or just inherits directly from writing-prose" — answered per #6:
+   reviewing-prose is itself a downstream of writing-prose.
+
+  The note doesn't teach the trio — it documents abandoning it — so it survived
+  the purge unmodified. Files changed in the purge: README.md,
+  feedback_skill_composition.md (memory),
+  write-the-writing-skills-and-reviewing-skills-pair.md,
+  write-the-writing-architecture-skill.md,
+  write-writing-skills-and-writing-bash-skills-with-verification-sections.md,
+  write-the-scaffolding-csharp-skill.md, summarize.sh.
+
+  What's the next move — continue with the taking-notes refactor, or revise this
+   note?
+
+✻ Brewed for 6m 56s
+
+※ recap: Goal: refactor downstream prose skills onto the writing-prose foundation, starting with taking-notes. Just finished purging the abandoned Philosophy/Guidance/Validation trio from README, memory, notes, and summarize.sh. Next: resolve the register choice for taking-notes (ADR vs Note). (disable recaps in /config)
+
+> " - Implemented, different mechanism: "load writing-prose first" — now        
+  expressed via the ## Rhetorical context contract                              
+    (#11), not a literal load instructi" <- there is a rhetorical context       
+  contract, but that does not replace load writing-prose first. the user will   
+  always need to load writing prose first, unless we have another way to inject 
+   the skill into the downstream skill.                                         
+
+● Correct — I overstated the contract. The ## Rhetorical context section
+  declares the slots a downstream fills, but it doesn't load the foundation.
+  Today the loading is user-driven: you invoke /writing-prose and /taking-notes
+  separately, or an agent loading the downstream sees the frontmatter hint
+  ("Loads alongside writing-prose...") and chooses to also load the foundation.
+  Nothing in the skill plumbing auto-injects the foundation into the
+  downstream's context.
+
+  So the gap remains. Options:
+
+  1. Status quo + discipline. Each downstream's frontmatter description names
+  the foundation dependency (writing-wiki precedent); each downstream's body
+  opens with a "Load writing-prose first" line so an agent reading the
+  downstream sees the instruction. Relies on the agent to actually call
+  Skill("writing-prose").
+  2. Inline transclusion. Have a build step that bakes the foundation content
+  into each downstream SKILL.md at publish time. Defeats the composition
+  rationale (duplication on disk), but solves loading.
+  3. Plugin-level mechanism. If Claude Code's plugin system supports
+  skill-to-skill dependencies in the manifest, declare them there. I'd need to
+  verify whether the plugin schema offers this.
+
+  Want me to save this gap as a memory and add it to the refactor task list,
+  then continue with taking-notes assuming option 1 (status quo + discipline)?
+
+✻ Brewed for 33s
+
+> may I request somewhat more brief responses? you're responses are very        
+  complete, but they contain detail that I can discover or request. just for    
+  this converstation.                                                           
+
+● Got it — terser from here.
+
+✻ Churned for 2s
+
+> do we have any notes that cover the design of the compound skill composition? 
+
+  Searched for 1 pattern (ctrl+o to expand)
+
+● The design lives in two places:
+
+  - restructure-prose-skills-as-foundation-and-downstream-composition.md —
+  original design proposal (foundation/downstream, one-way coupling, override
+  semantics).
+  - writing-prose-refactor-task-list.md — the implementation tracker; #11
+  captured the rhetorical-context contract.
+
+  Neither covers the loading mechanism — that's the gap you just flagged.
+
+✻ Cogitated for 10s
+
+> or any on skill composition at all, like what the first intro paragraph       
+  should cover? maybe that's a memory                                           
+
+  Searched for 1 pattern, searched memories (ctrl+o to expand)
+
+● Yes — feedback_skill_composition.md has it. Key bullet:
+
+  ▎ Each SKILL.md keeps a one- or two-sentence summary line after the H1, but it
+  ▎  states the composition contract... For a downstream: which foundation to 
+  ▎ load first and which slots this skill fills.
+
+  So the memory already says the intro should name the foundation dependency.
+  There's tension with the design note
+  write-the-writing-skills-and-reviewing-skills-pair.md: "The skill body intro:
+  describes file content only; never narrates loading or repeats the trigger."
+  Worth resolving before the taking-notes refactor — they disagree about whether
+   the intro mentions loading.
+
+✻ Baked for 16s
+
+> in writing-prose skill, the positive-transforms.md is outside of deep. let's  
+  move it inside, update the references, then rename deep to reference and      
+  update references                                                             
+
+  Searched for 3 patterns (ctrl+o to expand)
+
+● Bash(git mv plugins/skills/skills/writing-prose/positive-transforms.md
+      plugins/skills/skills/writing-prose/deep/positive-transforms.md && git mv
+      plugins/skills/skill…)
+  ⎿  On branch main
+     Your branch is up to date with 'origin/main'.
+     … +118 lines (ctrl+o to expand)
+
+● Now updating references.
+
+  Read 2 files (ctrl+o to expand)
+● Update(plugins\skills\skills\writing-prose\SKILL.md)
+  ⎿  Added 2 lines, removed 2 lines
+      53  
+      54  Above all: prefer positively framed assertions. Say what is, no
+          t what it isn't. Positive constructions strengthen the message.
+           Negative constructions weaken it. Weak writing circles around 
+          what something isn't. It gestures rather than delivers.
+      55  
+      56 -See [positive-transforms.md](${CLAUDE_PLUGIN_ROOT}/skills/writi
+         -ng-prose/positive-transforms.md) for examples of negative to po
+         -sitive transformations when you need help forming a positive fr
+         -ame.                                                           
+      56 +See [positive-transforms.md](${CLAUDE_PLUGIN_ROOT}/skills/writi
+         +ng-prose/reference/positive-transforms.md) for examples of nega
+         +tive to positive transformations when you need help forming a p
+         +ositive frame.                                                 
+      57  
+      58 -Each principle bullet has an expansion file at `${CLAUDE_PLUGIN
+         -_ROOT}/skills/writing-prose/deep/<slug>.md`, where the slug is 
+         -the principle phrase lowercased with non-alphanumerics replaced
+         - by dashes (use `bash ${CLAUDE_PLUGIN_ROOT}/scripts/slugify.sh 
+         -'<principle phrase>'` to derive deterministically). Consult whe
+         -n depth, examples, or patterns are needed. For example, in "- S
+         -ource is the authority — defer to the subject;", "Source is the
+         - authority" is the phrase.                                     
+      58 +Each principle bullet has an expansion file at `${CLAUDE_PLUGIN
+         +_ROOT}/skills/writing-prose/reference/<slug>.md`, where the slu
+         +g is the principle phrase lowercased with non-alphanumerics rep
+         +laced by dashes (use `bash ${CLAUDE_PLUGIN_ROOT}/scripts/slugif
+         +y.sh '<principle phrase>'` to derive deterministically). Consul
+         +t when depth, examples, or patterns are needed. For example, in
+         + "- Source is the authority — defer to the subject;", "Source i
+         +s the authority" is the phrase.                                
+      59  
+      60  - Source is the authority — defer to the subject; verify agains
+          t it before claiming; cite by stable reference.
+      61  - Active voice over passive — agency stays with the actor; "the
+           user signs in," not "sign-in is performed by the user."
+
+● Update(plugins\skills\skills\writing-prose\SKILL.md)
+  ⎿  Added 1 line, removed 1 line
+      110  - Within-document cohesion read — read paragraph transitions; 
+           does each pick up from the previous, or do paragraphs sit as i
+           ndependent claims?
+      111  - Cross-document cohesion read — compare against sibling artif
+           acts; do register, terminology, and structural pattern hold ac
+           ross them?
+      112  - Link-strip test — read the page imagining every link is brok
+           en; does the core message still come through? If not, more con
+           text is needed inline.
+      113 -- Negation grep — `not`, `don't`, `didn't`, `wasn't`, `won't`,
+          - `can't`, `cannot`, `never`, `avoid`, `should not`, `didn't se
+          -em`, `wasn't very`. Each hit is a candidate for positive rewri
+          -te; see [positive-transforms.md](${CLAUDE_PLUGIN_ROOT}/skills/
+          -writing-prose/positive-transforms.md).                        
+      113 +- Negation grep — `not`, `don't`, `didn't`, `wasn't`, `won't`,
+          + `can't`, `cannot`, `never`, `avoid`, `should not`, `didn't se
+          +em`, `wasn't very`. Each hit is a candidate for positive rewri
+          +te; see [positive-transforms.md](${CLAUDE_PLUGIN_ROOT}/skills/
+          +writing-prose/reference/positive-transforms.md).              
+      114  - Hedge and filler grep — `might`, `perhaps`, `could be`, `it'
+           s worth noting`, `basically`, `simply`, `just`, `actually`, `r
+           eally`, `quite`, `very`. Each hit is a candidate for removal.
+      115  - Tense drift grep — `will`, `would`. Most uses are tense drif
+           t; replace with present tense.
+      116  - Marketing language grep — `seamless`, `robust`, `powerful`, 
+           `revolutionary`, `easy`, `simple`, `intuitive`. Cut or replace
+            with substance.
+
+● Update(plugins\skills\skills\writing-prose\reference\negation-grep.md)
+  ⎿  Added 1 line, removed 1 line
+      10  
+      11  1. Grep for each trigger word in the page.
+      12  2. For each hit, ask: "What is this sentence actually trying to
+           say?"
+      13 -3. Rewrite to state that directly. See [positive-transforms.md]
+         -(../positive-transforms.md) for transform examples.            
+      13 +3. Rewrite to state that directly. See [positive-transforms.md]
+         +(positive-transforms.md) for transform examples.               
+      14  
+      15  ## When to keep the negation
+      16  
+
+● Update(docs\notes\writing-prose-refactor-task-list.md)
+  ⎿  Added 1 line, removed 1 line
+      27  - **#8 Update summarize.sh for the new writing-prose section st
+          ructure** — `read_canonical_prose()` parses principle bullets f
+          rom Composition, Grammar/structure/referential integrity, and V
+          alidation's judgement subsection. Original `read_canonical()` r
+          etained for writing-csharp and writing-wiki. Three new tests ad
+          ded; all 212 pass.
+      28  - **#9 Update reviewing-prose rubric citations** — four referen
+          ces in `reviewing-prose/SKILL.md` and five in `reviewing-wiki/S
+          KILL.md` updated from "Philosophy anchor / heading / section" t
+          o "principle name." Reviewer skills' own `## Philosophy` H2 sec
+          tions left intact (their internal structure has not been ported
+           to the new spine; revisit when #6 lands).
+      29  - **#12 Extract named registers to sidecar reference doc** — wa
+          s completed; subsequently the `registers.md` sidecar was *remov
+          ed* and the named-registers catalog was re-inlined in the SKILL
+          .md (the catalog is needed every load, so on-demand was the wro
+          ng call). `positive-transforms.md` remains as the sole sidecar.
+      30 -- **#14 Establish writing-prose deep/ expansion convention** — 
+         -convention statement added to Composition intro; `deep/` direct
+         -ory created with 48 placeholder files; shared `bash plugins/ski
+         -lls/scripts/slugify.sh` utility written with 21 passing tests; 
+         -convention round-trip verified against every principle bullet. 
+      30 +- **#14 Establish writing-prose reference/ expansion convention
+         +** — convention statement added to Composition intro; `referenc
+         +e/` directory (originally `deep/`, since renamed) created with 
+         +48 placeholder files; shared `bash plugins/skills/scripts/slugi
+         +fy.sh` utility written with 21 passing tests; convention round-
+         +trip verified against every principle bullet.                  
+      31  - **#10 Decide writing-csharp structural alignment** — decided:
+           writing-csharp is a special case, structural divergence betwee
+          n prose and code families is accepted, reviewer scripts already
+           handle both shapes. No further work unless friction emerges.
+      32  - **#11 Design the rhetorical-context memo contract** — landed.
+           (1) Each downstream skill declares a `## Rhetorical context` s
+          ection in its own SKILL.md, bulleted list, one `Slot: value` li
+          ne per slot. No YAML frontmatter, no per-directory override. (2
+          ) Foundation defaults live inline in writing-prose/SKILL.md und
+          er the Rhetorical context section (was a sidecar; inlined becau
+          se needed every load). Subject and intent are too artifact-spec
+          ific to default; every downstream must declare them. (3) Regist
+          er is bundled shorthand atop the defaults: declaring a named re
+          gister overrides only the few slots that distinguish it from de
+          faults; the rest stay at default. Inheritance precedence: expli
+          cit slot declaration > register bundle > defaults.
+      33  - **#6 Rename reviewing-documentation to reviewing-prose** — fu
+          ll sweep landed in one commit. Directory git-mv'd; frontmatter,
+           H1, internal self-references updated; sweep across writing-pro
+          se, reviewing-wiki, writing-wiki, README, seven docs/notes/ fil
+          es. Incidental cross-reference from reviewing-csharp removed. F
+          inding type stays as `documentation` (names the artifact review
+          ed, not the rubric).
+
+● Update(docs\notes\writing-prose-refactor-task-list.md)
+  ⎿  Added 1 line, removed 1 line
+      35  
+      36  ## Partially completed
+      37  
+      38 -- **#15 Seed deep/ expansions** — 30 of 48 deep files have cont
+         -ent extracted from the original SKILL.md. The remaining 18 are 
+         -new principles with no original to extract (active voice, prese
+         -nt tense, second person, systems behave, verbs over nominalizat
+         -ions, strong verbs, concrete over abstract, substance over supe
+         -rlatives, assertions over commentary, English over Latin, Globa
+         -l English, one idea per sentence, parallel construction, cohesi
+         -on across documents, action-oriented headings, plus a few Valid
+         -ation checks). Fill lazily as patterns and examples emerge.    
+      38 +- **#15 Seed reference/ expansions** — 30 of 48 reference files
+         + have content extracted from the original SKILL.md. The remaini
+         +ng 18 are new principles with no original to extract (active vo
+         +ice, present tense, second person, systems behave, verbs over n
+         +ominalizations, strong verbs, concrete over abstract, substance
+         + over superlatives, assertions over commentary, English over La
+         +tin, Global English, one idea per sentence, parallel constructi
+         +on, cohesion across documents, action-oriented headings, plus a
+         + few Validation checks). Fill lazily as patterns and examples e
+         +merge.                                                         
+      39  
+      40  ## Pending
+      41  
+
+● Update(docs\notes\writing-prose-refactor-task-list.md)
+  ⎿  Added 1 line, removed 1 line
+      44    - **#7b journaling refactor — pending.** Same pattern; regist
+          er likely "Journal" per the catalog (observation-based, chronol
+          ogical, append-only, first-person acceptable). Subject and inte
+          nt required.
+      45    - **#7c writing-wiki refactor — pending.** Already declares "
+          Loads alongside writing-prose" in frontmatter; needs the `## Rh
+          etorical context` section added per the #11 contract.
+      46    - **#7d reviewer skills — deferred.** reviewing-wiki and revi
+          ewing-prose follow once the generator skills land.
+      47 -- **#15 (remainder)** — lazy seed of the 18 empty `deep/` files
+         - for new principles with no original source. Fill as patterns a
+         -nd examples emerge in practice. Never blocking.                
+      47 +- **#15 (remainder)** — lazy seed of the 18 empty `reference/` 
+         +files for new principles with no original source. Fill as patte
+         +rns and examples emerge in practice. Never blocking.           
+      48  - **Wiki backfill follow-up** — existing project wikis that cit
+          e source by `path:line` will be flagged by the redesigned Accur
+          acy lens on next review. Worth a single sweep across active wik
+          is once #13's lens redesign is exercised.
+      49  
+      50  A separate note captures features for a future writing-prose me
+          chanical self-review script: `add-a-negation-grep-self-review-c
+          heck-to-writing-prose-validation.md` lists em-dash discipline, 
+          hedge/filler grep, tense drift grep, marketing-language grep, L
+          atin-abbreviation grep, bold-and-table grep, plus the negation 
+          grep itself.
+
+● Update(docs\notes\writing-prose-refactor-task-list.md)
+  ⎿  Added 3 lines, removed 2 lines
+      66  
+      67  Quick orientation:
+      68  - writing-prose/SKILL.md is live with the new structure (Rhetor
+          ical context /
+      69 -  Composition / Grammar / Validation). 48 deep/ expansion files
+         - exist; 30 have                                                
+      70 -  content, 18 are placeholders for new principles.             
+      69 +  Composition / Grammar / Validation). 48 reference/ expansion 
+         +files exist; 30 have                                           
+      70 +  content, 18 are placeholders for new principles. positive-tra
+         +nsforms.md now                                                 
+      71 +  lives at reference/positive-transforms.md.                   
+      72  - Rhetorical-context contract: each downstream declares a `## R
+          hetorical
+      73    context` section in its SKILL.md (bulleted Slot: value lines)
+          . Unmentioned
+      74    slots fall back to writing-prose/default-rhetorical-context.m
+          d. Subject
+
+● Update(docs\notes\writing-prose-refactor-task-list.md)
+  ⎿  Added 3 lines, removed 2 lines
+      76  - summarize.sh parses the new section structure. reviewing-pros
+          e
+      77    and reviewing-wiki rubric language updated. Wiki Accuracy len
+          s now uses
+      78    symbol-based citations with explicit drift detection. 212 tes
+          ts pass.
+      79 -- positive-transforms.md and default-rhetorical-context.md are 
+         -the sidecars.                                                  
+      80 -- bash plugins/skills/scripts/slugify.sh derives deep-file slug
+         -s deterministically.                                           
+      79 +- positive-transforms.md and default-rhetorical-context.md are 
+         +the sidecars                                                   
+      80 +  (positive-transforms.md sits under reference/ alongside the p
+         +rinciple expansions).                                          
+      81 +- bash plugins/skills/scripts/slugify.sh derives reference-file
+         + slugs deterministically.                                      
+      82  
+      83  Remaining work (no decisions needed; pick by leverage):
+      84  - #7 downstream refactor — taking-notes, journaling, writing-wi
+          ki, reviewing-wiki
+
+  Searched for 1 pattern (ctrl+o to expand)
+
+● Done. Moves and reference updates:
+
+  - positive-transforms.md → reference/positive-transforms.md
+  - deep/ → reference/
+  - Updated: writing-prose/SKILL.md (2 refs), reference/negation-grep.md (1
+  ref), refactor task-list note (5 refs)
+  - Untouched: reference/link-form.md (the path/to/... strings are illustrative
+  examples)
+
+✻ Sautéed for 1m 24s
+
+> the writing-prose skill has an intro that descibes the content. how do you    
+  say that?                                                                     
+
+● Multiple terms in play:
+
+  - "body intro" — used in write-the-writing-skills-and-reviewing-skills-pair.md
+   ("The skill body intro: describes file content only").
+  - "summary line" — used in feedback_skill_composition.md ("one- or
+  two-sentence summary line after the H1").
+  - "lede" — used in writing-prose's Validation ("Lede check — read the first
+  paragraph alone").
+
+  No single canonical term has settled.
+
+✻ Worked for 9s
+
+> no, the content - how do you describe the content?                            
+
+● It states the composition contract — what the foundation provides and what
+  downstreams are expected to declare on top.
+
+✻ Brewed for 9s
+
+> the other agent called it self-identity                                       
+
+● Noted. So now five terms in circulation: body intro, summary line, lede,
+  composition contract, self-identity. Worth picking one and updating the others
+   — want me to pick and sweep?
+
+✻ Cooked for 5s
+
+> please help me find the rhetorical term that describes the meta format of the 
+   writing-prose skill. look at this intro from writing-csharp - you can see    
+  the content is not at all the same - don't mean the content isn't a duplicate 
+   - i mean the approach is not the same : # Writing C#                         
+                                                                                
+  Type-driven design, immutability, pure functions, Result-based error          
+  handling, persistence ignorance, and the modern-C# idioms that operationalize 
+   them — backed by analyzer-strict build gates and ArchUnitNET structural      
+  tests.                                                                        
+
+● The rhetorical term is metadiscourse — writing about the writing rather than
+  about the subject. (Jakobson's parallel term: metalingual — language about the
+   discourse system itself.)
+
+  - writing-csharp intro is referential / topical: names the subject matter
+  directly.
+  - writing-prose intro is metadiscursive: describes its own role and contract
+  with other skills.
+
+✻ Worked for 22s
+
+> omfg, yes! do we have a single note that describes the skill format yet?      
+
+● No. The format guidance is scattered:
+
+  - README.md — frontmatter + H1 template (just updated).
+  - feedback_skill_composition.md memory — composition contract, summary-line
+  guidance.
+  - write-the-writing-skills-and-reviewing-skills-pair.md note — design for a
+  future writing-skills skill (not built).
+  - write-writing-skills-and-writing-bash-skills-with-verification-sections.md
+  note — same, with verification angle.
+
+  No single canonical note. Want one?
+✻ Sautéed for 9s
+
+> the readme.md should not cover that at all, but we'll deal with that later.   
+  create a new note named skill-composition. this will be the skill meta        
+  contract. the first piece of content is that the h1 summary is the            
+  metadiscursive. and by the way, I disagree that writing-csharp is             
+  referential/topical. it's not even a sentence. it's just comma separated list 
+   of jargon.                                                                   
+
+● Bash(bash plugins/skills/skills/taking-notes/scripts/take-note.sh "Skill
+      composition" "meta,skills,composition,architecture" "Meta contract for
+      SKILL.md format — the…)
+  ⎿  docs/notes/skill-composition.md
+
+  Read 1 file (ctrl+o to expand)
+
+● Created at docs/notes/skill-composition.md. Concession noted in the bad
+  example — labeled it correctly as a comma-separated enumeration, not a
+  sentence.
+
+✻ Crunched for 41s
+
+> we don't need a bad example. just give good examples. in taking-notes, we     
+  want a metadiscurvive introduction                                            
+
+● Update(docs\notes\skill-composition.md)
+  ⎿  Added 1 line, removed 2 lines
+       8  
+       9  The summary line directly under the H1 is **metadiscursive**: i
+          t describes the skill's role and its contract with other skills
+          , not the subject matter the skill teaches. A reader leaves the
+           summary knowing what the file is for, what it presupposes, and
+           which other skills compose with it — before encountering any o
+          f the subject content.
+      10  
+      11 -- Good (metadiscursive) — `writing-prose/SKILL.md`: "Foundation
+         -al editorial knowledge lives here — the authoring virtues that 
+         -apply across all markdown-based artifacts. Downstream skills sp
+         -ecify the rhetorical context for the artifact under composition
+         -..." States the skill's role (foundation), names the slot the d
+         -ownstream fills (rhetorical context), and sets the override rul
+         -e.                                                             
+      12 -- Bad (jargon list) — `writing-csharp/SKILL.md`: "Type-driven d
+         -esign, immutability, pure functions, Result-based error handlin
+         -g, persistence ignorance, and the modern-C# idioms that operati
+         -onalize them — backed by analyzer-strict build gates and ArchUn
+         -itNET structural tests." Not a sentence; a comma-separated enum
+         -eration of subject jargon. Says nothing about what the skill is
+         -, who reads it, or how it composes.                            
+      11 +Example — `writing-prose/SKILL.md`: "Foundational editorial kno
+         +wledge lives here — the authoring virtues that apply across all
+         + markdown-based artifacts. Downstream skills specify the rhetor
+         +ical context for the artifact under composition..." States the 
+         +skill's role (foundation), names the slot the downstream fills 
+         +(rhetorical context), and sets the override rule.              
+
+● Update(plugins\skills\skills\taking-notes\SKILL.md)
+  ⎿  Error editing file
+
+  Read 1 file (ctrl+o to expand)
+
+● Update(plugins\skills\skills\taking-notes\SKILL.md)
+  ⎿  Added 1 line, removed 1 line
+       5  
+       6  # Taking notes
+       7  
+       8 -Wiki-style atomic notes under `docs/notes/` — one topic per pag
+         -e, titled by identity, totally mutable, always representing the
+         - current state of an idea. Git carries the history.            
+       8 +Note-authoring knowledge for atomic wiki pages under `docs/note
+         +s/` — durable artifacts that survive context compaction. Loads 
+         +alongside `writing-prose` and specializes the rhetorical contex
+         +t for the note artifact: audience is the next session, intent i
+         +s to externalize one idea per file so the work outlives the con
+         +versation. Each note represents the current state of an idea; g
+         +it carries the history.                                        
+       9  
+      10  ## Philosophy
+      11  
+
+● Both done:
+  - Bad example dropped from skill-composition.md.
+  - taking-notes intro rewritten as metadiscursive — names the skill's role, the
+   composition with writing-prose, and the rhetorical-context slots it
+  specializes.
+
+✻ Crunched for 59s
+
+> now we need to set some expectations. before we make changes we will discuss  
+  until we achieve alignment on the work to be done. so edit files only after   
+  we agree that we're aligned.                                                  
+
+● Understood. Saving as feedback memory so it sticks across sessions.
+
+  Recalled 1 memory, wrote 2 memories (ctrl+o to expand)
+
+> the other agent said this: The intro doesn't just position the document, it instructs the reader how to read it.           
+    By the time you reach §2, you already know:                                                                              
+                                                                                                                             
+    - treat what follows as a foundation, not a complete picture,                                                            
+    - expect a second layer (downstream skills) to fill in rhetorical context,                                               
+    - read every rule below as overridable, given justification.                                                             
+                                                                                                                             
+    Those three primes change how every subsequent section parses. The defaults in §2 read as defaults because you were told 
+    upstream that downstreams override. The flat list of authoring virtues in §3 reads as inheritable because you were told  
+    the foundation/downstream split. Without the intro, you'd read the same content as monolithic rules.                     
+                                                                                                                             
+    So the intro is didactic meta-discourse: it teaches the document's interpretive frame before the document delivers       
+    content. That's why it earns its place where generic meta-discourse wouldn't — it isn't talking about the document for   
+    its own sake, it's installing the lens the reader needs to make sense of what's below.                                   
+  ⎿  Interrupted · What should Claude do instead?
+
+> this was in reference the the writing-prose introduction. didactic            
+  meta-discourse - that's what we want in the skill intros.                     
+
+● "Didactic meta-discourse" — the intro teaches the interpretive frame so every
+  section below parses through that lens. That's a sharper term than what I had.
+
+  Proposed edits to align on before I touch anything:
+
+  1. skill-composition.md — rename the section "H1 summary is metadiscursive" to
+   "H1 summary is didactic meta-discourse" and add a sentence explaining that
+  the intro installs the lens for reading the rest (overridability,
+  foundation/downstream split, audience, etc.) — not generic positioning prose.
+  2. taking-notes/SKILL.md intro — sharpen the didactic priming. The current
+  draft names the slots but doesn't explicitly tell the reader "read everything
+  below as serving durability across compaction" or "treat the note template as
+  the form, not the only shape." Could add a closing sentence like "Read the
+  patterns below as the form the note artifact takes under those constraints."
+
+  Want me to proceed with both? Either? Different framing?
+
+✻ Cogitated for 20s
+
+> ok                                                                            
+
+  Read 1 file (ctrl+o to expand)
+
+● Update(docs\notes\skill-composition.md)
+  ⎿  Added 3 lines, removed 3 lines
+       4  Meta contract for SKILL.md format — the rhetorical conventions 
+          that govern how an SKILL.md presents itself and composes with o
+          ther skills.
+       5  
+       6  
+       7 -## H1 summary is metadiscursive                                
+       7 +## H1 summary is didactic meta-discourse                       
+       8  
+       9 -The summary line directly under the H1 is **metadiscursive**: i
+         -t describes the skill's role and its contract with other skills
+         -, not the subject matter the skill teaches. A reader leaves the
+         - summary knowing what the file is for, what it presupposes, and
+         - which other skills compose with it — before encountering any o
+         -f the subject content.                                         
+       9 +The summary line directly under the H1 is **didactic meta-disco
+         +urse**: it teaches the reader the interpretive frame for the re
+         +st of the document before any subject content arrives. It does 
+         +not merely position the skill — it installs the lens through wh
+         +ich every following section is read. By the end of the summary,
+         + the reader knows what the skill is, how to treat the rules bel
+         +ow (as inheritable defaults, as overridable patterns, as a foun
+         +dation expecting a downstream), and which other skills compose 
+         +with it.                                                       
+      10  
+      11 -Example — `writing-prose/SKILL.md`: "Foundational editorial kno
+         -wledge lives here — the authoring virtues that apply across all
+         - markdown-based artifacts. Downstream skills specify the rhetor
+         -ical context for the artifact under composition..." States the 
+         -skill's role (foundation), names the slot the downstream fills 
+         -(rhetorical context), and sets the override rule.              
+      11 +Example — `writing-prose/SKILL.md`: "Foundational editorial kno
+         +wledge lives here — the authoring virtues that apply across all
+         + markdown-based artifacts. Downstream skills specify the rhetor
+         +ical context for the artifact under composition — writer, voice
+         +, ethos, stance, audience, subject, genre, tone, register, inte
+         +nt. Downstream skills may deviate with justification." Three se
+         +ntences install three primes: treat what follows as a foundatio
+         +n rather than a complete picture; expect a second layer to fill
+         + in rhetorical context; read every rule as overridable given ju
+         +stification. Without those primes, the same content would parse
+         + as monolithic rules.                                          
+
+● Update(plugins\skills\skills\taking-notes\SKILL.md)
+  ⎿  Added 1 line, removed 1 line
+       5  
+       6  # Taking notes
+       7  
+       8 -Note-authoring knowledge for atomic wiki pages under `docs/note
+         -s/` — durable artifacts that survive context compaction. Loads 
+         -alongside `writing-prose` and specializes the rhetorical contex
+         -t for the note artifact: audience is the next session, intent i
+         -s to externalize one idea per file so the work outlives the con
+         -versation. Each note represents the current state of an idea; g
+         -it carries the history.                                        
+       8 +Note-authoring knowledge for atomic wiki pages under `docs/note
+         +s/` — durable artifacts that survive context compaction. Loads 
+         +alongside `writing-prose` and specializes the rhetorical contex
+         +t for the note artifact: audience is the next session, intent i
+         +s to externalize one idea per file so the work outlives the con
+         +versation. Each note represents the current state of an idea; g
+         +it carries the history. Read the patterns below as the form the
+         + note artifact takes under those constraints — the template is 
+         +the default shape, the discipline is the durable rule.         
+       9  
+      10  ## Philosophy
+      11  
+● Both done. skill-composition.md now uses "didactic meta-discourse" with the
+  three primes worked into the writing-prose example. taking-notes intro gained
+  the closing didactic line.
+
+✻ Sautéed for 24s
+
+> we're going to design what notes are together. i'm the SME, and you're the    
+  Socratic questioner. you'll ask me questions as we explore every design       
+  branch. this is the process of discovery. we will discover notes together.    
+  make no assumptions based on the existing note skill.                         
+
+● Starting at the root: what is a note for? What problem does it solve that
+  nothing else solves?
+
+✻ Cogitated for 5s
+
+> a note solves several problems. what it is, it's a durable record of          
+  discoveries, tasks, open and closed questions, and so on. the problem notes   
+  solve is overcoming the limitations of human and AI memory systems. humans    
+  forget, agents compact. this means information can easily be lost. a well     
+  written, durable note solves that problem by providing context in future      
+  sessions and act as reference material for future conversations. writing a    
+  note is only part of the problem that needs solving, however. reference       
+  material needs to be indexable. we want to be able to efficiently scan and    
+  locate notes with a deterministic mechanism, such as a bash script. so        
+  taking-notes is a two part skill - composition of effective reference         
+  material, efficient retrieval of that reference material.                     
+
+● You've named two parts and the durability problem. Before composition or
+  retrieval, what's the atom? Is a note the record of a single fact, a single
+  topic, a single session's findings, a single decision — or something else?
+  What determines where one note ends and the next begins?
+
+✻ Brewed for 18s
+
+> a single topic, but to be precise one must understand that physics is a       
+  topic, gravity is a topic, the strong force is a topic, the composition of    
+  atoms is a topic, the composition of electrons is a topic, quantum theory is  
+  a topic.. you see - it's topics all the way down                              
+
+● Topics nest infinitely. So when you've started a note and a related idea
+  surfaces, what's the test that tells you it belongs in this note vs. its own
+  note? What's the signal that two ideas are the same topic vs. adjacent topics?
+
+✻ Churned for 12s
+
+> there is no signal. the user will realize a sub-topic has grown too large, or 
+   the note is trying to cover too many layers of abstraction maybe. i think    
+  that's outside the scope of the skill. this is like asking someone how to     
+  know where, in DDD, to draw the line between two bounded contexts, or         
+  aggregates. in other words, it's user decision                                
+
+● Retrieval was the second part. If a bash scan is the retrieval mechanism, what
+   does the scanner look at to decide a note matches a query? What's the minimum
+   every note must carry to be findable?
+
+✻ Cogitated for 12s
+
+> i know i said we start fresh, but this mechanism is already designed. we have 
+   several scripts that enforce, or depend on this structure. take-note.sh,     
+  list-notes.sh, query.sh                                                       
+
+● Good catch. So treat the scripts as fixed input. What do they require of every
+   note — what's the contract the composition side must satisfy to be
+  retrievable?
+
+✻ Churned for 6s
+
+> this is from the existing skill: ### The script set                           
+                                                                                
+  Three scripts ship under                                                      
+  `${CLAUDE_PLUGIN_ROOT}/skills/taking-notes/scripts/`. Portable POSIX bash;    
+  runs on Linux, macOS, and Windows (Git Bash, WSL).                            
+                                                                                
+  - `take-note.sh [--force] <title> <tags> <summary>` — body piped on stdin.    
+  Slugifies the title, refuses to overwrite without `--force`, writes           
+  `docs/notes/<slug>.md`. The slug is mechanically derived; the writer does not 
+   choose it.                                                                   
+  - `list-notes.sh [<tag>]` — reads the head of each `docs/notes/*.md` and      
+  emits one block per note: title, tags, summary, filename. With a tag          
+  argument, filters to notes whose `Tags:` line contains that tag.              
+  - `query.sh [--title PAT] [--tag TAG] [--xtag TAG] [--summary PAT]` —         
+  multi-predicate scan. Each flag is optional; flags AND together. Title and    
+  summary match substring case-insensitive; `--tag` matches exactly within the  
+  comma-separated `Tags:` line; `--xtag` excludes notes where the named tag is  
+  present. Output mirrors `list-notes.sh`.                                      
+                                                                                
+  ### Output discipline                                                         
+                                                                                
+  - `take-note.sh`: success is silent — the file is the artifact. Failure       
+  prints the validation error to stderr and exits non-zero.                     
+  - `list-notes.sh`: success prints the formatted note list, or `no notes` when 
+   `docs/notes/` is empty or missing. Tag filter prints only matches; no        
+  matches prints an explanatory line.                                           
+  - `query.sh`: success prints the formatted matches in the same block format   
+  as `list-notes.sh`, or `no matches` when nothing satisfies the predicates.    
+  Exit code is 0 in both cases — a clean empty result is success.               
+
+● The scripts only read the head (title, tags, summary). The body is invisible
+  to retrieval. What does that split mean for the role of each part — what kind
+  of content belongs in the head vs. the body?
+
+✻ Baked for 16s
+
+> let's start a new skill draft named SKILL.draft.md. you can stub it out for   
+  now                                                                           
+
+● Proposed stub shape — keep it minimal so the dialogue fills it in:
+
+  ---
+  name: taking-notes
+  description: <TBD — refine after composition/retrieval design settles>
+  ---
+
+  # Taking notes
+
+  <intro: didactic meta-discourse — TBD>
+
+  ## Rhetorical context
+
+  <TBD — slot declarations per writing-prose contract>
+
+  ## Composition
+
+  <TBD>
+
+  ## Retrieval
+
+  <TBD — anchors the script set as fixed contract>
+
+  Write that to plugins/skills/skills/taking-notes/SKILL.draft.md?
+
+✻ Sautéed for 13s
+
+> i don't understand your last question                                         
+
+● Sorry — redundant question. You already approved the stub. Creating it now.
+
+● Write(plugins\skills\skills\taking-notes\SKILL.draft.md)
+  ⎿  Wrote 20 lines to plugins\skills\skills\taking-notes\SKILL.draft.md
+       2 name: taking-notes
+       3 description: <TBD — refine after composition/retrieval design se
+         ttles>
+       4 ---
+       5 
+       6 # Taking notes
+       7 
+       8 <intro: didactic meta-discourse — TBD>
+       9 
+      10 ## Rhetorical context
+     … +11 lines (ctrl+o to expand)
+
+● Stub created at plugins/skills/skills/taking-notes/SKILL.draft.md. Back to the
+   dialogue.
+
+✻ Cogitated for 14s
+
+> "The scripts only read the head (title, tags, summary). The body is invisible 
+   to retrieval. What does that                                                 
+    split mean for the role of each part — what kind of content belongs in the  
+  head vs. the body?"                                                           
+
+● Over to you.
+✻ Brewed for 7s
+
+> i'm saying I don't understand that question                                   
+
+● Let me try again, concretely.
+
+  When someone searches notes, the scripts show them only title + tags +
+  summary. The body is hidden until they actually open the file. So those three
+  head fields have to be enough to find the right note in the first place.
+
+  Question: given that constraint, what job does the head do, and what's left
+  for the body to do?
+
+✻ Worked for 8s
+
+> head has title, tags, summary. it's like a card catalog. it's enough to       
+  decide if you want to open the document. I ask the agent, "find notes on the  
+  writing refactor" and it uses list or query to find notes                     
+
+● When you author a note, you can't know what words a future searcher will type.
+   How do you decide what goes in the title, tags, and summary so future
+  searches will hit?
+
+✻ Baked for 14s
+
+> they're based on the topic and intent of the note. you can use the list       
+  script now and see the tags.                                                  
+
+● Bash(bash plugins/skills/skills/taking-notes/scripts/list-notes.sh)
+  ⎿  Add a negation-grep self-review check to writing-prose Validation
+       tags: todo,skills,writing-prose,validation
+       A mechanical self-review pass that greps draft prose for negation tr
+     … +76 lines (ctrl+o to expand)
+
+● Looked at the list. Title states the topic as identity, tags act as facets
+  (status: todo/closed; area: skills/wiki/tests; subsystem: writing-prose;
+  thread: audit-mode-followup). Both visible patterns.
+
+  Given that, what's the summary doing that title + tags don't? Why does the
+  head need a third field?
+
+✻ Baked for 27s
+
+> the summary is prose that an agent can read. why does it need a third field?  
+  because `title: skills-composition, tags: todo` doesn't give you any context  
+
+● Head is settled: title = identity, tags = facets, summary = prose context.
+
+  Now the body. You named several content types earlier — discoveries, tasks,
+  open and closed questions. Do they all share one body shape, or does the body
+  shape vary by type?
+
+✻ Worked for 9s
+
+> identity, facets, context <- that goes into the intro. let's add a place      
+  holder in the taking notes intro - a block of content we'll quary later to    
+  compose the intro.                                                            
+
+● Proposed shape — a raw-material block in the draft that accretes design facts,
+   to be composed into prose later:
+
+  <intro raw material — to be composed into didactic meta-discourse later:
+
+  Head field roles:
+  - Title: identity (also slug, URL, exact-match anchor)
+  - Tags: facets (status, area, subsystem, thread)
+  - Summary: prose context, agent-readable
+
+  [more facts added as the dialogue progresses]
+  >
+
+  Add that in place of the current <intro: ... TBD> line in SKILL.draft.md?
+
+✻ Crunched for 13s
+
+> it might not live in the intro long term - it lives somewhere in the skill    
+
+● Right. Proposed: a scratch block at the top of SKILL.draft.md (under the H1,
+  above the sections) that holds discovered design facts. We distribute them
+  into sections later.
+
+  <!-- design scratch — raw material from the dialogue, distributed into
+  sections later
+
+  Head field roles:
+  - Title: identity (also slug, URL, exact-match anchor)
+  - Tags: facets (status, area, subsystem, thread)
+  - Summary: prose context, agent-readable
+
+  [more facts added as the dialogue progresses]
+  -->
+
+  Add that?
+
+✻ Baked for 8s
+
+> go ahead and edit the draft                                                   
+
+● Update(plugins\skills\skills\taking-notes\SKILL.draft.md)
+  ⎿  Added 10 lines
+       5  
+       6  # Taking notes
+       7  
+       8 +<!-- design scratch — raw material from the dialogue, distribut
+         +ed into sections later                                         
+       9 +                                                               
+      10 +Head field roles:                                              
+      11 +- Title: identity (also slug, URL, exact-match anchor)         
+      12 +- Tags: facets (status, area, subsystem, thread)               
+      13 +- Summary: prose context, agent-readable                       
+      14 +                                                               
+      15 +[more facts added as the dialogue progresses]                  
+      16 +-->                                                            
+      17 +                                                               
+      18  <intro: didactic meta-discourse — TBD>
+      19  
+      20  ## Rhetorical context
+
+● Done. Back to: discoveries, tasks, open and closed questions — do they all
+  share one body shape?
+
+✻ Worked for 9s
+
+> same body shape - probably not, but I like the "observation, interpretation,  
+  next" shape for discoveries                                                   
+
+● Add to scratch. Now for the next type — looking at the list, many notes are
+  tagged todo (tasks). What's the body shape for a task note? Same OIN reading,
+  or something different?
+
+✻ Crunched for 13s
+
+> a todo note might be a single sentence "remember to take out the trash". it   
+  might be a complex roadmap with multiple sub tasks. it might be a reference,  
+  like our skill-composition note. they're a scratch pad mostly. in my          
+  experience the agent will compose the body in an appropriate way depending on 
+   the context and intent of the note                                           
+
+● Add to scratch — task notes are free-form scratch; agent picks the shape from
+  context.
+
+  Then maybe the skill's job is to offer good body patterns the agent can pick
+  from (OIN for discoveries, others for other intents), not mandate one. Does
+  that match your model — patterns offered, not template enforced?
+✻ Cooked for 11s
+
+> the taking-notes skill should not know about journaling skill, but just to    
+  set a boundary for our discovery, the journaling skill is similar to notes.   
+  it has instructions for documenting a session, or discoveries, in a developer 
+   log, or engineering journal (similar to FIRST Robotics League).              
+
+● Noted — scope boundary, not skill content. Proposed scratch entry:
+
+  Scope boundary (for our discovery, not skill content):
+  - Out of scope: dated session logs / engineering journals (separate journaling
+   skill).
+  - Taking-notes covers atomic wiki pages only.
+
+  Add that?
+
+  And back to the open question: skill offers patterns the agent picks from (OIN
+   for discoveries, free-form for tasks) rather than mandating one template —
+  does that match your model?
+
+✻ Brewed for 14s
+
+> i don't know where this idea came from "atomic wiki pages" - these are not    
+  wiki pages.                                                                   
+
+● You're right — I imported that from the existing skill. So what are they? Just
+   markdown reference documents under docs/notes/, retrievable via the scripts?
+  Or is there a better framing?
+
+✻ Crunched for 14s
+
+> i feel like the term "notes" carries weight here                              
+
+● Right — "notes" stands on its own. Revised scratch entry:
+
+  Scope boundary (for our discovery, not skill content):
+  - Out of scope: dated session logs / engineering journals (separate journaling
+   skill).
+  - Taking-notes covers notes — durable, retrievable, indexed via the script
+  set.
+
+  Add that? And does the patterns-vs-template question still match your model —
+  skill offers shapes (OIN for discoveries), agent picks?
+
+✻ Brewed for 6s
+
+> notes — durable, structured header, retrievable, indexed via the script set   
+
+● Updated scratch entry (your wording):
+
+  Scope boundary (for our discovery, not skill content):
+  - Out of scope: dated session logs / engineering journals (separate journaling
+   skill).
+  - Taking-notes covers notes — durable, structured header, retrievable, indexed
+   via the script set.
+
+  Add that? And the open question: skill offers shapes (OIN for discoveries),
+  agent picks — match your model?
+
+✻ Sautéed for 6s
+
+> offering shapes seems like it's out of scope. i've seen no evidence that      
+  notes require structured body, nor that agents require instructions on how to 
+   format the information.                                                      
+
+● Got it — body is silent in the skill, agent decides. Proposed scratch
+  additions:
+
+  Body shape:
+  - Free-form, agent's discretion. The skill does not prescribe OIN or any other
+   body template.
+  - No evidence agents need body-formatting instructions.
+
+  Add that, alongside the scope-boundary entry?
+
+✻ Worked for 10s
+
+> body structure is silent in the skill - but the presence of the body is known 
+
+● Refined:
+
+  Body:
+  - Presence is known to the skill — take-note.sh accepts body on stdin and
+  writes it.
+  - Structure is silent — the skill prescribes no body template. The agent
+  decides shape from context and intent.
+
+  Add that?
+
+✻ Baked for 6s
+
+> ok                                                                            
+
+● Update(plugins\skills\skills\taking-notes\SKILL.draft.md)
+  ⎿  Added 8 lines
+      12  - Tags: facets (status, area, subsystem, thread)
+      13  - Summary: prose context, agent-readable
+      14  
+      15 +Scope boundary (for our discovery, not skill content):         
+      16 +- Out of scope: dated session logs / engineering journals (sepa
+         +rate journaling skill).                                        
+      17 +- Taking-notes covers notes — durable, structured header, retri
+         +evable, indexed via the script set.                            
+      18 +                                                               
+      19 +Body:                                                          
+      20 +- Presence is known to the skill — take-note.sh accepts body on
+         + stdin and writes it.                                          
+      21 +- Structure is silent — the skill prescribes no body template. 
+         +The agent decides shape from context and intent.               
+      22 +                                                               
+      23  [more facts added as the dialogue progresses]
+      24  -->
+      25  
+
+● Scratch updated. Next branch: triggers. What causes a note to get written —
+  explicit user request only, or can the agent decide to write one on its own?
+
+✻ Cogitated for 33s
+
+> three triggers. 1. user explicitly asks. 2. agent offers when a new discovery 
+   is made and user approves or denies. 3. use may request the agent            
+  auto-capture new discoveries. 1 and 2 are default, 3 is user-requested        
+  auto-capture                                                                  
+
+● Add to scratch. Before any of those triggers writes a new note, does the agent
+   first check whether an existing note covers the topic? Or do new notes always
+   start fresh?
+
+✻ Churned for 8s
+
+> yes, agent checks for existing note. if a note exists the agent may choose to 
+   update or edit the note, or may choose to compose a new file as a sibling    
+  and co-refernce. the critical judgement is avoiding information loss.         
+  obviously if the user says , "update this note to say x instead of y" then    
+  the original information is mutated. but if the agent is make a decision on   
+  it's own, it must be purely additive. look, I don't want to be very           
+  prescriptive here. as a general rule don't overright information unless asked 
+   to do so. if a note exists on the topic, and the "new" note doesn't add      
+  anything new, then let the user know - "hey, there's already a note on this   
+  topic"                                                                        
+
+● Add to scratch:
+
+  Dedup and mutation:
+  - Before writing, agent checks for an existing note on the topic.
+  - If one exists: agent may update/edit, or compose a sibling and co-reference.
+  - Critical judgment: avoid information loss.
+  - User-requested change can mutate freely; agent-initiated change must be
+  additive.
+  - General rule: don't overwrite without being asked.
+  - If an existing note already covers the topic and adds nothing new, surface
+  "there's already a note on this topic" instead of writing.
+
+  Tone of the skill:
+  - Soft on procedure; principles over strict workflows.
+
+  Add that?
+
+  You mentioned "compose a sibling and co-reference" — how do sibling notes
+  reference each other? Markdown links, tag membership, or something else?
+
+✻ Crunched for 16s
+> "Soft on procedure; principles over strict workflows." <- that's good to add  
+  to our skill-composition note.                                                
+
+● Two edits proposed:
+
+  1. SKILL.draft.md — add the dedup/mutation block to scratch (without the tone
+  line; promoting that to skill-composition).
+  2. skill-composition.md — add a new section after the H1-summary one:
+
+  ## Soft on procedure
+
+  A skill is content, not a recipe. Offer principles that let the agent exercise
+   judgment, not strict step-by-step workflows. The reader is an agent with
+  context the skill author can't anticipate; rigid procedures will break against
+   cases the author never imagined, while principles travel.
+
+  Make those two edits?
+
+✻ Worked for 10s
+
+> yes                                                                           
+
+● Update(plugins\skills\skills\taking-notes\SKILL.draft.md)
+  ⎿  Added 13 lines
+      20  - Presence is known to the skill — take-note.sh accepts body on
+           stdin and writes it.
+      21  - Structure is silent — the skill prescribes no body template. 
+          The agent decides shape from context and intent.
+      22  
+      23 +Triggers:                                                      
+      24 +- 1. User explicitly asks (default).                           
+      25 +- 2. Agent offers when a new discovery is made; user approves o
+         +r denies (default).                                            
+      26 +- 3. User-requested auto-capture of new discoveries (opt-in).  
+      27 +                                                               
+      28 +Dedup and mutation:                                            
+      29 +- Before writing, agent checks for an existing note on the topi
+         +c.                                                             
+      30 +- If one exists: agent may update/edit, or compose a sibling an
+         +d co-reference.                                                
+      31 +- Critical judgment: avoid information loss.                   
+      32 +- User-requested change can mutate freely; agent-initiated chan
+         +ge must be additive.                                           
+      33 +- General rule: don't overwrite without being asked.           
+      34 +- If an existing note already covers the topic and adds nothing
+         + new, surface "there's already a note on this topic" instead of
+         + writing.                                                      
+      35 +                                                               
+      36  [more facts added as the dialogue progresses]
+      37  -->
+      38  
+
+● Update(docs\notes\skill-composition.md)
+  ⎿  Added 4 lines
+       9  The summary line directly under the H1 is **didactic meta-disco
+          urse**: it teaches the reader the interpretive frame for the re
+          st of the document before any subject content arrives. It does 
+          not merely position the skill — it installs the lens through wh
+          ich every following section is read. By the end of the summary,
+           the reader knows what the skill is, how to treat the rules bel
+          ow (as inheritable defaults, as overridable patterns, as a foun
+          dation expecting a downstream), and which other skills compose 
+          with it.
+      10  
+      11  Example — `writing-prose/SKILL.md`: "Foundational editorial kno
+          wledge lives here — the authoring virtues that apply across all
+           markdown-based artifacts. Downstream skills specify the rhetor
+          ical context for the artifact under composition — writer, voice
+          , ethos, stance, audience, subject, genre, tone, register, inte
+          nt. Downstream skills may deviate with justification." Three se
+          ntences install three primes: treat what follows as a foundatio
+          n rather than a complete picture; expect a second layer to fill
+           in rhetorical context; read every rule as overridable given ju
+          stification. Without those primes, the same content would parse
+           as monolithic rules.
+      12 +                                                               
+      13 +## Soft on procedure                                           
+      14 +                                                               
+      15 +A skill is content, not a recipe. Offer principles that let the
+         + agent exercise judgment, not strict step-by-step workflows. Th
+         +e reader is an agent with context the skill author can't antici
+         +pate; rigid procedures will break against cases the author neve
+         +r imagined, while principles travel.                           
+
+● Both done. Back to the open question: how do sibling notes co-reference —
+  markdown links, tag membership, or something else?
+
+✻ Cogitated for 17s
+
+> tag membership is a great idea. there should already exist a sluggify script  
+  in our plugin.                                                                
+
+● Bash(ls plugins/skills/scripts/slugify.sh && bash
+      plugins/skills/scripts/slugify.sh --help 2>&1 | head -20)
+  ⎿  plugins/skills/scripts/slugify.sh
+     slugify.sh — convert a string to a URL-safe lowercase slug.
+     … +20 lines (ctrl+o to expand)
+
+● Confirmed — slugify.sh at plugins/skills/scripts/slugify.sh. (Side note: its
+  help text still says "writing-prose deep/" — stale after the rename to
+  reference/. Worth a follow-up.)
+
+  Proposed scratch addition:
+
+  Sibling co-reference:
+  - Siblings — notes on related topics within the same thread — share a tag.
+  - The shared tag is a slug of the thread or topic, derived via
+  plugins/skills/scripts/slugify.sh.
+  - Tag membership lets list-notes.sh <tag> and query.sh --tag <tag> retrieve
+  the whole thread.
+
+  Add that?
+
+✻ Crunched for 18s
+
+> yes                                                                           
+
+● Update(plugins\skills\skills\taking-notes\SKILL.draft.md)
+  ⎿  Added 5 lines
+      33  - General rule: don't overwrite without being asked.
+      34  - If an existing note already covers the topic and adds nothing
+           new, surface "there's already a note on this topic" instead of
+           writing.
+      35  
+      36 +Sibling co-reference:                                          
+      37 +- Siblings — notes on related topics within the same thread — s
+         +hare a tag.                                                    
+      38 +- The shared tag is a slug of the thread or topic, derived via 
+         +plugins/skills/scripts/slugify.sh.                             
+      39 +- Tag membership lets list-notes.sh <tag> and query.sh --tag <t
+         +ag> retrieve the whole thread.                                 
+      40 +                                                               
+      41  [more facts added as the dialogue progresses]
+      42  -->
+      43  
+
+● Added. Tags are now load-bearing for both facets and sibling threads. How does
+   the agent decide which tags to put on a new note — controlled vocabulary,
+  ad-hoc per note, or somewhere in between?
+
+✻ Crunched for 21s
+
+> the tag-based reference means we just created a document graph                
+
+● Right — notes are graph nodes, shared tags are subgraph memberships. A note
+  with multiple tags belongs to multiple subgraphs simultaneously. list-notes.sh
+   <tag> and query.sh --tag <tag> project a single subgraph.
+
+  Proposed scratch addition:
+
+  Document graph:
+  - Notes form a graph: nodes = notes, edges = shared tag membership.
+  - Multi-tag notes belong to multiple subgraphs simultaneously.
+  - Tag-filtered scripts (list-notes.sh <tag>, query.sh --tag <tag>) project a
+  single subgraph.
+
+  Add that, and where do you want to go next?
+
+✻ Sautéed for 9s
+
+> yes                                                                           
+
+● Update(plugins\skills\skills\taking-notes\SKILL.draft.md)
+  ⎿  Added 5 lines
+      38  - The shared tag is a slug of the thread or topic, derived via 
+          plugins/skills/scripts/slugify.sh.
+      39  - Tag membership lets list-notes.sh <tag> and query.sh --tag <t
+          ag> retrieve the whole thread.
+      40  
+      41 +Document graph:                                                
+      42 +- Notes form a graph: nodes = notes, edges = shared tag members
+         +hip.                                                           
+      43 +- Multi-tag notes belong to multiple subgraphs simultaneously. 
+      44 +- Tag-filtered scripts (list-notes.sh <tag>, query.sh --tag <ta
+         +g>) project a single subgraph.                                 
+      45 +                                                               
+      46  [more facts added as the dialogue progresses]
+      47  -->
+      48  
+
+● Back to the open question: how does the agent decide which tags to put on a
+  new note — controlled vocabulary, ad-hoc per note, or somewhere in between?
+
+✻ Cooked for 23s
+
+> i often say, "add a todo note" or "add a discovery note" and i notice that    
+  the agents then add their own tags. seems to be working as-is                 
+
+● Scratch addition:
+
+  Tag discipline:
+  - Ad-hoc per note; no controlled vocabulary.
+  - User often signals content type in the request ("add a todo note", "add a
+  discovery note"); the agent picks tags from intent and topic.
+  - Lightly-typed convention; prescription unnecessary.
+
+  Add that?
+
+  Next branch — title discipline. The title is identity, slug, URL, and search
+  anchor all at once. What makes a good title given that load?
+
+✻ Churned for 14s
+> a good title names the topic explicitly. "writing-prose-refactor-task-list"   
+  is better than "refactor". often the user will specify the title. otherwise   
+  the agent can derive from the topic, content, and conversation. there must be 
+   english composition guidance for chosing titles                              
+
+● Add to scratch:
+
+  Title discipline:
+  - Names the topic explicitly; concrete over abstract.
+  - User may specify the title; otherwise the agent derives it from topic,
+  content, and conversation.
+  - General English composition guidance comes from writing-prose
+  (concrete-over-abstract, front-load-important-words, action-oriented-headings)
+   — taking-notes inherits, does not re-prescribe.
+  - Taking-notes-specific: title is also identity, slug, URL, and search anchor
+  — make it discriminating enough that exact-match and slug derivation give a
+  useful result.
+
+  Add that?
+
+  Next: summary discipline. Same shape of question — what makes a good one-line
+  summary, given it's the agent-readable prose card-catalog entry?
+
+✻ Cooked for 12s
+
+> yes, approved the recent scratch additions                                    
+
+● Update(plugins\skills\skills\taking-notes\SKILL.draft.md)
+  ⎿  Added 11 lines
+      43  - Multi-tag notes belong to multiple subgraphs simultaneously.
+      44  - Tag-filtered scripts (list-notes.sh <tag>, query.sh --tag <ta
+          g>) project a single subgraph.
+      45  
+      46 +Tag discipline:                                                
+      47 +- Ad-hoc per note; no controlled vocabulary.                   
+      48 +- User often signals content type in the request ("add a todo n
+         +ote", "add a discovery note"); the agent picks tags from intent
+         + and topic.                                                    
+      49 +- Lightly-typed convention; prescription unnecessary.          
+      50 +                                                               
+      51 +Title discipline:                                              
+      52 +- Names the topic explicitly; concrete over abstract.          
+      53 +- User may specify the title; otherwise the agent derives it fr
+         +om topic, content, and conversation.                           
+      54 +- General English composition guidance comes from writing-prose
+         + (concrete-over-abstract, front-load-important-words, action-or
+         +iented-headings) — taking-notes inherits, does not re-prescribe
+         +.                                                              
+      55 +- Taking-notes-specific: title is also identity, slug, URL, and
+         + search anchor — make it discriminating enough that exact-match
+         + and slug derivation give a useful result.                     
+      56 +                                                               
+      57  [more facts added as the dialogue progresses]
+      58  -->
+      59  
+
+● Now: summary discipline. What makes a good one-line summary, given it's the
+  agent-readable prose card-catalog entry?
+
+✻ Brewed for 12s
+
+> you tell me                                                                   
+
+● A good summary, given what we've established:
+
+  - One sentence; front-loads the most informative phrase.
+  - Names what's in the note that title and tags don't already convey.
+  - Distinguishes it from siblings (other notes sharing the same tag).
+  - Uses words a future searcher would type — resonates with likely queries.
+  - Avoids restating the title and avoids meta-framing ("this note
+  discusses...").
+  - General editorial guidance (active voice, concrete, no hedges) inherited
+  from writing-prose.
+
+  Confirm, refine, or push back?
+
+✻ Brewed for 16s
+
+> that's solid                                                                  
+
+● Add to scratch. Next branch — lifecycle. A note is born, gets
+  mutated/added-to, and eventually... what? The existing notes show a closed
+  tag. Do notes get closed? Deleted? Superseded? What's the lifecycle?
+
+✻ Cogitated for 6s
+
+> a note lives as long as it's useful. an open question might get tagged closed 
+   and kept around during a series of design sessions, then once it's absorbed  
+  into a formal ADR, or expressed as source code, it might get deleted. todo    
+  items last until they are either moved to github issues, or completed and     
+  then we delete them. they're not for tracking or reporting - they're just     
+  durable within the repo where we can track mutation via git, and the agent    
+  can easily access them to learn things.                                       
+
+● Scratch addition:
+
+  Lifecycle:
+  - A note lives as long as it's useful.
+  - Open questions can earn a `closed` tag and persist through related sessions;
+   deleted once absorbed into a formal ADR or source code.
+  - Todo notes live until moved to GitHub issues or completed, then deleted.
+  - Notes are not project management — not for tracking or reporting. They are
+  durable repo state: git tracks mutation; the agent reads them for context.
+
+  Add that?
+
+  Next: who reads the body? The head is for the searcher (we said that earlier).
+   When the agent opens a note, who's the intended reader of the body — the
+  agent itself, the user, or both?
+
+✻ Baked for 17s
+
+> notes are never deleted by the agent, only by the user.                       
+
+● Critical correction. Revised:
+
+  Lifecycle:
+  - A note lives as long as it's useful.
+  - Open questions can earn a `closed` tag and persist through related sessions;
+   deleted once absorbed into a formal ADR or source code.
+  - Todo notes live until moved to GitHub issues or completed, then deleted.
+  - Deletion is user-only — the agent never deletes notes on its own.
+  - Notes are not project management — not for tracking or reporting. They are
+  durable repo state: git tracks mutation; the agent reads them for context.
+
+  Add that?
+
+  And: who reads the body? Agent, user, or both?
+
+✻ Baked for 7s
+
+> so maybe lifecycle is out of scope for the skill                              
+
+● Possible split:
+
+  - Out of scope (user practice): when notes get closed, when they get deleted,
+  what triggers deletion.
+  - In scope (agent behavior): deletion is user-only — the agent never deletes a
+   note on its own.
+
+  The second seems like an agent guardrail the skill should state. The first
+  feels like user practice the skill doesn't need to legislate. Match your read?
+
+✻ Sautéed for 9s
+
+> you don't need a guardrail. if you have to mention this, just say something   
+  like "lifecycle is managed externally"                                        
+
+● Revised:
+
+  Lifecycle:
+  - Out of scope. Lifecycle is managed externally.
+
+  Add that?
+
+  Open question still: who reads the body? Agent, user, or both?
+
+✻ Sautéed for 6s
+
+> both agent and user read bodies, but content optimization should lean toward  
+  llms                                                                          
+
+● Scratch:
+
+  Audience:
+  - Both agent and user read bodies.
+  - Content optimization leans toward LLMs — dense, structured, scannable signal
+   over human-prose flourishes.
+
+  Add that?
+
+  Next: after the agent writes a note, does it recite the content back in chat,
+  or does the file itself stand as the artifact?
+
+✻ Sautéed for 12s
+
+> the file stands. user says, "remember this" "write this down" "take a note"   
+  and agent says something like, "note writen here: {slug}.md"                  
+● Scratch:
+
+  Agent's response to a write:
+  - The file stands as the artifact; no recital or recap in chat.
+  - Agent confirms with a minimal acknowledgment: "note written here:
+  {slug}.md".
+
+  Add that?
+
+  Next: when does the agent consult notes — at session start, on user reference
+  to a topic, when the agent decides it needs context, all of the above?
+
+✻ Churned for 11s
+
+> agent consults notes when it decides it needs context, or the user @ includes 
+   the note in the conversation                                                 
+
+● Scratch additions (batch — including summary discipline, agent response, read
+  flow):
+
+  Summary discipline:
+  - One sentence; front-loads the most informative phrase.
+  - Names what's in the note that title and tags don't already convey.
+  - Distinguishes it from siblings sharing the same tag.
+  - Uses words a future searcher would type.
+  - Skips meta-framing ("this note discusses...").
+  - General editorial guidance (active voice, concrete, no hedges) inherited
+  from writing-prose.
+
+  Agent's response to a write:
+  - The file stands as the artifact; no recital or recap in chat.
+  - Agent confirms with a minimal acknowledgment: "note written here:
+  {slug}.md".
+
+  Read flow:
+  - Agent consults notes when it decides it needs context (autonomous).
+  - User may @-reference a specific note to include it in the conversation.
+
+  Add all three?
+
+  Next probe: trigger 2 — agent offers when a new discovery is made. What counts
+   as a "new discovery" worth offering for — what's the signal?
+
+✻ Cogitated for 20s
+
+> yes add the scratch. what's the signal for new discovery? i'm not sure. a     
+  human feels an emotion - there's a hormonal shift as a new connection is      
+  made. maybe it's graph connections between concepts. say we're discussing a   
+  new system and we have open questions in our context window - when we answer  
+  one that's a discovery. or we might have two related ideas, but we don't know 
+   how they are connected - when we uncover the connection, or finally          
+  comprehend a mechanism, or finalize the decomposition of an idea (the         
+  unpacking), or the composition of an idea (packing related ideas), these are  
+  all discoveries                                                               
+
+● Scratch:
+
+  Trigger 2 — what counts as a discovery worth offering for:
+  - Resolving an open question that was in conversation context.
+  - Uncovering the connection between two previously-unconnected ideas.
+  - Comprehending a mechanism for the first time.
+  - Decomposing an idea — unpacking a complex notion into parts.
+  - Composing an idea — packing related ideas into a unified concept.
+  - Shared signal: a new graph connection between concepts.
+
+  Add that?
+
+  Trigger 3 (auto-capture): same set of signals as trigger 2 but skip the
+  user-approval gate — or does auto-capture have its own rules?
+
+✻ Brewed for 14s
+
+> same set of triggers as 2, skill the user-approval. this is like a mode the   
+  user puts the agent into. there's a name for this - a woman who sits in on a  
+  meeting and takes the meeting minutes. but i guess these notes are minutes    
+  exactly, but minutes are a decent analogy for you and i to frame, though I'd  
+  leave it out of the skill.                                                    
+
+● Scratch:
+
+  Trigger 3 — auto-capture mode:
+  - Same signal set as trigger 2; the user-approval gate is skipped.
+  - Activated as a mode the user puts the agent into.
+
+  Add that?
+
+  I think the design surface is largely covered. Suggest we pause and read the
+  scratch end-to-end together to check for gaps before composing prose. Want to
+  do that?
+
+✻ Cogitated for 12s
+
+> record the final scratch. then look at the existing (legacy) skill (reload it 
+   as changes have been made)                                                   
+
+● Update(plugins\skills\skills\taking-notes\SKILL.draft.md)
+  ⎿  Added 35 lines
+      54  - General English composition guidance comes from writing-prose
+           (concrete-over-abstract, front-load-important-words, action-or
+          iented-headings) — taking-notes inherits, does not re-prescribe
+          .
+      55  - Taking-notes-specific: title is also identity, slug, URL, and
+           search anchor — make it discriminating enough that exact-match
+           and slug derivation give a useful result.
+      56  
+      57 +Summary discipline:                                            
+      58 +- One sentence; front-loads the most informative phrase.       
+      59 +- Names what's in the note that title and tags don't already co
+         +nvey.                                                          
+      60 +- Distinguishes it from siblings sharing the same tag.         
+      61 +- Uses words a future searcher would type.                     
+      62 +- Skips meta-framing ("this note discusses...").               
+      63 +- General editorial guidance (active voice, concrete, no hedges
+         +) inherited from writing-prose.                                
+      64 +                                                               
+      65 +Lifecycle:                                                     
+      66 +- Out of scope. Lifecycle is managed externally.               
+      67 +                                                               
+      68 +Audience:                                                      
+      69 +- Both agent and user read bodies.                             
+      70 +- Content optimization leans toward LLMs — dense, structured, s
+         +cannable signal over human-prose flourishes.                   
+      71 +                                                               
+      72 +Agent's response to a write:                                   
+      73 +- The file stands as the artifact; no recital or recap in chat.
+      74 +- Agent confirms with a minimal acknowledgment: "note written h
+         +ere: {slug}.md".                                               
+      75 +                                                               
+      76 +Read flow:                                                     
+      77 +- Agent consults notes when it decides it needs context (autono
+         +mous).                                                         
+      78 +- User may @-reference a specific note to include it in the con
+         +versation.                                                     
+      79 +                                                               
+      80 +Trigger 2 — what counts as a discovery worth offering for:     
+      81 +- Resolving an open question that was in conversation context. 
+      82 +- Uncovering the connection between two previously-unconnected 
+         +ideas.                                                         
+      83 +- Comprehending a mechanism for the first time.                
+      84 +- Decomposing an idea — unpacking a complex notion into parts. 
+      85 +- Composing an idea — packing related ideas into a unified conc
+         +ept.                                                           
+      86 +- Shared signal: a new graph connection between concepts.      
+      87 +                                                               
+      88 +Trigger 3 — auto-capture mode:                                 
+      89 +- Same signal set as trigger 2; the user-approval gate is skipp
+         +ed.                                                            
+      90 +- Activated as a mode the user puts the agent into.            
+      91 +                                                               
+      92  [more facts added as the dialogue progresses]
+      93  -->
+      94  
+
+  Read 1 file (ctrl+o to expand)
+
+● Loaded. Diff between our design and legacy:
+
+  Match: durability, topic atom, title-as-identity, "note is the artifact" (no
+  recital), mutable+git, dedup-before-write, tag-based threads, script contract.
+
+  Our design departs from legacy:
+  - Body shape: legacy prescribes OIN template (lines 71-91). Ours: silent —
+  agent picks.
+  - Triggers: legacy says user-directed only (lines 93-123). Ours: three
+  triggers, including agent-offered and auto-capture mode.
+  - Framing: legacy says "wiki-style atomic notes" / "wiki pages." Ours: just
+  "notes."
+
+  Legacy has, our design hasn't addressed:
+  - Body content disciplines (observation before interpretation, label
+  speculation) — could fold under "body free-form, agent decides."
+  - Memory-vs-notes distinction (user profile / cross-repo facts belong in
+  memory, not notes) — worth keeping as agent guardrail.
+  - Gate policies / malformed-note rules (validation section).
+
+  Our design has, legacy hasn't:
+  - Document-graph framing.
+  - Tag discipline spelled out.
+  - Summary discipline spelled out.
+  - LLM-leaning audience optimization.
+  - Trigger 2 discovery signals.
+
+  Where do you want to take it?
+
+✻ Brewed for 45s
+
+> in the original skill there are valuable ideas, though we could have better   
+  organized as actionable guidance for an agent. i see you already provided a   
+  diff report. let me read that, then i'll respond.                             
+
+● Standing by.
+
+✻ Cooked for 3s
+
+> where do you see the OIN?                                                     
+
+● Lines 73-87 in the legacy — the template fenced block under ### The note 
+  template shows ## Observation, ## Interpretation, ## Next as the body
+  sections. Lines 89-91 then explain that OIN is the default for investigation
+  notes and that question notes reuse the sections with a different reading.
+
+✻ Cooked for 6s
+
+> oh, i see. yeah, that's too prescriptive                                      
+
+● Right. Standing by for direction.
+
+✻ Baked for 6s
+
+> but we need the OIN - it just shouldn't be strict on body. something like     
+  this ```                                                                      
+  # <one-line title — the H1>                                                   
+                                                                                
+  Tags: <comma-separated, optional>                                             
+  <one-line summary>                                                            
+                                                                                
+  ## <a section title>                                                          
+  <content>                                                                     
+                                                                                
+  ## <another section title>                                                    
+  <more content>                                                                
+  ```                                                                           
+
+● Got it — fixed head, free body sections. Proposed scratch addition:
+
+  Note template (shape):
+  - Head is fixed by take-note.sh — H1 from <title>, blank, Tags: line, summary
+  line.
+  - Body has H2 sections; titles and contents are the agent's choice (OIN is one
+   option among many).
+
+  # <one-line title — the H1>
+
+  Tags: <comma-separated, optional>
+  <one-line summary>
+
+  ## <a section title>
+  <content>
+
+  ## <another section title>
+  <more content>
+
+  Add that?
+
+✻ Cooked for 12s
+
+> yes, update scratch. now for triggers from the old skill, the ### When to     
+  write a note is very different than what we've come up with in this session.  
+  it reads like the Anthropic guidance for the skill description actually.      
+  there's nothing incorrect in the legacy skill under the when to write section 
+   - it just doesn't belong in the body of the skill. the triggers we've laid   
+  out DO belong because our new triggers are signal and judgement-based         
+
+● Sharp distinction. Two scratch updates batched:
+
+  Note template (shape):
+  ... [as just proposed] ...
+
+  Trigger phrases vs. trigger behaviors:
+  - Legacy `### When to write a note` is a list of trigger phrases ("write this
+  down", "save this for later", "open question:"). That belongs in the
+  frontmatter `description:` per Anthropic guidance — phrases that activate the
+  skill.
+  - Our three triggers (user asks; agent offers on discovery signal;
+  auto-capture mode) are signal + judgment behaviors. Those belong in the skill
+  body because they require the agent to apply judgment.
+  - Legacy `### When not to write a note` is similar — anti-conditions for
+  activation, belongs adjacent to the trigger phrases in `description:`.
+
+  Add both?
+✻ Churned for 12s
+
+> yes                                                                           
+
+● Update(plugins\skills\skills\taking-notes\SKILL.draft.md)
+  ⎿  Added 23 lines
+       89  - Same signal set as trigger 2; the user-approval gate is skip
+           ped.
+       90  - Activated as a mode the user puts the agent into.
+       91  
+       92 +Note template (shape):                                        
+       93 +- Head is fixed by take-note.sh — H1 from <title>, blank, Tags
+          +: line, summary line.                                         
+       94 +- Body has H2 sections; titles and contents are the agent's ch
+          +oice (OIN is one option among many).                          
+       95 +                                                              
+       96 +Template:                                                     
+       97 +```                                                           
+       98 +# <one-line title — the H1>                                   
+       99 +                                                              
+      100 +Tags: <comma-separated, optional>                             
+      101 +<one-line summary>                                            
+      102 +                                                              
+      103 +## <a section title>                                          
+      104 +<content>                                                     
+      105 +                                                              
+      106 +## <another section title>                                    
+      107 +<more content>                                                
+      108 +```                                                           
+      109 +                                                              
+      110 +Trigger phrases vs. trigger behaviors:                        
+      111 +- Legacy `### When to write a note` is a list of trigger phras
+          +es ("write this down", "save this for later", "open question:"
+          +). That belongs in the frontmatter `description:` per Anthropi
+          +c guidance — phrases that activate the skill.                 
+      112 +- Our three triggers (user asks; agent offers on discovery sig
+          +nal; auto-capture mode) are signal + judgment behaviors. Those
+          + belong in the skill body because they require the agent to ap
+          +ply judgment.                                                 
+      113 +- Legacy `### When not to write a note` is similar — anti-cond
+          +itions for activation, belongs adjacent to the trigger phrases
+          + in `description:`.                                           
+      114 +                                                              
+      115  [more facts added as the dialogue progresses]
+      116  -->
+      117  
+
+● Done. Where next?
+
+✻ Worked for 12s
+
+> then let's talk about this "  Legacy has, our design hasn't addressed:        
+    - Body content disciplines (observation before interpretation, label        
+  speculation) — could fold under "body                                         
+    free-form, agent decides."                                                  
+    - Memory-vs-notes distinction (user profile / cross-repo facts belong in    
+  memory, not notes) — worth keeping                                            
+    as agent guardrail.                                                         
+    - Gate policies / malformed-note rules (validation section)."               
+
+● Three short proposals for each:
+
+  1. Body content disciplines (observation/interpretation, label speculation).
+  These are epistemic principles, not body-shape rules. Keep as principles in
+  the skill — "if you're capturing an investigation, separate observation from
+  interpretation; label speculation explicitly" — without prescribing sections.
+  Fits with "body free-form, agent decides."
+  2. Memory-vs-notes distinction. Positioning statement: notes are repo-scoped
+  (git-tracked, shared across sessions in the same repo); memory is cross-repo /
+   persistent user state. Belongs in the skill body as a scope clarifier — tells
+   the agent which system to use for what.
+  3. Gate policies / malformed-note rules. Most fold into existing discipline
+  (title/slug agreement → already in title discipline; body-restates-summary →
+  already in summary discipline; covers-two-topics → already in topic-atom
+  principle). Drop the standalone validation section; let the disciplines carry
+  the rules.
+
+  Match your read, or push back on any?
+
+✻ Baked for 22s
+
+> 2. memory vs notes - any topic related to the repo, for example, this is a    
+  plugin repo, so any topic related to the plugins / skills / scripts in this   
+  repo belongs in the notes. if I say "remember" i konw this triggers the       
+  memory skill, but if I say "remember the skill structure" then you should     
+  take a note instead of a memory.                                              
+
+● Subject decides routing, not the trigger phrase. Proposed scratch entry:
+
+  Memory vs. notes:
+  - Notes: any topic related to this repo — its plugins, skills, scripts,
+  structure, design.
+  - Memory: cross-repo facts, user profile, persistent preferences.
+  - Subject decides routing, not the trigger phrase. "Remember the skill
+  structure" → take a note (repo-scoped subject), even though "remember" reads
+  memory-shaped.
+
+  Add that?
+
+✻ Worked for 9s
+
+> looks good - maybe the original skill has useful information to apply         
+
+● Useful additions from legacy's "When not to write a note":
+
+  Memory vs. notes:
+  - Notes: any topic related to this repo — its plugins, skills, scripts,
+  structure, design.
+  - Memory: cross-repo facts, user profile, persistent preferences. Anything
+  that spans repos and sessions.
+  - Subject decides routing, not the trigger phrase. "Remember the skill
+  structure" → take a note (repo-scoped subject), even though "remember" reads
+  memory-shaped.
+
+  Don't take a note when:
+  - The authoritative source (code, CLAUDE.md, git history) already says it —
+  link to the source instead.
+  - The content is conversational ephemera — recap of what was just said,
+  transcript of what was tried. Capture the durable finding, not the path to it.
+
+  Add both?
+
+✻ Cogitated for 15s
+
+> that's good for the scratch, but a sample like "Remember the skill structure" 
+   will have zero mapping to an agent - it only has meaning in our conversation 
+   because i setup the frame, so don't use analogy here - just say what it is.  
+
+● Revised — example dropped:
+
+  Memory vs. notes:
+  - Notes: any topic related to this repo — its plugins, skills, scripts,
+  structure, design.
+  - Memory: cross-repo facts, user profile, persistent preferences. Anything
+  that spans repos and sessions.
+  - Subject decides routing, not the trigger phrase.
+
+  Don't take a note when:
+  - The authoritative source (code, CLAUDE.md, git history) already says it —
+  link to the source instead.
+  - The content is conversational ephemera — recap of what was just said,
+  transcript of what was tried. Capture the durable finding, not the path to it.
+
+  Add that?
+
+✻ Churned for 7s
+
+> ok                                                                            
+
+● Update(plugins\skills\skills\taking-notes\SKILL.draft.md)
+  ⎿  Added 9 lines
+      112  - Our three triggers (user asks; agent offers on discovery sig
+           nal; auto-capture mode) are signal + judgment behaviors. Those
+            belong in the skill body because they require the agent to ap
+           ply judgment.
+      113  - Legacy `### When not to write a note` is similar — anti-cond
+           itions for activation, belongs adjacent to the trigger phrases
+            in `description:`.
+      114  
+      115 +Memory vs. notes:                                             
+      116 +- Notes: any topic related to this repo — its plugins, skills,
+          + scripts, structure, design.                                  
+      117 +- Memory: cross-repo facts, user profile, persistent preferenc
+          +es. Anything that spans repos and sessions.                   
+      118 +- Subject decides routing, not the trigger phrase.            
+      119 +                                                              
+      120 +Don't take a note when:                                       
+      121 +- The authoritative source (code, CLAUDE.md, git history) alre
+          +ady says it — link to the source instead.                     
+      122 +- The content is conversational ephemera — recap of what was j
+          +ust said, transcript of what was tried. Capture the durable fi
+          +nding, not the path to it.                                    
+      123 +                                                              
+      124  [more facts added as the dialogue progresses]
+      125  -->
+      126  
+
+● Where next?
+
+✻ Sautéed for 16s
+
+> give me another diff plesae                                                   
+
+  Read 1 file (ctrl+o to expand)
+
+● Diff between scratch and legacy:
+
+  Legacy items captured in scratch:
+  - Title-as-identity, link liberally, mutable+git, note-is-artifact,
+  dedup-before-write, location/filename, the note template (with our softening),
+   trigger phrases (routed to description), memory-vs-notes (enriched).
+
+  Legacy items NOT yet in scratch:
+  - Observation before interpretation — body-content discipline for
+  investigations. We agreed it could fold as a principle without prescribing
+  sections.
+  - Label speculation — same shape.
+  - Negative results are notes — currently implicit in our triggers/discovery
+  signals; legacy makes it explicit.
+  - Externalize to survive compaction — implicit in audience/durability framing;
+   legacy makes it the headline principle.
+  - Open questions are notes too — implicit in the content-types list; legacy
+  makes it explicit.
+  - Gate policies — most folded into existing disciplines; one or two may not
+  have homes (e.g., "covers two topics" → topic-atom; "title/slug disagree" →
+  enforced by take-note.sh).
+
+  Newly in scratch (not in legacy):
+  - Three triggers vs. legacy's user-only.
+  - Document-graph framing.
+  - Tag discipline (ad-hoc, no controlled vocabulary).
+  - Summary discipline (explicit).
+  - Audience: LLM-optimized.
+  - Trigger 2 discovery signals.
+  - Trigger 3 auto-capture mode.
+  - Subject-decides-routing rule for memory vs. notes.
+
+  Which gaps want a scratch entry?
+
+✻ Sautéed for 29s
+
+> Label speculation — that's an important idea - sometimes agents take a guess. 
+   this is fine, but guesses (speculation) must be labeled as such so the       
+  future reader doesn't confuse speculation with verified facts.                
+
+● Scratch:
+
+  Label speculation:
+  - Agents sometimes guess. Guesses must be labeled so future readers don't
+  confuse speculation with verified fact.
+  - Mark hypotheses, inferences, and estimates explicitly. "Maybe X" or
+  "Hypothesis: X" is fine; "X" stated as fact when it's a guess is information
+  loss aimed at future self.
+
+  Add that?
+
+  Separately — observation-before-interpretation has the same shape (content
+  discipline, no section prescribed). Does it deserve a parallel entry, or is it
+   covered by label-speculation?
+
+✻ Cooked for 9s
+
+> we need to state dump. if I export this conversation we'll lose the task list 
+   i think. can you dump the current task list to chat so we can pick it up     
+  tomorrow                                                                      
+● State dump for tomorrow:
+
+  Conversation tasks (in id order)
+
+  #1 [pending] Resolve register choice for taking-notes notes
+    Catalog's "Note" register is for ephemeral scratch; taking-notes notes are
+  durable wiki notes whose mutability and current-state semantics look closer to
+   "ADR" (declarative, present-tense, mutable but always current, replaces prior
+   content). Decide whether to declare ADR, declare Note and override semantics,
+   or propose a new "wiki" register in the foundation catalog. NOTE: partially
+  stale after the dialogue — body structure is now silent, so the register
+  decision is narrower than originally framed.
+
+  #2 [pending] Draft Rhetorical context section for taking-notes/SKILL.md
+    Add `## Rhetorical context` near the top of taking-notes/SKILL.md, after the
+   H1 intro. Bulleted Slot: value lines covering all ten slots. Subject and
+  intent required (no defaults). Declare overrides explicitly; let unmentioned
+  slots inherit.
+
+  #3 [pending] Cut composition duplication; compose on writing-prose foundation
+    Audit taking-notes/SKILL.md against writing-prose Composition +
+  Grammar/structure principles. Cut or rewrite anything already covered by the
+  foundation. Keep taking-notes-specific content: note template, dedup, linking,
+   location, script set, gate policies. NOTE: design has been re-derived from
+  scratch in the SKILL.draft.md scratch block — apply that, not the legacy.
+
+  #4 [pending] Update taking-notes frontmatter description
+    Refine `description:` to include trigger phrases (the legacy `### When to
+  write a note` content belongs here) and the foundation relationship.
+
+  #5 [pending] Self-review pass on refactored taking-notes/SKILL.md
+    Apply writing-prose mechanical greps: negation, hedge/filler, tense drift,
+  marketing, Latin, bold/table. Plus judgement checks: lede, cohesion,
+  link-strip.
+
+  #6 [pending] Run plugin test suite; confirm green
+    `bash plugins/skills/tests/run-tests.sh`. Expect 212 tests passing baseline.
+
+  #7 [pending] Update writing-prose-refactor-task-list note as work proceeds
+    docs/notes/writing-prose-refactor-task-list.md is the canonical record.
+
+  #8 [completed] Purge Philosophy/Guidance/Validation trio prescription from
+  memories, notes, README, scripts
+
+  Where the live design lives
+
+  - Draft skill: plugins/skills/skills/taking-notes/SKILL.draft.md — has design
+  scratch as HTML comment under the H1; section placeholders below for
+  Rhetorical context / Composition / Retrieval.
+  - Meta note: docs/notes/skill-composition.md — captures (a) H1 summary is
+  didactic meta-discourse and (b) Soft on procedure.
+  - Refactor tracker: docs/notes/writing-prose-refactor-task-list.md — overall
+  #7 status.
+  - Memory promoted: feedback_align_before_editing.md — discuss before editing.
+
+  Scratch additions still pending approval at session end
+
+  - Label speculation (last proposed; awaiting approval) — guesses must be
+  labeled so readers don't confuse speculation with verified fact.
+  - Observation before interpretation (offered as parallel; awaiting decision on
+   whether it earns its own scratch entry or folds under label-speculation).
+
+  Open scratch gaps from the diff
+
+  - Externalize to survive compaction — currently implicit; legacy makes it the
+  headline principle.
+  - Negative results are notes — currently implicit in discovery signals.
+  - Open questions are notes — currently implicit in content types.
+  - Gate policies — most fold into existing disciplines (title/slug, summary,
+  topic-atom).
+
+  Resume prompt
+
+  Resume the taking-notes refactor. Canonical state:
+  docs/notes/writing-prose-refactor-task-list.md
+  plus the scratch block at the top of
+  plugins/skills/skills/taking-notes/SKILL.draft.md.
+  We're discussing-then-editing (per feedback_align_before_editing.md); no edits
+   without approval.
+  Last open item: Label speculation scratch entry (approve?), then
+  observation-before-interpretation
+  parallel decision. After scratch closes out, compose the SKILL.draft.md
+  sections from the scratch
+  block.
+
+✻ Churned for 45s
+
+※ recap: Refactoring the taking-notes skill as a writing-prose downstream; we're Socratically drafting the design into a scratch block at the top of SKILL.draft.md. Next action: approve the Label speculation scratch entry. (disable recaps in /config)
