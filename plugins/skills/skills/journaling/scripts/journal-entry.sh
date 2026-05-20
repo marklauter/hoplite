@@ -50,11 +50,8 @@ date_part=$(date +%Y-%m-%d)
 time_part=$(date +%H%M)
 date_head="${date_part} $(date +%H:%M)"
 
-slug=$(printf '%s' "$TITLE" \
-    | tr '[:upper:]' '[:lower:]' \
-    | sed -E 's/[^a-z0-9]+/-/g' \
-    | sed -E 's/^-+|-+$//g' \
-    | cut -c1-80)
+plugin_root="${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)}"
+slug=$(bash "$plugin_root/scripts/slugify.sh" "$TITLE")
 
 if [ -z "$slug" ]; then
     echo "journal-entry.sh: title slug is empty after sanitization" >&2

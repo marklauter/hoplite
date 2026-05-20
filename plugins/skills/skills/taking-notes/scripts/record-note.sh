@@ -1,24 +1,32 @@
 #!/usr/bin/env bash
-# Write a wiki-style note to docs/notes/<slug>.md.
+# Write or extend a wiki-style note at docs/notes/<slug>.md.
 #
-# Head fields are positional args. The body (## Observation, ## Interpretation,
-# ## Next — or whatever sections the topic demands) is read from stdin and
-# appended verbatim. The skill documents the body shape; this script does not
-# validate it.
+# Three modes, governed by flags:
+#   (none)        new note. Refuses to write if the target file exists.
+#   --overwrite   replace existing note (full header + body) with new content.
+#   --append      extend existing note's body. Header is preserved. Title is
+#                 used only to derive the slug for finding the target.
 #
-# Tags are free-form, comma-separated, may be empty (pass "").
+# --overwrite and --append are mutually exclusive.
+#
+# Head fields (title, tags, summary) are positional. The body is read from
+# stdin and appended verbatim. The skill documents the body shape; this script
+# does not validate it. Tags may be empty (pass "").
 #
 # Output discipline:
 #   - Success: silent. The file at docs/notes/<slug>.md is the artifact.
 #   - Failure: validation error to stderr, non-zero exit.
 #
 # Usage:
-#   record-note.sh [--force] <title> <tags> <summary> < body.md
+#   record-note.sh                <title> <tags> <summary> < body.md   # new
+#   record-note.sh --overwrite    <title> <tags> <summary> < body.md   # replace
+#   record-note.sh --append       <title>                  < body.md   # extend
 #
 # Examples:
 #   record-note.sh "Cache TTL is 300s" 'auth-investigation,cache' \
-#       'Confirmed via appsettings.json; the stale read was a cold-start artifact, not a TTL bug.' \
+#       'Confirmed via appsettings.json; stale read was a cold-start artifact.' \
 #       < body.md
+#   record-note.sh --append "Cache TTL is 300s" < followup.md
 
 set -eo pipefail
 
@@ -29,12 +37,16 @@ case "${1:-}" in
         ;;
 esac
 
-FORCE=0
+OVERWRITE=0
+APPEND=0
 
 while [ $# -gt 0 ]; do
     case "$1" in
-        --force)
-            FORCE=1
+        --overwrite)
+            OVERWRITE=1
+            shift ;;
+        --append)
+            APPEND=1
             shift ;;
         --)
             shift
@@ -47,13 +59,30 @@ while [ $# -gt 0 ]; do
     esac
 done
 
-TITLE="${1:-}"
-TAGS="${2-}"
-SUMMARY="${3:-}"
-
-if [ -z "$TITLE" ] || [ -z "$SUMMARY" ]; then
-    echo "usage: record-note.sh [--force] <title> <tags> <summary>  (body on stdin)" >&2
+if [ "$OVERWRITE" = "1" ] && [ "$APPEND" = "1" ]; then
+    echo "record-note.sh: --overwrite and --append are mutually exclusive" >&2
     exit 2
+fi
+
+TITLE="${1:-}"
+
+if [ -z "$TITLE" ]; then
+    echo "usage: record-note.sh [--overwrite | --append] <title> [<tags> <summary>]  (body on stdin)" >&2
+    exit 2
+fi
+
+if [ "$APPEND" = "1" ]; then
+    if [ $# -gt 1 ]; then
+        echo "record-note.sh: --append takes only <title>; got extra positional args" >&2
+        exit 2
+    fi
+else
+    TAGS="${2-}"
+    SUMMARY="${3:-}"
+    if [ -z "$SUMMARY" ]; then
+        echo "usage: record-note.sh [--overwrite] <title> <tags> <summary>  (body on stdin)" >&2
+        exit 2
+    fi
 fi
 
 if [ -t 0 ]; then
@@ -61,11 +90,15 @@ if [ -t 0 ]; then
     exit 2
 fi
 
-slug=$(printf '%s' "$TITLE" \
-    | tr '[:upper:]' '[:lower:]' \
-    | sed -E 's/[^a-z0-9]+/-/g' \
-    | sed -E 's/^-+|-+$//g' \
-    | cut -c1-80)
+body=$(cat)
+
+if [ -z "${body//[[:space:]]/}" ]; then
+    echo "record-note.sh: body must not be empty" >&2
+    exit 2
+fi
+
+plugin_root="${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)}"
+slug=$(bash "$plugin_root/scripts/slugify.sh" "$TITLE")
 
 if [ -z "$slug" ]; then
     echo "record-note.sh: title slug is empty after sanitization" >&2
@@ -75,16 +108,26 @@ fi
 mkdir -p docs/notes
 target="docs/notes/${slug}.md"
 
-if [ -e "$target" ] && [ "$FORCE" != "1" ]; then
-    echo "record-note.sh: $target already exists (use --force to overwrite)" >&2
+if [ "$APPEND" = "1" ]; then
+    if [ ! -e "$target" ]; then
+        echo "record-note.sh: $target does not exist (cannot append)" >&2
+        exit 2
+    fi
+    {
+        printf '%s' "$body"
+        printf '\n'
+    } >> "$target"
+    exit 0
+fi
+
+if [ -e "$target" ] && [ "$OVERWRITE" != "1" ]; then
+    echo "record-note.sh: $target already exists (use --overwrite to replace or --append to extend)" >&2
     exit 2
 fi
 
-body=$(cat)
-
 {
     printf '# %s\n\n' "$TITLE"
-    printf 'Tags: %s\n' "$TAGS"
+    printf 'tags: %s\n' "$TAGS"
     printf '%s\n\n' "$SUMMARY"
     printf '%s\n' "$body"
 } > "$target"

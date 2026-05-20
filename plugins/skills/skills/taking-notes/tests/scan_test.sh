@@ -12,7 +12,7 @@ make_note() {
     mkdir -p docs/notes
     {
         printf '# %s\n\n' "$title"
-        printf 'Tags: %s\n' "$tags"
+        printf 'tags: %s\n' "$tags"
         printf '%s\n\n' "$summary"
         printf '%s\n' "${body:-Body content.}"
     } > "docs/notes/${slug}.md"

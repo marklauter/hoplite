@@ -6,8 +6,8 @@
 #
 # Predicates:
 #   --title PAT     substring, case-insensitive, against the H1 title
-#   --tag TAG       exact match against an entry in the comma-separated Tags
-#   --xtag TAG      exclude notes where this tag is present in the Tags line
+#   --tag TAG       exact match against an entry in the comma-separated tags
+#   --xtag TAG      exclude notes where this tag is present in the tags line
 #   --summary PAT   substring, case-insensitive, against the one-line summary
 #
 # Output: one block per match — title, tags, summary, filename.
@@ -83,7 +83,7 @@ first=1
 matched=0
 for f in "${files[@]}"; do
     title=$(sed -n '1s/^# //p' "$f")
-    tags=$(sed -n '3s/^Tags: //p' "$f")
+    tags=$(sed -n '3s/^tags: //p' "$f")
     summary=$(sed -n '4p' "$f")
     name=$(basename "$f")
 
