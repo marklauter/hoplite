@@ -1,90 +1,100 @@
 ---
 name: taking-notes
-description: Use when the user asks to write something down, save something for later, record something, take a note, or capture an open question. Produces atomic, titled wiki pages under docs/notes/ — discoveries and unresolved questions are equally first-class — that always represent the latest state of the idea; git keeps the history.
+description: Use when the user asks to write something down, save something for later, record something, take a note, or capture an open question — or when a discovery worth preserving emerges in conversation. Composes on writing-prose; produces durable, structured notes under docs/notes/ retrieved via the script set.
 ---
 
 # Taking notes
 
-Note-authoring knowledge for markdown notes. Loads alongside `writing-prose` and specializes the rhetorical context for the note artifact: audience is the next session, intent is to externalize one idea per file so the work outlives the conversation. Each note represents the current state of an idea; git carries the history. Read the patterns below as the form the note artifact takes under those constraints — the template is the default shape, the discipline is the durable rule.
+A note is a durable, structured artifact stored in `docs/notes/`. Notes survive beyond short-term memory and context windows. Anything worth remembering belongs in a note: a hypothesis, a measurement, a decision, an open question, a reference, and so on.
 
-## Instructions
+Ensure the companion skill, `writing-prose` is loaded before composing a note.
 
-Ensure the `writing-prose` skill has been load before composing any notes.
+Recording a note has four steps: spot the note-invocation trigger, search for an existing note on the topic, compose the content, and record the note.
 
-## Philosophy
+## Spot the trigger — when to record a note
 
-Notes are the durable layer beneath the conversation. The conversation compacts; the notes do not. The next session reads what this one wrote.
+Record a note when:
 
-Notes represent the current state of an idea; the journal tells the story of how we got there. The two artifacts are siblings — a wiki page and an engineering notebook — and the taking-notes skill produces only the former. The journal — dated entries, append-only, ordered by time — is a separate skill with a separate shape.
+1. The user asks. They request a note; you compose one.
+2. A discovery surfaces. A new graph connection between concepts: resolving an open question in conversation context, uncovering a connection between previously-unconnected ideas, comprehending a mechanism for the first time, unpacking a complex idea into parts, packing related ideas into a unified concept, or crystallizing an unknown into a precise question. You propose a note; the user approves or denies before you compose. Recording a dead end prevents repeating it.
+3. Auto-capture mode is on. The user has asked you to auto-capture discoveries without the approval gate; discovery signals are the same as #2.
 
-### Externalize to survive compaction
+## Search for an existing note — duplicate hygiene
 
-A fact that lives only in the conversation evaporates the moment the context window does. The note is the persistence layer. Anything worth remembering past the next compaction — a hypothesis, a measurement, a dead end, a decision, a reference — is worth a note.
+Before recording, scan for an existing note on the topic via `scan.sh`.
 
-### One topic per note
+- Same topic exists. Use `record-note.sh --overwrite` to replace the note, or `--append` to extend the body in place (header is preserved).
+- Adjacent topic exists. Compose a new note and co-reference (see [Tags](#tags)).
+- Existing note covers the content with nothing to add. Surface "there's already a note on this topic" instead of recording a duplicate.
 
-Each note covers one topic. The title names it; the slug is the file. Two topics get two notes, linked. Stuffing a second topic into an existing note breaks dedup, breaks scan, and breaks the link graph — the second topic has no title of its own and cannot be found by it.
+Preserve content. User-requested change mutates freely; agent-initiated change is additive — overwrite only on request or approval.
 
-### Title is identity
+## Compose the note — topics and exclusions
 
-The title is what the note is, not what it is about. "Cache TTL is 300s" is a title; "Cache investigation" is a topic header pretending to be a title. The slug derives from the title, so the title is also the URL. Renaming the title means renaming the file and updating inbound links; treat it like renaming a function.
+Notes are repo-scoped; cross-repo facts, user profile, and persistent preferences belong in memory.
 
-### Observation before interpretation
+Each note covers one topic. Two topics get two notes — stuffing both into one breaks dedup and search.
 
-Record the observable fact before the meaning assigned to it. "Endpoint returned 503 at 14:22" is observation; "the service is overloaded" is interpretation. Conflating them poisons later analysis — the interpretation gets cited as if it were the measurement. Two separate sentences, often two separate sections, keep the boundary visible.
+Exclude from notes:
 
-### Label speculation
+- Discoverable content — anything the authoritative source (code, CLAUDE.md, git history, other notes, directory structure) already states. Reference by stable identifier; duplication drifts as the source changes.
+- Conversational ephemera — recap of what was just said, transcript of what was tried. Capture the durable finding, not the path to it.
 
-A hypothesis stated as fact is misinformation aimed at future self. The note labels what is observed, what is inferred, and what is guessed — and never lets the labels blur. "Maybe the cache is stale" belongs in an Interpretation section or under a "Hypothesis:" prefix; "the cache TTL is 300s per config" belongs in Observation. The labels are the contract.
+## Record the note — record-note.sh reference
 
-### Negative results are notes
+To record a note, use `record-note.sh`. The script slugifies the title and saves `docs/notes/<slug>.md`. After saving, confirm with a minimal acknowledgment — for example, `note saved: {slug}.md`. No recital or recap.
 
-A dead end documented prevents the dead end being repeated. The next session, or the same session after compaction, does not see the reasoning that ruled out an approach — only the conclusion. Writing "tried X, did not work because Y" is the cheapest insurance against doing X again next week. A note titled for the dead end is as legitimate as a note titled for the answer.
+`record-note.sh` — save or extend a note.
 
-### Open questions are notes too
+Signature:
 
-A question that goes unrecorded gets re-asked next session. Writing it down — even with no answer yet — captures what is unknown, why it matters, and what would resolve it. The note's title states the question; the body holds partial knowledge and the path toward an answer. Discoveries and questions are peers: the discovery says "here is what is known," the question says "here is what is not known yet." When the answer arrives, the same note evolves to record it; the title may pivot from interrogative to declarative.
-
-### Link liberally
-
-Wiki notes earn their value from the graph. When a note references a concept that has — or could have — its own page, link to it. A dangling link to a page that does not yet exist is a feature, not a defect: it marks the topic as worth a page when the next session has the context to write one.
-
-### Always the latest state; git is the history
-
-Notes are totally mutable. A note represents the current understanding of its topic — not a record of prior belief. When the understanding changes, the note changes; the old text goes away. No "previously we thought X" sections, no `-v2.md` companion files, no superseded markers. The revision history lives in git. A new file is for a new topic; the same file evolves to reflect the current truth about its own topic.
-
-### The note is the artifact
-
-Once the note is written, the work of recording is done. The chat does not recite the note back; the file under `docs/notes/` is the deliverable.
-
-## Guidance
-
-Concrete patterns for taking notes against the principles above.
-
-### Location and filename
-
-- Notes live under `docs/notes/` at the repo root. The directory is committed to git; the revision history is the change log.
-- Filename: `<slug>.md`. The slug is the title lowercased, non-alphanumerics replaced with dashes, leading and trailing dashes trimmed, capped at 80 characters.
-- The slug is mechanically derived from the title — never hand-edited. Renaming a note means changing the title and regenerating the file.
-- No date prefix. Notes are wiki pages, not journal entries. A dated diary belongs in a separate `journal` skill.
-
-### The note template
-
+```bash
+${CLAUDE_PLUGIN_ROOT}/skills/taking-notes/scripts/record-note.sh [--overwrite | --append] <title> [<tags> <summary>]
 ```
-# <one-line title — the H1>
 
-tags: <comma-separated, optional>
-<one-line summary>
+Three modes (mutually exclusive):
 
-## Observation
-<observable facts, measurements, references>
+- (no flag) — new note. Refuses to save if the target file exists.
+- `--overwrite` — replace an existing note's full content (header + body).
+- `--append` — extend an existing note's body. Header is preserved; pass only `<title>` to derive the slug.
 
-## Interpretation
-<inferences, hypotheses, guesses, labeled as such>
+Body is read from stdin and appended verbatim. Output: success is silent — the file is the artifact. Failure prints the validation error to stderr and exits non-zero.
 
-## Next
-<the next concrete action, or `none` if the topic is settled>
+## Finding notes — scan.sh reference
+
+`scan.sh` is the canonical access mechanism for finding notes — it emits the structured header fields Explore, Glob, and Grep skip.
+
+`scan.sh` — list and filter notes by structured predicates.
+
+Signature:
+
+```bash
+${CLAUDE_PLUGIN_ROOT}/skills/taking-notes/scripts/scan.sh [--title PAT] [--tag TAG] [--xtag TAG] [--summary PAT]
 ```
+
+Each flag is optional; flags AND together. No predicates lists every note.
+
+- `--title PAT` — substring match, case-insensitive, against the H1 title
+- `--tag TAG` — exact match against an entry in the comma-separated `tags:` line
+- `--xtag TAG` — exclude notes whose `tags:` line contains TAG
+- `--summary PAT` — substring match, case-insensitive, against the one-line summary
+
+Output: one header block per match — title, tags, summary, filename. Empty `docs/notes/` prints `no notes`; predicates that match nothing print `no notes matching <predicates>`. Exit code 0 either way — clean empty result is success.
+
+## Notes form a graph
+
+Notes are nodes; tags are virtual nodes — meta-topics. A note connects to each tag in its `tags:` line; multiple notes carrying the same tag converge at that tag-node, forming a thread (subgraph). When a tag's value matches another note's slug, the virtual tag-node coincides with that concrete note. In that case, the tag is a direct edge to that note. The script set is the agent's interface to the graph: `record-note.sh` adds a note and its tag-connections; `scan.sh --tag <tag>` projects the subgraph around a tag-node.
+
+## Note format
+
+A note has two parts:
+
+- Header — H1 title, blank line, `tags:` line (comma-separated), one-line summary. Composed by `record-note.sh` from its args.
+- Body — H2 sections; titles and content are yours.
+
+References between notes are plain text inline — `(see {slug}.md)`. Plain text only — notes live on web and on disk, where markdown links break.
+
+The template `record-note.sh` produces:
 
 ```
 # <one-line title — the H1>
@@ -99,77 +109,57 @@ tags: <comma-separated, optional>
 <more content>
 ```
 
-Line 1 is the H1. Line 2 is blank. Lines 3-4 are the scannable head — tags, summary. Line 5 is blank, then the body sections. `scan.sh` reads the head; the body is for humans and future sessions.
+### Head field discipline
 
-The Observation/Interpretation/Next split is the default shape for investigation notes. Reference notes and decision notes use the sections that fit the topic — the template is a starting point, not a straightjacket. Question notes use the same default sections with a different reading: Observation = what is known so far, Interpretation = current guesses, Next = what would answer the question. The scannable head is non-negotiable; the body shape adapts.
+Three head fields carry the discovery load: title, tags, summary.
 
-### When to write a note
+#### Title
 
-Notes are user-directed, not agent-autonomous. The trigger is an explicit request from the user. Watch for phrases like:
+Name the topic explicitly. Concrete over abstract. Title is what the note is, not what it is about. Make it discriminating enough that exact-match scan returns the right note.
 
-Discovery-shaped triggers:
+When the user supplies a title, use it. Otherwise derive from topic, content, and conversation.
 
-- "write this down"
-- "save this for later"
-- "record this"
-- "take a note"
-- "note that..."
-- "let's not forget..."
-- "remember this for the repo" (distinct from memory — see below)
+When a question note gets its answer, the title may pivot from interrogative to declarative. Record the answered note under the new title and remove the old file.
 
-Question-shaped triggers:
+#### Tags
 
-- "open question:"
-- "we should figure out..."
-- "we don't know X yet"
-- "track this as a question"
-- "park this for later"
-- "outstanding question:"
+Tags are facets that distill the note's content or intent. Common dimensions: status (`todo`, `closed`), area (`skills`, `scripts`, `tests`), subsystem (`writing-prose`, `wiki`), thread (`audit-mode-followup`, `refactor`). No controlled vocabulary — pick from what the note covers.
 
-The content to capture is whatever the user just said, observed, decided, or wondered — the request points back to it. When the request is ambiguous, ask once: "as one note titled X, or split across topics?" The user's framing is the title; do not invent a title that abstracts away from what they said. For a question, the title is the question itself, phrased interrogatively.
+When the user signals content type in the request ("add a todo note", "add a discovery note"), the named type becomes a tag. Multi-tag membership is the norm; a note may belong to several subgraphs simultaneously.
 
-### When not to write a note
+Sibling notes share a tag-node (see [Notes form a graph](#notes-form-a-graph)); `scan.sh --tag <tag>` retrieves the thread. Tagging a note with another note's slug creates a direct edge — `scan.sh --tag <slug>` finds every note that cites the target.
 
-- The user did not ask. Notes are explicit-request artifacts. The autonomous version of this is the memory system — different scope, different mechanism.
-- Information already documented in the code, CLAUDE.md, or git history. Notes do not duplicate authoritative sources; they link to them.
-- Information that belongs in long-term memory (user profile, persistent feedback, cross-project preferences). The memory system is for facts that span repos and sessions; notes are repo-scoped and shared via git.
-- Conversational ephemera — recap of what was just said, summary of what was just tried. The note captures the durable finding, not the transcript leading to it.
+#### Summary
 
-### Dedup before writing
+One sentence. Front-load the most informative phrase. Name what's in the note that title and tags don't already convey. Distinguish it from siblings sharing the same tag. Skip meta-framing ("this note discusses...").
 
-- `scan.sh` is the first stop. Scan for an existing note on the topic before opening a new one — predicates intersect title, tag, and summary. With no predicates it lists every note.
-- A note on the same topic exists: open it and update it. Wiki pages evolve; do not write `cache-ttl-300s-v2.md`.
-- A note on an adjacent topic exists: write the new note and link the two. Adjacent is not same.
-- The topic does not warrant its own page: link from the existing note to the underlying source instead.
+### Body principles
 
-### Linking notes
+Label speculation. A guess stated as fact is misinformation aimed at future self. Label what is observed, what is inferred, and what is guessed — never let the labels blur. "Maybe X" or "Hypothesis: X" is fine; an unlabeled guess passes as a verified fact.
 
-- Reference another note by filename in prose: `see [cache-ttl-300s](cache-ttl-300s.md)`.
-- Use `tags:` for thread membership: a tag like `auth-investigation` lets `scan.sh --tag auth-investigation` retrieve every note on the thread.
-- Dangling links to pages that do not yet exist are acceptable — they mark candidates for future notes.
+Observation before interpretation. When capturing an investigation, record observable facts before the meaning assigned to them. Conflating the two poisons later analysis — the interpretation gets cited as if it were the measurement. Two separate sentences, or two separate sections, keep the boundary visible.
 
-## Validation
+### Well-formed notes
 
-"What gets measured gets managed" (Drucker, in spirit). The note set is the measurement of what this codebase has learned about itself. Validation here is the discipline that keeps the set scannable — head fields present, titles unique, link graph intact.
+Notes earn their value from the graph. Tags define subgraph membership; titles are identity nodes; the scanner reads the header. Title, tag, and summary hygiene preserves retrieval. Fix malformed notes.
 
-### The script set
+Defects:
 
-Two scripts ship under `${CLAUDE_PLUGIN_ROOT}/skills/taking-notes/scripts/`. Portable POSIX bash; runs on Linux, macOS, and Windows (Git Bash, WSL).
+- A note without a one-line summary in the header. The summary is what the scanner reads.
+- A note whose body restates the summary verbatim. The summary is the header; the body is the evidence and reasoning.
+- A note whose title and slug disagree. The title and the filename are one fact in two places; they agree.
+- A note that covers two topics. Split it.
+- A note that duplicates an existing note. Merge them.
 
-- `record-note.sh [--overwrite | --append] <title> [<tags> <summary>]` — body piped on stdin. Default mode creates a new note and refuses to overwrite an existing one. `--overwrite` replaces an existing note's full content. `--append` extends an existing note's body (header preserved) and takes only `<title>`. Slugifies the title; writes `docs/notes/<slug>.md`.
-- `scan.sh [--title PAT] [--tag TAG] [--xtag TAG] [--summary PAT]` — reads the head of each `docs/notes/*.md` and emits one block per note: title, tags, summary, filename. Each flag is an optional predicate; flags AND together. With no predicates, lists every note. `--title` and `--summary` match substring case-insensitive; `--tag` matches exactly within the comma-separated `tags:` line; `--xtag` excludes notes where the named tag is present.
+## Rhetorical context
 
-### Output discipline
-
-- `record-note.sh`: success is silent — the file is the artifact. Failure prints the validation error to stderr and exits non-zero.
-- `scan.sh`: success prints the formatted matches as block-per-note. With no predicates, lists every note; with predicates, only matches. Empty `docs/notes/` prints `no notes`; predicates that match nothing print `no notes matching <predicates>`. Exit code is 0 in both cases — a clean empty result is success.
-
-### Gate policies
-
-When a note is malformed, the rule is: fix the note.
-
-- A note without a one-line summary in the head is a defect. The summary is what the scanner reads.
-- A note whose body restates the summary verbatim is a defect. The summary is the head; the body is the evidence and reasoning.
-- A note whose title and slug disagree (manual rename without regenerating the slug) is a defect. The title and the filename are one fact in two places; they agree.
-- A note that covers two topics is a defect. Split it.
-- A note that duplicates an existing note is a defect. Merge them.
+- Writer: contributor
+- Voice: declarative, terse
+- Ethos: expert
+- Stance: neutral
+- Audience: a future reader picking up where this session left off — the same agent after compaction, a different agent in a later session, or the user revisiting
+- Subject: any repo-scoped topic worth a durable record — discoveries, decisions, observations, open questions, dead ends, design fragments
+- Genre: note
+- Tone: professional, even-keeled
+- Register: declarative, present-tense, mutable and always current; the note evolves as understanding does and replaces prior content rather than versioning it
+- Intent: externalize repo-scoped findings into structured, retrievable artifacts that survive context compaction
