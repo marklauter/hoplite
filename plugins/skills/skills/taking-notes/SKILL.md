@@ -73,7 +73,7 @@ Concrete patterns for taking notes against the principles above.
 ```
 # <one-line title — the H1>
 
-Tags: <comma-separated, optional>
+tags: <comma-separated, optional>
 <one-line summary>
 
 ## Observation
@@ -89,7 +89,7 @@ Tags: <comma-separated, optional>
 ```
 # <one-line title — the H1>
 
-Tags: <comma-separated, optional>
+tags: <comma-separated, optional>
 <one-line summary>
 
 ## <a section title>
@@ -145,7 +145,7 @@ The content to capture is whatever the user just said, observed, decided, or won
 ### Linking notes
 
 - Reference another note by filename in prose: `see [cache-ttl-300s](cache-ttl-300s.md)`.
-- Use `Tags:` for thread membership: a tag like `auth-investigation` lets `scan.sh --tag auth-investigation` retrieve every note on the thread.
+- Use `tags:` for thread membership: a tag like `auth-investigation` lets `scan.sh --tag auth-investigation` retrieve every note on the thread.
 - Dangling links to pages that do not yet exist are acceptable — they mark candidates for future notes.
 
 ## Validation
@@ -156,8 +156,8 @@ The content to capture is whatever the user just said, observed, decided, or won
 
 Two scripts ship under `${CLAUDE_PLUGIN_ROOT}/skills/taking-notes/scripts/`. Portable POSIX bash; runs on Linux, macOS, and Windows (Git Bash, WSL).
 
-- `record-note.sh [--force] <title> <tags> <summary>` — body piped on stdin. Slugifies the title, refuses to overwrite without `--force`, writes `docs/notes/<slug>.md`. The slug is mechanically derived; the writer does not choose it.
-- `scan.sh [--title PAT] [--tag TAG] [--xtag TAG] [--summary PAT]` — reads the head of each `docs/notes/*.md` and emits one block per note: title, tags, summary, filename. Each flag is an optional predicate; flags AND together. With no predicates, lists every note. `--title` and `--summary` match substring case-insensitive; `--tag` matches exactly within the comma-separated `Tags:` line; `--xtag` excludes notes where the named tag is present.
+- `record-note.sh [--overwrite | --append] <title> [<tags> <summary>]` — body piped on stdin. Default mode creates a new note and refuses to overwrite an existing one. `--overwrite` replaces an existing note's full content. `--append` extends an existing note's body (header preserved) and takes only `<title>`. Slugifies the title; writes `docs/notes/<slug>.md`.
+- `scan.sh [--title PAT] [--tag TAG] [--xtag TAG] [--summary PAT]` — reads the head of each `docs/notes/*.md` and emits one block per note: title, tags, summary, filename. Each flag is an optional predicate; flags AND together. With no predicates, lists every note. `--title` and `--summary` match substring case-insensitive; `--tag` matches exactly within the comma-separated `tags:` line; `--xtag` excludes notes where the named tag is present.
 
 ### Output discipline
 
