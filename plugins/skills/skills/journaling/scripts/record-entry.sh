@@ -16,10 +16,10 @@
 #   - Failure: validation error to stderr, non-zero exit.
 #
 # Usage:
-#   journal-entry.sh <title> <tags> <summary> < body.md
+#   record-entry.sh <title> <tags> <summary> < body.md
 #
 # Example:
-#   journal-entry.sh "Verified cache TTL via config" 'auth-investigation,cache' \
+#   record-entry.sh "Verified cache TTL via config" 'auth-investigation,cache' \
 #       'Confirmed the 300s TTL in appsettings.json; closes the stale-read thread.' \
 #       < body.md
 
@@ -37,12 +37,12 @@ TAGS="${2-}"
 SUMMARY="${3:-}"
 
 if [ -z "$TITLE" ] || [ -z "$SUMMARY" ]; then
-    echo "usage: journal-entry.sh <title> <tags> <summary>  (body on stdin)" >&2
+    echo "usage: record-entry.sh <title> <tags> <summary>  (body on stdin)" >&2
     exit 2
 fi
 
 if [ -t 0 ]; then
-    echo "journal-entry.sh: body must be piped on stdin" >&2
+    echo "record-entry.sh: body must be piped on stdin" >&2
     exit 2
 fi
 
@@ -54,7 +54,7 @@ plugin_root="${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../../..
 slug=$(bash "$plugin_root/scripts/slugify.sh" "$TITLE")
 
 if [ -z "$slug" ]; then
-    echo "journal-entry.sh: title slug is empty after sanitization" >&2
+    echo "record-entry.sh: title slug is empty after sanitization" >&2
     exit 2
 fi
 
@@ -62,7 +62,7 @@ mkdir -p docs/journal
 target="docs/journal/${date_part}-${time_part}-${slug}.md"
 
 if [ -e "$target" ]; then
-    echo "journal-entry.sh: $target already exists (journal is append-only; choose a more specific title or wait one minute)" >&2
+    echo "record-entry.sh: $target already exists (journal is append-only; choose a more specific title or wait one minute)" >&2
     exit 2
 fi
 
@@ -70,8 +70,8 @@ body=$(cat)
 
 {
     printf '# %s\n\n' "$TITLE"
-    printf 'Date: %s\n' "$date_head"
-    printf 'Tags: %s\n' "$TAGS"
+    printf 'date: %s\n' "$date_head"
+    printf 'tags: %s\n' "$TAGS"
     printf '%s\n\n' "$SUMMARY"
     printf '%s\n' "$body"
 } > "$target"

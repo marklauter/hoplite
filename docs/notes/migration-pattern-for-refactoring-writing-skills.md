@@ -3,6 +3,10 @@
 tags: refactor,skills,writing-prose,migration,pattern
 Transformation function for moving a legacy Philosophy/Guidance/Validation skill into the new foundation-composition + procedural-OODA shape; derived from the taking-notes refactor and reusable for journaling and other downstream skills.
 
+## Before and after
+
+- Legacy: `plugins/skills/skills/taking-notes/SKILL.old.md` — the input to this transformation.
+- Refactored: `plugins/skills/skills/taking-notes/SKILL.md` — the output.
 
 ## Input: legacy shape
 
@@ -27,6 +31,10 @@ New skills compose on writing-prose and follow a procedural-OODA + reference sha
 - ## Rhetorical context section (slots; placement is flexible — taking-notes put it last)
 
 Structural conventions: no bold, em-dashes for parentheticals, sentence-case headings, full `${CLAUDE_PLUGIN_ROOT}/...` path in signature blocks (prefixed with `bash`), intra-doc links by GFM anchor, overloaded verbs disambiguated (compose / save / record).
+
+## Preservation contract
+
+Structural tightening is lossless on ideas. Cut prose, tighten layout, deduplicate — but every load-bearing claim from the legacy must survive the refactor. Ideas leave only by judgment: bad claims, abandoned framings, or content already covered by the foundation. Track intentional omissions; everything else carries over to its natural home in the new shape. The taking-notes before/after pair (`SKILL.old.md` and `SKILL.md`) is the worked record of which decisions excluded which legacy ideas.
 
 ## Transformation steps
 

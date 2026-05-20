@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Tests for plugins/skills/skills/journaling/scripts/journal-entry.sh
+# Tests for plugins/skills/skills/journaling/scripts/record-entry.sh
 
-ENTRY="$PLUGIN_ROOT/skills/journaling/scripts/journal-entry.sh"
+ENTRY="$PLUGIN_ROOT/skills/journaling/scripts/record-entry.sh"
 
 # Helper: find the single entry file under docs/journal/ (assumes one was just written).
 find_entry() {
@@ -35,15 +35,15 @@ test_date_head_is_line_3() {
     echo "body" | "$ENTRY" "Title" "" "Summary."
     local f; f=$(find_entry)
     local date_line; date_line=$(sed -n '3p' "$f")
-    # Format: "Date: YYYY-MM-DD HH:MM"
-    assert_match "$date_line" "^Date: [0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}$"
+    # Format: "date: YYYY-MM-DD HH:MM"
+    assert_match "$date_line" "^date: [0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}$"
 }
 
 test_tags_at_line_4() {
     echo "body" | "$ENTRY" "Title" "a,b" "Summary."
     local f; f=$(find_entry)
     local tags; tags=$(sed -n '4p' "$f")
-    assert_equal "Tags: a,b" "$tags"
+    assert_equal "tags: a,b" "$tags"
 }
 
 test_summary_at_line_5() {

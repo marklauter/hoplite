@@ -55,15 +55,15 @@ Concrete patterns for journaling against the principles above.
 
 - Entries live under `docs/journal/` at the repo root. The directory is committed to git; the revision history is a secondary log behind the journal itself.
 - Filename: `YYYY-MM-DD-HHMM-<slug>.md`. The date-and-time prefix gives `ls` chronological order for free and prevents same-day collisions; the slug is the title lowercased, non-alphanumerics replaced with dashes, capped at 80 characters.
-- The date, time, and slug are mechanically derived — `journal-entry.sh` generates them at write time. The writer chooses the title; the script chooses the filename.
+- The date, time, and slug are mechanically derived — `record-entry.sh` generates them at write time. The writer chooses the title; the script chooses the filename.
 
 ### The entry template
 
 ```
 # <one-line title — the entry topic>
 
-Date: YYYY-MM-DD HH:MM
-Tags: <comma-separated, optional>
+date: YYYY-MM-DD HH:MM
+tags: <comma-separated, optional>
 <one-line summary>
 
 ## Context
@@ -131,23 +131,21 @@ Unlike notes, journal entries do not dedup. Two entries on the same topic on dif
 
 ### The script set
 
-Three scripts ship under `${CLAUDE_PLUGIN_ROOT}/skills/journaling/scripts/`. Portable POSIX bash; runs on Linux, macOS, and Windows (Git Bash, WSL).
+Two scripts ship under `${CLAUDE_PLUGIN_ROOT}/skills/journaling/scripts/`. Portable POSIX bash; runs on Linux, macOS, and Windows (Git Bash, WSL).
 
-- `journal-entry.sh <title> <tags> <summary>` — body piped on stdin. Generates date and time-of-day at write time, slugifies the title, writes `docs/journal/YYYY-MM-DD-HHMM-<slug>.md`. No `--force` flag: the journal is append-only and the script does not overwrite existing entries.
-- `list-journal.sh [<since-date> | <tag>]` — reads the head of each `docs/journal/*.md` and emits one block per entry: title, date, tags, summary, filename. With a date argument (`YYYY-MM-DD`), lists entries on or after that date. With a tag argument, filters to entries whose `Tags:` line contains it.
-- `query.sh [--title PAT] [--tag TAG] [--xtag TAG] [--summary PAT] [--since YYYY-MM-DD] [--until YYYY-MM-DD]` — multi-predicate scan. Each flag is optional; flags AND together. Title and summary match substring case-insensitive; `--tag` matches exactly within the comma-separated `Tags:` line; `--xtag` excludes entries where the named tag is present; date flags bracket the filename's date prefix lexicographically. Output mirrors `list-journal.sh`.
+- `record-entry.sh <title> <tags> <summary>` — body piped on stdin. Generates date and time-of-day at write time, slugifies the title, writes `docs/journal/YYYY-MM-DD-HHMM-<slug>.md`. No `--force` flag: the journal is append-only and the script does not overwrite existing entries.
+- `scan.sh [--title PAT] [--tag TAG] [--xtag TAG] [--summary PAT] [--since YYYY-MM-DD] [--until YYYY-MM-DD]` — multi-predicate scan over `docs/journal/*.md`, chronological order. Each flag is optional; flags AND together; no flags lists every entry. Title and summary match substring case-insensitive; `--tag` matches exactly within the comma-separated `tags:` line; `--xtag` excludes entries where the named tag is present; date flags bracket the filename's date prefix lexicographically. Output: one block per entry — title, date, tags, summary, filename.
 
 ### Output discipline
 
-- `journal-entry.sh`: success is silent — the file is the artifact. Failure prints the validation error to stderr and exits non-zero.
-- `list-journal.sh`: success prints the formatted entry list, or `no entries` when `docs/journal/` is empty or missing. Filters print only matches; no matches prints an explanatory line.
-- `query.sh`: success prints the formatted matches in the same block format as `list-journal.sh`, or `no matches` when nothing satisfies the predicates. Exit code is 0 in both cases.
+- `record-entry.sh`: success is silent — the file is the artifact. Failure prints the validation error to stderr and exits non-zero.
+- `scan.sh`: success prints the formatted matches, or `no entries` when `docs/journal/` is empty or missing, or `no entries matching <predicates>` when nothing satisfies the predicates. Exit code is 0 in all three cases — a clean empty result is success.
 
 ### Gate policies
 
 When an entry is malformed, the rule is: write a new corrective entry. The original stays.
 
-- An entry without a `Date:` line is a defect. Every entry declares its provenance.
+- An entry without a `date:` line is a defect. Every entry declares its provenance.
 - An entry without a one-line summary in the head is a defect. The summary is what the scanner reads.
 - An entry whose body restates the summary verbatim is a defect. The summary is the head; the body is the cycle.
 - An entry that covers two cycles is a defect noted by a corrective entry; the original is not edited to fix it.

@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# Query journal entries by structured predicates over the head fields.
+# Scan journal entries by structured predicates over the head fields.
 #
 # Each flag is an optional predicate. Multiple flags AND together.
-# No flags matches every entry.
+# No flags lists every entry, chronologically.
 #
 # Predicates:
 #   --title PAT          substring, case-insensitive, against the H1 title
@@ -12,17 +12,21 @@
 #   --since YYYY-MM-DD   entries with filename date prefix on or after this date
 #   --until YYYY-MM-DD   entries with filename date prefix on or before this date
 #
-# Output: same block-per-match format as list-journal.sh, chronological order.
-# Exit code is 0 whether or not there are matches.
+# Output: one block per match — title, date, tags, summary, filename — in
+# chronological order, blank line between blocks.
+# Empty result prints `no entries matching <predicates>` (or `no entries` if
+# docs/journal is missing/empty).
+# Exit code is 0 whether or not there are matches — a clean empty result is success.
 #
 # Usage:
-#   query.sh [--title PAT] [--tag TAG] [--xtag TAG] [--summary PAT] [--since DATE] [--until DATE]
+#   scan.sh [--title PAT] [--tag TAG] [--xtag TAG] [--summary PAT] [--since DATE] [--until DATE]
 #
 # Examples:
-#   query.sh --since 2026-05-01
-#   query.sh --tag auth-investigation --since 2026-05-01 --until 2026-05-12
-#   query.sh --title cache --summary ttl
-#   query.sh --xtag retrospective --since 2026-05-01
+#   scan.sh
+#   scan.sh --since 2026-05-01
+#   scan.sh --tag auth-investigation --since 2026-05-01 --until 2026-05-12
+#   scan.sh --title cache --summary ttl
+#   scan.sh --xtag retrospective --since 2026-05-01
 
 set -eo pipefail
 
@@ -45,30 +49,30 @@ date_re='^[0-9]{4}-[0-9]{2}-[0-9]{2}$'
 while [ $# -gt 0 ]; do
     case "$1" in
         --title)
-            [ $# -ge 2 ] || { echo "query.sh: --title requires a value" >&2; exit 2; }
+            [ $# -ge 2 ] || { echo "scan.sh: --title requires a value" >&2; exit 2; }
             TITLE="$2"; shift 2 ;;
         --tag)
-            [ $# -ge 2 ] || { echo "query.sh: --tag requires a value" >&2; exit 2; }
+            [ $# -ge 2 ] || { echo "scan.sh: --tag requires a value" >&2; exit 2; }
             TAG="$2"; shift 2 ;;
         --xtag)
-            [ $# -ge 2 ] || { echo "query.sh: --xtag requires a value" >&2; exit 2; }
+            [ $# -ge 2 ] || { echo "scan.sh: --xtag requires a value" >&2; exit 2; }
             XTAG="$2"; shift 2 ;;
         --summary)
-            [ $# -ge 2 ] || { echo "query.sh: --summary requires a value" >&2; exit 2; }
+            [ $# -ge 2 ] || { echo "scan.sh: --summary requires a value" >&2; exit 2; }
             SUMMARY="$2"; shift 2 ;;
         --since)
-            [ $# -ge 2 ] || { echo "query.sh: --since requires a value" >&2; exit 2; }
+            [ $# -ge 2 ] || { echo "scan.sh: --since requires a value" >&2; exit 2; }
             SINCE="$2"
-            printf '%s' "$SINCE" | grep -Eq "$date_re" || { echo "query.sh: --since must be YYYY-MM-DD" >&2; exit 2; }
+            printf '%s' "$SINCE" | grep -Eq "$date_re" || { echo "scan.sh: --since must be YYYY-MM-DD" >&2; exit 2; }
             shift 2 ;;
         --until)
-            [ $# -ge 2 ] || { echo "query.sh: --until requires a value" >&2; exit 2; }
+            [ $# -ge 2 ] || { echo "scan.sh: --until requires a value" >&2; exit 2; }
             UNTIL="$2"
-            printf '%s' "$UNTIL" | grep -Eq "$date_re" || { echo "query.sh: --until must be YYYY-MM-DD" >&2; exit 2; }
+            printf '%s' "$UNTIL" | grep -Eq "$date_re" || { echo "scan.sh: --until must be YYYY-MM-DD" >&2; exit 2; }
             shift 2 ;;
         *)
-            echo "query.sh: unknown argument '$1'" >&2
-            echo "usage: query.sh [--title PAT] [--tag TAG] [--summary PAT] [--since DATE] [--until DATE]" >&2
+            echo "scan.sh: unknown argument '$1'" >&2
+            echo "usage: scan.sh [--title PAT] [--tag TAG] [--xtag TAG] [--summary PAT] [--since DATE] [--until DATE]" >&2
             exit 2 ;;
     esac
 done
@@ -108,8 +112,8 @@ for f in "${files[@]}"; do
     fi
 
     title=$(sed -n '1s/^# //p' "$f")
-    date=$(sed -n '3s/^Date: //p' "$f")
-    tags=$(sed -n '4s/^Tags: //p' "$f")
+    date=$(sed -n '3s/^date: //p' "$f")
+    tags=$(sed -n '4s/^tags: //p' "$f")
     summary=$(sed -n '5p' "$f")
 
     if [ -n "$TITLE_LC" ]; then
@@ -151,5 +155,12 @@ for f in "${files[@]}"; do
 done
 
 if [ "$matched" = "0" ]; then
-    echo "no matches"
+    preds=""
+    [ -n "$TITLE" ]   && preds="$preds --title '$TITLE'"
+    [ -n "$TAG" ]     && preds="$preds --tag '$TAG'"
+    [ -n "$XTAG" ]    && preds="$preds --xtag '$XTAG'"
+    [ -n "$SUMMARY" ] && preds="$preds --summary '$SUMMARY'"
+    [ -n "$SINCE" ]   && preds="$preds --since '$SINCE'"
+    [ -n "$UNTIL" ]   && preds="$preds --until '$UNTIL'"
+    echo "no entries matching${preds}"
 fi
