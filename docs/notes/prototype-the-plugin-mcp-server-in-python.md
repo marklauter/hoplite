@@ -86,4 +86,4 @@ The MCP server runs as a per-CLI subprocess on stdio transport. Every open Claud
 
 - Confirm the Python MCP SDK's protocol-version compatibility with the Claude Code plugin loader.
 - Decide whether bash scripts get deprecated once the MCP path is solid, or stay parallel for CLI users.
-- The nested env-var limitation noted in `skill-md-supports-backtick-bash-injection-at-load-time.md` does not affect MCP tool I/O — MCP and `!cat` injection address different problems and coexist cleanly.
+- The nested env-var limitation noted in `skill-composition.md` does not affect MCP tool I/O — MCP and `!cat` injection address different problems and coexist cleanly.
