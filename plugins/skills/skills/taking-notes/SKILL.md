@@ -1,13 +1,11 @@
 ---
 name: taking-notes
-description: Use when the user asks to write something down, save something for later, record something, take a note, or capture an open question — or when a discovery worth preserving emerges in conversation. Composes on writing-prose; produces durable, structured notes under docs/notes/ retrieved via the script set.
+description: Use when the user asks to write something down, save something for later, record something, take a note, or capture an open question — or when a discovery worth preserving emerges in conversation. Notes go under docs/notes/.
 ---
 
 # Taking notes
 
 A note is a durable, structured artifact stored in `docs/notes/`. Notes survive beyond short-term memory and context windows. Anything worth remembering belongs in a note: a hypothesis, a measurement, a decision, an open question, a reference, and so on.
-
-Ensure the companion skill, `writing-prose` is loaded before composing a note.
 
 Recording a note has four steps: spot the note-invocation trigger, search for an existing note on the topic, compose the content, and record the note.
 
@@ -92,8 +90,6 @@ A note has two parts:
 - Header — H1 title, blank line, `tags:` line (comma-separated), one-line summary. Composed by `record-note.sh` from its args.
 - Body — H2 sections; titles and content are yours.
 
-References between notes are plain text inline — `(see {slug}.md)`. Plain text only — notes live on web and on disk, where markdown links break.
-
 The template `record-note.sh` produces:
 
 ```
@@ -150,6 +146,8 @@ Defects:
 - A note whose title and slug disagree. The title and the filename are one fact in two places; they agree.
 - A note that covers two topics. Split it.
 - A note that duplicates an existing note. Merge them.
+
+!`cat ${CLAUDE_PLUGIN_ROOT}/components/editorial-principles/editorial-principles.md | sed "s|[$]{CLAUDE_PLUGIN_ROOT}|${CLAUDE_PLUGIN_ROOT}|g"`
 
 ## Rhetorical context
 

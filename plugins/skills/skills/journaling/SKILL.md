@@ -1,63 +1,115 @@
 ---
 name: journaling
-description: Use when the user asks to log this, journal this, add a journal entry, record what we just did, or wrap up the session in the journal. Produces dated, append-only entries under docs/journal/ that tell the story of how we got here — the engineering notebook to taking-notes' wiki.
+description: Use when the user asks to log this, journal this, add a journal entry, record what we just did, wrap up the session in the journal, log today's work, log the outcome of an experiment, or record a decision — or when an OODA cycle closes (experiment ends, decision lands, dead-end is ruled out) and the cycle is worth preserving. Entries go under docs/journal/.
 ---
 
 # Journaling
 
-Engineering-notebook-style entries — dated, append-only records of what was attempted, what happened, and what was decided. The chronological counterpart to the wiki notes; together they answer "where are we?" and "how did we get here?"
+A developer journal is the durable, append-only, chronological record of an engineering project's process: what was attempted, what was learned, what was decided. The journal lives under `docs/journal/` so a future reader — the author later, a teammate, the next session — can reconstruct the design path the work moved through.
 
-## Philosophy
+A journal entry is one cycle within the journal — one experiment, one decision, one session wrap, one dead-end ruled out, one intent-versus-outcome comparison. Each entry is dated and historically immutable: once recorded, it stays as written.
 
-Notes represent the current state of an idea; the journal tells the story of how we got there. The two skills are siblings — [[taking-notes]] is the wiki page, journaling is the engineering notebook. They cross-reference: an entry says "today we changed our understanding of X"; the note titled X carries the new state.
+Recording an entry has four steps: observe the cycle that just closed, search for a recent entry on the same topic in the last 24 hours, compose the content, and record the entry.
 
-### Append-only; the past is fixed
+## Observe the cycle — what to journal
 
-The journal is the audit trail. Once an entry is written, it is not edited. Corrections, revisions, "we were wrong about that yesterday" — these are new entries that reference the old. Editing an entry erases the record of what we believed when we believed it.
+Record an entry when:
 
-### Time is the spine
+1. The user asks. They request a journal entry; you compose one.
+2. A cycle closes. An OODA loop completes a turn — experiment ended, decision landed, dead-end ruled out, intent-vs-outcome comparison ready, session wraps. You propose an entry; the user approves or denies before you compose.
+3. Auto-capture mode is on. The user has asked you to auto-capture cycle closures without the approval gate; signals are the same as #2.
 
-Entries are ordered by time. The filename carries the date and the time-of-day; `ls` lists the journal chronologically by default. Topical structure is layered on with tags and cross-references, but the spine is time.
+One cycle, one entry. Stuffing two cycles into one entry destroys the chronology the journal exists to preserve. Two cycles get two entries.
 
-### The journey is the artifact
+Exclude from the journal:
 
-The journal captures process, not just outcomes. Failed attempts, abandoned approaches, hypotheses that did not survive contact with reality — these are journal content. The reader (future self, judge, teammate, next session) reconstructs the design space the work moved through. A journal that records only the successes is a journal that has nothing useful to teach.
+- State-of-the-idea content — that belongs in a note (taking-notes), not the journal. The journal records change; notes record current state.
+- Cross-repo facts, user profile, persistent preferences — that belongs in memory.
+- Conversational ephemera with no durable cycle behind it. The journal captures cycles that produced something worth knowing: an observation, a decision, a dead end, a deferral.
+- Speculation the author isn't ready to commit to. Entries are historically immutable — once recorded, the original stays as-written. Compose only what you're ready to preserve.
 
-### Intent before outcome
+## Search for a recent entry — last-24h same-topic check
 
-Write the hypothesis before running the experiment. Write the plan before doing the work. Then write the result. The temporal order matters — recording intent only after the outcome is known turns every prediction into hindsight. The discipline of stating what is expected, then comparing against what happened, is the loop that produces calibration.
+Before recording, scan entries from the last 24 hours via `scan.sh --since <today-1>` plus title, tag, or summary predicates to locate any recent entry on the same topic.
 
-### Datestamped provenance
+- Same topic exists within the last 24 hours. Use `record-entry.sh --append <title>` to extend the body of the existing entry — the new content continues the same cycle.
+- Different topic within the last 24 hours. Record a new entry with the default mode.
+- Same topic outside the 24-hour window. Record a new entry. Today's cycle is its own entry; the older entry stays untouched and may be referenced by filename.
 
-Every entry knows when it was written. The date is in the filename and the head; the time-of-day disambiguates same-day entries and preserves intraday ordering. An entry without a date is uninterpretable — the reader cannot tell what the team knew at the time, what tools they had, what version of the world they were in.
+Topic match is a judgment call from title, tags, and summary of the recent entries. When in doubt, start a new entry.
 
-### One cycle, one entry
+The journal is historically immutable. If an existing entry is wrong, compose a new compensating entry that references and corrects the prior one. The original stays as-written. Other agents — those not running this skill — must never modify journal entries. They may read and scan; all writes go through `record-entry.sh`.
 
-An entry covers one OODA cycle, one experiment, one session, or one decision. The unit is whatever closes — what was attempted, what happened, what comes next. Stuffing three cycles into one entry destroys the chronology that the journal exists to preserve. Two cycles get two entries.
+## Compose the entry — head and body
 
-### Link to notes
+Three head fields carry the entry: title, tags, summary. Discipline lives in the [Entry format](#entry-format) section below.
 
-The journal records change; the notes record state. When an entry causes a note to be created or updated, the entry links to the note by filename. The graph between journal and notes is the connective tissue — "as of `2026-05-12-1430-cache-investigation.md`, the note at `cache-ttl-300s.md` reflects the new understanding."
+Two body disciplines apply regardless of the entry's shape:
 
-### Future self is the reader
+Intent before outcome. State the hypothesis or plan before recording the result. The temporal order matters: recording intent after the outcome is known turns every prediction into hindsight. The discipline of stating expectation, then comparing against what happened, is the loop that produces calibration.
 
-The entry is written for someone who has lost the context — the same person tomorrow, a teammate, a judge, the next session after compaction. The writing assumes nothing about what the reader already knows. Specific names, specific paths, specific numbers, specific dates. Phrases like "the thing we discussed earlier" or "as I said" assume context the reader does not have.
+Future self is the reader. The reader has lost the context — the same author tomorrow, a teammate, a future agent, the next session after compaction. Assume nothing about what the reader already knows. Specific names, specific paths, specific numbers, specific dates. Phrases like "the thing we discussed earlier" or "as I said" rely on context the reader does not have.
 
-### The entry is the artifact
+The journey is the artifact. Capture failed attempts, abandoned approaches, hypotheses that did not survive contact with reality. A journal that records only the successes has nothing useful to teach the reader reconstructing the design path.
 
-Once the entry is written, the work of recording is done. The chat does not recite the entry back; the file under `docs/journal/` is the deliverable.
+Cross-reference notes. An entry that changes the current understanding of a topic names the note inline: `[[cache-ttl-300s]]`. An entry that produces a new topic worth its own page either creates the note then or flags the candidate: `candidate note: cache-eviction-policy`. The journal links forward to notes; notes do not link back.
 
-## Guidance
+## Record the entry — record-entry.sh reference
 
-Concrete patterns for journaling against the principles above.
+To record an entry, use `record-entry.sh`. The script generates the date and time at write time, slugifies the title, and saves `docs/journal/YYYY-MM-DD-HHMM-<slug>.md`. After saving, confirm with a minimal acknowledgment — for example, `entry saved: <filename>` — and let the file stand. No recital or recap.
 
-### Location and filename
+`record-entry.sh` — save a new entry or append to a recent one.
 
-- Entries live under `docs/journal/` at the repo root. The directory is committed to git; the revision history is a secondary log behind the journal itself.
-- Filename: `YYYY-MM-DD-HHMM-<slug>.md`. The date-and-time prefix gives `ls` chronological order for free and prevents same-day collisions; the slug is the title lowercased, non-alphanumerics replaced with dashes, capped at 80 characters.
-- The date, time, and slug are mechanically derived — `record-entry.sh` generates them at write time. The writer chooses the title; the script chooses the filename.
+Signature:
 
-### The entry template
+```bash
+${CLAUDE_PLUGIN_ROOT}/skills/journaling/scripts/record-entry.sh [--append] <title> [<tags> <summary>]
+```
+
+Two modes:
+
+- (no flag) — new entry. Refuses to save if a same-minute same-slug file already exists.
+- `--append` — extend the body of the latest existing entry matching the slug. Header (H1, date, tags, summary) is preserved. Pass only `<title>` to derive the slug.
+
+There is no `--overwrite` mode. The journal is historically immutable; corrections are new compensating entries that reference and correct the prior one.
+
+Body is read from stdin and appended verbatim. Output: success is silent — the file is the artifact. Failure prints the validation error to stderr and exits non-zero.
+
+## Finding entries — scan.sh reference
+
+`scan.sh` is the canonical access mechanism for finding entries — it emits the structured header fields Explore, Glob, and Grep skip.
+
+`scan.sh` — list and filter entries by structured predicates.
+
+Signature:
+
+```bash
+${CLAUDE_PLUGIN_ROOT}/skills/journaling/scripts/scan.sh [--title PAT] [--tag TAG] [--xtag TAG] [--summary PAT] [--since YYYY-MM-DD] [--until YYYY-MM-DD]
+```
+
+Each flag is optional; flags AND together. No predicates lists every entry in chronological order.
+
+- `--title PAT` — substring match, case-insensitive, against the H1 title
+- `--tag TAG` — exact match against an entry in the comma-separated `tags:` line
+- `--xtag TAG` — exclude entries whose `tags:` line contains TAG
+- `--summary PAT` — substring match, case-insensitive, against the one-line summary
+- `--since YYYY-MM-DD` — include only entries whose date prefix is on or after this date
+- `--until YYYY-MM-DD` — include only entries whose date prefix is on or before this date
+
+Output: one header block per match — title, date, tags, summary, filename. Empty `docs/journal/` prints `no entries`; predicates that match nothing print `no entries matching <predicates>`. Exit code 0 either way — clean empty result is success.
+
+## Entry format
+
+Entry files live under `docs/journal/` at the repo root. The filename is `YYYY-MM-DD-HHMM-<slug>.md`. The date and time prefix gives `ls` chronological order; the slug derives from the title.
+
+An entry has two parts:
+
+- Header — five lines: H1 title, blank line, `date:` line, `tags:` line (comma-separated), one-line summary. Composed by `record-entry.sh` from its args plus the current date and time. The slug, date, and time are mechanically derived; renaming is not a supported operation.
+- Body — everything piped on stdin. H2 sections; titles and content are yours. Context/Attempted/Outcome/Decision/Next fits experiment-style entries; session-summary, decision, and milestone entries take whatever shape fits the cycle.
+
+Cross-references to entries use the full date-prefixed slug — `[[2026-05-20-1430-cache-investigation]]`; cross-references to notes use the note slug — `[[cache-ttl-300s]]`.
+
+The template `record-entry.sh` produces:
 
 ```
 # <one-line title — the entry topic>
@@ -66,87 +118,68 @@ date: YYYY-MM-DD HH:MM
 tags: <comma-separated, optional>
 <one-line summary>
 
-## Context
-<what state were we in coming into this — what was current, what was unknown>
+## <a section title>
+<content>
 
-## Attempted
-<what was tried, including the hypothesis or intent>
-
-## Outcome
-<what happened — observable, measured, with citations>
-
-## Decision
-<what was decided based on the outcome>
-
-## Next
-<the next planned step, or `none` if the cycle closed cleanly>
+## <another section title>
+<more content>
 ```
 
-Line 1 is the H1. Line 2 is blank. Lines 3-5 are the scannable head — date, tags, summary. Line 6 is blank, then the body sections.
+### Head field discipline
 
-The Context/Attempted/Outcome/Decision/Next shape is the default for experiment-style entries. Session-summary entries, decision entries, and milestone entries use the sections that fit — the template is a starting point. The scannable head is non-negotiable; the body shape adapts.
+Three head fields carry the discovery load: title, tags, summary.
 
-### When to write an entry
+#### Title
 
-Entries are user-directed, not agent-autonomous. The trigger is an explicit request from the user. Watch for phrases like:
+Name the cycle explicitly. Concrete over abstract. The title is identity, slug, and search anchor — discriminating enough that exact-match scan returns the right entry. Title is what the cycle was, not what the entry is about.
 
-Session-bracket triggers:
+When the user supplies a title, use it. Otherwise derive from the cycle's content and outcome.
 
-- "log this"
-- "journal this"
-- "add a journal entry"
-- "record what we just did"
-- "wrap up the session in the journal"
-- "log today's work"
+For a question that gained an answer mid-cycle: pivot the title from interrogative to declarative within the same entry if the cycle closed cleanly; or record the answer as a new compensating entry that references the original question.
 
-Cycle-close triggers:
+#### Tags
 
-- "log the outcome of..."
-- "journal what happened when we tried..."
-- "record the decision to..."
-- "log this experiment"
+Tags are facets that distill the entry's content or intent. Common dimensions: status (`closed`, `wip`), area (`auth`, `cache`, `infra`), thread (`auth-investigation`, `cache-ttl-thread`), entry type (`experiment`, `decision`, `session-wrap`). No controlled vocabulary — pick from what the cycle covers.
 
-The content is whatever cycle or session the request brackets — the request points back to it. When the request is ambiguous about scope, ask once: "as one entry covering the session, or one entry per experiment?" Default to finer-grained when the answer is unclear; over-splitting is recoverable, under-splitting is not.
+When the user signals entry type in the request ("log the experiment", "log the decision"), the named type becomes a tag. Multi-tag membership is the norm.
 
-### When not to write an entry
+Tagging an entry with another artifact's slug creates a cross-reference — `scan.sh --tag <slug>` finds every entry that cites the target.
 
-- The user did not ask. Journaling, like notes, is an explicit-request artifact.
-- The content belongs in a note. State-of-the-idea content goes to [[taking-notes]]; the journal records what changed, not the new state.
-- The content belongs in memory. Cross-project user preferences, persistent feedback, user profile facts go through the memory system, not the journal.
-- The content is a recap of what was just said in chat with no durable signal. The journal captures cycles that produced something worth knowing about — observations, decisions, dead ends, decisions to defer.
+#### Summary
 
-### Cross-referencing notes
+One sentence. Front-load the most informative phrase. Name what the cycle produced that title and tags omit. Distinguish it from siblings sharing the same tag. Skip meta-framing ("this entry covers...").
 
-- An entry that changes the current understanding of a topic names the note: `updates [[cache-ttl-300s]]`.
-- An entry that produces a new topic worth its own page either creates the note then or flags the candidate: `candidate note: cache-eviction-policy`.
-- A note's content does not say "as of journal entry X" — notes are stateless about their journey. The journal links to notes; the notes do not link back.
+### Body principles
 
-### Dedup is not the goal
+Two disciplines apply regardless of body shape, restated here as the operative form:
 
-Unlike notes, journal entries do not dedup. Two entries on the same topic on different days are expected — they capture two cycles, not one fact. The discipline is to make each entry capture exactly one cycle, not to consolidate cycles after the fact.
+Intent before outcome. Record the hypothesis or plan before the result, in that order. The calibration loop depends on this temporal sequence.
 
-## Validation
+Specific over vague. Names, paths, numbers, dates, citations. Pronouns and "the thing earlier" rely on context the reader does not have.
 
-"What is written, remains" (the lab-notebook discipline, paraphrased). Validation here is the discipline that keeps the journal honest — every entry timestamped, every entry untouched after writing, every entry traceable to a real cycle.
+### Well-formed entries
 
-### The script set
+The journal earns its value from chronological integrity and recovered context. Date in the head, summary present, body distinct from summary, one cycle per entry. Fix new entries on the way in; never edit a recorded entry — compose a compensating entry instead.
 
-Two scripts ship under `${CLAUDE_PLUGIN_ROOT}/skills/journaling/scripts/`. Portable POSIX bash; runs on Linux, macOS, and Windows (Git Bash, WSL).
+Defects:
 
-- `record-entry.sh <title> <tags> <summary>` — body piped on stdin. Generates date and time-of-day at write time, slugifies the title, writes `docs/journal/YYYY-MM-DD-HHMM-<slug>.md`. No `--force` flag: the journal is append-only and the script does not overwrite existing entries.
-- `scan.sh [--title PAT] [--tag TAG] [--xtag TAG] [--summary PAT] [--since YYYY-MM-DD] [--until YYYY-MM-DD]` — multi-predicate scan over `docs/journal/*.md`, chronological order. Each flag is optional; flags AND together; no flags lists every entry. Title and summary match substring case-insensitive; `--tag` matches exactly within the comma-separated `tags:` line; `--xtag` excludes entries where the named tag is present; date flags bracket the filename's date prefix lexicographically. Output: one block per entry — title, date, tags, summary, filename.
+- An entry without a `date:` line in the header. Every entry declares its provenance.
+- An entry without a one-line summary in the head. The summary is what the scanner reads.
+- An entry whose body restates the summary verbatim. The summary is the head; the body is the cycle.
+- An entry that covers two cycles. Split it — a new entry for the second cycle.
+- A modification of an already-recorded entry (other than `--append` within the same cycle). The original stays; compose a compensating entry that references and corrects it.
 
-### Output discipline
+!`cat ${CLAUDE_PLUGIN_ROOT}/components/editorial-principles/editorial-principles.md | sed "s|[$]{CLAUDE_PLUGIN_ROOT}|${CLAUDE_PLUGIN_ROOT}|g"`
 
-- `record-entry.sh`: success is silent — the file is the artifact. Failure prints the validation error to stderr and exits non-zero.
-- `scan.sh`: success prints the formatted matches, or `no entries` when `docs/journal/` is empty or missing, or `no entries matching <predicates>` when nothing satisfies the predicates. Exit code is 0 in all three cases — a clean empty result is success.
+## Rhetorical context
 
-### Gate policies
-
-When an entry is malformed, the rule is: write a new corrective entry. The original stays.
-
-- An entry without a `date:` line is a defect. Every entry declares its provenance.
-- An entry without a one-line summary in the head is a defect. The summary is what the scanner reads.
-- An entry whose body restates the summary verbatim is a defect. The summary is the head; the body is the cycle.
-- An entry that covers two cycles is a defect noted by a corrective entry; the original is not edited to fix it.
-- Editing a past entry after it has been written is a defect. Corrections are new entries; if the past entry is materially misleading, the corrective entry names it and explains the correction.
+- Writer: contributor
+- Voice: declarative, terse — first-person acceptable
+- Ethos: expert
+- Stance: neutral
+- Audience: future self — the author later, a future agent picking up the work, or a teammate reconstructing the design path
+- Subject: one OODA cycle — what was attempted, what happened, what was decided
+- Genre: journal
+- Tone: professional, even-keeled
+- Register: Journal — observation-based, chronological, append-only, first-person acceptable
+- Intent: preserve the chronological record of cycles so future readers can reconstruct intent, outcome, and the design path the work moved through
