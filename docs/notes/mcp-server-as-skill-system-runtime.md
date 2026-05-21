@@ -1,7 +1,7 @@
 # MCP server as skill-system runtime
 
-tags: architecture,mcp,skills,knowledge-graph,claude-code,prototype-the-plugin-mcp-server-in-python,write-a-knowledge-extraction-skill
-The MCP server reframes from write-path delivery mechanism to runtime for a knowledge-graph-backed skill system — notes, decisions, and skill bodies become graph nodes loaded on demand, replacing the always-loaded skill-frontmatter cap with a small stable tool surface.
+tags: architecture,mcp,skills,knowledge-graph,indexer,claude-code,prototype-the-plugin-mcp-server-in-python,write-a-knowledge-extraction-skill
+The MCP server is the runtime for a knowledge-graph-backed skill system — nodes (notes, decisions, skills) load on demand through a small stable tool surface, and a property-graph index projected from notes (mechanical edges at write, semantic edges via scheduled reindex) replaces the always-loaded skill-frontmatter cap with O(tool count) overhead.
 
 
 ## The reframe
@@ -19,9 +19,34 @@ MCP inverts the dimensionality. One server's tool schemas cost O(tool count) —
 Speculative — the architecture as currently envisioned, not yet built.
 
 - **One orchestrator skill teaches the graph.** Single frontmatter slot covering an unbounded knowledge surface. The skill body explains node types, edge semantics, traversal heuristics, and the MCP tools that read and write the graph.
-- **MCP tools are navigation and composition primitives.** A small surface: `search_graph(query)`, `get_node(id)`, `list_backlinks(id)`, `follow_link(from, edge_type)`, `record_node(type, body)`. Stable in count; addresses unbounded content.
+- **MCP tools are navigation and composition primitives.** A small surface: `search_graph(query)`, `get_node(id)`, `list_backlinks(id)`, `follow_link(from, edge_type)`, `record_node(type, body)`, and a runner-facing `reindex(scope)`. Stable in count; addresses unbounded content.
 - **Nodes are typed; node type lives in frontmatter.** Notes, journal entries, decisions, references, and possibly skill bodies are all node types within the same graph. The current distinction between `taking-notes` and `journaling` skills collapses into a node-type distinction inside one orchestrator.
+- **Index is a separate projection of notes, maintained by the MCP server.** See Indexer architecture below.
 - **`writing-prose` stays as the universal spine.** The composition rubric that today lives in `taking-notes` and `journaling` folds into the orchestrator's "node types" section. `writing-prose` keeps its role as the prose foundation both compose on top of.
+
+## Indexer architecture
+
+### Index as projection of notes
+
+Notes remain the source of truth. The index is a derived artifact, fully rebuildable from on-disk notes plus a small amount of LLM work for summaries and semantic edges. Author-generated metadata (title, tags, body content, body wiki-links) lives in the note. Derived data (summaries, backlinks, semantic edges with confidence scores) lives in the index. If the index corrupts or the summarizer model changes, throw the index away and re-derive — notes alone stay self-describing for everything the agent authored.
+
+### Edge taxonomy
+
+Three kinds of edges, distinguished by who produced them:
+
+- **Authored edges.** Tags and body `[[wiki-links]]`. Tags are membership in a meta-topic — each unique tag is a virtual node, and notes sharing a tag converge at it (1-hop from each, 2-hop between siblings). Body wiki-links are direct edges between concrete notes, with the surrounding prose providing the link's semantic context. Slug-as-tag (the current "mention" pattern) retires in favor of body wiki-links — same edge, better ergonomics.
+- **Mechanically derived edges.** Backlinks, computed deterministically by inverting body wiki-links. Free at any time; no LLM involvement.
+- **Semantically derived edges.** Relationships discovered by an agent reading the corpus — "these two notes address adjacent aspects of caching but neither cites the other," "this decision contradicts that one," "these three form a thread." Carry a confidence score so queries filter by threshold. Stored in the index, marked as derived. A user can promote a derived edge to authored by adding the corresponding wiki-link to the note body.
+
+The third category is what makes the corpus more than a tidier file system — the graph teaches you about itself.
+
+### Two-phase update
+
+Write time handles what the agent knows about what it just wrote: save the file, parse tags, parse body wiki-links, update inverse backlinks on the targets. Synchronous, cheap, deterministic. The agent's `record_node` MCP call does all of this in one transaction.
+
+Scheduled reindex handles what the corpus knows about itself: regenerate summaries for changed notes (headless Sonnet over the body), discover semantic edges (embedding-based candidate retrieval, then selective LLM analysis on high-similarity pairs), prune low-confidence derived edges that newer notes contradict, clean up dangling links to renamed targets. Background, asynchronous, expensive, periodic. Triggered on a schedule or by an explicit `reindex(scope)` MCP call.
+
+The split mirrors memory consolidation: fast encoding during waking, slow integration into the semantic network offline. Skip the reindex for a stretch and you accumulate REM debt — new notes present but unwired to the rest of the graph.
 
 ## What the original decision still settles
 
@@ -29,16 +54,22 @@ The Python-MCP choice from the existing note remains correct as means. Source-in
 
 ## What this changes if adopted
 
-- **Tool surface grows from write to read+write+traverse.** The original note's tool list (`record_note`, `record_journal_entry`, slugify, header-format) becomes a subset. Read and traversal tools join.
-- **Edges become a first-class data type.** Bash scripts today write files; the MCP server in the runtime thesis owns the edge index. Whether that means parsing `[[wiki-links]]` on the fly, maintaining a derived edge file, or storing edges in node frontmatter is open (see Open questions below).
-- **Trust qualifier scales up.** When the MCP server is the runtime for skills, dependency discipline matters more than for a write-path helper. The "pyproject.toml stays minimal" property has to hold harder. Re-read the existing note's Trust qualifier section before each new dependency.
+- **Tool surface grows from write to read + write + traverse + reindex.** The original note's tool list (`record_note`, `record_journal_entry`, slugify, header-format) becomes a subset. Read, traversal, and indexer-control tools join.
+- **Index becomes a first-class artifact the MCP server owns.** A property-graph file on disk, projected from notes, mutated by both synchronous write-time updates and asynchronous reindex passes.
+- **Edges become a first-class data type.** Bash scripts today write files; the MCP server in the runtime thesis owns the edge graph in all three of its forms (authored, mechanically derived, semantically derived).
+- **Background process becomes part of the system.** The reindexer needs a runner — separate process, queue, rate limits, retry semantics. New operational surface the write-path-only design lacked.
+- **Trust qualifier scales up.** When the MCP server is the runtime for skills *and* runs an indexer that issues LLM calls, dependency discipline matters more than for a write-path helper. The "pyproject.toml stays minimal" property has to hold harder, and the embedding-model and summarizer-model choices become trust-relevant.
 
 ## Open questions
 
 - Does the Claude Code skill mechanism stay as a one-slot shim (the orchestrator skill points at the MCP server, the rest of the surface lives in the graph), or do skills move entirely into the graph with no Claude Code skill at all? The trigger language Claude Code provides ("Use when…") is doing real work today — moving fully into the graph requires reimplementing triggering.
 - How does triggering work when skills live as graph nodes? Candidates: agent searches the graph proactively at task start, a `list_relevant_skills(query)` tool runs early, or the orchestrator skill body teaches the agent to query the graph on each new task. None proven; pick during prototype.
-- Edge representation. `[[wiki-links]]` inline in body, frontmatter-declared typed edges, or a separate edge file? Affects parser complexity, link discoverability, and edge-type richness.
-- Does the orchestrator subsume `taking-notes` and `journaling`, or coexist with them as a higher-level skill that delegates to them? Subsuming is cleaner under the one-slot thesis; coexisting preserves the current rubric layering.
+- Does the orchestrator subsume `taking-notes` and `journaling`, or coexist with them as a higher-level skill that delegates to them?
+- **Reindex scheduling mechanism.** Cron-style periodic, file-watcher-driven, event-driven (after K writes since last reindex), lazy-on-read (reindex when an agent queries and mtimes have changed), or hybrid. Each has different operational shape and different failure modes.
+- **Migration of existing slug-as-tag "mentions"** to body wiki-links: rewrite existing notes in place, or grandfather slug-tags as a legacy form the indexer still parses?
+- **Index file format and location.** Single property-graph file or per-node-type sharding? Where on disk — `docs/index/` or alongside notes?
+- **Confidence score semantics.** How stored, how queried, what default threshold filters derived edges out of normal query results, when does the indexer prune low-confidence edges?
+- **Embedding model choice for candidate retrieval.** Ships with the plugin, or assumes an external service? Cost and trust implications either way.
 
 ## References
 

@@ -14,5 +14,11 @@
     "notes",
     "journaling",
     "review"
-  ]
+  ],
+  "mcpServers": {
+    "skills": {
+      "command": "python",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/mcp/server.py"]
+    }
+  }
 }
