@@ -45,7 +45,7 @@ Each principle bullet has an expansion file at `${CLAUDE_PLUGIN_ROOT}/components
 - Cross-artifact references — use wiki-style `[[slug]]` with relative paths; markdown link syntax breaks across web rendering and disk filesystem contexts.
 - Sentence-style headings — first word and proper nouns only; no title case.
 - Numbered for procedures, bullets for options, prose for reasoning.
-- Skip bold and tables — except in worked examples that demonstrate what to remove.
+- Avoid bold and tables — except in worked examples that demonstrate what to remove.
 - Rename propagation — on renames and refactors, grep the project for the old name or path before declaring done; update every reference in the same change set.
 
 ## Validation — self-check the composition before handoff
