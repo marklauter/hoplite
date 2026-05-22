@@ -5,7 +5,7 @@ description: Use when the user asks to write something down, save something for 
 
 # Taking notes
 
-A note is a durable, structured artifact stored in `docs/notes/`. Notes survive beyond short-term memory and context windows. Anything worth remembering belongs in a note: a hypothesis, a measurement, a decision, an open question, a reference, and so on.
+A note is a durable artifact stored in `docs/notes/`. Notes survive beyond short-term memory and context windows. Anything worth remembering belongs in a note: a hypothesis, a measurement, a decision, a question, a reference, and so on.
 
 Recording a note has four steps: spot the trigger, search for an existing note on the topic, compose the content, and save the file.
 
@@ -24,6 +24,7 @@ Before recording, look for an existing note on the topic. Glob `docs/notes/*.md`
 - Same topic exists. Edit the existing file in place. Replace it wholesale only on user request or approval.
 - Adjacent topic exists. Compose a new note and cross-reference it.
 - Existing note covers the content with nothing to add. Surface "there's already a note on this topic" instead of recording a duplicate.
+- Question note gained its answer. Write under the new declarative slug and delete the old; the title pivots from interrogative to declarative.
 
 Preserve content. User-requested change mutates freely; agent-initiated change is additive — overwrite only on request or approval.
 
@@ -42,30 +43,7 @@ Exclude from notes:
 
 Notes are saved at `docs/notes/<slug>.md` where `<slug>` is a lowercase slug of the H1 title. Glob the target path first to learn whether the note exists. For a new note, use Write. For an existing note, use Edit to extend the body — adding content needs no approval. Removing content, or replacing the file wholesale, requires user approval. After saving, confirm with a minimal acknowledgment — for example, `note saved: <slug>.md`. No recital or recap.
 
-Template:
-
-```
-# <one-line title — the H1>
-
-<one-line summary>
-
-## <a section title>
-<content>
-
-## <another section title>
-<more content>
-```
-
-Body shape (H2 sections, titles and content) is yours. The fixed line-position contract: line 1 is the H1 title, line 2 is blank, line 3 is the one-line summary, line 4 is blank, line 5 onward is the body. This positional convention is the scanner contract — `Read limit=3` pulls a note's headline; `Grep -A 2 '^# ' docs/notes/` pulls every title-and-summary pair without parsing.
-
-Defects:
-
-- A note without a one-line summary under the H1. Every note opens with title then summary.
-- A note whose body restates the summary verbatim. The summary is the lede; the body is the evidence and reasoning.
-- A note whose title and slug disagree. The title and the filename are one fact in two places; they agree.
-- A note that covers two topics. Split it.
-- A note that duplicates an existing note. Merge them.
-
+!`cat ${CLAUDE_PLUGIN_ROOT}/components/editorial-principles/template.md | sed "s|[$]{CLAUDE_PLUGIN_ROOT}|${CLAUDE_PLUGIN_ROOT}|g"`
 !`cat ${CLAUDE_PLUGIN_ROOT}/components/editorial-principles/title.md | sed "s|[$]{CLAUDE_PLUGIN_ROOT}|${CLAUDE_PLUGIN_ROOT}|g"`
 !`cat ${CLAUDE_PLUGIN_ROOT}/components/editorial-principles/summary.md | sed "s|[$]{CLAUDE_PLUGIN_ROOT}|${CLAUDE_PLUGIN_ROOT}|g"`
 !`cat ${CLAUDE_PLUGIN_ROOT}/components/editorial-principles/body.md | sed "s|[$]{CLAUDE_PLUGIN_ROOT}|${CLAUDE_PLUGIN_ROOT}|g"`
