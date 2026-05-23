@@ -11,7 +11,7 @@ Each principle bullet has an expansion file at `${CLAUDE_PLUGIN_ROOT}/components
 - Present tense for current behavior — "the function returns," not "the function will return" or "the function returned."
 - Second person for instructions — address the reader directly with "you"; avoid "the user" or "one."
 - Systems behave — describe what they do; "wants" and "decides" belong to people.
-- Every word must earn its place — cut hedges, filler, transitions that announce; clarity depends on brevity.
+- Every word must earn its place — cut hedges, filler, transitions that announce; brevity serves clarity.
 - Verbs over nominalizations — "decide" beats "make a decision"; the verb is shorter and stronger.
 - Strong verbs over verb-plus-adverb — "sprint" beats "run quickly"; the verb carries the meaning.
 - Concrete over abstract — "the cache" beats "the caching mechanism" unless the distinction is the point.
