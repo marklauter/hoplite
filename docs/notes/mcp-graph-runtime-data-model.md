@@ -7,17 +7,20 @@ Locks down the concrete shapes and contracts the parent note `[[mcp-server-as-sk
 One authored directory; the index is a flat sidecar tree plus a label inverted-index subdirectory.
 
 ```
-docs/notes/<slug>.md                            authored notes (default form)
-docs/notes/<iso-date>-<slug>.md                 authored notes with observation or journal label
-docs/index/<id>.md                              per-node sidecars (flat)
-docs/index/labels/<label>.md                    label body (envelope prose, summary) — optional
-docs/index/labels/<label>/<member-id>           membership marker file (one per member, empty)
+docs/notes/<slug>.md                            authored note (pure markdown, body only)
+docs/notes/<iso-date>-<slug>.md                 authored note with observation or journal label
+docs/index/<id>.yml                             node sidecar (pure YAML, structured metadata)
+docs/index/labels/<label>.yml                   label sidecar (pure YAML, structured metadata)
+docs/index/labels/<label>.md                    label envelope (pure markdown, optional prose)
+docs/index/labels/<label>/<member-id>           empty membership marker (filename is the data)
 docs/index/envelopes/read.md                    fixed content envelope applied by read()
 ```
 
-Every authored node is a note. Questions, observations, journal entries, decisions, references — all distinguished by labels in the note's own frontmatter, not by directory. The label `note` is auto-derived from the authored location; everything else comes from the note's `labels:` field. External references are wrapped in local notes — a note summarizes the source and carries the URL in its body — so no separate external-node mechanism is needed.
+Each file type has one job. `.md` files carry human-readable content — notes and label envelope prose. `.yml` files carry structured metadata the indexer reads and writes. Empty marker files carry membership in their filename. The split matches the access pattern: sidecars are the indexed "B-tree" surface (small, scanned often); notes are the "BLOB" (larger, opened only when the content is needed via `invoke` or `read`).
 
-A node's **id** is its filename without the `.md` extension. `docs/notes/foo.md` has id `foo`; `docs/notes/2026-05-22-design-meeting.md` has id `2026-05-22-design-meeting`. The sidecar always lives at `docs/index/<id>.md`.
+Every authored node is a note. Questions, observations, journal entries, decisions, references — all distinguished by labels, not by directory. Notes themselves are pure markdown (no YAML frontmatter); labels are supplied to `insert` and `update` as tool-call parameters. The `note` label is auto-derived from the authored location; everything else comes from the caller. External references are wrapped in local notes — a note summarizes the source and carries the URL in its body — so no separate external-node mechanism is needed.
+
+A node's **id** is its filename without the `.md` extension. `docs/notes/foo.md` has id `foo`; `docs/notes/2026-05-22-design-meeting.md` has id `2026-05-22-design-meeting`. The sidecar always lives at `docs/index/<id>.yml`.
 
 Filename convention. Nodes carrying `observation` or `journal` labels use the ISO date prefix — `docs/notes/<iso-date>-<slug>.md`. The indexer parses the prefix to derive the date label. Other nodes use `docs/notes/<slug>.md`. The prefix is the single source of truth for the date; no separate `date:` frontmatter field.
 
@@ -31,9 +34,9 @@ Corpus root configuration. The paths above (`docs/notes/`, `docs/index/`) are th
 
 Why flat sidecar storage. A node carries a multi-valued `labels` set, so directory-by-label cannot place it — the node belongs to several labels at once. Flat storage gives O(1) path lookup from id; per-label files in `labels/` provide the inverted index that "all nodes labeled X" queries need.
 
-Why no separate framings directory. Framings collapse into labels. `instruction`, `reference`, `observation` are just three labels whose files at `docs/index/labels/<framing>.md` carry envelope prose in their bodies. The server knows a hardcoded list of "framing-axis labels" to drive envelope selection on `invoke`, but the data model has no separate framing concept. Everything lives under `labels/`.
+Why no separate framings directory. Framings collapse into labels. `instruction`, `reference`, `observation` are just three labels whose envelope files at `docs/index/labels/<framing>.md` carry the framing prose. The server knows a hardcoded list of "framing-axis labels" to drive envelope selection on `invoke`, but the data model has no separate framing concept. Everything lives under `labels/`.
 
-Rename semantics. Slug change means three writes plus a grep: rename the authored file, rename the sidecar at `docs/index/<id>.md`, grep the corpus for `[[old-slug]]` references and rewrite them. Tooling can automate the grep-and-replace; a `rename_node(old, new)` MCP call is a candidate for the indexer's surface.
+Rename semantics. Slug change means three writes plus a grep: rename the authored file, rename the sidecar at `docs/index/<id>.yml`, grep the corpus for `[[old-slug]]` references and rewrite them. Tooling can automate the grep-and-replace; a `rename_node(old, new)` MCP call is a candidate for the indexer's surface.
 
 Wiki-link resolution. `[[foo]]` inside any note body resolves to the node whose id is `foo`. The indexer parses every `[[...]]` at write time and emits an outbound `:mentions` edge on the source node's sidecar. Other edge types (`:cites`, `:contradicts`, `:requires`) require explicit declaration in the sidecar — wiki-link form is reserved for the default `:mentions` semantics.
 
@@ -41,20 +44,40 @@ Broken-link behavior. A `[[foo]]` whose target id does not exist drops silently 
 
 ## Sidecar schema
 
-Two shapes — node sidecars and label sidecars. Both follow the markdown-with-YAML-frontmatter pattern: structured data in frontmatter, optional prose in body. The YAML uses strict mode (no implicit type coercion), with string values quoted in the writer to avoid the Norway-style gotchas.
+Three file kinds carry structured data: authored notes (pure markdown body), sidecars (pure YAML metadata), and optional label envelope files (pure markdown prose). Each file has one role and one format — no mixed frontmatter-in-markdown. The YAML parser uses strict mode (no implicit type coercion), with string values quoted in the writer to avoid the Norway-style gotchas.
 
-### Node sidecar — `docs/index/<id>.md`
+### Authored note — `docs/notes/<id>.md`
 
-Frontmatter fields:
+Pure markdown, no YAML frontmatter. The body's first lines follow a fixed shape the indexer parses at write time:
+
+```
+# Title
+
+One-sentence summary.
+
+(body sections from line 5 onward)
+```
+
+- Line 1: `# Title` — the H1.
+- Line 2: blank.
+- Line 3: one-sentence summary. The indexer caches this to the sidecar's `summary` field.
+- Line 4: blank.
+- Line 5+: body content. Use `[[wiki-link]]` to reference another node — the indexer emits `:mentions` edges automatically.
+
+Labels and explicit out_edges enter through the `insert` and `update` tool calls as parameters, not through the note file. The note carries content only; metadata lives in the sidecar.
+
+### Node sidecar — `docs/index/<id>.yml`
+
+Pure YAML, no markdown wrapper. Fields:
 
 - `id` (required, string) — the filename without `.md`; matches the authored source's filename.
-- `labels` (required, list of strings) — the union of auto-derived labels (`note`, ISO date if applicable) and author-supplied labels from the note's frontmatter.
-- `out_edges` (required, list of edge objects; may be empty) — wiki-link `:mentions` edges parsed from the body plus any explicit edges the author declared in the note's frontmatter.
+- `labels` (required, list of strings) — the union of auto-derived labels (`note`, ISO date if applicable) and author-supplied labels passed to the `insert` or `update` call.
+- `out_edges` (required, list of edge objects; may be empty) — wiki-link `:mentions` edges parsed from the body, plus any explicit author-supplied edges from the tool-call `out_edges` parameter, plus any derived edges preserved from a prior reindex pass.
 - `summary` (required, string) — cached lede; auto-derived at write time from the body's first non-heading line (the line following the H1 and its blank line). Stored on the sidecar so `match`, `Landing`, and `TraversalHit` can return it without reading the full body.
 - `in_edges` (optional, list of edge objects) — cached inversion of incoming edges across the corpus; populated by reindex when corpus size makes on-demand inversion slow.
 - `embedding` (optional, string) — path to the embedding blob; populated by reindex.
 
-Body: typically empty. Reserved for future derived prose (extracted excerpt, generated long-form summary). The authored content lives in the note file, not the sidecar.
+The authored content lives in the note file at `docs/notes/<id>.md`. The sidecar carries no body — pure YAML.
 
 Each `out_edges` or `in_edges` entry:
 
@@ -65,27 +88,33 @@ Each `out_edges` or `in_edges` entry:
 - `source` (optional, string) — how a derived confidence was computed (`minhash`, `embedding-cosine`, etc.). Authored edges omit this field.
 - `rationale` (optional, string) — explanation of the edge, useful for derived edges where the reason is non-obvious.
 
-### Label — body file plus members folder
+### Label — three independent pieces
 
-A label has two on-disk pieces, independent of each other:
+A label can exist as up to three on-disk artifacts, each independent:
 
-- `docs/index/labels/<label>.md` — the label's body file. Optional. Holds the envelope prose for framing-axis labels (`instruction`, `reference`, `observation`) and behavior-modifier prose or landing-page content for topic labels. Frontmatter carries `id` and an optional `summary`.
-- `docs/index/labels/<label>/` — the members folder. Created the first time any node is written carrying this label. Contains one empty marker file per member, named exactly the member's id.
+- `docs/index/labels/<label>.yml` — the label sidecar. Pure YAML metadata. Created with the first member.
+- `docs/index/labels/<label>.md` — the label envelope. Pure markdown prose the loader inlines during `invoke` (envelope text for framing-axis labels; supplementary behavior-modifier prose for topic labels). Optional — present only if there's authored prose to contribute.
+- `docs/index/labels/<label>/` — the members folder. Contains one empty marker file per member, named exactly the member's id.
 
 Membership IS the filesystem. Adding a node to a label creates `docs/index/labels/<label>/<id>` (atomic file creation). Removing drops the file (atomic unlink). Listing members is `os.listdir` over the folder. No central list to rewrite, no alphabetical sort at write time, no contention between writers on different members.
 
-Label body file's frontmatter (when the file exists):
+The three siblings coexist on disk distinguished by suffix: `.yml` is the metadata, `.md` is the envelope prose, the trailing-slash form is the members folder. All target filesystems allow this layout; the implementer discriminates by suffix, not by assuming nesting.
+
+Label names follow the same slug rule as node ids — lowercase, kebab-case, `[a-z0-9-]` characters only. Whitespace and other characters are rejected at write time.
+
+Label sidecar (`<label>.yml`) fields:
 
 - `id` (required, string) — the label string.
 - `summary` (optional, string) — a one-line description of what the label covers.
 - `out_edges` (optional, list of edge objects) — reserved for future label-to-label edges (e.g., hierarchy). Empty day one.
 
-Labels with no body file and no members folder simply don't exist as graph entities yet. A label comes into being the first time a node references it.
+A label with no `.yml`, no `.md`, and no members folder simply doesn't exist as a graph entity yet. A label comes into being the first time a node references it — the indexer creates the sidecar and members folder; the envelope `.md` is only created if someone authors prose for it.
 
 ### Worked example — node sidecar
 
+The sidecar at `docs/index/mcp-server-as-skill-system-runtime.yml`:
+
 ```yaml
----
 id: mcp-server-as-skill-system-runtime
 labels: [note, architecture, mcp, skills]
 out_edges:
@@ -99,23 +128,26 @@ out_edges:
     source: minhash
 summary: the MCP server as runtime for a knowledge-graph-backed skill system
 embedding: docs/index/embeddings/mcp-server-as-skill-system-runtime.npy
----
 ```
 
-### Worked example — label with envelope body and members
+The authored content lives at `docs/notes/mcp-server-as-skill-system-runtime.md` — pure markdown body, no frontmatter.
 
-The body file at `docs/index/labels/instruction.md`:
+### Worked example — label with sidecar, envelope, and members
+
+The label sidecar at `docs/index/labels/instruction.yml`:
 
 ```yaml
----
 id: instruction
 summary: operative guidance the agent should follow
----
+```
 
+The envelope prose at `docs/index/labels/instruction.md`:
+
+```markdown
 The following is operative guidance for your current task. Apply it directly to your next response. Read it as you would read an active section of your system prompt — not as background reading, not as one perspective among many.
 ```
 
-The members folder at `docs/index/labels/instruction/` contains one empty marker file per member:
+The members folder at `docs/index/labels/instruction/`:
 
 ```
 docs/index/labels/instruction/
@@ -126,9 +158,9 @@ docs/index/labels/instruction/
 
 Each marker file is empty; the filename IS the member id.
 
-### Worked example — label with members only, no body
+### Worked example — label with members only, no envelope
 
-For tracking a thread without an authored landing page, the body file at `docs/index/labels/audit-mode-followup.md` is simply absent. Only the members folder exists:
+For tracking a thread without an authored landing page, the envelope `.md` is absent; the sidecar exists for the id and summary; the members folder lists the thread:
 
 ```
 docs/index/labels/audit-mode-followup/
@@ -141,7 +173,7 @@ Listing members is `ls`; the inverted index is the filesystem itself.
 
 ## Label vocabulary
 
-Labels are lowercase, kebab-case for multi-word values. A node carries a set of labels — multi-valued, open vocabulary, any string allowed. Single field `labels:` in note frontmatter holds the author-supplied set; the indexer adds auto-derived labels at write time.
+Labels are lowercase, kebab-case for multi-word values. A node carries a set of labels — multi-valued, open vocabulary, any string matching the `[a-z0-9-]` rule. Author-supplied labels enter through the `labels` parameter on `insert` and `update`; the indexer adds auto-derived labels at write time. Notes themselves carry no frontmatter — the sidecar holds the union.
 
 Auto-derived labels.
 
@@ -156,9 +188,9 @@ Author-supplied labels. The day-one set of conventional names the corpus expects
 - `instruction` — node carries operative guidance the agent should follow. Skills and orchestrator content carry this.
 - `reference` — node is consultable knowledge. Default framing when no framing-axis label is present; rarely needs explicit declaration.
 
-Topic labels (`skills`, `architecture`, `audit-mode-followup`, etc.) join freely from the note's frontmatter.
+Topic labels (`skills`, `architecture`, `audit-mode-followup`, etc.) join freely from the `insert` or `update` tool call.
 
-Framing-axis labels. Three labels — `instruction`, `reference`, `observation` — drive the response envelope on `invoke`. Their corresponding label files at `docs/index/labels/<label>.md` carry envelope prose in the body; the server inlines that prose before the node body when `invoke` serves a node with the label. Other labels with authored bodies (`skills`, etc.) similarly contribute behavior-modifier prose, stacked alongside the framing envelope. `read` ignores all framing and supplementary labels — it applies only the fixed content envelope.
+Framing-axis labels. Three labels — `instruction`, `reference`, `observation` — drive the response envelope on `invoke`. Their envelope files at `docs/index/labels/<label>.md` carry the framing prose; the server inlines that prose before the node body when `invoke` serves a node with the label. Other labels with authored envelopes (`skills`, etc.) similarly contribute behavior-modifier prose, stacked alongside the framing envelope. `read` ignores all framing and supplementary envelopes — it applies only the fixed content envelope.
 
 Validation rule. At most one framing-axis label per node — `instruction`, `reference`, `observation` are mutually exclusive. The indexer rejects writes that violate this. Absence of any framing-axis label defaults to `reference` at retrieval time without storing the label explicitly.
 
@@ -232,8 +264,8 @@ Node: {
   body: string,
   labels: [string],
   out_edges: [Edge],
+  summary: string,
   in_edges?: [Edge],       // present if cached
-  summary?: string,
   embedding?: string       // path to .npy if present
 }
 
@@ -267,7 +299,7 @@ Reads a node as content. Calls `_fetch(id)` internally and frames the body with 
 
 ### `insert(id, body, labels=[], out_edges=[]) -> WriteResult`
 
-Creates a new node. Rejects if a file already exists at `docs/notes/<id>.md`. Triggers synchronous write-time indexing: parses `[[wiki-links]]` from the body and emits `:mentions` edges, validates labels (rejects multi-framing violations), parses the cached summary, writes the sidecar at `docs/index/<id>.md`, creates the membership marker in each label folder the node carries.
+Creates a new node. Rejects if a file already exists at `docs/notes/<id>.md`. Triggers synchronous write-time indexing: parses `[[wiki-links]]` from the body and emits `:mentions` edges, validates labels (rejects multi-framing violations), parses the cached summary, writes the sidecar at `docs/index/<id>.yml`, creates the membership marker in each label folder the node carries.
 
 ### `update(id, body, labels=[], out_edges=[]) -> WriteResult`
 
@@ -275,7 +307,7 @@ Modifies an existing node. Rejects if no file exists at `docs/notes/<id>.md`. Sa
 
 ### `delete(id) -> WriteResult`
 
-Removes a node. Rejects if no file exists at `docs/notes/<id>.md`. Unlinks the authored file, unlinks the sidecar at `docs/index/<id>.md`, and removes the membership marker from every label folder the node carried. Wiki-link references to this id from other notes become dangling — per the broken-link semantic, they drop silently from query results.
+Removes a node. Rejects if no file exists at `docs/notes/<id>.md`. Unlinks the authored file, unlinks the sidecar at `docs/index/<id>.yml`, and removes the membership marker from every label folder the node carried. Wiki-link references to this id from other notes become dangling — per the broken-link semantic, they drop silently from query results.
 
 ### `traverse(from, depth=1, predicate) -> [TraversalHit]`
 
@@ -293,7 +325,16 @@ Default `depth=1` returns the immediate neighbors — the typical "what's around
 
 ### `_fetch(id)` — private primitive
 
-Reads the sidecar at `docs/index/<id>.md` and the authored source at `docs/notes/<id>.md`. Returns a structured record: body text, labels list, out-edges list, and any cached fields. Both `invoke` and `read` consume this; caching at the primitive layer benefits both.
+Reads the sidecar at `docs/index/<id>.yml` (for structured metadata: labels, out_edges, summary, cached fields) and the authored note at `docs/notes/<id>.md` (for body content). The two files store disjoint fields — note has body only, sidecar has metadata only — so there is no field-level conflict to resolve. The hot path returns both verbatim. Membership disagreements (sidecar labels vs label-folder markers) are detected only by the scoped repair-on-read described in [Mid-flight crashes](#mid-flight-crashes). Both `invoke` and `read` consume this primitive; caching at this layer benefits both.
+
+### Input validation
+
+Every public method validates its inputs at the boundary. Two failure modes, distinguished by remediability:
+
+- Invariant violations throw exceptions. These are programming errors — calls that violate the API contract in ways the caller could have prevented (passing `None` for a required string, an out-of-range integer, a malformed Edge object). Throwing surfaces the bug to the caller.
+- Constraint violations return errors (an `ErrorOr`-style result). These are runtime conditions the caller couldn't have known in advance — calling `insert` with an id that already exists, calling `update` on a missing id, supplying labels that fail the `[a-z0-9-]` regex from user input. Returning lets the caller branch on the error.
+
+A shared `slugify(s)` utility canonicalizes any string into the kebab-case form used for ids and labels. The validators reject input that doesn't already conform to canonical form; they don't silently transform. The slugify utility is for the caller to use at the input boundary if it wants to accept looser input.
 
 ### Envelope composition
 
@@ -323,17 +364,18 @@ Day one is fully synchronous. Every operation happens during an `insert`, `updat
 What `insert(id, body, labels, out_edges)` and `update(id, body, labels, out_edges)` do, in order. Step 0 differs between them; the rest is shared.
 
 0. Existence check. `insert` rejects if `docs/notes/<id>.md` already exists; `update` rejects if it doesn't.
-1. Validate labels. Lowercase, kebab-case. At most one framing-axis label (`instruction`, `reference`, `observation`). Reject on violation.
+1. Validate labels. Lowercase kebab-case, `[a-z0-9-]` only. At most one framing-axis label (`instruction`, `reference`, `observation`). Reject on violation.
 2. If labels include `observation` or `journal`, verify the id has an ISO date prefix. Reject if missing.
-3. Write the authored note at `docs/notes/<id>.md` with the provided body and frontmatter.
-4. Parse `[[wiki-links]]` from the body; emit a `:mentions` edge for each into the sidecar's `out_edges`.
-5. Merge author-supplied `out_edges` with parsed `:mentions` edges. Dedupe by `(type, to)`.
-6. Compose auto-derived labels: `note`, plus the ISO date label if applicable.
-7. Parse the cached summary from the body — the first non-heading line after the H1.
-8. Write the sidecar at `docs/index/<id>.md` with the full labels list, merged out_edges, and cached summary.
-9. For each label the node now carries, create an empty marker file at `docs/index/labels/<label>/<id>`. Atomic create-if-not-exists. Create the folder if it doesn't exist.
-10. For each label the node previously carried but no longer does (`update` only), unlink the marker file at `docs/index/labels/<label>/<id>`.
-11. Return `WriteResult` with id and any warnings.
+3. Validate `out_edges`. Reject any author-supplied edge that carries a `source` field — derived edges (`source` set) only arrive via reindex; authors cannot manufacture them.
+4. Write the authored note at `docs/notes/<id>.md`. The note is pure markdown — no frontmatter. Body shape: `# Title` on line 1, blank line 2, one-sentence summary on line 3, blank line 4, body sections from line 5 onward.
+5. Parse `[[wiki-links]]` from the body; emit a `:mentions` edge for each into the sidecar's `out_edges`.
+6. Reconcile `out_edges` with the existing sidecar (on `update`). The new `out_edges` set is: parsed `:mentions` edges from the body (replacement) + author-supplied edges from the tool parameter (replacement of edges without `source`) + existing derived edges from the prior sidecar (edges with `source` set are preserved across updates). Dedupe by `(type, to)`.
+7. Compose auto-derived labels: `note`, plus the ISO date label if applicable.
+8. Parse the cached summary from the body — the line on row 3 (after the H1 and its blank line).
+9. Write the sidecar at `docs/index/<id>.yml` with the full labels list, reconciled out_edges, and cached summary.
+10. For each label the node now carries, create an empty marker file at `docs/index/labels/<label>/<id>`. Atomic create-if-not-exists. Create the folder if it doesn't exist.
+11. For each label the node previously carried but no longer does (`update` only), unlink the marker file at `docs/index/labels/<label>/<id>`.
+12. Return `WriteResult` with id and any warnings.
 
 ### Delete flow
 
@@ -342,13 +384,13 @@ What `delete(id)` does:
 1. Existence check. Reject if `docs/notes/<id>.md` doesn't exist.
 2. Read the sidecar's labels list so we know which membership folders the node was in.
 3. Unlink `docs/notes/<id>.md`.
-4. Unlink `docs/index/<id>.md` (the sidecar).
+4. Unlink `docs/index/<id>.yml` (the sidecar).
 5. For each label the node carried, unlink `docs/index/labels/<label>/<id>`.
 6. Return `WriteResult` with id and any warnings.
 
-Wiki-link references to the deleted id from other notes become dangling and drop silently from query results, per the broken-link semantic.
+Wiki-link references to the deleted id from other notes become dangling and drop silently from query results, per the broken-link semantic. Cached back-references in other nodes' `in_edges` and symmetric `:related` edges don't exist day one (reindex is deferred); when reindex lands, the next pass reconciles back-references to deleted ids.
 
-Per-file writes use temp-and-rename so no individual file appears half-written. Cross-file atomicity is best-effort day one — a crash between writing the sidecar and updating a label file leaves the graph briefly inconsistent until the next `repair` pass reconciles it. The authored note at `docs/notes/<id>.md` is the source of truth; sidecars and label files are derivable projections, so repair is always possible. Cross-file transactional semantics arrive later via a write-ahead journal; specifics are out of scope for day one.
+Per-file writes use temp-and-rename so no individual file appears half-written. Cross-file atomicity is best-effort day one — a crash between writing the sidecar and updating a label folder leaves the graph briefly inconsistent until the next `repair` pass reconciles it. Source of truth is split: notes for body, label-folder markers for membership. Sidecars are derived from both, so repair is always possible. Cross-file transactional semantics arrive later via a write-ahead journal; specifics are out of scope for day one.
 
 ### Search day one
 
@@ -422,16 +464,17 @@ Parallel to Claude Code's existing surface: `invoke` is `/skill` (active skill l
 
 Use `insert(id, body, labels, out_edges)` for new nodes, `update(id, ...)` to modify existing ones, `delete(id)` to remove. Conventions:
 
-- The first line of the body is `# Title` (H1). The line after the blank is a one-sentence summary — the indexer caches this for `match` and `traverse` responses.
-- Labels are lowercase kebab-case. The `note` label is auto-derived; you supply additional ones.
+- Notes are pure markdown — no frontmatter. The body shape: `# Title` on line 1, blank line 2, one-sentence summary on line 3, blank line 4, body sections from line 5. The indexer parses line 3 as the cached summary.
+- Labels are lowercase kebab-case, `[a-z0-9-]` only. The `note` label is auto-derived; supply additional ones via the tool-call `labels` parameter.
 - Date-prefixed id for observations and journal entries: `2026-05-23-design-meeting`. The indexer parses the date from the prefix.
 - Use `[[wiki-link]]` in the body to reference another node — the indexer emits `:mentions` edges automatically.
+- Day one, the `out_edges` parameter is reserved for future edge types and stays empty. All authored edges enter via wiki-links.
 
 ## Vocabulary
 
 - node — a content unit identified by id.
 - edge — a typed connection between two nodes (`mentions`, `related`); has `type`, `to`, optional `confidence`, optional `source`.
-- label — a named set of nodes. Has two on-disk pieces: an optional body file at `docs/index/labels/<label>.md` (envelope or landing prose) and a members folder at `docs/index/labels/<label>/` containing one empty marker file per member.
+- label — a named set of nodes. Has up to three on-disk pieces: a sidecar at `docs/index/labels/<label>.yml` (structured metadata), an optional envelope at `docs/index/labels/<label>.md` (prose the loader inlines during `invoke`), and a members folder at `docs/index/labels/<label>/` containing one empty marker file per member.
 - landing — a node returned by `match`. A role, not a type.
 - framing label — `instruction`, `reference`, or `observation`. The server wraps `invoke` responses with the framing label's body as the envelope; `read` ignores the framing label and applies the fixed content envelope. At most one framing label per node.
 
@@ -455,7 +498,7 @@ Errors return to the caller; no files change.
 
 A single `insert` or `update` call touches up to 2 + N files — the authored note, the sidecar, and one empty membership marker file per label the node carries (plus unlinking markers for labels removed on an update). A `delete` call unlinks the authored file, the sidecar, and the membership markers in every label folder the node was in. The authored note and sidecar use temp-and-rename so they never appear half-written. Membership markers are atomic creates (empty files) and unlinks. Cross-file atomicity across the full set is not guaranteed day one — a crash between marker writes leaves the membership view briefly inconsistent.
 
-Day-one recovery. The authored note at `docs/notes/<id>.md` is the source of truth; the sidecar and the label membership markers are derivable projections. The operational `repair` CLI regenerates them: rewrite the sidecar from the authored note's frontmatter and body; for each label in the node's labels, ensure a marker exists at `docs/index/labels/<label>/<id>` and remove markers in folders the node no longer carries.
+Day-one recovery. The source of truth is split: `docs/notes/<id>.md` is authoritative for body content; the label membership markers in `docs/index/labels/<label>/<id>` are authoritative for which labels a node carries. The sidecar at `docs/index/<id>.yml` is a derived projection of both. The operational `repair` CLI regenerates sidecars by reading body content from the note and label membership from the folder markers; if a sidecar's labels list disagrees with the folder markers, the folder markers win.
 
 Repair-on-read is scoped, not blanket. It fires only on operations that actually consult a label's membership — listing or filtering members of `docs/index/labels/<label>/` triggers a check against the folder. Node fetches via `_fetch(id)` do not validate label markers; the consistency check rides only on the path that depends on the data.
 
@@ -464,7 +507,7 @@ Future cross-file atomicity will use a write-ahead journal on top of the file st
 ### Read failures
 
 - Missing id: `invoke`, `read`, `traverse(from=missing)` return an error.
-- Corrupt sidecar (YAML parse fails): rebuild from the authored file via an operational `repair(id)` CLI. The schema is fully derivable from the authored content.
+- Corrupt sidecar (YAML parse fails): rebuild via the operational `repair(id)` CLI. The sidecar is fully derivable from the authored note (body, parsed `:mentions` edges, cached summary) plus the label folders that contain a marker for this id.
 - Dangling out_edge target: `invoke(target)` returns an error when the reader follows the edge. The indexer doesn't pre-validate edge targets at read time.
 
 ### Concurrency
@@ -479,8 +522,8 @@ Future multi-writer support adds file locking on the per-node write path, paired
 
 When the index disagrees with the authored corpus, the authored corpus wins. An operational `repair(scope)` CLI handles recovery:
 
-- For one node: regenerate its sidecar from the authored content; reconcile membership markers for each of its labels.
-- For all nodes: walk `docs/notes/`, regenerate every sidecar; walk `docs/index/labels/*/`, drop markers whose corresponding node doesn't list that label, add missing markers for labels each node claims.
+- For one node: regenerate its sidecar from the authored note plus the label-folder markers that reference its id.
+- For all nodes: walk `docs/notes/` to enumerate notes; walk `docs/index/labels/*/` to enumerate memberships; regenerate every sidecar from those two sources. Drop label-folder markers that point at non-existent notes (orphans from deleted notes that weren't fully cleaned).
 
 Full-corpus repair is the "I broke the index" escape hatch — slow but always correct.
 
