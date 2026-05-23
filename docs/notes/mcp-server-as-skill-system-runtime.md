@@ -2,6 +2,8 @@
 
 The MCP server is the runtime for a knowledge-graph-backed skill system — nodes (notes, decisions, skills) load on demand through a small stable tool surface, and a property-graph index projected from notes (mechanical edges at write, semantic edges via scheduled reindex) replaces the always-loaded skill-frontmatter cap with O(tool count) overhead.
 
+> See `[[mcp-graph-runtime-data-model]]` for the resolved day-one specification. This note records the design exploration that led there. Sections marked _superseded_ below preserve the discovery path; specifics like tool names, edge types, and label capitalization have since been refined. The data-model is canonical when they conflict.
+
 ## The reframe
 
 `[[prototype-the-plugin-mcp-server-in-python]]` motivates the MCP server as a write-path delivery mechanism — transport for `record_note` and `record_journal_entry`, replacing bash scripts that choke on quoting edge cases. The bigger thesis: the MCP server is the runtime for a knowledge-graph-backed content layer. Notes, journal entries, decisions, references — and possibly skill bodies themselves — live as graph nodes on disk. The agent loads any of them on demand through a small, stable MCP tool surface. The write path is one slice of that surface.
@@ -14,6 +16,8 @@ MCP inverts the dimensionality. One server's tool schemas cost O(tool count) —
 
 ## Proposed shape
 
+_Superseded — see `[[mcp-graph-runtime-data-model]]` for the locked tool surface and node-type decisions._
+
 Speculative — the architecture as currently envisioned, not yet built.
 
 - One orchestrator skill teaches the graph. Single frontmatter slot covering an unbounded knowledge surface. The skill body explains node types, edge semantics, traversal heuristics, and the MCP tools that read and write the graph.
@@ -23,6 +27,8 @@ Speculative — the architecture as currently envisioned, not yet built.
 - `[[writing-prose]]` stays as the universal spine. The composition rubric that today lives in `[[taking-notes]]` and `[[journaling]]` folds into the orchestrator's "node types" section. `writing-prose` keeps its role as the prose foundation both compose on top of.
 
 ## Node labels drive injection framing
+
+_Superseded — framing labels are lowercase (`instruction`, `reference`, `observation`) in the data-model, and framings collapsed into the labels axis. The discovery here remains correct; the names have been updated._
 
 Loading a node from the graph is a delivery moment, and the delivery shapes how the agent treats the payload. Claude Code's skill loader does heavy pre-rendering before injection — wraps the body in a slash-command envelope, prepends a base-directory line, expands `${CLAUDE_PLUGIN_ROOT}`, runs backtick-cat interpolations to inline sibling components — but the resulting text carries no structural "treat as instructions" marker. A skill's authority is rhetorical: imperative voice in the body, plus the system-reminder skill list that nudges invocation in the first place.
 
@@ -44,6 +50,8 @@ The parallel that confirms the broader pattern: an LSP server exposes a graph to
 
 ## Progressive disclosure — traversal pattern
 
+_Superseded — the tools are `match`, `load`, `read`, `write`, `traverse` in the data-model. The traversal model (aid-station, depth-first from landings) is retained._
+
 The agent's query pattern is depth-first from a landing page, not global filter. An aid-station flowchart: enter at "tell me where it hurts," follow the answer to the next page, repeat. The patient never asks for the full table of contents.
 
 A corpus designed this way needs only two reads to be navigable:
@@ -58,6 +66,8 @@ This collapses what the indexer must do at query time. Global queries ("all deci
 Edges carry the navigational weight. `:elaborates`, `:contradicts`, `:requires`, `:next-step`, `:see-also` — the vocabulary is what makes the book navigable. Without rich edge labels, the agent reaches a node but can't choose its next step.
 
 ## Composable skills via dependency edges
+
+_Superseded — skills are deferred from the day-one graph; they stay as Claude Code skills bootstrapping from the CLI. The composition pattern described here applies when skills enter the graph in a later pass._
 
 Skills are graph nodes carrying the `:Instruction` label and `:requires` edges to other skill-nodes. A "skill that knows how to load skills" is a meta-node whose body teaches the traversal protocol: enter at a landing, follow `:requires` edges, fetch each target with the instruction envelope.
 
@@ -74,6 +84,8 @@ Side benefit: edges can carry versions. A skill node may have several bodies; th
 
 ## Tag-nodes as first-class graph nodes
 
+_Superseded — tags collapsed into the general label axis. Every label is a node-like file at `docs/index/labels/<label>.md` with a members list and optional behavior-modifier body; there is no separate `:Tag` label type and no `:contains` edge. The insight that categorical membership wants first-class node files survives; the naming has been refined._
+
 Categorical membership becomes a node type rather than a flat property or a virtual lookup. Every tag has a sidecar at `docs/index/<tag>.md`, carries the `:Tag` label, owns its membership outbound, and serves as a landing page the agent reaches through `find_entry`.
 
 Why nodes and not properties: in any property graph, finding all notes tagged X requires an index over the property values. In a filesystem-as-graph model with no engine maintaining hidden state, that index has to live on disk as a file mapping tag-name to members — functionally identical to a tag-node's outbound edges, renamed and accessed through a dedicated tool. Surfacing the index as a node keeps the design uniform: every thing the agent reads is a node fetched through `get_node`.
@@ -87,6 +99,8 @@ Tag-nodes carry their own metadata. A hand-written summary explains what the cat
 One trade worth naming. From a note's sidecar, the agent can't directly enumerate "what categories is this in" without scanning tag-nodes or hitting a derived cache. Per [Progressive disclosure](#progressive-disclosure--traversal-pattern), the agent reaches a note through a landing or by name, so the path discloses the topic context. If reverse lookup ever becomes a hot path, add a `docs/index/_meta.json` entry per note mapping note → tags.
 
 ## Indexer architecture
+
+_Superseded — the data-model locks: storage layout (`docs/index/<id>.md` flat sidecars; `docs/index/labels/<label>.md` inverted index); two day-one edge types (`mentions`, `related`); reindex deferred (no two-phase update day one — synchronous write-time only); BM25 day one for `match`; embeddings via Ollama later. The discussion below preserves the design exploration; the data-model is canonical for what ships._
 
 ### Index as projection of notes
 
@@ -167,6 +181,8 @@ The Python-MCP choice from the existing note remains correct as means. Source-in
 
 ## What this changes if adopted
 
+_Superseded — see the data-model for the concrete day-one delta. Bullets below describe the broader thesis-level changes; specific tool names and labels have been refined._
+
 - Tool surface grows from write to read + write. The original note's tool list (`record_note`, `record_journal_entry`, slugify, header-format) becomes a subset. Read tools (`get_node`, `find_entry`) and indexer control (`reindex`) join. Global-query tools wait for a query pattern that needs them.
 - Index becomes a first-class artifact the MCP server owns. Per-node sidecar files on disk, projected from notes, mutated by both synchronous write-time updates and asynchronous reindex passes.
 - Edges become a first-class data type. Bash scripts today write files; the MCP server in the runtime thesis owns the edge graph in all three of its forms (authored, mechanically derived, semantically derived).
@@ -178,17 +194,7 @@ The Python-MCP choice from the existing note remains correct as means. Source-in
 
 ## Open questions
 
-- Does the Claude Code skill mechanism stay as a one-slot shim (the orchestrator skill points at the MCP server, the rest of the surface lives in the graph), or do skills move entirely into the graph with no Claude Code skill at all? The trigger language Claude Code provides ("Use when…") is doing real work today — moving fully into the graph requires reimplementing triggering.
-- How does triggering work when skills live as graph nodes? Candidates: agent searches the graph proactively at task start, a `list_relevant_skills(query)` tool runs early, or the orchestrator skill body teaches the agent to query the graph on each new task. None proven; pick during prototype.
-- Does the orchestrator subsume `[[taking-notes]]` and `[[journaling]]`, or coexist with them as a higher-level skill that delegates to them?
-- Reindex scheduling mechanism. Cron-style periodic, file-watcher-driven, event-driven (after K writes since last reindex), lazy-on-read (reindex when an agent queries and mtimes have changed), or hybrid. Each has different operational shape and different failure modes.
-- Index file location. `docs/index/` next to `docs/notes/`, or sidecars co-located alongside their notes in the same directory? Co-location keeps a note and its index together; separation keeps the indexer's write surface isolated.
-- Confidence score semantics. How stored, how queried, what default threshold filters derived edges out of normal query results, when does the indexer prune low-confidence edges?
-- Embedding model choice for candidate retrieval. Ships with the plugin, or assumes an external service? Cost and trust implications either way.
-- Label vocabulary. Day-one set covers framing (`:Instruction`, `:Reference`, `:Observation`) and node-type routing (`:Note`, `:JournalEntry`, `:Decision`, `:Skill`, `:Tag`). Single label set with both axes mixed, or two orthogonal axes (framing label + type label) on every node? Mixed risks ambiguity; orthogonal doubles the label fields.
-- Edge vocabulary. Which edge types ship on day one — `:requires`, `:elaborates`, `:contradicts`, `:see-also`, `:next-step`? Define too few and the agent can reach a node but can't choose what's next; define too many and authors guess between near-synonyms.
-- `find_entry` implementation. Embedding search over node summaries, keyword search, or hand-curated landing list in the orchestrator skill body? First two assume an embedding index already exists; the third doesn't scale past a small graph.
-- Lazy vs inline default per edge. Lazy is the proposed default, but tightly-coupled compositions (`writing-prose` inside every prose skill) may want inline. Prototype usage decides the right default and the markers that override it.
+All resolved or explicitly deferred in `[[mcp-graph-runtime-data-model]]`. Refer there for current status; the data-model is canonical when this note's specifics conflict with it.
 
 ## References
 
