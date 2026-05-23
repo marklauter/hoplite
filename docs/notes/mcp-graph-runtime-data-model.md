@@ -1,6 +1,6 @@
 # MCP graph runtime data model
 
-Locks down the concrete shapes and contracts the parent note `[[mcp-server-as-skill-system-runtime]]` leaves abstract — storage layout, sidecar schema, label and edge vocabularies, tool API JSON shapes, the indexer's write and reindex operations, and the orchestrator skill body that bootstraps the agent into the graph.
+Locks down the concrete shapes and contracts the parent note `[[mcp-server-as-skill-system-runtime]]` leaves abstract — storage layout, sidecar schema, label and edge vocabularies, tool API contracts, the indexer's write and reindex operations, and the orchestrator skill body that bootstraps the agent into the graph.
 
 ## Storage layout
 
@@ -38,7 +38,7 @@ Why no separate framings directory. Framings collapse into labels. `instruction`
 
 Rename semantics. Slug change means three writes plus a grep: rename the authored file, rename the sidecar at `docs/index/<id>.yml`, grep the corpus for `[[old-slug]]` references and rewrite them. Tooling can automate the grep-and-replace; a `rename_node(old, new)` MCP call is a candidate for the indexer's surface.
 
-Wiki-link resolution. `[[foo]]` inside any note body resolves to the node whose id is `foo`. The indexer parses every `[[...]]` at write time and emits an outbound `:mentions` edge on the source node's sidecar. Other edge types (`:cites`, `:contradicts`, `:requires`) require explicit declaration in the sidecar — wiki-link form is reserved for the default `:mentions` semantics.
+Wiki-link resolution. `[[foo]]` inside any note body resolves to the node whose id is `foo`. The indexer parses every `[[...]]` at write time and emits an outbound `:mentions` edge on the source node's sidecar. Edge types beyond `:mentions` and `:related` (aspirational examples: `:cites`, `:contradicts`, `:requires`) require explicit declaration via the `out_edges` parameter on `insert`/`update` — wiki-link form is reserved for the default `:mentions` semantics. The aspirational types aren't yet in the day-one edge vocabulary.
 
 Broken-link behavior. A `[[foo]]` whose target id does not exist drops silently — no edge is emitted, no error. Authors can grep the corpus for orphaned wiki-link patterns when they want a broken-link report; the indexer does not maintain a dangling-edge registry.
 
@@ -81,7 +81,7 @@ The authored content lives in the note file at `docs/notes/<id>.md`. The sidecar
 
 Each `out_edges` or `in_edges` entry:
 
-- `type` (required, string) — edge type, lowercase kebab-case (e.g., `mentions`, `cites`, `contradicts`, `requires`, `see-also`).
+- `type` (required, string) — edge type, lowercase kebab-case. Day-one vocabulary is `mentions` and `related` (see [Edge vocabulary](#edge-vocabulary)); aspirational types like `cites`, `contradicts`, `requires`, `see-also` are reserved for future passes.
 - `to` (required, string; for `out_edges`) — target node id.
 - `from` (required, string; for `in_edges`) — source node id.
 - `confidence` (optional, float in `[0, 1]`) — edge strength. Authored edges carry implicit confidence 1.0; derived edges (MinHash, embedding similarity) carry the signal's score. The query API filters traversal by minimum confidence.
@@ -264,22 +264,20 @@ Landing: { id, summary, labels, score }
 
 Edge: { type, to, confidence?, source?, rationale? }
 
-InvokedNode: {
-  id,
-  envelope: string,        // composed envelope text (framing + label bodies)
-  body: string,            // node body content
-  labels: [string],
-  out_edges: [Edge]
+Envelope: {
+  framing: string,                          // primary contract (framing-axis label body, or read content envelope)
+  primes: [{label: string, body: string}]   // supplementary label bodies, alphabetical by label; empty for read
 }
 
-Node: {
+FetchedNode: {
   id,
-  body: string,
-  labels: [string],
-  out_edges: [Edge],
-  summary: string,
-  in_edges?: [Edge],       // present if cached
-  embedding?: string       // path to .npy if present
+  envelope: Envelope,      // start of the response
+  labels: [string],        // meta
+  summary: string,         // meta
+  out_edges: [Edge],       // meta
+  in_edges?: [Edge],       // meta, present if cached
+  embedding?: string,      // meta, path to .npy if present
+  body: string             // node body content (end of the response)
 }
 
 TraversalHit: {
@@ -302,13 +300,15 @@ Returns up to `k` landings ranked by relevance to the predicate. Day one, the pr
 
 `score` is the raw BM25 score day one (and later, raw cosine similarity when embeddings are wired in). Comparable within a single `match()` call as a sort key. Not comparable across calls — different predicates produce incomparable absolute magnitudes.
 
-### `invoke(id) -> InvokedNode`
+### `invoke(id) -> FetchedNode`
 
-Invokes a node as a directive. Calls `_fetch(id)` internally, composes the envelope (framing body + stacked label bodies), returns the framed content. The verb declares intent: calling `invoke` is the agent committing to read the response under whatever framing the node's framing-axis label sets — `instruction` to follow, `reference` to factor into reasoning, `observation` to treat as historical record.
+Invokes a node as a directive. Calls `_fetch(id)` internally; populates `envelope.framing` with the framing-axis label's body (defaulting to the `reference` envelope when none is present) and `envelope.primes` with the bodies of any other labels the node carries (alphabetical by label name). The verb declares intent: calling `invoke` is the agent committing to read the response under whatever framing the node's framing-axis label sets — `instruction` to follow, `reference` to factor into reasoning, `observation` to treat as historical record.
 
-### `read(id) -> Node`
+### `read(id) -> FetchedNode`
 
-Reads a node as content. Calls `_fetch(id)` internally and frames the body with the fixed content envelope (label-independent). The content envelope overrides any framing-axis label on the node — an `instruction` node returned via `read` is treated as data, not as guidance. The path the agent uses when it intends to inspect, edit, refactor, or extract from the node as text.
+Reads a node as content. Calls `_fetch(id)` internally; populates `envelope.framing` with the fixed content envelope (label-independent) and leaves `envelope.primes` empty. The content envelope overrides any framing-axis label on the node — an `instruction` node returned via `read` is treated as data, not as guidance. The path the agent uses when it intends to inspect, edit, refactor, or extract from the node as text.
+
+Same `FetchedNode` shape as `invoke` — both return envelope + meta + body. The verb chooses what fills `envelope.framing` and whether `envelope.primes` is populated; the shape is uniform.
 
 ### `insert(id, body, labels=[], out_edges=[]) -> WriteResult`
 
@@ -355,22 +355,21 @@ A shared `slugify(s)` utility canonicalizes any string into the kebab-case form 
 
 ### Envelope composition
 
-Both verbs frame the response. They differ in which envelope they apply and what they stack with it.
+Both verbs return the same `FetchedNode` shape. They differ in what populates the `envelope` field.
 
-`invoke` composes three layers, ordered to align with LLM attention patterns (start and end of a stacked context dominate; the middle is the weak position):
+For `invoke`:
 
-1. Framing envelope (start) — body of the framing-axis label's file (`instruction`, `reference`, or `observation`). Defaults to `reference` when no framing-axis label is present. Sets the contract for reading everything that follows.
-2. Supplementary label bodies (middle) — bodies of any other labels the node carries, in alphabetical order by label name. Authored prose primes context without competing for the strong positions.
-3. Node body (end) — the payload. Sits at the strong-recency position.
+- `envelope.framing` — body of the framing-axis label's file (`instruction`, `reference`, or `observation`). Defaults to the `reference` envelope when no framing-axis label is present. Sets the contract for reading everything that follows.
+- `envelope.primes` — bodies of any other labels the node carries (excluding the framing-axis label), sorted alphabetically by label name. Authored prose primes context without competing for the strong positions.
 
-`read` composes two layers:
+For `read`:
 
-1. Content envelope (start) — the fixed content envelope at `docs/index/envelopes/read.md`. Label-independent. Tells the agent the payload is data, not directive. Overrides any framing the node's labels would otherwise carry.
-2. Node body (end) — the raw payload.
+- `envelope.framing` — the fixed content envelope at `docs/index/envelopes/read.md`. Label-independent. Tells the agent the payload is data, not directive. Overrides any framing the node's labels would otherwise carry.
+- `envelope.primes` — always empty. `read` isn't engaging the node behaviorally, so supplementary primes get dropped.
 
-`read` drops the supplementary label bodies — they prime behavior, and `read` isn't engaging the node behaviorally. The framing-axis label drives only `invoke`'s envelope; `read`'s envelope is fixed regardless of label.
+The structure stays inspectable: a caller can ask "what's the framing here?" or "which labels primed this response?" without parsing a blob. The agent (or its runtime) composes for display by concatenating `framing` + `primes[*].body` + node `body` in that order. The order aligns with LLM attention patterns — framing at the strong start position, body at the strong end position, supplementary primes in the middle.
 
-Envelope size. With several labels carrying authored bodies, an `invoke` response can grow long. No hard cap day one; the constraint is authoring discipline (keep label bodies short and operative). If responses balloon in practice, add a `max_envelope_tokens` config knob: the server truncates supplementary bodies in alphabetical order to fit, framing envelope and node body always intact. The framing-axis envelope and the node body are load-bearing; supplementary primes are nice-to-have.
+Envelope size. With several labels carrying authored bodies, an `invoke` response can grow long. No hard cap day one; the constraint is authoring discipline (keep label bodies short and operative). If responses balloon in practice, add a `max_envelope_tokens` config knob: the server truncates `envelope.primes` in alphabetical order to fit, leaving `framing` and `body` always intact. The framing-axis envelope and the node body are load-bearing; supplementary primes are nice-to-have.
 
 ## Indexer operations
 
@@ -486,7 +485,7 @@ Use `insert(id, body, labels, out_edges)` for new nodes, `update(id, ...)` to mo
 - Labels are lowercase kebab-case, `[a-z0-9-]` only. The `note` label is auto-derived; supply additional ones via the tool-call `labels` parameter.
 - Date-prefixed id for observations and journal entries: `2026-05-23-design-meeting`. The indexer parses the date from the prefix.
 - Use `[[wiki-link]]` in the body to reference another node — the indexer emits `:mentions` edges automatically.
-- Day one, all authored edges enter via wiki-links. The `out_edges` parameter accepts edge objects with `type` and `to` fields (no `source` field — that's reserved for derived edges from reindex), but day-one convention is to leave it empty and let body wiki-links handle the work. The parameter exists for future edge types beyond `:mentions`; until those land, prefer wiki-links.
+- Body wiki-links produce `:mentions` edges automatically. The `out_edges` parameter on `insert`/`update` accepts any authored edge object with `type` and `to` fields (no `source` — that's reserved for derived edges from reindex). Day one this includes `:related` if you want to declare an authored relatedness edge; future edge types beyond `:mentions` and `:related` land here too.
 
 ## Vocabulary
 
@@ -494,7 +493,7 @@ Use `insert(id, body, labels, out_edges)` for new nodes, `update(id, ...)` to mo
 - edge — a typed connection between two nodes (`mentions`, `related`); has `type`, `to`, optional `confidence`, optional `source`.
 - label — a named set of nodes. Has up to three on-disk pieces: a sidecar at `docs/index/labels/<label>.yml` (structured metadata), an optional envelope at `docs/index/labels/<label>.md` (prose the loader inlines during `invoke`), and a members folder at `docs/index/labels/<label>/` containing one empty marker file per member.
 - landing — a node returned by `match`. A role, not a type.
-- framing label — `instruction`, `reference`, or `observation`. The server wraps `invoke` responses with the framing label's body as the envelope; `read` ignores the framing label and applies the fixed content envelope. At most one framing label per node.
+- framing label — `instruction`, `reference`, or `observation`. The server wraps `invoke` responses with the framing label's body as the envelope; `read` ignores the framing label and applies the fixed content envelope. At most one framing label per node. Use `apply_framing` to add envelope prose to any other label — including overriding the shipped envelopes for the three framing-axis labels.
 
 ## Failure modes
 
@@ -509,6 +508,7 @@ The indexer refuses the write and leaves the graph unchanged when:
 - Labels include `observation` or `journal` and the id lacks an ISO date prefix.
 - `insert(id, ...)` is called with an id whose authored file already exists.
 - `update(id, ...)` or `delete(id)` is called with an id whose authored file doesn't exist.
+- Body fails the required shape: H1 on line 1, blank on line 2, non-empty summary on line 3, blank on line 4. The summary line is required because the indexer caches it to the sidecar and `match`/`traverse` depend on it.
 
 Errors return to the caller; no files change.
 
@@ -524,7 +524,8 @@ Future cross-file atomicity will use a write-ahead journal on top of the file st
 
 ### Read failures
 
-- Missing id: `invoke`, `read`, `traverse(from=missing)` return an error.
+- Missing id: `invoke`, `read`, `traverse(from=missing)` return an error. "Missing" means no authored file at `docs/notes/<id>.md` — the node was never inserted or has been deleted.
+- Missing sidecar with authored file present: the indexer surfaces an error noting the sidecar is absent. The body is still readable from the authored file, so the result can carry the body alongside the error for the caller's use. Auto-repair on this path is deferred — for day one, surface the inconsistency and let the operational `repair(id)` CLI rebuild.
 - Corrupt sidecar (YAML parse fails): rebuild via the operational `repair(id)` CLI. The sidecar is fully derivable from the authored note (body, parsed `:mentions` edges, cached summary) plus the label folders that contain a marker for this id.
 - Dangling out_edge target: `invoke(target)` returns an error when the reader follows the edge. The indexer doesn't pre-validate edge targets at read time.
 
