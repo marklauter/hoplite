@@ -1,62 +1,12 @@
 # Implementation alternatives
 
-[Implementation, future] Storage and operational variants that swap or extend the day-one file-based design. Contracts in [data-model.md](data-model.md), [tool-api.md](tool-api.md), [behavior.md](behavior.md), and [orchestrator-skill.md](orchestrator-skill.md) stay unchanged across all of these.
+[Implementation, overlay] Operational extensions that apply on top of either implementation A ([file-based](implementation-file-based.md)) or implementation B ([SQLite-hybrid](implementation-sqlite-hybrid.md)). Contracts in [data-model.md](data-model.md), [tool-api.md](tool-api.md), [behavior.md](behavior.md), and [orchestrator-skill.md](orchestrator-skill.md) stay unchanged across all of these.
 
-## SQLite for the relational layer
+The SQLite-hybrid implementation moved out of this file into [implementation-sqlite-hybrid.md](implementation-sqlite-hybrid.md) as a peer to the file-based implementation. The two implementations are alternatives; the overlays below apply to whichever one is chosen.
 
-The day-one folder-per-label scheme is a degenerate key-value store: folder is the table, filename is the key, empty file is value-by-presence. Same semantics as `PutItem` with no attributes. SQLite gives the same semantics in one file with real query capability.
+## Write-ahead journal for cross-file atomicity (file-based only)
 
-The hybrid: SQLite for the relational layer, files for the prose layer.
-
-```
-Files (content + prose):
-  docs/notes/<id>.md                authored notes (unchanged)
-  docs/index/labels/<label>.md      label envelopes (unchanged)
-  docs/index/envelopes/read.md      read content envelope (unchanged)
-  docs/index/embeddings/<id>.npy    embedding blobs (unchanged)
-
-SQLite (everything relational):
-  docs/index/graph.db               single file holding:
-    - nodes (id, summary)
-    - labels (id, summary, has_envelope)
-    - label_membership (label, member_id)
-    - edges (source_id, type, target_id, confidence, source, rationale)
-```
-
-What collapses from [implementation-file-based.md](implementation-file-based.md):
-
-- Per-node `.yml` sidecars become rows in `nodes` plus their owned `edges`.
-- Per-label `.yml` sidecars become rows in `labels`.
-- Membership marker files become rows in `label_membership`.
-
-What stays unchanged:
-
-- Tool API surface — identical signatures, identical semantics.
-- Envelope composition — framing + primes from label envelopes' `.md` prose.
-- Notes stay as files. Label envelope prose stays as files. Embedding blobs stay as files.
-- Source-of-truth split — notes for body content, label envelope files for prose. Relational state in SQLite becomes the new source of truth for memberships and edges; the database's ACID guarantees replace the day-one repair-on-read story.
-
-What it buys:
-
-- Composite queries — "all nodes labeled X AND not labeled Y" is one SQL statement instead of N filesystem reads.
-- Bidirectional indexes — "which labels does node X carry" and "which nodes carry label X" are both fast queries against indexed columns.
-- Edge graph proper — `out_edges` and cached `in_edges` become two views of one source of truth. The "symmetric `:related` edges written on both sides" trick goes away — store once, query either direction.
-- Bulk writes — a reindex pass touching 1000 membership entries is one transaction instead of 1000 filesystem operations.
-- ACID writes — no more best-effort cross-file atomicity; the database handles it.
-
-What it costs:
-
-- `ls docs/index/labels/skills/` no longer enumerates members. Membership queries go through the MCP API (which is the use case anyway — agents call `traverse`/`match`, not `ls`).
-- Per-membership git diff goes away. But membership churn isn't typically interesting in commits; content changes are.
-- Hand-editing memberships becomes API-only. For an agentic system this is right.
-
-Plugin packaging: Python's stdlib has `sqlite3` — no dependency to add. The `.db` file is created on first run via a schema migration in startup code; gitignored.
-
-Triggers for moving to this implementation: popular-label contention surfaces, transactional needs across multiple entities become load-bearing, or `:related` edge reindex passes need batch performance the filesystem can't deliver.
-
-## Write-ahead journal for cross-file atomicity
-
-Day-one [implementation-file-based.md](implementation-file-based.md#atomicity) is best-effort across files — per-file writes use temp-and-rename, but a crash mid-sequence leaves the index briefly inconsistent.
+The [file-based implementation](implementation-file-based.md#atomicity) is best-effort across files — per-file writes use temp-and-rename, but a crash mid-sequence leaves the index briefly inconsistent.
 
 A write-ahead journal lifts the guarantee to genuine cross-file transactional semantics:
 
@@ -65,20 +15,17 @@ A write-ahead journal lifts the guarantee to genuine cross-file transactional se
 - On clean completion, remove the journal record.
 - On startup, replay any non-empty journal records — finishing partial writes or rolling them back.
 
-Combined with file locking on the per-node write path (see below), this closes the half-written-graph window without abandoning the filesystem-as-storage shape. Specifics are designed when the day-one shape's limits become visible.
+Combined with file locking on the per-node write path (see below), this closes the half-written-graph window without abandoning the filesystem-as-storage shape.
 
-If the SQLite-for-relational alternative lands first, this concern dissolves into SQLite's native ACID — no journal-on-files needed.
+If the SQLite-hybrid implementation is chosen instead, this concern dissolves into SQLite's native ACID — no journal-on-files needed. The overlay applies only when the chosen implementation is file-based.
 
 ## Multi-writer support
 
-Day one assumes a single writer. Multi-agent is the actual target. Multi-writer support adds:
+Day one assumes a single writer. Multi-agent is the actual target. The story differs by chosen implementation:
 
-- File locking on the per-node write path — `docs/notes/<id>.md` and `docs/index/<id>.yml`. Simultaneous writes to the same node serialize.
-- The write-ahead journal above for cross-file atomicity across the per-node + per-label operation sequence.
+Under the file-based implementation: add file locking on the per-node write path — the authored note file plus the node's sidecar. Simultaneous writes to the same node serialize. The folder-per-label membership shape already removes the popular-label contention concern. Combine with the write-ahead journal above for cross-file atomicity across the per-node + per-label operation sequence.
 
-The folder-per-label membership shape already removes what would have been the worst contention point. Two writers updating different members of the same popular label never collide — they create different filenames.
-
-Under the SQLite alternative, multi-writer collapses to SQLite's connection model with WAL mode. The per-node locking and journal needs go away.
+Under the SQLite-hybrid implementation: multi-writer collapses to SQLite's connection model with WAL mode. The database serializes writers natively; the only remaining concern is the per-node authored file write, which still needs per-id file locking. The journal-on-files mechanism is unneeded — SQLite's transactional commit covers what the journal was for.
 
 ## Source files as graph nodes
 

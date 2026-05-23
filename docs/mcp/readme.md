@@ -6,7 +6,7 @@ The agent-facing spec for an MCP-backed knowledge graph runtime, split into stab
 
 The MCP graph runtime is a knowledge-graph-backed knowledge base for agentic systems. Agents discover content through `match`, navigate via typed edges, invoke nodes under explicit framing contracts, and write back through transactional verbs. The graph compounds as the agent learns; the system maintains consistency the agent would otherwise have to remember.
 
-This spec is organized as four contract files (stable, implementation-agnostic) and two implementation files (one per storage substrate). To swap storage backends, change the implementation file. Contracts stay put.
+This spec is organized as four contract files (stable, implementation-agnostic) plus two peer implementation files (one per storage substrate — file-based or SQLite-hybrid) and one overlay file (extensions that layer on either substrate). To swap storage backends, change which implementation file is active. Contracts stay put.
 
 ## Status of each file
 
@@ -14,8 +14,9 @@ This spec is organized as four contract files (stable, implementation-agnostic) 
 - [tool-api.md](tool-api.md) — [Contract] Tool signatures and semantics. Stable. Nine agent-facing tools.
 - [behavior.md](behavior.md) — [Contract] Validation rules, envelope composition, label and edge vocabularies, error model. Stable.
 - [orchestrator-skill.md](orchestrator-skill.md) — [Contract] The SKILL.md body the agent loads on first interaction. Stable.
-- [implementation-file-based.md](implementation-file-based.md) — [Implementation, day-one] File-based storage. The shipping default.
-- [implementation-alternatives.md](implementation-alternatives.md) — [Implementation, future] SQLite-for-relational hybrid, multi-writer support, write-ahead journaling, code-as-content.
+- [implementation-file-based.md](implementation-file-based.md) — [Implementation, option A] File-based storage. Notes, sidecars, label envelopes, membership markers all on disk. Greppable, hand-editable, git-friendly.
+- [implementation-sqlite-hybrid.md](implementation-sqlite-hybrid.md) — [Implementation, option B] SQLite for the relational layer, files for the prose layer. Notes and envelopes stay as markdown; sidecars, memberships, edges, and FTS5 search live in one SQLite database.
+- [implementation-alternatives.md](implementation-alternatives.md) — [Implementation, future] Multi-writer support, write-ahead journaling, code-as-content, embeddings via Ollama. Apply on top of either implementation A or B.
 
 ## Contracts versus implementation
 
@@ -31,8 +32,9 @@ Read in order on first pass:
 2. [tool-api.md](tool-api.md) — the API the agent calls
 3. [behavior.md](behavior.md) — how it composes and validates
 4. [orchestrator-skill.md](orchestrator-skill.md) — the protocol the agent follows
-5. [implementation-file-based.md](implementation-file-based.md) — how the day-one shipping version maps onto disk
-6. [implementation-alternatives.md](implementation-alternatives.md) — future implementation directions
+5. [implementation-file-based.md](implementation-file-based.md) — option A: file-based mapping
+6. [implementation-sqlite-hybrid.md](implementation-sqlite-hybrid.md) — option B: SQLite for relational layer, files for prose
+7. [implementation-alternatives.md](implementation-alternatives.md) — overlay extensions (multi-writer, embeddings, code-as-content)
 
 ## Cross-references
 
