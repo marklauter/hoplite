@@ -28,7 +28,7 @@ Speculative — the architecture as currently envisioned, not yet built.
 
 ## Node labels drive injection framing
 
-_Superseded — framing labels are lowercase (`instruction`, `reference`, `observation`) in the data-model, and framings collapsed into the labels axis. The discovery here remains correct; the names have been updated._
+_Superseded — framing labels are lowercase (`instruction`, `reference`, `observation`) in the data-model, and framings collapsed into the labels axis. Framing also splits by verb: `invoke` applies the framing-axis label's envelope; `read` applies a fixed label-independent content envelope. The discovery here remains correct; the names and the verb-asymmetry have been refined._
 
 Loading a node from the graph is a delivery moment, and the delivery shapes how the agent treats the payload. Claude Code's skill loader does heavy pre-rendering before injection — wraps the body in a slash-command envelope, prepends a base-directory line, expands `${CLAUDE_PLUGIN_ROOT}`, runs backtick-cat interpolations to inline sibling components — but the resulting text carries no structural "treat as instructions" marker. A skill's authority is rhetorical: imperative voice in the body, plus the system-reminder skill list that nudges invocation in the first place.
 

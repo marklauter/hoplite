@@ -210,7 +210,7 @@ Each is a real pattern but not load-bearing for day one. Adding a new type is ch
 
 ## Tool API contracts
 
-Four agent-facing tools (`match`, `invoke`, `read`, `write`) plus `traverse`. Reindex and `repair` stay operational — they run via background worker or CLI invocation outside the agent's MCP surface. The agent never calls them; they exist for the indexer maintainer to keep the corpus consistent.
+Six agent-facing tools — `match`, `invoke`, `read`, `insert`, `update`, `delete` — plus `traverse`. Reindex and `repair` stay operational — they run via background worker or CLI invocation outside the agent's MCP surface. The agent never calls them; they exist for the indexer maintainer to keep the corpus consistent.
 
 ### Shared types
 
@@ -255,6 +255,8 @@ WriteResult: {
 
 Returns up to `k` landings ranked by relevance to the predicate. Day one, the predicate is a text string scored via BM25 over node bodies and summary fields. Later, the predicate grows into a structured filter (text plus label constraints, plus embedding-cosine similarity once Ollama is wired in). Each `Landing` carries id, summary, labels, and `score` — enough for the agent to pick a landing without loading every candidate.
 
+`score` is the raw BM25 score day one (and later, raw cosine similarity when embeddings are wired in). Comparable within a single `match()` call as a sort key. Not comparable across calls — different predicates produce incomparable absolute magnitudes.
+
 ### `invoke(id) -> InvokedNode`
 
 Invokes a node as a directive. Calls `_fetch(id)` internally, composes the envelope (framing body + stacked label bodies), returns the framed content. The verb declares intent: calling `invoke` is the agent committing to read the response under whatever framing the node's framing-axis label sets — `instruction` to follow, `reference` to factor into reasoning, `observation` to treat as historical record.
@@ -263,9 +265,17 @@ Invokes a node as a directive. Calls `_fetch(id)` internally, composes the envel
 
 Reads a node as content. Calls `_fetch(id)` internally and frames the body with the fixed content envelope (label-independent). The content envelope overrides any framing-axis label on the node — an `instruction` node returned via `read` is treated as data, not as guidance. The path the agent uses when it intends to inspect, edit, refactor, or extract from the node as text.
 
-### `write(id, body, labels=[], out_edges=[]) -> WriteResult`
+### `insert(id, body, labels=[], out_edges=[]) -> WriteResult`
 
-Creates a new node or updates an existing one. Triggers synchronous write-time indexing: parses `[[wiki-links]]` from the body and emits `:mentions` edges, validates labels (rejects multi-framing violations), updates the label inverted-index files the node touches, writes the sidecar at `docs/index/<id>.md`. For a new node, the authored file at `docs/notes/<id>.md` is created from the provided body. For an update, the existing file is rewritten. Returns the id and any warnings.
+Creates a new node. Rejects if a file already exists at `docs/notes/<id>.md`. Triggers synchronous write-time indexing: parses `[[wiki-links]]` from the body and emits `:mentions` edges, validates labels (rejects multi-framing violations), parses the cached summary, writes the sidecar at `docs/index/<id>.md`, creates the membership marker in each label folder the node carries.
+
+### `update(id, body, labels=[], out_edges=[]) -> WriteResult`
+
+Modifies an existing node. Rejects if no file exists at `docs/notes/<id>.md`. Same indexing flow as `insert`, plus reconciles label memberships: drops markers for labels the node no longer carries.
+
+### `delete(id) -> WriteResult`
+
+Removes a node. Rejects if no file exists at `docs/notes/<id>.md`. Unlinks the authored file, unlinks the sidecar at `docs/index/<id>.md`, and removes the membership marker from every label folder the node carried. Wiki-link references to this id from other notes become dangling — per the broken-link semantic, they drop silently from query results.
 
 ### `traverse(from, depth=1, predicate) -> [TraversalHit]`
 
@@ -306,12 +316,13 @@ Envelope size. With several labels carrying authored bodies, an `invoke` respons
 
 ## Indexer operations
 
-Day one is fully synchronous. Every operation happens during a `write()` call; no background worker, no scheduled passes, no derived data that needs catching up. The reindex pass is deferred entirely — schema fields it would populate (`embedding`, `:related` edges, cached `in_edges`) stay absent until reindex lands later.
+Day one is fully synchronous. Every operation happens during an `insert`, `update`, or `delete` call; no background worker, no scheduled passes, no derived data that needs catching up. The reindex pass is deferred entirely — schema fields it would populate (`embedding`, `:related` edges, cached `in_edges`) stay absent until reindex lands later.
 
-### Write-time flow
+### Insert and update flow
 
-What `write(id, body, labels, out_edges)` does, in order:
+What `insert(id, body, labels, out_edges)` and `update(id, body, labels, out_edges)` do, in order. Step 0 differs between them; the rest is shared.
 
+0. Existence check. `insert` rejects if `docs/notes/<id>.md` already exists; `update` rejects if it doesn't.
 1. Validate labels. Lowercase, kebab-case. At most one framing-axis label (`instruction`, `reference`, `observation`). Reject on violation.
 2. If labels include `observation` or `journal`, verify the id has an ISO date prefix. Reject if missing.
 3. Write the authored note at `docs/notes/<id>.md` with the provided body and frontmatter.
@@ -321,10 +332,23 @@ What `write(id, body, labels, out_edges)` does, in order:
 7. Parse the cached summary from the body — the first non-heading line after the H1.
 8. Write the sidecar at `docs/index/<id>.md` with the full labels list, merged out_edges, and cached summary.
 9. For each label the node now carries, create an empty marker file at `docs/index/labels/<label>/<id>`. Atomic create-if-not-exists. Create the folder if it doesn't exist.
-10. For each label the node previously carried but no longer does (on update), unlink the marker file at `docs/index/labels/<label>/<id>`.
+10. For each label the node previously carried but no longer does (`update` only), unlink the marker file at `docs/index/labels/<label>/<id>`.
 11. Return `WriteResult` with id and any warnings.
 
-Per-file writes use temp-and-rename so no individual file appears half-written. Cross-file atomicity is best-effort day one — a crash between writing the sidecar and updating a label file leaves the graph briefly inconsistent until the next `repair` pass reconciles it. The authored note at `docs/notes/<id>.md` is the source of truth; sidecars and label files are derivable projections, so repair is always possible. Phase-two upgrade lifts this to a write-ahead journal (and likely SQLite storage) for genuine cross-file transactional semantics.
+### Delete flow
+
+What `delete(id)` does:
+
+1. Existence check. Reject if `docs/notes/<id>.md` doesn't exist.
+2. Read the sidecar's labels list so we know which membership folders the node was in.
+3. Unlink `docs/notes/<id>.md`.
+4. Unlink `docs/index/<id>.md` (the sidecar).
+5. For each label the node carried, unlink `docs/index/labels/<label>/<id>`.
+6. Return `WriteResult` with id and any warnings.
+
+Wiki-link references to the deleted id from other notes become dangling and drop silently from query results, per the broken-link semantic.
+
+Per-file writes use temp-and-rename so no individual file appears half-written. Cross-file atomicity is best-effort day one — a crash between writing the sidecar and updating a label file leaves the graph briefly inconsistent until the next `repair` pass reconciles it. The authored note at `docs/notes/<id>.md` is the source of truth; sidecars and label files are derivable projections, so repair is always possible. Cross-file transactional semantics arrive later via a write-ahead journal; specifics are out of scope for day one.
 
 ### Search day one
 
@@ -367,7 +391,9 @@ The corpus is a labeled multigraph stored as files. Nodes are notes; edges are t
 - `match(predicate, k=5)` — find landings. Returns up to `k` `Landing` records (id, summary, labels, score) ranked by relevance to the predicate.
 - `invoke(id)` — invoke a node as a directive. Returns the body with the framing envelope applied (framing prose plus stacked label bodies plus the node body).
 - `read(id)` — read a node as content. Returns the body framed by the fixed content envelope (label-independent), telling the agent to treat the payload as data rather than directive.
-- `write(id, body, labels=[], out_edges=[])` — create or update a node. Triggers synchronous indexing.
+- `insert(id, body, labels=[], out_edges=[])` — create a new node. Rejects if the id already exists.
+- `update(id, body, labels=[], out_edges=[])` — modify an existing node. Rejects if the id doesn't exist.
+- `delete(id)` — remove a node. Unlinks the authored file, sidecar, and label membership markers.
 - `traverse(from, depth=1, predicate)` — breadth-first walk. Returns up to `depth` layers of `TraversalHit` records, excluding the origin. Default `depth=1` returns the immediate neighbors.
 
 ## Protocol — aid-station traversal
@@ -394,7 +420,7 @@ Parallel to Claude Code's existing surface: `invoke` is `/skill` (active skill l
 
 ## Writing
 
-Use `write(id, body, labels, out_edges)`. Conventions:
+Use `insert(id, body, labels, out_edges)` for new nodes, `update(id, ...)` to modify existing ones, `delete(id)` to remove. Conventions:
 
 - The first line of the body is `# Title` (H1). The line after the blank is a one-sentence summary — the indexer caches this for `match` and `traverse` responses.
 - Labels are lowercase kebab-case. The `note` label is auto-derived; you supply additional ones.
@@ -411,7 +437,7 @@ Use `write(id, body, labels, out_edges)`. Conventions:
 
 ## Failure modes
 
-Day one is synchronous and atomic per `write()`; most failure modes are file-level, not distributed.
+Day one is synchronous and atomic per write call (`insert`, `update`, or `delete`); most failure modes are file-level, not distributed.
 
 ### Rejected writes
 
@@ -420,17 +446,20 @@ The indexer refuses the write and leaves the graph unchanged when:
 - Labels include more than one framing-axis label (`instruction`, `reference`, `observation` are mutually exclusive).
 - A label is not lowercase kebab-case.
 - Labels include `observation` or `journal` and the id lacks an ISO date prefix.
-- A new write targets an id whose file already exists, without explicit overwrite intent.
+- `insert(id, ...)` is called with an id whose authored file already exists.
+- `update(id, ...)` or `delete(id)` is called with an id whose authored file doesn't exist.
 
 Errors return to the caller; no files change.
 
 ### Mid-flight crashes
 
-A single `write()` touches up to 2 + N files — the authored note, the sidecar, and one empty membership marker file per label the node carries (plus unlinking markers for labels removed on an update). The authored note and sidecar use temp-and-rename so they never appear half-written. Membership markers are atomic creates (empty files) and unlinks. Cross-file atomicity across the full set is not guaranteed day one — a crash between marker writes leaves the membership view briefly inconsistent.
+A single `insert` or `update` call touches up to 2 + N files — the authored note, the sidecar, and one empty membership marker file per label the node carries (plus unlinking markers for labels removed on an update). A `delete` call unlinks the authored file, the sidecar, and the membership markers in every label folder the node was in. The authored note and sidecar use temp-and-rename so they never appear half-written. Membership markers are atomic creates (empty files) and unlinks. Cross-file atomicity across the full set is not guaranteed day one — a crash between marker writes leaves the membership view briefly inconsistent.
 
-Day-one recovery. The authored note at `docs/notes/<id>.md` is the source of truth; the sidecar and the label membership markers are derivable projections. The operational `repair` CLI regenerates them: rewrite the sidecar from the authored note's frontmatter and body; for each label in the node's labels, ensure a marker exists at `docs/index/labels/<label>/<id>` and remove markers in folders the node no longer carries. Repair-on-read also detects inconsistency at query time (the sidecar lists a label but no marker exists in that label's folder) and triggers targeted repair before returning.
+Day-one recovery. The authored note at `docs/notes/<id>.md` is the source of truth; the sidecar and the label membership markers are derivable projections. The operational `repair` CLI regenerates them: rewrite the sidecar from the authored note's frontmatter and body; for each label in the node's labels, ensure a marker exists at `docs/index/labels/<label>/<id>` and remove markers in folders the node no longer carries.
 
-Phase-two upgrade. A write-ahead journal lifts the guarantee to genuine cross-file transactional semantics: append a journal record describing all intended file operations before any of them, replay on startup if the journal is non-empty. Combined with file locking on the per-node write path, this closes the half-written-graph window. Storage likely shifts to SQLite at that point — single-file ACID is simpler than maintaining the journal-on-files pattern.
+Repair-on-read is scoped, not blanket. It fires only on operations that actually consult a label's membership — listing or filtering members of `docs/index/labels/<label>/` triggers a check against the folder. Node fetches via `_fetch(id)` do not validate label markers; the consistency check rides only on the path that depends on the data.
+
+Future cross-file atomicity will use a write-ahead journal on top of the file storage: append a journal record describing all intended file operations before any of them, replay on startup if the journal is non-empty. Combined with file locking on the per-node write path, this closes the half-written-graph window. Specifics are deferred — designed when the day-one shape's limits become visible.
 
 ### Read failures
 
@@ -444,7 +473,7 @@ Day one assumes a single writer. Simultaneous writes to the same node id risk la
 
 Multi-agent support is the actual target — single-writer is just the day-one simplification. Lifting it is the first priority for the second pass. The folder-per-label membership shape already removes what would have been the worst contention point (rewriting a shared alphabetical list on every label-touching write); what remains is per-node-id contention on the authored file and its sidecar, which file locking handles cleanly without bottlenecking on popular labels.
 
-The phase-two upgrade is file locking on the per-node write path, paired with the write-ahead journal from [Mid-flight crashes](#mid-flight-crashes) for genuine cross-file atomicity. SQLite as a storage backend stays on the table as a later option if the file-based shape ever shows its limits at scale.
+Future multi-writer support adds file locking on the per-node write path, paired with the write-ahead journal described in [Mid-flight crashes](#mid-flight-crashes) for genuine cross-file atomicity. Both are deferred — designed when day-one shape limits surface.
 
 ### Inconsistency recovery
 
