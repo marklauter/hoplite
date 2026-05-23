@@ -1,5 +1,13 @@
 # MCP graph runtime data model
 
+Legacy monolithic spec; canonical spec now lives at `docs/mcp/readme.md` and the six section files alongside it. This note is preserved for historical reference.
+
+> See [`docs/mcp/readme.md`](../mcp/readme.md) for the current spec. The contracts (data model, tool API, behavior, orchestrator skill) and implementation (file-based day-one, alternatives) are split into separate files there so storage substrates swap without rewriting the whole spec.
+
+The original content of this note follows.
+
+## Original spec (preserved for reference)
+
 Locks down the concrete shapes and contracts the parent note `[[mcp-server-as-skill-system-runtime]]` leaves abstract — storage layout, sidecar schema, label and edge vocabularies, tool API contracts, the indexer's write and reindex operations, and the orchestrator skill body that bootstraps the agent into the graph.
 
 ## Storage layout
@@ -255,7 +263,7 @@ Each is a real pattern but not load-bearing for day one. Adding a new type is ch
 
 ## Tool API contracts
 
-Eight agent-facing tools: `match`, `invoke`, `read`, `insert`, `update`, `delete`, `apply_framing`, `traverse`. Reindex and `repair` stay operational — they run via background worker or CLI invocation outside the agent's MCP surface. The agent never calls them; they exist for the indexer maintainer to keep the corpus consistent.
+Nine agent-facing tools: `match`, `invoke`, `read`, `insert`, `update`, `delete`, `apply_framing`, `slugify`, `traverse`. Reindex and `repair` stay operational — they run via background worker or CLI invocation outside the agent's MCP surface. The agent never calls them; they exist for the indexer maintainer to keep the corpus consistent.
 
 ### Shared types
 
@@ -326,6 +334,10 @@ Removes a node. Rejects if no file exists at `docs/notes/<id>.md`. Unlinks the a
 
 Creates or replaces the envelope file at `docs/index/labels/<label>.md` with the supplied content. Idempotent — repeat calls overwrite. Use this to add or update behavior-modifier prose for any label, including the three shipped framing-axis defaults (`instruction`, `reference`, `observation` at `docs/index/labels/<framing>.md`). The read envelope at `docs/index/envelopes/read.md` lives outside the label directory and is not editable via this tool; update it through hand-edit or the operational repair path. Validates the label name against the kebab-case rule. Passing empty content writes an empty file — the loader still finds it but contributes nothing. Explicit envelope removal (unlinking the file) is deferred to a repair-style operation; not in the day-one agent surface.
 
+### `slugify(s) -> string`
+
+Pure function. Returns the canonical kebab-case form of `s`: lowercase, whitespace converted to hyphens, characters outside `[a-z0-9-]` stripped. Doesn't mutate graph state. The agent calls this at the input boundary when normalizing human-supplied strings (a title, a label, an id) before passing to `insert`, `update`, `apply_framing`, or any tool that validates against the canonical form. The validators on the other tools reject non-canonical input rather than silently transforming, so `slugify` is the explicit normalize-then-submit step.
+
 ### `traverse(from, depth=1, predicate) -> [TraversalHit]`
 
 Breadth-first walk from a starting node. Returns up to `depth` layers of nodes reachable from the origin — neighbors at `distance=1`, neighbors-of-neighbors at `distance=2`, and so on through `distance=depth`. The origin is the starting point, never included in the result. `depth` must be `≥ 1`.
@@ -351,7 +363,7 @@ Every public method validates its inputs at the boundary. Two failure modes, dis
 - Invariant violations throw exceptions. These are programming errors — calls that violate the API contract in ways the caller could have prevented (passing `None` for a required string, an out-of-range integer, a malformed Edge object). Throwing surfaces the bug to the caller.
 - Constraint violations return errors (an `ErrorOr`-style result). These are runtime conditions the caller couldn't have known in advance — calling `insert` with an id that already exists, calling `update` on a missing id, supplying labels that fail the `[a-z0-9-]` regex from user input. Returning lets the caller branch on the error.
 
-A shared `slugify(s)` utility canonicalizes any string into the kebab-case form used for ids and labels. The validators reject input that doesn't already conform to canonical form; they don't silently transform. The slugify utility is for the caller to use at the input boundary if it wants to accept looser input.
+A shared `slugify(s)` canonicalizes any string into the kebab-case form used for ids and labels. Exposed as an MCP tool — see [`slugify`](#slugifys---string) — so the agent can normalize human-supplied input at the boundary before submitting. The other validators reject non-canonical input rather than silently transform; `slugify` is the explicit normalize-then-submit step.
 
 ### Envelope composition
 
@@ -423,16 +435,14 @@ Pure Python, no model dependencies. `rank_bm25` is the obvious library choice; h
 
 ### Reindex — deferred, not forgotten
 
-No reindex pass day one. The features below are designed-and-deferred, not abandoned — the schema reserves their fields, and the indexer codebase grows the reindex module when the corpus is mature enough to justify it.
+No server-side reindex pass day one. Most of what reindex would do day one is already reachable through the agent-as-driver pattern: an agent can walk `docs/notes/`, call `update(id, body=<current-body>, labels=<current-labels>)` on each, and the existing write-time flow re-parses wiki-links, regenerates the cached summary, rewrites the sidecar, and reconciles label markers. Stale sidecars, hand-edited bodies, and missing derived metadata all fix themselves through normal `update` calls. No new primitive needed for the "soft reindex" case.
 
-Deferred features:
+The features that genuinely need a server-side reindex are the ones the agent can't compute through the existing surface:
 
-- MinHash pairwise relatedness — Jaccard-similarity edges above `minhash_threshold` (0.20 default) materialize as `:related` derived edges with `source: minhash`.
-- Embeddings via local Ollama (`nomic-embed-text` candidate, 768-dim, ~270MB, CPU-fast) writing `.npy` files into `docs/index/embeddings/`. With embeddings, `match` switches from BM25 to vector similarity, and embedding-derived `:related` edges supplement MinHash.
-- Cached summary regeneration after body edits.
-- Label inverted-index rebuild as a safety net against write-time drift.
+- MinHash pairwise relatedness — Jaccard-similarity edges above `minhash_threshold` (0.20 default) materialize as `:related` derived edges with `source: minhash`. Requires corpus-wide signature computation and pairwise comparison.
+- Embeddings via local Ollama (`nomic-embed-text` candidate, 768-dim, ~270MB, CPU-fast) writing `.npy` files into `docs/index/embeddings/`. With embeddings, `match` switches from BM25 to vector similarity, and embedding-derived `:related` edges supplement MinHash. Requires the embedding model invocation.
 
-The trigger model (manual CLI, scheduled, file-watch, write-trigger-drain) is decided when reindex itself is built. None of the day-one tools depend on reindex; the graph functions fully without it.
+These two are the actual day-two reindex scope. The trigger model (manual CLI, scheduled, file-watch, write-trigger-drain) is decided when reindex itself is built. None of the day-one tools depend on reindex; the graph functions fully without it.
 
 ## Orchestrator skill body
 
@@ -453,6 +463,7 @@ The corpus is a labeled multigraph stored as files. Nodes are notes; edges are t
 - `update(id, body, labels=[], out_edges=[])` — modify an existing node. Rejects if the id doesn't exist.
 - `delete(id)` — remove a node. Unlinks the authored file, sidecar, and label membership markers.
 - `apply_framing(label, content)` — create or replace the envelope prose at `docs/index/labels/<label>.md`. Use to set framing on labels beyond the four shipped envelopes.
+- `slugify(s)` — pure function. Normalizes a string into canonical kebab-case `[a-z0-9-]` form. Call it when you need to derive a canonical id or label from human-supplied input before passing to `insert`/`update`/`apply_framing`.
 - `traverse(from, depth=1, predicate)` — breadth-first walk. Returns up to `depth` layers of `TraversalHit` records, excluding the origin. Default `depth=1` returns the immediate neighbors.
 
 ## Protocol — aid-station traversal
