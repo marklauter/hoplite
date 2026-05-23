@@ -220,6 +220,19 @@ Skills (when they join the graph later) typically carry `instruction`. Observati
 
 The read envelope is the one stable contract `read` always applies. Editing the file changes the contract; no code change required.
 
+### Bootstrap — how envelope files arrive on disk
+
+The four shipped envelope files arrive as bundled assets the plugin installer drops into place at install time:
+
+- `docs/index/envelopes/read.md`
+- `docs/index/labels/instruction.md`
+- `docs/index/labels/reference.md`
+- `docs/index/labels/observation.md`
+
+After install they are editable like any other authored file — either by hand or via `apply_framing` (described in [Tool API contracts](#tool-api-contracts)).
+
+Framing on any non-shipped label is optional. If `docs/index/labels/<label>.md` exists, the loader inlines it during `invoke`; if it doesn't, the label contributes nothing to the envelope (the membership still applies — only the prose contribution is conditional). `read` always inlines `docs/index/envelopes/read.md`; if missing, `read` errors — the contract is load-bearing.
+
 ## Edge vocabulary
 
 Two day-one edge types — the minimum surface that supports current traversal needs while leaving room for expansion as patterns emerge.
@@ -242,7 +255,7 @@ Each is a real pattern but not load-bearing for day one. Adding a new type is ch
 
 ## Tool API contracts
 
-Six agent-facing tools — `match`, `invoke`, `read`, `insert`, `update`, `delete` — plus `traverse`. Reindex and `repair` stay operational — they run via background worker or CLI invocation outside the agent's MCP surface. The agent never calls them; they exist for the indexer maintainer to keep the corpus consistent.
+Eight agent-facing tools: `match`, `invoke`, `read`, `insert`, `update`, `delete`, `apply_framing`, `traverse`. Reindex and `repair` stay operational — they run via background worker or CLI invocation outside the agent's MCP surface. The agent never calls them; they exist for the indexer maintainer to keep the corpus consistent.
 
 ### Shared types
 
@@ -309,6 +322,10 @@ Modifies an existing node. Rejects if no file exists at `docs/notes/<id>.md`. Sa
 
 Removes a node. Rejects if no file exists at `docs/notes/<id>.md`. Unlinks the authored file, unlinks the sidecar at `docs/index/<id>.yml`, and removes the membership marker from every label folder the node carried. Wiki-link references to this id from other notes become dangling — per the broken-link semantic, they drop silently from query results.
 
+### `apply_framing(label, content) -> WriteResult`
+
+Creates or replaces the envelope file at `docs/index/labels/<label>.md` with the supplied content. Idempotent — repeat calls overwrite. Use this to add or update behavior-modifier prose for any label, including the four shipped defaults (`instruction`, `reference`, `observation` envelopes at `docs/index/labels/<framing>.md`, plus the `read` envelope at `docs/index/envelopes/read.md`). Validates the label name against the kebab-case rule. Passing empty content writes an empty file — the loader still finds it but contributes nothing. Explicit envelope removal (unlinking the file) is deferred to a repair-style operation; not in the day-one agent surface.
+
 ### `traverse(from, depth=1, predicate) -> [TraversalHit]`
 
 Breadth-first walk from a starting node. Returns up to `depth` layers of nodes reachable from the origin — neighbors at `distance=1`, neighbors-of-neighbors at `distance=2`, and so on through `distance=depth`. The origin is the starting point, never included in the result. `depth` must be `≥ 1`.
@@ -373,7 +390,7 @@ What `insert(id, body, labels, out_edges)` and `update(id, body, labels, out_edg
 7. Compose auto-derived labels: `note`, plus the ISO date label if applicable.
 8. Parse the cached summary from the body — the line on row 3 (after the H1 and its blank line).
 9. Write the sidecar at `docs/index/<id>.yml` with the full labels list, reconciled out_edges, and cached summary.
-10. For each label the node now carries, create an empty marker file at `docs/index/labels/<label>/<id>`. Atomic create-if-not-exists. Create the folder if it doesn't exist.
+10. For each label the node now carries, ensure the label sidecar and the membership marker exist. If the label is new (no sidecar present), create `docs/index/labels/<label>.yml` with `id: <label>` and empty optional fields. Then create the empty marker file at `docs/index/labels/<label>/<id>`. Atomic create-if-not-exists for both. Create the folder if it doesn't exist.
 11. For each label the node previously carried but no longer does (`update` only), unlink the marker file at `docs/index/labels/<label>/<id>`.
 12. Return `WriteResult` with id and any warnings.
 
@@ -436,6 +453,7 @@ The corpus is a labeled multigraph stored as files. Nodes are notes; edges are t
 - `insert(id, body, labels=[], out_edges=[])` — create a new node. Rejects if the id already exists.
 - `update(id, body, labels=[], out_edges=[])` — modify an existing node. Rejects if the id doesn't exist.
 - `delete(id)` — remove a node. Unlinks the authored file, sidecar, and label membership markers.
+- `apply_framing(label, content)` — create or replace the envelope prose at `docs/index/labels/<label>.md`. Use to set framing on labels beyond the four shipped envelopes.
 - `traverse(from, depth=1, predicate)` — breadth-first walk. Returns up to `depth` layers of `TraversalHit` records, excluding the origin. Default `depth=1` returns the immediate neighbors.
 
 ## Protocol — aid-station traversal
@@ -468,7 +486,7 @@ Use `insert(id, body, labels, out_edges)` for new nodes, `update(id, ...)` to mo
 - Labels are lowercase kebab-case, `[a-z0-9-]` only. The `note` label is auto-derived; supply additional ones via the tool-call `labels` parameter.
 - Date-prefixed id for observations and journal entries: `2026-05-23-design-meeting`. The indexer parses the date from the prefix.
 - Use `[[wiki-link]]` in the body to reference another node — the indexer emits `:mentions` edges automatically.
-- Day one, the `out_edges` parameter is reserved for future edge types and stays empty. All authored edges enter via wiki-links.
+- Day one, all authored edges enter via wiki-links. The `out_edges` parameter accepts edge objects with `type` and `to` fields (no `source` field — that's reserved for derived edges from reindex), but day-one convention is to leave it empty and let body wiki-links handle the work. The parameter exists for future edge types beyond `:mentions`; until those land, prefer wiki-links.
 
 ## Vocabulary
 
