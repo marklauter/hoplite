@@ -324,7 +324,7 @@ Removes a node. Rejects if no file exists at `docs/notes/<id>.md`. Unlinks the a
 
 ### `apply_framing(label, content) -> WriteResult`
 
-Creates or replaces the envelope file at `docs/index/labels/<label>.md` with the supplied content. Idempotent — repeat calls overwrite. Use this to add or update behavior-modifier prose for any label, including the four shipped defaults (`instruction`, `reference`, `observation` envelopes at `docs/index/labels/<framing>.md`, plus the `read` envelope at `docs/index/envelopes/read.md`). Validates the label name against the kebab-case rule. Passing empty content writes an empty file — the loader still finds it but contributes nothing. Explicit envelope removal (unlinking the file) is deferred to a repair-style operation; not in the day-one agent surface.
+Creates or replaces the envelope file at `docs/index/labels/<label>.md` with the supplied content. Idempotent — repeat calls overwrite. Use this to add or update behavior-modifier prose for any label, including the three shipped framing-axis defaults (`instruction`, `reference`, `observation` at `docs/index/labels/<framing>.md`). The read envelope at `docs/index/envelopes/read.md` lives outside the label directory and is not editable via this tool; update it through hand-edit or the operational repair path. Validates the label name against the kebab-case rule. Passing empty content writes an empty file — the loader still finds it but contributes nothing. Explicit envelope removal (unlinking the file) is deferred to a repair-style operation; not in the day-one agent surface.
 
 ### `traverse(from, depth=1, predicate) -> [TraversalHit]`
 
