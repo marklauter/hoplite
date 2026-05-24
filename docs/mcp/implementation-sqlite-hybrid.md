@@ -72,7 +72,28 @@ CREATE VIRTUAL TABLE nodes_fts USING fts5(
 );
 ```
 
-WAL mode is enabled at startup for safe single-writer concurrency and read-during-write.
+### PRAGMAs
+
+The MCP server applies these PRAGMAs immediately after opening the connection at startup:
+
+```sql
+PRAGMA journal_mode = WAL;        -- write-ahead logging
+PRAGMA synchronous = NORMAL;      -- standard companion to WAL
+PRAGMA foreign_keys = ON;         -- enforce FK constraints
+PRAGMA busy_timeout = 5000;       -- 5s wait before SQLITE_BUSY
+```
+
+`journal_mode = WAL` is load-bearing — it's what enables one writer plus many concurrent readers without blocking. The other PRAGMAs are the standard companions for a WAL-mode database.
+
+`synchronous = NORMAL` flushes WAL pages at every commit but doesn't fsync the database file on every commit. Combined with WAL's checkpoint semantics, this is durable across application crashes and gives much better write throughput than `synchronous = FULL`. It loses durability only on OS-level crashes or power loss within a small window; acceptable for a personal-and-agentic knowledge graph.
+
+`foreign_keys = ON` is required for FK constraints to be enforced — SQLite leaves them off by default for legacy reasons.
+
+`busy_timeout = 5000` sets how long a write waits for the SQLite lock before erroring. With single-writer day one this rarely matters; with multi-writer it gives short-lived contention time to resolve before surfacing as an error.
+
+WAL creates two side files alongside `graph.db`: `graph.db-wal` (the write-ahead log) and `graph.db-shm` (shared memory index). Both belong in `.gitignore` alongside `graph.db` itself. They're recreated automatically when the database is opened.
+
+Checkpointing happens automatically; manual `PRAGMA wal_checkpoint(TRUNCATE)` can be invoked by a maintenance script if WAL file size growth becomes a concern.
 
 ## Entity-to-storage mapping
 
