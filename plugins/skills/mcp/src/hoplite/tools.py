@@ -15,10 +15,10 @@ Envelope strings are lifted verbatim from docs/mcp/behavior.md
 
 from __future__ import annotations
 
-import re
 from pathlib import Path
 from typing import Final, Literal, TypedDict
 
+from hoplite.ids import slugify_text
 from hoplite.models import (
     Edge,
     Envelope,
@@ -190,17 +190,3 @@ def delete_node(id: str) -> WriteResult:
 
 def apply_framing(label: str, content: str) -> WriteResult:
     return WriteResult(id=label, warnings=None)
-
-
-_WS_RE: Final = re.compile(r"\s+")
-_STRIP_RE: Final = re.compile(r"[^a-z0-9-]+")
-_HYPHEN_RUN_RE: Final = re.compile(r"-+")
-
-
-def slugify_text(s: str) -> str:
-    """Lowercase; whitespace → `-`; non-`[a-z0-9-]` stripped; `-+` collapsed; edges trimmed."""
-    lowered = s.lower()
-    hyphenated = _WS_RE.sub("-", lowered)
-    stripped = _STRIP_RE.sub("", hyphenated)
-    collapsed = _HYPHEN_RUN_RE.sub("-", stripped)
-    return collapsed.strip("-")
