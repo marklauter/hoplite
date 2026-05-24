@@ -1,22 +1,24 @@
-# Orchestrator skill
+# Hoplite skill
 
-[Contract] The SKILL.md body the agent loads on first interaction with the graph.
+[Contract] The SKILL.md body the agent loads when invoked. The skill is named `hoplite` — invoked as `/hoplite` in Claude Code.
 
 ## Status
 
-This is the drafted SKILL.md body ready to ship day one. When the implementation lands, this content becomes the actual skill file at the plugin's skill location and loads automatically the first time the agent interacts with the corpus.
+This is the drafted SKILL.md body ready to ship day one. When the implementation lands, this content becomes the actual skill file at the plugin's skill location and loads when the agent invokes `/hoplite` or when the host auto-loads it on first interaction with a Hoplite corpus.
 
-The contract here references entities and tools from [data-model.md](data-model.md) and [tool-api.md](tool-api.md). It declares the protocol the agent follows for every interaction.
+The contract here references entities and tools from [data-model.md](data-model.md) and [tool-api.md](tool-api.md). It declares the protocol the agent follows for every interaction with the graph — this skill orchestrates the agent's use of the corpus.
 
 ---
 
-# Hoplite graph orchestrator
+# Hoplite
 
 The corpus is a labeled multigraph stored as files. Nodes are notes; edges are typed relationships between nodes; labels are virtual nodes grouping members. Use this skill's protocol for every interaction with the graph.
 
 ## Tools
 
+- `hoplite_init_corpus()` — initialize a fresh corpus at the server's working directory. Creates `.hoplite/` index folders, the SQLite database, and the four shipped envelope files. Idempotent — safe to re-run. Required first call if every other tool errors with "corpus not initialized."
 - `hoplite_match_nodes(predicate, k=5)` — find landings. Returns up to `k` `Landing` records (id, summary, labels, score) ranked by relevance. `predicate` is `{text?, node_labels?}` — at least one must be supplied. `text` (BM25-scored) finds nodes similar to a phrase; `node_labels` is a label expression like `note & mcp` or `(note | journal) & !draft`.
+- `hoplite_traverse_nodes(from, depth=1, predicate)` — breadth-first walk. Returns `TraversalHit` records from layers 1 through `depth`, excluding the origin. Default `depth=1` returns the immediate neighbors.
 - `hoplite_invoke_node(id)` — invoke a node as a directive. Returns the body with the framing envelope applied (framing prose plus stacked label bodies plus the node body).
 - `hoplite_read_node(id)` — read a node as content. Returns the body framed by the fixed content envelope (label-independent), telling the agent to treat the payload as data rather than directive.
 - `hoplite_insert_node(id, body, labels=[], out_edges=[])` — create a new node. Rejects if the id already exists.
@@ -25,7 +27,10 @@ The corpus is a labeled multigraph stored as files. Nodes are notes; edges are t
 - `hoplite_delete_node(id)` — remove a node. Drops the node's content, metadata, and all of its label memberships.
 - `hoplite_apply_framing(label, content)` — create or replace the envelope prose for a label. Use to set framing on labels beyond the four shipped envelopes.
 - `hoplite_slugify_text(s)` — pure function. Normalizes a string into canonical kebab-case `[a-z0-9-]` form. Call it when you need to derive a canonical id or label from human-supplied input before passing to other tools.
-- `hoplite_traverse_nodes(from, depth=1, predicate)` — breadth-first walk. Returns `TraversalHit` records from layers 1 through `depth`, excluding the origin. Default `depth=1` returns the immediate neighbors.
+
+## First run
+
+If any tool other than `hoplite_init_corpus` returns "corpus not initialized at `<cwd>`," call `hoplite_init_corpus()` once to set up the index and bootstrap envelopes. Subsequent tool calls work immediately — no restart needed.
 
 ## Protocol — aid-station traversal
 
@@ -58,7 +63,7 @@ Use `hoplite_insert_node(id, body, labels, out_edges)` for new nodes, `hoplite_u
 - The first path segment becomes an auto-derived label: `journal/...` carries `journal`, `notes/...` carries `notes`, `mcp/...` carries `mcp`. Root-level ids get no auto-derived path label.
 - Filenames matching `<iso-date>-<slug>.<ext>` get the date as an auto-derived label automatically — works for observations and journal entries.
 - Use `[[wiki-link]]` in the body to reference another node — wiki-links use the same id form (including extension and path): `[[journal/2026-05-24-foo.md]]`, `[[mcp/data-model.md]]`. The indexer emits `:mentions` edges automatically.
-- Body wiki-links produce `:mentions` edges automatically. The `out_edges` parameter on `hoplite_insert_node`/`hoplite_update_node`/`hoplite_index_node` accepts any authored edge object with `type` and `to` fields (no `source` — that's reserved for derived edges from reindex). Day one this includes `:related` if you want to declare an authored relatedness edge; future edge types beyond `:mentions` and `:related` land here too.
+- Body wiki-links produce `:mentions` edges automatically. The `out_edges` parameter on `hoplite_insert_node`/`hoplite_update_node`/`hoplite_index_node` accepts any authored edge object with `type` and `to` fields (no `source` — that's reserved for server-derived edges, including the MinHash-derived `:related` edges materialized on every write). Day one this includes authored `:related` if you want to declare an explicit relatedness edge alongside the MinHash-derived ones; future edge types beyond `:mentions` and `:related` land here too.
 
 ## Vocabulary
 

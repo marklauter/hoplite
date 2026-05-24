@@ -1,28 +1,26 @@
 # Roadmap
 
-Features designed and named but not in day one. Each lands when the use case justifies the build. Contracts in [data-model.md](data-model.md), [tool-api.md](tool-api.md), [behavior.md](behavior.md), and [orchestrator-skill.md](orchestrator-skill.md) hold unchanged for all of these — the schema columns that store deferred data (`embedding_path`, `confidence`, `source`, `in_edges`) are already present in the day-one shape, ready for population when the feature lands.
+Features designed and named but not in day one. Each lands when the use case justifies the build. Contracts in [data-model.md](data-model.md), [tool-api.md](tool-api.md), [behavior.md](behavior.md), and [hoplite-skill.md](hoplite-skill.md) hold unchanged for all of these — the schema columns that store deferred data (`embedding_path`, `confidence`, `source`, `in_edges`) are already present in the day-one shape, ready for population when the feature lands. MinHash and derived `:related` edges, originally listed here, moved to day one and now live in the write-time flow in [implementation-sqlite-hybrid.md](implementation-sqlite-hybrid.md#minhash-details).
 
-## Server-side reindex pass
+## Server-side reindex pass — embeddings
 
-Day one has no server-side reindex. The agent-as-driver pattern handles "soft reindex" through `hoplite_index_node(id)` calls — walk the corpus, call `hoplite_index_node` on each file, the write-time flow re-derives metadata. That covers stale rows, hand-edited bodies, and missing cached fields.
+Day one has no batch server-side reindex. MinHash signatures and derived `:related` edges materialize on every write through the normal write flow (see [implementation-sqlite-hybrid.md](implementation-sqlite-hybrid.md#minhash-details)). The agent-as-driver pattern via `hoplite_index_node(id)` covers stale rows, hand-edited bodies, and missing cached fields.
 
-The features that genuinely need server-side compute live here:
+The one feature that still wants server-side compute: embedding generation via local Ollama (`nomic-embed-text` candidate, 768-dim, ~270MB, CPU-fast). The reindex pass writes `.npy` files into `<corpus_root>/.hoplite/embeddings/` and populates `nodes.embedding_path`. With embeddings, `hoplite_match_nodes` switches from BM25 to vector similarity, and embedding-derived `:related` edges supplement MinHash.
 
-- MinHash pairwise relatedness — Jaccard-similarity edges above `minhash_threshold` (0.20 default) materialize as `:related` derived edges with `source: minhash`. Adds rows to `edges` in batches across one transaction.
-- Embedding generation via local Ollama (`nomic-embed-text` candidate, 768-dim, ~270MB, CPU-fast) writes `.npy` files into `<corpus_root>/.hoplite/embeddings/` and populates `nodes.embedding_path`. With embeddings, `hoplite_match_nodes` switches from BM25 to vector similarity, and embedding-derived `:related` edges supplement MinHash.
-
-A bulk reindex pass is fast under SQLite: one transaction can insert thousands of `:related` edges in a single commit.
+A bulk embedding pass is fast under SQLite: one transaction can update thousands of rows in a single commit. Whether embeddings need to recompute every write (like MinHash) or stay batch-deferred depends on Ollama's call-time cost in practice — MinHash takes milliseconds; an embedding model call may take 50-500ms per node and is a heavier write-path budget.
 
 ### Trigger model
 
-When the reindex pass lands, it needs a trigger model. Options:
+When the embeddings pass lands, it needs a trigger model. Options:
 
 - Manual CLI — operator runs `reindex` when they want it.
 - Scheduled — cron-style periodic invocation.
 - File-watcher — detects changes under `<corpus_root>/docs/` and triggers automatically.
 - Write-trigger-drain — `hoplite_insert_node`/`hoplite_update_node`/`hoplite_index_node`/`hoplite_delete_node` enqueue work for a background drain process.
+- Synchronous on write — same shape as MinHash, accepting the embedding-call latency.
 
-Each has different operational shape and failure modes. Decided when reindex itself is built.
+Each has different operational shape and failure modes. Decided when the embedding pass itself is built.
 
 ## Multi-writer support
 
@@ -111,7 +109,7 @@ Day-one edge vocabulary is `mentions` (authored, from wiki-links) and `related` 
 - `parent` — hierarchy among labels.
 - `supersedes` — source replaces target.
 
-Adding a new type is cheap once a pattern recurs: pick a name, document the semantic, teach the indexer to emit it (if it should auto-emit from some source), update the orchestrator skill's vocabulary section.
+Adding a new type is cheap once a pattern recurs: pick a name, document the semantic, teach the indexer to emit it (if it should auto-emit from some source), update the `/hoplite` skill's vocabulary section.
 
 ## Migration of legacy corpus
 

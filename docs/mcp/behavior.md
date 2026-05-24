@@ -17,7 +17,7 @@ Path-traversal safety: the segment regex `[a-z0-9-]` excludes `.`, so a `..` seg
 Every public method validates its inputs at the boundary. Two failure modes, distinguished by remediability:
 
 - Invariant violations throw exceptions. These are programming errors — calls that violate the API contract in ways the caller could have prevented (passing `None` for a required string, an out-of-range integer, a malformed Edge object). Throwing surfaces the bug to the caller.
-- Constraint violations return errors (an `ErrorOr`-style result). These are runtime conditions the caller couldn't have known in advance — calling `hoplite_insert_node` with an id that already exists, calling `hoplite_update_node` on a missing id, supplying labels that fail the slug regex. Returning lets the caller branch on the error.
+- Constraint violations return errors (an `ErrorOr`-style result). These are runtime conditions the caller couldn't have known in advance — calling `hoplite_insert_node` with an id that already exists, calling `hoplite_update_node` on a missing id, supplying labels that fail the slug regex, or calling any tool other than `hoplite_init_corpus` against an uninitialized corpus. Returning lets the caller branch on the error.
 
 The validators reject non-canonical input rather than silently transforming. `hoplite_slugify_text` exists as the explicit normalize-then-submit step.
 
@@ -139,7 +139,7 @@ When `node_labels` is absent or empty, no label filter applies. `hoplite_match_n
 Two day-one edge types:
 
 - `mentions` — authored. Emitted by the indexer when it parses any `[[wiki-link]]` in a node body. Implicit confidence 1.0. Reads source-to-target: "foo mentions bar." The default semantic for references without a stronger claim.
-- `related` — symmetric topical adjacency. Carries a confidence score and an optional `source` naming the signal that generated it. Day one accepts authored `related` edges (no `source` field) via the `out_edges` parameter; the server-side reindex pass that produces derived `related` edges (MinHash, embeddings) lives on the [roadmap](roadmap.md#server-side-reindex-pass).
+- `related` — symmetric topical adjacency. Carries a confidence score and an optional `source` naming the signal that generated it. Two flavors day one: authored `related` edges (no `source` field) come in through the `out_edges` parameter and represent an author's explicit claim; derived `related` edges (`source = "minhash"`) materialize on every write from MinHash-Jaccard similarity over node bodies. Embedding-derived `related` edges (`source = "embedding-cosine"`) join when the embedding pass lands — see [roadmap](roadmap.md#server-side-reindex-pass--embeddings).
 
 Aspirational edge types beyond these two (`cites`, `contradicts`, `requires`, `see-also`, etc.) are reserved for future passes — see the [roadmap](roadmap.md#aspirational-edge-types).
 
@@ -163,15 +163,15 @@ Envelope size. With several labels carrying authored bodies, an `hoplite_invoke_
 
 ## Edge reconciliation on update
 
-`hoplite_update_node` preserves derived edges that prior reindex passes deposited. The new `out_edges` set for an update is:
+`hoplite_update_node` rebuilds the outbound edge set from current state on every call. The new `out_edges` set is:
 
 - Parsed `:mentions` edges from the body — replacement (each update re-parses).
-- Author-supplied edges from the tool parameter — replacement of edges without `source` (authored edges).
-- Existing derived edges from the prior state — edges with `source` set are preserved across updates.
+- Author-supplied edges from the tool parameter — replacement of authored edges (those without `source`).
+- Freshly-derived `:related` edges from MinHash similarity — recomputed against the current corpus (replacement; prior `minhash`-sourced edges are dropped before the new ones land).
 
-Dedupe by `(type, to)`.
+Dedupe by `(type, to)`. Derived edges from sources beyond MinHash (when the embedding pass lands) follow the same recompute-on-write pattern.
 
-This means a routine `hoplite_update_node` to fix a typo in a body doesn't wipe `:related` edges from a prior reindex pass.
+A routine `hoplite_update_node` to fix a typo in a body re-parses everything, rewriting the cached metadata and refreshing the `:related` set to match the corpus as it stands now. No stale-derived-edge problem to design around.
 
 ## Wiki-link resolution and broken-link behavior
 

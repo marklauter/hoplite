@@ -6,8 +6,9 @@
 
 Server name: `hoplite_mcp` (Python module convention `{service}_mcp`).
 
-Ten agent-facing tools, all prefixed `hoplite_` to avoid collision with built-in tools and other MCP servers. Grouped by purpose:
+Eleven agent-facing tools, all prefixed `hoplite_` to avoid collision with built-in tools and other MCP servers. Grouped by purpose:
 
+- Setup: `hoplite_init_corpus`
 - Discovery: `hoplite_match_nodes`, `hoplite_traverse_nodes`
 - Retrieval: `hoplite_invoke_node`, `hoplite_read_node`
 - Mutation: `hoplite_insert_node`, `hoplite_update_node`, `hoplite_index_node`, `hoplite_delete_node`, `hoplite_apply_framing`
@@ -29,6 +30,7 @@ Each tool's MCP annotation hints. Clients use these to decide how to handle the 
 Per-tool settings:
 
 - `hoplite_match_nodes`, `hoplite_invoke_node`, `hoplite_read_node`, `hoplite_traverse_nodes`, `hoplite_slugify_text` — readOnly: true, destructive: false, idempotent: true, openWorld: false. Pure reads or pure computation.
+- `hoplite_init_corpus` — readOnly: false, destructive: false, idempotent: true, openWorld: false. Creates absent artifacts only; never overwrites authored content. Second call against an initialized corpus is a no-op.
 - `hoplite_insert_node` — readOnly: false, destructive: false, idempotent: false, openWorld: false. Creates only; second call with the same id rejects.
 - `hoplite_update_node`, `hoplite_index_node`, `hoplite_apply_framing` — readOnly: false, destructive: true, idempotent: true, openWorld: false. Overwrite or replace prior state; safe to retry on transient failures.
 - `hoplite_delete_node` — readOnly: false, destructive: true, idempotent: false, openWorld: false. Rejects if the id is missing; not safely retryable as specified.
@@ -45,6 +47,18 @@ Tools that return content support a `response_format` parameter:
 ## Error handling at the MCP boundary
 
 Per [behavior.md](behavior.md#validation-and-error-model), the server distinguishes invariant violations (programming errors — throw exceptions) from constraint violations (runtime conditions — return ErrorOr). At the MCP wire boundary, the server adapter catches invariant exceptions and surfaces them alongside constraint errors as structured content with `isError: true`. JSON-RPC protocol-level errors stay reserved for transport-level failures; tool-execution errors always land as content responses.
+
+## Setup
+
+### `hoplite_init_corpus() -> WriteResult`
+
+Initializes the corpus rooted at the server's CWD. Creates `.hoplite/` and its subdirectories (`labels/`, `envelopes/`, `embeddings/`), creates `docs/` if absent, opens the SQLite database and applies the schema, writes the four shipped envelope files, and inserts the bootstrap `labels` rows.
+
+Idempotent. A second call against an initialized corpus restores any individually-missing bootstrap files and otherwise no-ops. The tool never overwrites authored content — customized envelope bodies survive re-init.
+
+The tool is uniquely available in uninitialized mode. Until `.hoplite/` exists, every other tool errors with a structured "corpus not initialized at `<cwd>`; call `hoplite_init_corpus` to create it." pointing the caller here. After init completes, the in-process server transitions to initialized mode and all other tools begin serving.
+
+Returns a `WriteResult` with the corpus root path and the list of files created (empty list on a no-op call against an already-initialized corpus).
 
 ## Discovery
 
@@ -120,7 +134,7 @@ Use cases: ingesting content created out-of-band (an external editor wrote the f
 
 Removes a node. Rejects if no node exists at the supplied id. Drops the node's content, metadata, and all of its label memberships. Wiki-link references to the deleted id from other nodes become dangling and drop silently from query results, per the broken-link semantic.
 
-Cached back-references in other nodes' `in_edges` and symmetric `:related` edges don't exist day one (reindex is deferred); when reindex lands, the next pass reconciles back-references to deleted ids.
+The delete transaction also drops symmetric `:related` edges other nodes carried back to this id (since they're stored as rows in `edges` keyed on either endpoint). Cached back-references in other nodes' `in_edges` are not materialized day one; reads compute `in_edges` from the live `edges` table.
 
 ### `hoplite_apply_framing(label, content) -> WriteResult`
 
@@ -140,7 +154,7 @@ This tool exists as a tool (rather than a library function the agent invokes inl
 
 ## Operational (not agent-facing)
 
-- `reindex(scope)` — runs the server-side indexer pass (MinHash signatures, embedding generation, `:related` edge materialization). Not in day one; see [roadmap.md](roadmap.md#server-side-reindex-pass). The agent-as-driver soft-reindex pattern (walking files and calling `hoplite_index_node(id)` on each) covers day-one needs through the existing surface.
+- `reindex(scope)` — runs the server-side embedding pass (Ollama embedding generation, embedding-derived `:related` edges supplementing the day-one MinHash-derived ones). Not in day one; see [roadmap.md](roadmap.md#server-side-reindex-pass--embeddings). MinHash signatures and MinHash-derived `:related` edges materialize on every write through the normal flow — no batch pass needed for those. The agent-as-driver soft-reindex pattern (walking files and calling `hoplite_index_node(id)` on each) covers day-one needs through the existing surface.
 - `repair(scope)` — recovers inconsistency between the index and the source of truth. Walks the corpus, regenerates derived state. Invoked through CLI when the index disagrees with reality.
 
 Both are CLI or background-worker entry points, not MCP tools the agent invokes.

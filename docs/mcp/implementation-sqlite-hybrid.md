@@ -16,9 +16,9 @@ Transport: stdio. Day-one deployment is local, single-user, single-corpus — th
 
 ## Lifespan and connection management
 
-The MCP server opens a single SQLite connection at startup and holds it for the process lifetime. The PRAGMAs (`journal_mode = WAL`, `synchronous = NORMAL`, `foreign_keys = ON`, `busy_timeout = 5000`) apply once at connection open; FTS5 keeps internal state across queries that benefits from the persistent connection.
+The MCP server holds a single SQLite connection for the process lifetime once the corpus is initialized. The PRAGMAs (`journal_mode = WAL`, `synchronous = NORMAL`, `foreign_keys = ON`, `busy_timeout = 5000`) apply once at connection open; FTS5 keeps internal state across queries that benefits from the persistent connection.
 
-In Python's MCP server framework, this maps to the `lifespan=app_lifespan` pattern — an async context manager that opens the connection on server startup and closes it on shutdown. The connection lives in the server's lifespan-scoped state, accessible from every tool handler.
+In Python's MCP server framework, this maps to the `lifespan=app_lifespan` pattern — an async context manager. On startup, if `<cwd>/.hoplite/graph.db` exists, the lifespan opens the connection and stores it in server state. If `.hoplite/` is absent, the lifespan stores a sentinel "uninitialized" state instead; the connection opens later when `hoplite_init_corpus` runs and is then promoted into the same lifespan-held slot. Tool handlers read the connection from lifespan-scoped state; the slot is `None` in uninitialized mode, and the dispatcher fast-paths to the "corpus not initialized" error for every tool except `hoplite_init_corpus`.
 
 ## Storage layout
 
@@ -47,15 +47,16 @@ File responsibilities:
 - `.hoplite/envelopes/read.md` is the fixed content envelope.
 - `.hoplite/embeddings/<flat-id>.npy` carries binary embedding vectors. The flat-id replaces `/` in the path with `-` (or another safe separator) so embedding files live flat at one level — easier for ML tooling than nested directories.
 
-The `.hoplite/` directory is hidden (leading dot) the same way `.git/` is — it's tool-managed metadata, not authored content. Humans rarely need to look in it. Add `.hoplite/graph.db`, `.hoplite/graph.db-wal`, and `.hoplite/graph.db-shm` to `.gitignore` (the database is regenerable from `docs/` content). Whether to commit the rest of `.hoplite/` (label envelope prose, read envelope) is a user choice — they're authored content even though they live in the index directory.
+The `.hoplite/` directory is hidden (leading dot) the same way `.git/` is — mostly tool-managed metadata; humans rarely look in it. Add `.hoplite/graph.db`, `.hoplite/graph.db-wal`, and `.hoplite/graph.db-shm` to `.gitignore` (the database is regenerable from `docs/` content). The label envelope prose and read envelope are authored content the user may choose to commit alongside `docs/`.
 
 ## Database schema
 
 ```sql
 CREATE TABLE nodes (
-  id              TEXT PRIMARY KEY,
-  summary         TEXT NOT NULL,
-  embedding_path  TEXT
+  id                  TEXT PRIMARY KEY,
+  summary             TEXT NOT NULL,
+  minhash_signature   BLOB,            -- MinHash signature for relatedness scoring
+  embedding_path      TEXT             -- path to .npy when embeddings land
 );
 
 CREATE TABLE labels (
@@ -126,7 +127,7 @@ How each entity from [data-model.md](data-model.md) is realized.
 Two locations per node:
 
 - Authored content at `<corpus_root>/docs/<id>`. The id is a path expression including the file extension (`foo.md`, `notes/skill-composition.md`, `journal/2026-05-24-foo.md`, `mcp/data-model.md`). Pure markdown body, no YAML frontmatter. Body shape on lines 1-4 is fixed: `# Title` on line 1, blank on line 2, summary on line 3, blank on line 4, body sections from line 5 onward.
-- Metadata: one row in `nodes` (`id`, `summary`, `embedding_path`) plus rows in `edges` for each outbound edge. The body text is indexed in `nodes_fts` for `hoplite_match_nodes`.
+- Metadata: one row in `nodes` (`id`, `summary`, `minhash_signature`, `embedding_path`) plus rows in `edges` for each outbound edge. The body text is indexed in `nodes_fts` for `hoplite_match_nodes`. The signature is computed at write time and used to materialize `:related` edges; see [MinHash details](#minhash-details).
 
 The two stores hold disjoint primary concerns: the file is the source of truth for body content; the database is the source of truth for metadata, edges, and the search index.
 
@@ -161,17 +162,33 @@ Auto-derived labels from the id:
 - First path segment when present. `journal/2026-05-24-foo.md` carries `journal`; `notes/foo.md` carries `notes`; `mcp/data-model.md` carries `mcp`. Root-level ids (no folder) get no auto-derived path label.
 - ISO date label when the filename component matches `<iso-date>-<slug>.<ext>`. Independent of folder; works for any note whose filename starts with a date.
 
-## Corpus root configuration
+## Corpus root and initialization
 
-The MCP server reads a `corpus_root` config value at startup. Paths derive from it:
+The corpus root IS the current working directory. The MCP server reads CWD at startup; that directory holds `docs/` (content) and `.hoplite/` (index). Hoplite installs once as a user-scope plugin; CWD differs per project, so the same server binary attaches to whichever corpus the launching host (Claude Code CLI, IDE extension, desktop app) opens.
 
-- Content: `<corpus_root>/docs/<id>` for every node.
-- Database: `<corpus_root>/.hoplite/graph.db`.
-- Label envelopes: `<corpus_root>/.hoplite/labels/<label>.md`.
-- Read envelope: `<corpus_root>/.hoplite/envelopes/read.md`.
-- Embedding blobs: `<corpus_root>/.hoplite/embeddings/<flat-id>.npy`.
+All paths derive from CWD:
 
-Relocating or multi-corpus setups need no code changes.
+- Content: `<cwd>/docs/<id>` for every node.
+- Database: `<cwd>/.hoplite/graph.db`.
+- Label envelopes: `<cwd>/.hoplite/labels/<label>.md`.
+- Read envelope: `<cwd>/.hoplite/envelopes/read.md`.
+- Embedding blobs: `<cwd>/.hoplite/embeddings/<flat-id>.npy`.
+
+### Uninitialized state
+
+If `<cwd>/.hoplite/` is absent, the corpus is uninitialized. The server boots in uninitialized mode: it skips opening the database connection (there's no file to open) and rejects every tool call EXCEPT `hoplite_init_corpus` with a structured error pointing the caller at the init tool.
+
+`hoplite_init_corpus` (see [tool-api.md](tool-api.md#hoplite_init_corpus)):
+
+1. Create `<cwd>/.hoplite/`, `<cwd>/.hoplite/labels/`, `<cwd>/.hoplite/envelopes/`, `<cwd>/.hoplite/embeddings/`.
+2. Create `<cwd>/docs/` if absent.
+3. Open `<cwd>/.hoplite/graph.db`, apply PRAGMAs, run the schema DDL from [Database schema](#database-schema).
+4. Write the four shipped envelope files (bundled with the plugin) into `<cwd>/.hoplite/labels/` and `<cwd>/.hoplite/envelopes/` — see [Bootstrap](#bootstrap--shipped-envelope-files). Existing files are left alone (idempotent).
+5. Insert the three `labels` rows for `instruction`, `reference`, `observation` with `has_envelope = 1`.
+6. Transition the server from uninitialized to initialized mode in-process — the connection from step 3 becomes the lifespan-held connection, every other tool starts working immediately.
+7. Return `WriteResult` listing the corpus root path and the files created.
+
+Idempotent across calls: a second `hoplite_init_corpus` against an already-initialized corpus is a no-op (or restores any individually missing bootstrap files). The tool only creates absent artifacts; it never overwrites authored content. Full reset to defaults is a future `repair` concern.
 
 ## Why this shape
 
@@ -201,19 +218,36 @@ Common steps, in order:
 4. Resolve the file path: `<corpus_root>/docs/<id>`.
 5. Read or write the body (varies by tool — see per-tool sections).
 6. Parse `[[wiki-links]]` from the body; build the `:mentions` edges.
-7. Reconcile `out_edges` per [behavior.md](behavior.md#edge-reconciliation-on-update). On `hoplite_insert_node`, no prior state. On `hoplite_update_node` or `hoplite_index_node` with prior state, preserve derived edges by querying the existing `edges` table for rows with `source` set and merging them in.
-8. Compose auto-derived labels: the first path segment of the id when present, plus the ISO date label if the filename component matches `<iso-date>-<slug>.<ext>`.
-9. Parse the cached summary from the body — line 3.
-10. Open a SQLite transaction:
-    - `INSERT OR REPLACE` into `nodes` with id, summary, embedding_path.
-    - `DELETE FROM edges WHERE source_id = ?` then `INSERT` the reconciled edge set.
+7. Compose auto-derived labels: the first path segment of the id when present, plus the ISO date label if the filename component matches `<iso-date>-<slug>.<ext>`.
+8. Parse the cached summary from the body — line 3.
+9. Compute the MinHash signature of the body (tokenize on word boundaries, shingle into word n-grams, hash each shingle, keep the `k` minimum hashes). See [MinHash details](#minhash-details).
+10. Materialize derived `:related` edges. Read every other node's `minhash_signature` from `nodes` (single SQL scan). Compute Jaccard similarity against this node. For each other node where similarity ≥ `minhash_threshold` (0.20 default), emit a `:related` edge with `confidence = similarity` and `source = "minhash"`. The edge is symmetric — both endpoints carry it.
+11. Reconcile the outbound edge set for this node: parsed `:mentions` + author-supplied `out_edges` + freshly-derived `:related` from step 10. Dedupe by `(type, to)`.
+12. Open a SQLite transaction:
+    - `INSERT OR REPLACE` into `nodes` with id, summary, minhash_signature, embedding_path.
+    - `DELETE FROM edges WHERE source_id = ?` then `INSERT` the reconciled edge set from step 11.
+    - For each derived `:related` edge `(this, other, sim)`: `INSERT OR REPLACE INTO edges` the symmetric row `(other, this, related, sim, "minhash")`. Drop any prior row `(other, this, related, *, "minhash")` whose pair fell below threshold this pass.
     - `DELETE FROM label_membership WHERE member_id = ?` (no-op on first insert).
     - For each label the node carries: `INSERT OR IGNORE INTO labels (id, has_envelope) VALUES (?, COALESCE((SELECT has_envelope FROM labels WHERE id=?), 0))` then `INSERT INTO label_membership (label, member_id) VALUES (?, ?)`.
     - Refresh the FTS index: `DELETE FROM nodes_fts WHERE id = ?` then `INSERT INTO nodes_fts (id, body, summary) VALUES (?, ?, ?)`.
     - Commit.
-11. Return `WriteResult` with id and any warnings.
+13. Return `WriteResult` with id and any warnings.
 
-The SQLite transaction in step 10 is atomic — every relational change for this write succeeds or none do.
+The SQLite transaction in step 12 is atomic — every relational change for this write succeeds or none do, including the bidirectional `:related` edge updates.
+
+### MinHash details
+
+The signature lives directly on the `nodes` table as a `BLOB` column (`minhash_signature`). The signature is small (k 32-bit hashes, default k=128 → ~512 bytes) and rarely needed by read paths, so on-row storage avoids a second table while keeping the `nodes` row cache-friendly.
+
+Configuration:
+
+- `minhash_signature_size` (default 128) — number of hash values per signature. Larger is more accurate, slower to compare.
+- `minhash_shingle_size` (default 5) — width of the word n-gram. Smaller catches shorter overlaps, more noise.
+- `minhash_threshold` (default 0.20) — minimum Jaccard similarity to materialize a `:related` edge.
+
+The step-10 pairwise scan is O(N) where N is the corpus size. For a personal corpus (hundreds to low thousands of nodes), this is sub-second per write. At very large N (10⁵+), an LSH bucketing pre-filter narrows the comparison set; deferred to [roadmap.md](roadmap.md).
+
+Write latency takes the cost of the pairwise scan and signature recompute; reads stay on the hot path (`hoplite_match_nodes` and `hoplite_traverse_nodes` never load the signature blob unless an operator explicitly queries it).
 
 ## Insert flow
 
@@ -248,10 +282,10 @@ Use cases: ingesting files created out-of-band (external editor, script, migrati
 1. Existence check. Reject if no row in `nodes` for the id.
 2. Resolve the file path and unlink the file.
 3. Open a SQLite transaction:
-   - `DELETE FROM edges WHERE source_id = ? OR target_id = ?` (drops outgoing edges; also drops back-references in derived edges pointing at this id, since the row is going away).
+   - `DELETE FROM edges WHERE source_id = ? OR target_id = ?` (drops outgoing edges; also drops back-references in derived edges pointing at this id, since the row is going away — including the symmetric `:related` edges other nodes carried back to this one).
    - `DELETE FROM label_membership WHERE member_id = ?`.
    - `DELETE FROM nodes_fts WHERE id = ?`.
-   - `DELETE FROM nodes WHERE id = ?`.
+   - `DELETE FROM nodes WHERE id = ?` (drops the row and its `minhash_signature`).
    - Commit.
 
 Wiki-link references in other notes' bodies still exist as raw `[[...]]` text but resolve to nothing — the broken-link semantic still applies. The next `hoplite_update_node`/`hoplite_index_node` to a note containing a stale `[[<deleted-id>]]` will re-parse and emit no edge.
@@ -295,22 +329,22 @@ No per-call rescoring of every node. The FTS index is incremental — `INSERT` /
 
 ## Soft reindex via the agent
 
-No server-side reindex pass day one. The agent-as-driver pattern covers the soft-reindex case through `hoplite_index_node(id)`: walk `<corpus_root>/docs/`, call `hoplite_index_node` on each file, and the write-time flow re-reads the body, re-parses wiki-links, regenerates the cached summary, rewrites the relational rows, and refreshes the FTS index. Stale rows, hand-edited bodies, and missing derived metadata fix themselves through normal `hoplite_index_node` calls.
+No batch server-side reindex pass day one. The agent-as-driver pattern covers the soft-reindex case through `hoplite_index_node(id)`: walk `<corpus_root>/docs/`, call `hoplite_index_node` on each file, and the write-time flow re-reads the body, re-parses wiki-links, regenerates the cached summary, recomputes the MinHash signature, materializes fresh `:related` edges, rewrites the relational rows, and refreshes the FTS index. Stale rows, hand-edited bodies, missing signatures, and missing derived metadata fix themselves through normal `hoplite_index_node` calls.
 
-Server-side reindex (MinHash, embeddings, derived `:related` edges) is on the [roadmap](roadmap.md#server-side-reindex-pass).
+Embedding generation (Ollama-driven vector embeddings, used to supplement BM25 with cosine similarity and to derive additional `:related` edges) is on the [roadmap](roadmap.md#server-side-reindex-pass).
 
 ## Bootstrap — shipped envelope files
 
-Four envelope files arrive as bundled assets the plugin installer drops into `<corpus_root>/.hoplite/` at install time:
+Four envelope files ship as bundled plugin assets. `hoplite_init_corpus` copies them into place on first run:
 
-- `<corpus_root>/.hoplite/envelopes/read.md`
-- `<corpus_root>/.hoplite/labels/instruction.md`
-- `<corpus_root>/.hoplite/labels/reference.md`
-- `<corpus_root>/.hoplite/labels/observation.md`
+- `<cwd>/.hoplite/envelopes/read.md`
+- `<cwd>/.hoplite/labels/instruction.md`
+- `<cwd>/.hoplite/labels/reference.md`
+- `<cwd>/.hoplite/labels/observation.md`
 
-The corresponding `labels` rows (with `has_envelope = 1`) are inserted by a first-run migration when the server starts and notices the files. The exact prose for each envelope is in [behavior.md](behavior.md#day-one-envelope-prose).
+The corresponding `labels` rows (with `has_envelope = 1`) get inserted in the same init transaction. The exact prose for each envelope is in [behavior.md](behavior.md#day-one-envelope-prose).
 
-After install they're editable like any other authored file — by hand, or via `hoplite_apply_framing` for the three framing-axis envelopes. `hoplite_apply_framing` writes the file and updates `labels.has_envelope` in a single transaction.
+After init the files are editable like any other authored file — by hand, or via `hoplite_apply_framing` for the three framing-axis envelopes. `hoplite_apply_framing` writes the file and updates `labels.has_envelope` in a single transaction.
 
 The read content envelope (the one `hoplite_read_node` applies) is structurally separate; only edits through hand-edit or repair.
 
@@ -353,9 +387,10 @@ Full-corpus repair is the "I broke the index" escape hatch — slow but always c
 The row in `nodes` for the mcp data-model spec page (id `mcp/data-model.md`):
 
 ```
-id              = "mcp/data-model.md"
-summary         = "the entities the graph carries and the fields each one holds"
-embedding_path  = ".hoplite/embeddings/mcp-data-model.md.npy"
+id                 = "mcp/data-model.md"
+summary            = "the entities the graph carries and the fields each one holds"
+minhash_signature  = <512-byte BLOB — 128 32-bit hashes>
+embedding_path     = NULL                       (set when embeddings land)
 ```
 
 Its rows in `edges`:
@@ -396,7 +431,7 @@ The rows in `label_membership`:
 
 ```
 label        | member_id
-instruction  | mcp/orchestrator-skill.md
+instruction  | mcp/hoplite-skill.md
 instruction  | notes/taking-notes.md
 instruction  | notes/writing-prose.md
 ```
