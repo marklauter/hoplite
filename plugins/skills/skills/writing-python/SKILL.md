@@ -37,7 +37,6 @@ This style captures most of the correctness benefit of pure FP while staying ins
 - `Final` for module-level constants.
 - `TypeAlias` (3.10+) or the `type` statement (3.12+) for named complex types.
 - Type hints on every function signature. `T | None` over `Optional[T]` post-3.10.
-- Empty generic literals carry the type parameter — `frozenset[str]()`, `dict[str, int]()`, `list[Foo]()`. Bare `frozenset()` gives pyright nothing to infer from; populated literals like `frozenset({"x"})` infer fine from the elements. An opt-in semgrep rule for the no-literal cases (`frozenset()`, `set()`) ships at `${CLAUDE_PLUGIN_ROOT}/skills/writing-python/semgrep/empty-generic-literal.yml`.
 - Run `pyright` in strict mode so the hints stay honest under the gate.
 
 ## Functions and control flow
