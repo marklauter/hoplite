@@ -16,7 +16,7 @@ The corpus is a labeled multigraph stored as files. Nodes are notes; edges are t
 
 ## Tools
 
-- `hoplite_match_nodes(predicate, k=5)` — find landings. Returns up to `k` `Landing` records (id, summary, labels, score) ranked by relevance to the predicate. The predicate carries `text` (BM25-scored) and/or `node_labels` (a label expression like `note & mcp` or `(note | journal) & !draft`).
+- `hoplite_match_nodes(predicate, k=5)` — find landings. Returns up to `k` `Landing` records (id, summary, labels, score) ranked by relevance. `predicate` is `{text?, node_labels?}` — at least one must be supplied. `text` (BM25-scored) finds nodes similar to a phrase; `node_labels` is a label expression like `note & mcp` or `(note | journal) & !draft`.
 - `hoplite_invoke_node(id)` — invoke a node as a directive. Returns the body with the framing envelope applied (framing prose plus stacked label bodies plus the node body).
 - `hoplite_read_node(id)` — read a node as content. Returns the body framed by the fixed content envelope (label-independent), telling the agent to treat the payload as data rather than directive.
 - `hoplite_insert_node(id, body, labels=[], out_edges=[])` — create a new node. Rejects if the id already exists.
@@ -33,7 +33,7 @@ Enter the graph through `hoplite_match_nodes` when you need to find a starting p
 
 Typical flow:
 
-1. `hoplite_match_nodes("phrase describing what you need")` — returns candidate landings.
+1. `hoplite_match_nodes({text: "phrase describing what you need"})` — returns candidate landings.
 2. Inspect the landings; pick one based on summary and labels.
 3. `hoplite_invoke_node(landing_id)` — read the framed content. Note the out_edges.
 4. Decide: does this answer the user, or do you need to go further?
