@@ -95,7 +95,7 @@ The agent calls `slugify` at the input boundary when normalizing human-supplied 
 
 ## Operational (not agent-facing)
 
-- `reindex(scope)` — runs the background indexer pass: MinHash signatures, embedding generation, `:related` edge materialization. Day one no server-side reindex exists; the agent-as-driver pattern (walking nodes and calling `update` on each) covers the soft-reindex case. See [implementation-sqlite-hybrid.md](implementation-sqlite-hybrid.md#reindex--deferred-not-forgotten) and [behavior.md](behavior.md#edge-vocabulary).
+- `reindex(scope)` — runs the server-side indexer pass (MinHash signatures, embedding generation, `:related` edge materialization). Not in day one; see [roadmap.md](roadmap.md#server-side-reindex-pass). The agent-as-driver soft-reindex pattern (walking files and calling `index(id)` on each) covers day-one needs through the existing surface.
 - `repair(scope)` — recovers inconsistency between the index and the source of truth. Walks the corpus, regenerates derived state. Invoked through CLI when the index disagrees with reality.
 
 Both are CLI or background-worker entry points, not MCP tools the agent invokes.

@@ -11,11 +11,11 @@ This spec is organized as four contract files (stable, implementation-agnostic),
 ## Status of each file
 
 - [data-model.md](data-model.md) — [Contract] Entity schemas. The data model the graph carries.
-- [tool-api.md](tool-api.md) — [Contract] Tool signatures and semantics. Nine agent-facing tools.
+- [tool-api.md](tool-api.md) — [Contract] Tool signatures and semantics. Ten agent-facing tools.
 - [behavior.md](behavior.md) — [Contract] Validation rules, envelope composition, label and edge vocabularies, error model.
 - [orchestrator-skill.md](orchestrator-skill.md) — [Contract] The SKILL.md body the agent loads on first interaction.
 - [implementation-sqlite-hybrid.md](implementation-sqlite-hybrid.md) — [Implementation] SQLite for the relational layer (`<repo-root>/.graph/graph.db` with FTS5), files for the prose layer (`<repo-root>/docs/` content plus envelope files under `.graph/`).
-- [deferred-features.md](deferred-features.md) — [Roadmap] Multi-writer support, source files as graph nodes, external web references as first-class nodes, reindex trigger model.
+- [roadmap.md](roadmap.md) — [Roadmap] Server-side reindex (MinHash, embeddings), multi-writer support, source files as graph nodes, external web references as first-class nodes, aspirational edge types, legacy-corpus migration.
 
 ## Contracts versus implementation
 
@@ -30,11 +30,11 @@ Read in order on first pass:
 3. [behavior.md](behavior.md) — how it composes and validates
 4. [orchestrator-skill.md](orchestrator-skill.md) — the protocol the agent follows
 5. [implementation-sqlite-hybrid.md](implementation-sqlite-hybrid.md) — how the day-one shipping version maps onto SQLite + files
-6. [deferred-features.md](deferred-features.md) — what comes later
+6. [roadmap.md](roadmap.md) — what comes later
 
 ## Cross-references
 
 - `[[mcp-server-as-skill-system-runtime]]` — the parent design-exploration note. Records how this design emerged.
 - `[[mcp-graph-runtime-data-model]]` — the legacy monolithic spec note, preserved for historical reference. This `docs/mcp/` folder is canonical.
-- `[[source-files-as-graph-nodes]]` — future-scope analysis of indexing source code alongside markdown notes. Referenced from `deferred-features.md`.
+- `[[source-files-as-graph-nodes]]` — future-scope analysis of indexing source code alongside markdown notes. Referenced from `roadmap.md`.
 - `[[prototype-the-plugin-mcp-server-in-python]]` — the Python-as-language choice and shape options A through D for the write path.

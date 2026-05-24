@@ -281,16 +281,11 @@ FTS5's BM25 scoring uses default parameters (`k1 = 1.2`, `b = 0.75`). The implem
 
 No per-call rescoring of every node. The FTS index is incremental — `INSERT` / `DELETE` / `REPLACE` in the write flow keep it current.
 
-## Reindex — deferred, not forgotten
+## Soft reindex via the agent
 
-No server-side reindex pass day one. The agent-as-driver pattern covers soft-reindex through the existing tools: walk `<corpus_root>/docs/`, call `index(id)` on each, and the write-time flow re-reads the body, re-parses wiki-links, regenerates the cached summary, rewrites the relational rows, and refreshes the FTS index. The `index` tool is purpose-built for this — it indexes a file without rewriting it, so the soft-reindex walk doesn't risk disturbing the content. Stale rows, hand-edited bodies, and missing derived metadata fix themselves through normal `index` calls.
+No server-side reindex pass day one. The agent-as-driver pattern covers the soft-reindex case through `index(id)`: walk `<corpus_root>/docs/`, call `index` on each file, and the write-time flow re-reads the body, re-parses wiki-links, regenerates the cached summary, rewrites the relational rows, and refreshes the FTS index. Stale rows, hand-edited bodies, and missing derived metadata fix themselves through normal `index` calls.
 
-The features that genuinely need a server-side reindex are the ones the agent can't compute through the existing surface:
-
-- MinHash pairwise relatedness — Jaccard-similarity edges above `minhash_threshold` (0.20 default) materialize as `:related` derived edges with `source: minhash`. Adds rows to `edges` in batches.
-- Embedding generation via Ollama (`nomic-embed-text` candidate, 768-dim, ~270MB, CPU-fast) writes `.npy` files into `<corpus_root>/.graph/embeddings/` and populates `nodes.embedding_path`. With embeddings, `match` switches from BM25 to vector similarity, and embedding-derived `:related` edges supplement MinHash.
-
-A bulk reindex pass is fast: one SQLite transaction can insert thousands of `:related` edges in a single commit.
+Server-side reindex (MinHash, embeddings, derived `:related` edges) is on the [roadmap](roadmap.md#server-side-reindex-pass).
 
 ## Bootstrap — shipped envelope files
 
@@ -330,11 +325,7 @@ The cross-boundary failure mode is small: file written but database commit faile
 
 ### Concurrency
 
-SQLite in WAL mode supports one writer plus many concurrent readers without blocking. Multi-reader is essentially free; multi-writer serializes through the SQLite write lock.
-
-For multi-agent writes, SQLite's connection model handles serialization automatically — the MCP server can accept concurrent write calls and let SQLite queue them. No application-level locking needed.
-
-The file-boundary remains: two writers updating the same authored note race on the file. The SQLite transaction can still commit cleanly for whichever wins, but the file may not match what the last-committed transaction expected. For day one, single-writer assumption stays; multi-writer support adds per-id file locking on the authored note, paired with SQLite's native transaction serialization.
+Day one assumes a single writer. SQLite in WAL mode already supports one writer plus many concurrent readers without blocking, so multi-reader is free at the database layer. Multi-writer support is on the [roadmap](roadmap.md#multi-writer-support).
 
 ### Inconsistency recovery
 
@@ -398,9 +389,9 @@ instruction  | notes/taking-notes.md
 instruction  | notes/writing-prose.md
 ```
 
-## Migration — deferred
+## Migration
 
-The legacy `docs/notes/` corpus (with YAML frontmatter on notes from the pre-graph era) needs migration to the new shape. A converter walks every note, derives labels from filenames and existing frontmatter, populates the database, and writes the bootstrapped envelope files. Deferred — when migration lands, it runs as a one-time CLI pass that produces the initial database from existing content. Day-one development can use a fresh empty corpus or a hand-curated subset.
+Legacy-corpus migration is on the [roadmap](roadmap.md#migration-of-legacy-corpus). Day-one development uses a fresh empty corpus or a hand-curated subset.
 
 ## Rename semantics
 

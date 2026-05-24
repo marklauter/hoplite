@@ -86,22 +86,12 @@ These envelopes are editable — changing them changes the contract without requ
 
 ## Edge vocabulary
 
-Two day-one edge types — the minimum surface that supports current traversal needs while leaving room for expansion as patterns emerge.
+Two day-one edge types:
 
 - `mentions` — authored. Emitted by the indexer when it parses any `[[wiki-link]]` in a node body. Implicit confidence 1.0. Reads source-to-target: "foo mentions bar." The default semantic for references without a stronger claim.
-- `related` — derived. Produced by the reindex pass from MinHash similarity (later, from embedding similarity). Carries a confidence score and a `source` naming which signal generated it. Reads as symmetric topical adjacency. Author-supplied `related` edges (no `source` field) are also permitted day one — the API accepts authored relatedness declarations.
+- `related` — symmetric topical adjacency. Carries a confidence score and an optional `source` naming the signal that generated it. Day one accepts authored `related` edges (no `source` field) via the `out_edges` parameter; the server-side reindex pass that produces derived `related` edges (MinHash, embeddings) lives on the [roadmap](roadmap.md#server-side-reindex-pass).
 
-Deferred edge types — aspirational, not in the day-one vocabulary. Adding any of these is cheap when the corpus repeatedly exercises a relationship that `mentions` underspecifies and `related` doesn't capture:
-
-- `cites` — source explicitly cites target as backing.
-- `contradicts` — source opposes target's claim.
-- `requires` — source depends on target (skill composition).
-- `see-also` — topical adjacency the author wants to surface explicitly, independent of derived similarity.
-- `blocked-by` — work that can't proceed without resolution of the target.
-- `parent` — hierarchy among labels.
-- `supersedes` — source replaces target.
-
-Adding a new type is cheap: pick a name, document the semantic, teach the indexer (if it should auto-emit from some source), update the orchestrator skill's vocabulary section.
+Aspirational edge types beyond these two (`cites`, `contradicts`, `requires`, `see-also`, etc.) are reserved for future passes — see the [roadmap](roadmap.md#aspirational-edge-types).
 
 ## Envelope composition
 
