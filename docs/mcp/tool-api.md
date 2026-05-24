@@ -4,11 +4,11 @@
 
 ## Overview
 
-Nine agent-facing tools, grouped by purpose:
+Ten agent-facing tools, grouped by purpose:
 
 - Discovery: `match`, `traverse`
 - Retrieval: `invoke`, `read`
-- Mutation: `insert`, `update`, `delete`, `apply_framing`
+- Mutation: `insert`, `update`, `index`, `delete`, `apply_framing`
 - Utility: `slugify`
 
 Two operational primitives stay outside the agent surface: `reindex` and `repair`. Both run through background workers or CLI invocation; the agent never calls them.
@@ -64,6 +64,12 @@ Creates a new node. Rejects if a node already exists at the supplied id. Trigger
 Modifies an existing node. Rejects if no node exists at the supplied id. Same indexing flow as `insert`, plus reconciles label memberships: drops membership from labels the node no longer carries.
 
 Edge reconciliation preserves derived edges across updates. The new `out_edges` set is: parsed `:mentions` edges from the body (replacement) + author-supplied edges from the tool parameter (replacement of edges without `source`) + existing derived edges from the prior state (edges with `source` set survive). Dedupe by `(type, to)`.
+
+### `index(id, labels=[], out_edges=[]) -> WriteResult`
+
+Indexes a node from a pre-existing file. Same indexing flow as `insert`, except the body comes from the file already on disk at the path the id resolves to — `index` does not write the file. Creates a new node entry if none exists; refreshes the entry if one does (with the same label-reconciliation and edge-reconciliation semantics as `update`).
+
+Use cases: ingesting content created out-of-band (an external editor wrote the file, a script generated it, a migration deposited it); re-indexing after hand-editing a body; bulk ingest by walking a directory and calling `index` per file. Rejects if the file at the id's resolved path does not exist.
 
 ### `delete(id) -> WriteResult`
 

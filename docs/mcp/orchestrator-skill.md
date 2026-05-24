@@ -21,6 +21,7 @@ The corpus is a labeled multigraph stored as files. Nodes are notes; edges are t
 - `read(id)` — read a node as content. Returns the body framed by the fixed content envelope (label-independent), telling the agent to treat the payload as data rather than directive.
 - `insert(id, body, labels=[], out_edges=[])` — create a new node. Rejects if the id already exists.
 - `update(id, body, labels=[], out_edges=[])` — modify an existing node. Rejects if the id doesn't exist.
+- `index(id, labels=[], out_edges=[])` — index a node from a pre-existing file. Reads the body from disk rather than writing it. Useful when the file was created out-of-band, or for re-indexing after a hand-edit.
 - `delete(id)` — remove a node. Drops the node's content, metadata, and all of its label memberships.
 - `apply_framing(label, content)` — create or replace the envelope prose for a label. Use to set framing on labels beyond the four shipped envelopes.
 - `slugify(s)` — pure function. Normalizes a string into canonical kebab-case `[a-z0-9-]` form. Call it when you need to derive a canonical id or label from human-supplied input before passing to `insert`/`update`/`apply_framing`.
@@ -50,13 +51,14 @@ Parallel to Claude Code's existing surface: `invoke` is `/skill` (active skill l
 
 ## Writing
 
-Use `insert(id, body, labels, out_edges)` for new nodes, `update(id, ...)` to modify existing ones, `delete(id)` to remove. Conventions:
+Use `insert(id, body, labels, out_edges)` for new nodes, `update(id, ...)` to modify existing ones, `index(id, ...)` to ingest a pre-existing file on disk, `delete(id)` to remove. Conventions:
 
 - Notes are pure markdown — no frontmatter. The body shape: `# Title` on line 1, blank line 2, one-sentence summary on line 3, blank line 4, body sections from line 5. The indexer parses line 3 as the cached summary.
-- Labels are lowercase kebab-case, `[a-z0-9-]` only. The `note` label is auto-derived; supply additional ones via the tool-call `labels` parameter.
-- Date-prefixed id for observations and journal entries: `2026-05-23-design-meeting`. The indexer parses the date from the prefix.
-- Use `[[wiki-link]]` in the body to reference another node — the indexer emits `:mentions` edges automatically.
-- Body wiki-links produce `:mentions` edges automatically. The `out_edges` parameter on `insert`/`update` accepts any authored edge object with `type` and `to` fields (no `source` — that's reserved for derived edges from reindex). Day one this includes `:related` if you want to declare an authored relatedness edge; future edge types beyond `:mentions` and `:related` land here too.
+- Ids are path expressions with extension: `foo.md` for a root-level note, `notes/skill-composition.md` for a categorized note, `journal/2026-05-24-today-was-warm.md` for a journal entry. Each path segment is lowercase kebab-case.
+- The first path segment becomes an auto-derived label: `journal/...` carries `journal`, `notes/...` carries `notes`, `mcp/...` carries `mcp`. Root-level ids get no auto-derived path label.
+- Filenames matching `<iso-date>-<slug>.<ext>` get the date as an auto-derived label automatically — works for observations and journal entries.
+- Use `[[wiki-link]]` in the body to reference another node — wiki-links use the same id form (including extension and path): `[[journal/2026-05-24-foo.md]]`, `[[mcp/data-model.md]]`. The indexer emits `:mentions` edges automatically.
+- Body wiki-links produce `:mentions` edges automatically. The `out_edges` parameter on `insert`/`update`/`index` accepts any authored edge object with `type` and `to` fields (no `source` — that's reserved for derived edges from reindex). Day one this includes `:related` if you want to declare an authored relatedness edge; future edge types beyond `:mentions` and `:related` land here too.
 
 ## Vocabulary
 

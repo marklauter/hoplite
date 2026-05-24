@@ -2,9 +2,13 @@
 
 [Contract] Validation rules, vocabularies, envelope composition, and the error model — pure behavioral spec.
 
-## Slug rule
+## Slug and id rules
 
-Ids and labels share one canonical form: lowercase kebab-case, characters in `[a-z0-9-]` only. Whitespace, uppercase letters, and other characters are rejected at write time. The `slugify` utility (see [tool-api.md](tool-api.md#slugifys---string)) normalizes any string into canonical form.
+Labels are lowercase kebab-case, `[a-z0-9-]` only. Whitespace, uppercase letters, and other characters are rejected at write time.
+
+Ids are path expressions of the form `<segment>(/<segment>)*.<ext>`. Each segment is lowercase kebab-case (`[a-z0-9-]`). The final segment includes the file extension. Examples: `foo.md`, `notes/skill-composition.md`, `journal/2026-05-24-today-was-warm.md`, `mcp/data-model.md`.
+
+The `slugify` utility (see [tool-api.md](tool-api.md#slugifys---string)) normalizes any string into a canonical kebab-case segment. Path composition (joining segments with `/` and appending the extension) is the caller's responsibility.
 
 ## Validation and error model
 
@@ -31,17 +35,17 @@ Errors return to the caller; no state changes.
 
 ## Label vocabulary
 
-Labels are multi-valued (a node carries a set), open vocabulary (any slug-conforming string is permitted), and supplied through the `labels` parameter on `insert` and `update`.
+Labels are multi-valued (a node carries a set), open vocabulary (any slug-conforming string is permitted), and supplied through the `labels` parameter on `insert`, `update`, or `index`.
 
-Auto-derived labels — added by the indexer at write time, not supplied by the caller:
+Auto-derived labels — added by the indexer at write time from the id, not supplied by the caller:
 
-- `note` — every authored node carries this. The implementation derives it from the authored content's location.
-- ISO date (e.g., `2026-05-22`) — added when the node's labels include `observation` or `journal`. The date is parsed from the id's filename prefix.
+- First path segment — when an id has the form `<segment>/<rest>.<ext>`, the leading segment becomes a label automatically. So `journal/2026-05-24-foo.md` carries the `journal` label; `notes/skill-composition.md` carries `notes`; `mcp/data-model.md` carries `mcp`. Ids at the root level (e.g., `foo.md`) get no auto-derived path label.
+- ISO date (e.g., `2026-05-24`) — added when the filename component matches `<iso-date>-<slug>.<ext>`. Independent of folder; any note whose filename starts with a date gets the date label.
 
 Author-supplied conventional labels — recognized names the corpus expects but doesn't enforce as a closed set:
 
-- `observation` — node is a timestamped observation. Triggers the date-prefix id requirement.
-- `journal` — node is a journal entry, always also an observation. Triggers the date-prefix id requirement.
+- `observation` — node is a timestamped observation. The author supplies this; the date label comes from the filename automatically.
+- `journal` — node is a journal entry, always also an observation. Typically lives under `docs/journal/` (giving the auto-derived `journal` label) but can be tagged manually too.
 - `question` — node is an open question.
 - `instruction` — node carries operative guidance.
 - `reference` — node is consultable knowledge. Default framing when no framing-axis label is present; rarely needs explicit declaration.

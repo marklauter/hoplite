@@ -10,20 +10,32 @@ The tool API surface (see [tool-api.md](tool-api.md)) and behavior contracts (se
 
 ## Storage layout
 
+Content lives anywhere under `<repo-root>/docs/`. The index lives at `<repo-root>/.graph/`. Two directories at the repo root, with disjoint responsibilities.
+
 ```
-docs/notes/<slug>.md                            authored note (pure markdown, body only)
-docs/notes/<iso-date>-<slug>.md                 authored note with observation or journal label
-docs/index/graph.db                             SQLite database (all relational data)
-docs/index/labels/<label>.md                    label envelope (pure markdown, optional prose)
-docs/index/envelopes/read.md                    fixed content envelope applied by read()
-docs/index/embeddings/<id>.npy                  embedding blob (when reindex lands)
+<repo-root>/
+  docs/                                         CONTENT — all notes live here
+    <slug>.<ext>                                root-level note (id: <slug>.<ext>)
+    notes/<slug>.<ext>                          notes organized under notes/ (id: notes/<slug>.<ext>)
+    journal/<iso-date>-<slug>.<ext>             journal entry (id: journal/...)
+    mcp/<slug>.<ext>                            mcp spec page (id: mcp/...)
+    ... any other folder structure the user wants
+  .graph/                                       INDEX — opaque to authors; managed by the MCP server
+    graph.db                                    SQLite database (all relational data)
+    labels/<label>.md                           label envelope (pure markdown, optional prose)
+    envelopes/read.md                           fixed content envelope applied by read()
+    embeddings/<flat-id>.npy                    embedding blob (when reindex lands; flat-id encodes path)
 ```
 
 File responsibilities:
 
-- `.md` files carry human-readable content — authored notes and envelope prose.
-- `.npy` files carry binary embedding vectors.
-- `graph.db` carries every structured query target: nodes (metadata), labels (metadata), label memberships, edges, and the full-text search index.
+- `docs/` contains every node's body. Subfolders organize by topic at the user's discretion; the indexer reads them as ids.
+- `.graph/graph.db` carries every structured query target: nodes (metadata), labels (metadata), label memberships, edges, and the full-text search index.
+- `.graph/labels/<label>.md` files carry label envelope prose.
+- `.graph/envelopes/read.md` is the fixed content envelope.
+- `.graph/embeddings/<flat-id>.npy` carries binary embedding vectors. The flat-id replaces `/` in the path with `-` (or another safe separator) so embedding files live flat at one level — easier for ML tooling than nested directories.
+
+The `.graph/` directory is hidden (leading dot) the same way `.git/` is — it's tool metadata, not content. Add `.graph/graph.db`, `.graph/graph.db-wal`, and `.graph/graph.db-shm` to `.gitignore` (the database is regenerable from `docs/` content).
 
 ## Database schema
 
@@ -37,7 +49,7 @@ CREATE TABLE nodes (
 CREATE TABLE labels (
   id              TEXT PRIMARY KEY,
   summary         TEXT,
-  has_envelope    INTEGER NOT NULL DEFAULT 0  -- 1 if docs/index/labels/<id>.md exists
+  has_envelope    INTEGER NOT NULL DEFAULT 0  -- 1 if .graph/labels/<id>.md exists
 );
 
 CREATE TABLE label_membership (
@@ -101,7 +113,7 @@ How each entity from [data-model.md](data-model.md) is realized.
 
 Two locations per node:
 
-- Authored content: `docs/notes/<id>.md`. Pure markdown body, no YAML frontmatter. Body shape on lines 1-4 is fixed: `# Title` on line 1, blank on line 2, summary on line 3, blank on line 4, body sections from line 5 onward.
+- Authored content at `<corpus_root>/docs/<id>`. The id is a path expression including the file extension (`foo.md`, `notes/skill-composition.md`, `journal/2026-05-24-foo.md`, `mcp/data-model.md`). Pure markdown body, no YAML frontmatter. Body shape on lines 1-4 is fixed: `# Title` on line 1, blank on line 2, summary on line 3, blank on line 4, body sections from line 5 onward.
 - Metadata: one row in `nodes` (`id`, `summary`, `embedding_path`) plus rows in `edges` for each outbound edge. The body text is indexed in `nodes_fts` for `match`.
 
 The two stores hold disjoint primary concerns: the file is the source of truth for body content; the database is the source of truth for metadata, edges, and the search index.
@@ -111,7 +123,7 @@ The two stores hold disjoint primary concerns: the file is the source of truth f
 Up to two locations per label:
 
 - One row in `labels` (`id`, optional `summary`, `has_envelope` boolean).
-- Optional `docs/index/labels/<label>.md` carrying envelope prose. The `has_envelope` column tracks whether the file exists; the file is authoritative.
+- Optional `<corpus_root>/.graph/labels/<label>.md` carrying envelope prose. The `has_envelope` column tracks whether the file exists; the file is authoritative.
 - Rows in `label_membership` for each member.
 
 Membership IS a relational table. Adding a node to a label is one `INSERT OR IGNORE`. Removing is one `DELETE`. Listing members is one query.
@@ -122,21 +134,32 @@ Each edge is a row in `edges`. Symmetric `:related` edges are written as two row
 
 ### Envelope
 
-The framing component for `invoke` comes from `docs/index/labels/<label>.md` (the label envelope file). For `read`, from `docs/index/envelopes/read.md`. The structured `Envelope` shape is composed by the server at retrieval time; on disk it's just the envelope file plus the structure built in memory.
+The framing component for `invoke` comes from `<corpus_root>/.graph/labels/<label>.md` (the label envelope file). For `read`, from `<corpus_root>/.graph/envelopes/read.md`. The structured `Envelope` shape is composed by the server at retrieval time; on disk it's just the envelope file plus the structure built in memory.
 
-## Id and filename rules
+## Id and path rules
 
-A node's id is its authored filename without the `.md` extension. The filename and the `nodes.id` column always agree.
+A node's id is the path from `docs/` including the file extension. Each path segment is lowercase kebab-case (`[a-z0-9-]`); segments are separated by `/`. Examples: `foo.md`, `notes/skill-composition.md`, `journal/2026-05-24-today-was-warm.md`, `mcp/data-model.md`.
 
-Filename convention. Nodes carrying `observation` or `journal` labels use the ISO date prefix — `docs/notes/<iso-date>-<slug>.md`. The indexer parses the prefix to derive the date label. Other nodes use `docs/notes/<slug>.md`. No separate `date:` column — the prefix is the date.
+Wiki-links use the same id form: `[[journal/2026-05-24-foo.md]]`, `[[mcp/data-model.md]]`.
 
-Date label is derived only when the node carries `observation` or `journal`. Removing both labels drops the date label on the next write; the prefix becomes cosmetic.
+The id maps directly to the authored file path: `<corpus_root>/docs/<id>`. No translation needed.
 
-Slug derivation matches the canonical rule (lowercase, whitespace to hyphens, strip non-alphanumeric except hyphens).
+Auto-derived labels from the id:
+
+- First path segment when present. `journal/2026-05-24-foo.md` carries `journal`; `notes/foo.md` carries `notes`; `mcp/data-model.md` carries `mcp`. Root-level ids (no folder) get no auto-derived path label.
+- ISO date label when the filename component matches `<iso-date>-<slug>.<ext>`. Independent of folder; works for any note whose filename starts with a date.
 
 ## Corpus root configuration
 
-The MCP server reads a `corpus_root` config value at startup. The database path is `<corpus_root>/docs/index/graph.db`. All other paths (`docs/notes/`, `docs/index/labels/`, `docs/index/envelopes/`, `docs/index/embeddings/`) derive from `corpus_root`. Relocating or multi-corpus setups need no code changes.
+The MCP server reads a `corpus_root` config value at startup. Paths derive from it:
+
+- Content: `<corpus_root>/docs/<id>` for every node.
+- Database: `<corpus_root>/.graph/graph.db`.
+- Label envelopes: `<corpus_root>/.graph/labels/<label>.md`.
+- Read envelope: `<corpus_root>/.graph/envelopes/read.md`.
+- Embedding blobs: `<corpus_root>/.graph/embeddings/<flat-id>.npy`.
+
+Relocating or multi-corpus setups need no code changes.
 
 ## Why this shape
 
@@ -154,36 +177,64 @@ Prose stays in files:
 - Label envelope prose and the read envelope are content the agent (and the user) authors directly; their natural medium is markdown files.
 - Embedding blobs are binary; SQLite BLOBs work but `.npy` files are more interoperable with ML tooling.
 
-## Insert and update flow
+## Write-time flow — common steps
 
-What `insert(id, body, labels, out_edges)` and `update(id, body, labels, out_edges)` do, in order.
+`insert`, `update`, and `index` share most of the indexing flow. They differ on the existence check (step 0) and whether step 4 writes the body file. The remaining steps are shared.
 
-0. Existence check. `insert` rejects if a row exists in `nodes` for the id (and rejects if `docs/notes/<id>.md` exists, as a belt-and-braces safety check). `update` rejects if no row exists.
-1. Validate labels. Per [behavior.md](behavior.md#validation-and-error-model).
-2. If labels include `observation` or `journal`, verify the id has an ISO date prefix. Reject if missing.
+Common steps, in order:
+
+1. Validate labels. Per [behavior.md](behavior.md#slug-and-id-rules).
+2. Validate the id format. Each path segment matches `[a-z0-9-]`; the id ends with `.<ext>`.
 3. Validate `out_edges`. Reject any author-supplied edge that carries a `source` field.
-4. Write the authored note to `docs/notes/<id>.md` (temp-and-rename for atomicity). Pure markdown, no frontmatter.
-5. Parse `[[wiki-links]]` from the body; build the `:mentions` edges.
-6. Reconcile `out_edges` per the rule in [behavior.md](behavior.md#edge-reconciliation-on-update). On `insert`, no prior state — just merge parsed mentions with author-supplied. On `update`, preserve derived edges by querying the existing `edges` table for rows with `source` set and merging them in.
-7. Compose auto-derived labels: `note`, plus the ISO date label if applicable.
-8. Parse the cached summary from the body — line 3.
-9. Open a SQLite transaction:
-   - `INSERT OR REPLACE` into `nodes` with id, summary, embedding_path.
-   - `DELETE FROM edges WHERE source_id = ?` then `INSERT` the reconciled edge set.
-   - `DELETE FROM label_membership WHERE member_id = ?` (clears prior memberships on update; no-op on insert).
-   - For each label the node carries: `INSERT OR IGNORE INTO labels (id, has_envelope) VALUES (?, COALESCE((SELECT has_envelope FROM labels WHERE id=?), 0))` then `INSERT INTO label_membership (label, member_id) VALUES (?, ?)`.
-   - Refresh the FTS index: `DELETE FROM nodes_fts WHERE id = ?` then `INSERT INTO nodes_fts (id, body, summary) VALUES (?, ?, ?)`.
-   - Commit.
-10. Return `WriteResult` with id and any warnings.
+4. Resolve the file path: `<corpus_root>/docs/<id>`.
+5. Read or write the body (varies by tool — see per-tool sections).
+6. Parse `[[wiki-links]]` from the body; build the `:mentions` edges.
+7. Reconcile `out_edges` per [behavior.md](behavior.md#edge-reconciliation-on-update). On `insert`, no prior state. On `update` or `index` with prior state, preserve derived edges by querying the existing `edges` table for rows with `source` set and merging them in.
+8. Compose auto-derived labels: the first path segment of the id when present, plus the ISO date label if the filename component matches `<iso-date>-<slug>.<ext>`.
+9. Parse the cached summary from the body — line 3.
+10. Open a SQLite transaction:
+    - `INSERT OR REPLACE` into `nodes` with id, summary, embedding_path.
+    - `DELETE FROM edges WHERE source_id = ?` then `INSERT` the reconciled edge set.
+    - `DELETE FROM label_membership WHERE member_id = ?` (no-op on first insert).
+    - For each label the node carries: `INSERT OR IGNORE INTO labels (id, has_envelope) VALUES (?, COALESCE((SELECT has_envelope FROM labels WHERE id=?), 0))` then `INSERT INTO label_membership (label, member_id) VALUES (?, ?)`.
+    - Refresh the FTS index: `DELETE FROM nodes_fts WHERE id = ?` then `INSERT INTO nodes_fts (id, body, summary) VALUES (?, ?, ?)`.
+    - Commit.
+11. Return `WriteResult` with id and any warnings.
 
-The SQLite transaction in step 9 is atomic — every relational change for this write succeeds or none do. The file write in step 4 is a separate atomic operation; cross-boundary failure modes are covered in [Atomicity](#atomicity) below.
+The SQLite transaction in step 10 is atomic — every relational change for this write succeeds or none do.
+
+## Insert flow
+
+`insert(id, body, labels, out_edges)`:
+
+- Step 0 (existence check): reject if a row exists in `nodes` for the id, or if the file at the resolved path already exists.
+- Step 5: write the body to the resolved path via temp-and-rename. File write is atomic per-file; cross-boundary failure modes are covered in [Atomicity](#atomicity).
+- Otherwise runs the common steps.
+
+## Update flow
+
+`update(id, body, labels, out_edges)`:
+
+- Step 0 (existence check): reject if no row exists in `nodes` for the id, or if the file at the resolved path does not exist.
+- Step 5: rewrite the body at the resolved path via temp-and-rename.
+- Otherwise runs the common steps. Edge reconciliation preserves derived edges from the prior state.
+
+## Index flow
+
+`index(id, labels, out_edges)`:
+
+- Step 0 (existence check): reject if the file at the resolved path does not exist. The database may or may not have a prior row — `index` is idempotent across both cases.
+- Step 5: read the body from the resolved path. Do not write — `index` indexes content that's already on disk.
+- Otherwise runs the common steps. Edge reconciliation preserves derived edges if a prior database row exists.
+
+Use cases: ingesting files created out-of-band (external editor, script, migration); re-indexing after a hand-edit changes the body; bulk-ingesting an existing folder by walking it and calling `index` per file.
 
 ## Delete flow
 
-What `delete(id)` does:
+`delete(id)`:
 
 1. Existence check. Reject if no row in `nodes` for the id.
-2. Unlink `docs/notes/<id>.md`.
+2. Resolve the file path and unlink the file.
 3. Open a SQLite transaction:
    - `DELETE FROM edges WHERE source_id = ? OR target_id = ?` (drops outgoing edges; also drops back-references in derived edges pointing at this id, since the row is going away).
    - `DELETE FROM label_membership WHERE member_id = ?`.
@@ -191,7 +242,7 @@ What `delete(id)` does:
    - `DELETE FROM nodes WHERE id = ?`.
    - Commit.
 
-Wiki-link references in other notes' bodies still exist as raw `[[...]]` text but resolve to nothing — the broken-link semantic still applies. The next `update` to a note containing a stale `[[<deleted-id>]]` will re-parse and emit no edge.
+Wiki-link references in other notes' bodies still exist as raw `[[...]]` text but resolve to nothing — the broken-link semantic still applies. The next `update`/`index` to a note containing a stale `[[<deleted-id>]]` will re-parse and emit no edge.
 
 ## Atomicity
 
@@ -204,7 +255,7 @@ Order: file first, database second. The insert/update flow writes the authored f
 
 The reverse order (SQLite first, file second) is rejected because a SQLite commit followed by a failed file write would leave a row pointing at content that doesn't exist — worse failure mode than a file with no row.
 
-Source of truth: the authored note at `docs/notes/<id>.md` is authoritative for body content. The `labels` membership in SQLite is authoritative for what labels a node carries (no folder marker analog). Conflicts between the FTS index and the file body get reconciled by rebuilding FTS from the file content during repair.
+Source of truth: the authored note at `<corpus_root>/docs/<id>` is authoritative for body content. The `labels` membership in SQLite is authoritative for what labels a node carries. Conflicts between the FTS index and the file body get reconciled by rebuilding FTS from the file content during repair.
 
 ## Search day one
 
@@ -232,25 +283,25 @@ No per-call rescoring of every node. The FTS index is incremental — `INSERT` /
 
 ## Reindex — deferred, not forgotten
 
-No server-side reindex pass day one. The agent-as-driver pattern covers soft-reindex through the existing tools: walk `docs/notes/`, call `update(id, body=<current-body>, labels=<current-labels>)` on each, and the write-time flow re-parses wiki-links, regenerates the cached summary, rewrites the relational rows, and refreshes the FTS index. Stale rows, hand-edited bodies, and missing derived metadata fix themselves through normal `update` calls.
+No server-side reindex pass day one. The agent-as-driver pattern covers soft-reindex through the existing tools: walk `<corpus_root>/docs/`, call `index(id)` on each, and the write-time flow re-reads the body, re-parses wiki-links, regenerates the cached summary, rewrites the relational rows, and refreshes the FTS index. The `index` tool is purpose-built for this — it indexes a file without rewriting it, so the soft-reindex walk doesn't risk disturbing the content. Stale rows, hand-edited bodies, and missing derived metadata fix themselves through normal `index` calls.
 
 The features that genuinely need a server-side reindex are the ones the agent can't compute through the existing surface:
 
 - MinHash pairwise relatedness — Jaccard-similarity edges above `minhash_threshold` (0.20 default) materialize as `:related` derived edges with `source: minhash`. Adds rows to `edges` in batches.
-- Embedding generation via Ollama (`nomic-embed-text` candidate, 768-dim, ~270MB, CPU-fast) writes `.npy` files into `docs/index/embeddings/` and populates `nodes.embedding_path`. With embeddings, `match` switches from BM25 to vector similarity, and embedding-derived `:related` edges supplement MinHash.
+- Embedding generation via Ollama (`nomic-embed-text` candidate, 768-dim, ~270MB, CPU-fast) writes `.npy` files into `<corpus_root>/.graph/embeddings/` and populates `nodes.embedding_path`. With embeddings, `match` switches from BM25 to vector similarity, and embedding-derived `:related` edges supplement MinHash.
 
 A bulk reindex pass is fast: one SQLite transaction can insert thousands of `:related` edges in a single commit.
 
 ## Bootstrap — shipped envelope files
 
-Four envelope files arrive as bundled assets the plugin installer drops into place at install time:
+Four envelope files arrive as bundled assets the plugin installer drops into `<corpus_root>/.graph/` at install time:
 
-- `docs/index/envelopes/read.md`
-- `docs/index/labels/instruction.md`
-- `docs/index/labels/reference.md`
-- `docs/index/labels/observation.md`
+- `<corpus_root>/.graph/envelopes/read.md`
+- `<corpus_root>/.graph/labels/instruction.md`
+- `<corpus_root>/.graph/labels/reference.md`
+- `<corpus_root>/.graph/labels/observation.md`
 
-The corresponding `labels` rows (with `has_envelope = 1`) are inserted by a first-run migration when the server starts and notices the file. The exact prose for each envelope is in [behavior.md](behavior.md#day-one-envelope-prose).
+The corresponding `labels` rows (with `has_envelope = 1`) are inserted by a first-run migration when the server starts and notices the files. The exact prose for each envelope is in [behavior.md](behavior.md#day-one-envelope-prose).
 
 After install they're editable like any other authored file — by hand, or via `apply_framing` for the three framing-axis envelopes. `apply_framing` writes the file and updates `labels.has_envelope` in a single transaction.
 
@@ -266,7 +317,7 @@ SQLite's WAL mode handles transaction durability. A crash during a transaction r
 
 The cross-boundary failure mode is small: file written but database commit failed, or vice versa. Repair-on-startup detects orphans on either side:
 
-- Files in `docs/notes/` with no corresponding `nodes` row → re-index the orphan.
+- Files in `<corpus_root>/docs/` (walked recursively) with no corresponding `nodes` row → re-index the orphan via the `index` flow.
 - `nodes` rows with no corresponding authored file → drop the row (the file was deleted out-of-band, or the database survived a delete that the file didn't).
 - Labels in `labels` with no members and no envelope file → drop the row (the last member left, no envelope was authored).
 
@@ -274,7 +325,7 @@ The cross-boundary failure mode is small: file written but database commit faile
 
 - Missing id: `invoke`, `read`, `traverse(from=missing)` return an error. "Missing" means no row in `nodes`.
 - Missing authored file with `nodes` row present: surfaces as an error; the database expects a file that isn't there. Auto-repair drops the `nodes` row, or the operator restores the file. Deferred to repair.
-- Corrupt database: SQLite usually recovers via WAL replay. If the database is unrecoverable, the operational `repair --rebuild` walks every authored file and rebuilds the database from scratch. The corpus is fully self-describing from `docs/notes/` + `docs/index/labels/<label>.md` + `docs/index/envelopes/read.md`.
+- Corrupt database: SQLite usually recovers via WAL replay. If the database is unrecoverable, the operational `repair --rebuild` walks every authored file and rebuilds the database from scratch. The corpus is fully self-describing from `<corpus_root>/docs/` + `<corpus_root>/.graph/labels/` + `<corpus_root>/.graph/envelopes/read.md`.
 - Dangling out_edge target: `invoke(target)` returns an error when the reader follows the edge. The indexer doesn't pre-validate edge targets at read time.
 
 ### Concurrency
@@ -289,41 +340,38 @@ The file-boundary remains: two writers updating the same authored note race on t
 
 When the database disagrees with the authored corpus, the corpus wins. An operational `repair(scope)` CLI handles recovery:
 
-- For one node: re-read `docs/notes/<id>.md`, re-derive labels and edges, rewrite the corresponding `nodes`, `edges`, `label_membership`, and `nodes_fts` rows in one transaction.
-- For all nodes: walk `docs/notes/`, run the per-node repair for each. Drop any `nodes` row whose authored file is missing. Drop any `labels` row whose membership is empty and envelope file is absent.
+- For one node: re-read `<corpus_root>/docs/<id>`, re-derive labels and edges, rewrite the corresponding `nodes`, `edges`, `label_membership`, and `nodes_fts` rows in one transaction.
+- For all nodes: walk `<corpus_root>/docs/` recursively, run the per-node repair for each. Drop any `nodes` row whose authored file is missing. Drop any `labels` row whose membership is empty and envelope file is absent.
 
 Full-corpus repair is the "I broke the index" escape hatch — slow but always correct.
 
 ## Worked example — node row
 
-The row in `nodes` for the data-model note:
+The row in `nodes` for the mcp data-model spec page (id `mcp/data-model.md`):
 
 ```
-id              = "mcp-server-as-skill-system-runtime"
-summary         = "the MCP server as runtime for a knowledge-graph-backed skill system"
-embedding_path  = "docs/index/embeddings/mcp-server-as-skill-system-runtime.npy"
+id              = "mcp/data-model.md"
+summary         = "the entities the graph carries and the fields each one holds"
+embedding_path  = ".graph/embeddings/mcp-data-model.md.npy"
 ```
 
 Its rows in `edges`:
 
 ```
-source_id                              | type        | target_id                                       | confidence | source   | rationale
-mcp-server-as-skill-system-runtime     | mentions    | prototype-the-plugin-mcp-server-in-python       |            |          |
-mcp-server-as-skill-system-runtime     | mentions    | writing-prose                                   |            |          |
-mcp-server-as-skill-system-runtime     | related     | skill-composition-foundation-and-downstream     | 0.62       | minhash  |
+source_id            | type      | target_id                       | confidence | source   | rationale
+mcp/data-model.md    | mentions  | mcp/tool-api.md                 |            |          |
+mcp/data-model.md    | mentions  | mcp/behavior.md                 |            |          |
+mcp/data-model.md    | related   | mcp/implementation-sqlite-hybrid.md | 0.62   | minhash  |
 ```
 
 Its rows in `label_membership`:
 
 ```
-label         | member_id
-note          | mcp-server-as-skill-system-runtime
-architecture  | mcp-server-as-skill-system-runtime
-mcp           | mcp-server-as-skill-system-runtime
-skills        | mcp-server-as-skill-system-runtime
+label  | member_id
+mcp    | mcp/data-model.md
 ```
 
-The authored content lives at `docs/notes/mcp-server-as-skill-system-runtime.md` — pure markdown, no frontmatter.
+The `mcp` label is auto-derived from the first path segment. The authored content lives at `<corpus_root>/docs/mcp/data-model.md` — pure markdown, no frontmatter.
 
 ## Worked example — label with envelope and members
 
@@ -335,7 +383,7 @@ summary       = "operative guidance the agent should follow"
 has_envelope  = 1
 ```
 
-The envelope prose at `docs/index/labels/instruction.md`:
+The envelope prose at `<corpus_root>/.graph/labels/instruction.md`:
 
 ```markdown
 The following is operative guidance for your current task. Apply it directly to your next response. Read it as you would read an active section of your system prompt — not as background reading, not as one perspective among many.
@@ -345,18 +393,18 @@ The rows in `label_membership`:
 
 ```
 label        | member_id
-instruction  | orchestrator-skill
-instruction  | taking-notes
-instruction  | writing-prose
+instruction  | mcp/orchestrator-skill.md
+instruction  | notes/taking-notes.md
+instruction  | notes/writing-prose.md
 ```
 
 ## Migration — deferred
 
-The current `docs/notes/` corpus predates the graph shape (no sidecars, no SQLite database, no envelope files). Migration requires a converter that walks every note, derives labels from filenames and existing frontmatter, populates the database, and writes the bootstrapped envelope files. Deferred — when migration lands, it runs as a one-time CLI pass that produces the initial database from existing content. Day-one development can use a fresh empty corpus or a hand-curated subset.
+The legacy `docs/notes/` corpus (with YAML frontmatter on notes from the pre-graph era) needs migration to the new shape. A converter walks every note, derives labels from filenames and existing frontmatter, populates the database, and writes the bootstrapped envelope files. Deferred — when migration lands, it runs as a one-time CLI pass that produces the initial database from existing content. Day-one development can use a fresh empty corpus or a hand-curated subset.
 
 ## Rename semantics
 
-Slug change is one SQLite transaction plus two file operations:
+Id change (which is also a file move) is one SQLite transaction plus file operations:
 
 - Open transaction:
   - `UPDATE nodes SET id = ? WHERE id = ?`
@@ -365,8 +413,8 @@ Slug change is one SQLite transaction plus two file operations:
   - `UPDATE label_membership SET member_id = ? WHERE member_id = ?`
   - `UPDATE nodes_fts SET id = ? WHERE id = ?` (or DELETE + INSERT)
   - Commit.
-- Rename the authored file: `mv docs/notes/<old>.md docs/notes/<new>.md` (atomic).
-- Grep the corpus for `[[old]]` references and rewrite them.
+- Rename the authored file: `mv <corpus_root>/docs/<old-id> <corpus_root>/docs/<new-id>` (atomic). Create any intermediate folders the new id requires.
+- Grep the corpus for `[[<old-id>]]` references and rewrite them.
 
-A `rename_node(old, new)` MCP call is a natural candidate for the indexer's surface.
+A `rename_node(old, new)` MCP call is a natural candidate for the indexer's surface — particularly because an id change may also change the first path segment, which changes the auto-derived label.
 

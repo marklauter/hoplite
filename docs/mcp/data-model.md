@@ -22,7 +22,7 @@ A unit of content identified by a stable id.
 
 Fields:
 
-- `id` (required, string) — the node's stable identifier. Lowercase kebab-case slug, `[a-z0-9-]` only.
+- `id` (required, string) — the node's stable identifier. Path from the content root including the file extension. Each path segment is lowercase kebab-case (`[a-z0-9-]`); segments separated by `/`; ends with `.<ext>`. Examples: `foo.md`, `notes/skill-composition.md`, `journal/2026-05-24-today-was-warm.md`, `mcp/data-model.md`.
 - `labels` (required, list of strings) — the set of labels this node carries. Includes both author-supplied labels and any labels the system auto-derives.
 - `out_edges` (required, list of Edge; may be empty) — edges originating from this node, both authored and derived.
 - `summary` (required, string) — one-sentence lede of the body content. Used by `match`, `Landing`, and `TraversalHit` without requiring a full body read.

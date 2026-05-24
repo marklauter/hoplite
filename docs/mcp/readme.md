@@ -14,7 +14,7 @@ This spec is organized as four contract files (stable, implementation-agnostic),
 - [tool-api.md](tool-api.md) — [Contract] Tool signatures and semantics. Nine agent-facing tools.
 - [behavior.md](behavior.md) — [Contract] Validation rules, envelope composition, label and edge vocabularies, error model.
 - [orchestrator-skill.md](orchestrator-skill.md) — [Contract] The SKILL.md body the agent loads on first interaction.
-- [implementation-sqlite-hybrid.md](implementation-sqlite-hybrid.md) — [Implementation] SQLite for the relational layer (`docs/index/graph.db` with FTS5), files for the prose layer (notes, label envelopes, embedding blobs).
+- [implementation-sqlite-hybrid.md](implementation-sqlite-hybrid.md) — [Implementation] SQLite for the relational layer (`<repo-root>/.graph/graph.db` with FTS5), files for the prose layer (`<repo-root>/docs/` content plus envelope files under `.graph/`).
 - [deferred-features.md](deferred-features.md) — [Roadmap] Multi-writer support, source files as graph nodes, external web references as first-class nodes, reindex trigger model.
 
 ## Contracts versus implementation

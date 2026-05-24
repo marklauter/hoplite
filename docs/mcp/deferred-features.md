@@ -8,18 +8,18 @@ Day one assumes a single writer. Multi-agent is the actual target.
 
 SQLite in WAL mode supports one writer plus many concurrent readers without blocking; the database serializes writers natively. The MCP server accepts concurrent write calls and lets SQLite queue them — no application-level locking needed for the relational layer.
 
-The remaining concern is the per-node authored file write: two writers updating the same `docs/notes/<id>.md` race on the file. The SQLite transaction can still commit cleanly for whichever wins, but the file may not match what the last-committed transaction expected. Multi-writer support adds per-id file locking on the authored note path, paired with SQLite's native transaction serialization.
+The remaining concern is the per-node authored file write: two writers updating the same `<corpus_root>/docs/<id>` race on the file. The SQLite transaction can still commit cleanly for whichever wins, but the file may not match what the last-committed transaction expected. Multi-writer support adds per-id file locking on the authored note path, paired with SQLite's native transaction serialization.
 
 ## Source files as graph nodes
 
-The current spec implicitly scopes the corpus to markdown notes under `docs/notes/`. The graph model itself is type-agnostic; indexing source code files as nodes is a natural extension.
+The current spec implicitly scopes the corpus to markdown notes under `<corpus_root>/docs/`. The graph model itself is type-agnostic; indexing source code files as nodes is a natural extension.
 
 See `[[source-files-as-graph-nodes]]` for the full analysis. Summary of what changes when code joins:
 
 - "Authored note" generalizes to "authored content." The H1/blank/summary/blank/body shape is markdown-only. Source files derive summary from docstring, first comment block, or filename. Body validation becomes file-type-conditional.
 - Wiki-link parsing for `:mentions` is markdown-only. Code has its own reference graph — imports, definitions, references, inheritance — derivable from AST or LSP. These join the authored-edge category.
-- `note` as the lone auto-derived label is too narrow. Becomes `note` for `docs/notes/`, `code` for source dirs, with sub-labels for language (`python`, `csharp`, `typescript`).
-- `insert`/`update`/`delete` are markdown-only. Source files get indexed but written through normal coding workflows (IDE, Claude Code's Edit tool), not the MCP write surface. Closer to LSP's read-mostly model for code.
+- The auto-derived path-segment label generalizes naturally: a source file at `src/foo/bar.py` carries `src` as the first-segment label (or the indexer can adopt a different rule for non-content paths). Sub-labels for language (`python`, `csharp`, `typescript`) join from filename extension.
+- `insert`/`update`/`delete` are markdown-only. Source files get indexed via `index(id)` but written through normal coding workflows (IDE, Claude Code's Edit tool), not the MCP write surface. Closer to LSP's read-mostly model for code.
 - A fourth framing-axis label (candidate name `definition` — "you are reading the canonical source of behavior") joins the `instruction`/`reference`/`observation` trio when code lands.
 
 Cross-boundary traversal (notes ↔ code) is the agentic value-add: "show me notes that mention this function" and "show me code paths the discussion in this note refers to."
@@ -38,7 +38,7 @@ When the server-side reindex pass lands (MinHash, embeddings — see [implementa
 
 - Manual CLI — operator runs `reindex` when they want it.
 - Scheduled — cron-style periodic invocation.
-- File-watcher — detects changes to `docs/notes/` and triggers automatically.
+- File-watcher — detects changes under `<corpus_root>/docs/` and triggers automatically.
 - Write-trigger-drain — `insert`/`update`/`delete` enqueue work for a background drain process.
 
 Each has different operational shape and failure modes. Decided when reindex itself is built.
