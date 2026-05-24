@@ -54,18 +54,27 @@ A middle option: keep `hoplite_match_nodes` and `hoplite_traverse_nodes` as the 
 
 Open question — pending a corpus or agentic use case that recurrently wants combined queries. Until then, the two-tool surface with label expressions is the design.
 
-## Continuation-token pagination for `hoplite_match_nodes`
+## Open question — does pagination ever land?
 
-Day one, `hoplite_match_nodes` returns the top `k` results in one shot. The `k` cap is the natural bound — agents pick `k` to match how much they want to look at. No pagination day one.
+Day one, neither discovery tool paginates. `hoplite_match_nodes` returns the top `k` results in one shot; `hoplite_traverse_nodes` returns whatever's bounded by `depth` and the predicate. The MCP best-practices reference recommends pagination from day one (limit + has_more + next_offset metadata); we deliberately diverge because the natural caps are sufficient for the expected use cases and pagination on graph data is structurally awkward.
 
-If `k`-capping becomes limiting at scale (the agent regularly wants the top 5 but knows there are 50 worth examining, and increasing `k` each call is awkward), continuation-token pagination is the natural extension. Likely shape:
+What you'd gain by adding pagination:
 
-- `hoplite_match_nodes(predicate, k=5, continuation_token=null)` returns `[Landing]` plus an optional `next_continuation_token` when more results are available.
-- The token opaquely encodes the query state (predicate, last score+id seen, deterministic sort order). The agent treats it as an opaque string and passes it back to continue.
+- The agent can ask for the top 5 from a relevance ranking but page through to 50 if needed, without recomputing.
+- Large traversal results from hub nodes become walkable incrementally instead of all-or-nothing.
+- Closer alignment with the MCP best-practices reference.
 
-The match case is structurally straightforward — results are a sorted score list, the token just marks the position.
+What you'd lose:
 
-Traverse is a different story. Graph traversal doesn't paginate naturally — to resume a BFS, the server has to remember the visited set and frontier queue, which means either caching the full walk (expensive memory) or encoding BFS state in the token (large, awkward). The day-one approach — bound traversal by `depth` and let the agent tighten the predicate or lower `depth` if results balloon — is probably the permanent answer. Traversal pagination may never land.
+- `hoplite_match_nodes` becomes more complex than the simple "top-k" the agent picks `k` for. The k cap is doing real work as a self-limiting design.
+- `hoplite_traverse_nodes` pagination requires either caching the full BFS walk (memory cost) or encoding BFS state — visited set, frontier queue — in a continuation token (large, awkward). Neither is appealing.
+
+Two possible shapes if it lands:
+
+- Continuation-token pagination — `hoplite_match_nodes(predicate, k=5, continuation_token=null)` returns `[Landing]` plus an optional `next_continuation_token` when more results are available. Token opaquely encodes query state (predicate, last score+id seen, sort order). Robust to concurrent inserts; clean for the sorted-score result set match returns.
+- Pagination on match only, never on traverse — match's results are a sorted list, well-suited to continuation tokens. Traverse pagination may never make sense; bound by `depth` and tighten the predicate instead.
+
+Open question — pending a corpus or agentic use case that recurrently bumps into the day-one caps. Until then, the no-pagination surface plus the `k` and `depth` caps is the design.
 
 
 ## Source files as graph nodes
