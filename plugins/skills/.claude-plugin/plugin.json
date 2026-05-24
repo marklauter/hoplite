@@ -18,7 +18,10 @@
   "mcpServers": {
     "skills": {
       "command": "python",
-      "args": ["${CLAUDE_PLUGIN_ROOT}/mcp/server.py"]
+      "args": ["-m", "hoplite.server"],
+      "env": {
+        "PYTHONPATH": "${CLAUDE_PLUGIN_ROOT}/mcp/src"
+      }
     }
   }
 }

@@ -3,7 +3,7 @@ from pathlib import Path
 
 from mcp.server.fastmcp import FastMCP
 
-DB_PATH = Path(__file__).parent / "hello.db"
+DB_PATH = Path(__file__).resolve().parents[2] / "hello.db"
 
 
 def _init_db() -> None:
