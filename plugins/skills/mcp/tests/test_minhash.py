@@ -113,6 +113,16 @@ def test_jaccard_mismatched_length_raises() -> None:
         jaccard(long_sig, short_sig)
 
 
+def test_signature_zero_k_raises() -> None:
+    with pytest.raises(ValueError, match="k must be >= 1"):
+        signature(_TEXT_A, k=0)
+
+
+def test_signature_zero_shingle_size_raises() -> None:
+    with pytest.raises(ValueError, match="shingle_size must be >= 1"):
+        signature(_TEXT_A, shingle_size=0)
+
+
 def test_lowercase_tokenization() -> None:
     # Case-insensitive: uppercase variant produces the same signature.
     upper = _TEXT_A.upper()

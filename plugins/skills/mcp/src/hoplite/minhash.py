@@ -32,12 +32,11 @@ Edge cases
 On-disk format
 --------------
 `to_bytes` packs the signature as `k * 8` bytes, little-endian unsigned
-64-bit integers (`<Q` format). `from_bytes` inverts. Note: this
-diverges from implementation-sqlite-hybrid.md ("k 32-bit hashes,
-~512 B blob"); the impl doc should be updated to reflect the 64-bit
-choice when the write flow lands. The `_SALT` constant carries a
-`v1` suffix as the format version marker; bumping it invalidates
-all stored signatures.
+64-bit integers (`<Q` format). `from_bytes` inverts. Matches
+docs/mcp/implementation-sqlite-hybrid.md#minhash-details (k 64-bit
+hashes, ~1024 B blob). The `_SALT` constant carries a `v1` suffix as
+the format version marker; bumping it invalidates all stored
+signatures.
 
 Determinism
 -----------
@@ -72,7 +71,11 @@ DEFAULT_THRESHOLD: Final[float] = 0.20
 
 
 _M61: Final[int] = (1 << 61) - 1
-_MAX_HASH: Final[int] = _M61 - 1
+# Sentinel sits one past the universal-hash output range. Real hashes
+# are produced by `% _M61` so they're strictly less than _M61; the
+# sentinel can never collide with a real hash. Fits in uint64 for
+# `struct.pack("<Q")`.
+_MAX_HASH: Final[int] = _M61
 _SALT: Final[bytes] = b"hoplite-minhash-v1"
 
 
@@ -80,10 +83,12 @@ _SALT: Final[bytes] = b"hoplite-minhash-v1"
 class Signature:
     """A MinHash signature: a fixed-length vector of 64-bit values.
 
-    Values lie in `[0, _M61)` for signatures produced by `signature()`,
-    with `_MAX_HASH` reserved as the sentinel for empty / too-short
-    text. Construct directly only when round-tripping through bytes or
-    building test fixtures; normal callers go through `signature()`.
+    Values lie in `[0, _M61]` for signatures produced by `signature()`,
+    with `_M61` reserved as the sentinel for empty / too-short text.
+    Real hash positions are always strictly less than `_M61`, so the
+    sentinel never collides with a real hash. Construct directly only
+    when round-tripping through bytes or building test fixtures;
+    normal callers go through `signature()`.
     """
 
     values: tuple[int, ...]
