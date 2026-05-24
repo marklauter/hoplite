@@ -25,7 +25,7 @@ Fields:
 - `id` (required, string) — the node's stable identifier. Path from the content root including the file extension. Each path segment is lowercase kebab-case (`[a-z0-9-]`); segments separated by `/`; ends with `.<ext>`. Examples: `foo.md`, `notes/skill-composition.md`, `journal/2026-05-24-today-was-warm.md`, `mcp/data-model.md`.
 - `labels` (required, list of strings) — the set of labels this node carries. Includes both author-supplied labels and any labels the system auto-derives.
 - `out_edges` (required, list of Edge; may be empty) — edges originating from this node, both authored and derived.
-- `summary` (required, string) — one-sentence lede of the body content. Used by `match`, `Landing`, and `TraversalHit` without requiring a full body read.
+- `summary` (required, string) — one-sentence lede of the body content. Used by `hoplite_match_nodes`, `Landing`, and `TraversalHit` without requiring a full body read.
 - `in_edges` (optional, list of Edge) — cached inversion of incoming edges; populated when corpus size makes on-demand inversion slow.
 - `embedding` (optional, opaque reference) — opaque pointer to the node's vector embedding when one exists.
 - `body` (required, string) — the node's content. Authored prose, typically markdown.
@@ -38,7 +38,7 @@ Fields:
 
 - `id` (required, string) — the label name. Same slug rule as node ids.
 - `summary` (optional, string) — one-line description of what the label covers.
-- `envelope_body` (optional, string) — prose the loader inlines during `invoke` when serving a node carrying this label. Present for the three shipped framing-axis labels and any topic labels the user has set framing on.
+- `envelope_body` (optional, string) — prose the loader inlines during `hoplite_invoke_node` when serving a node carrying this label. Present for the three shipped framing-axis labels and any topic labels the user has set framing on.
 - `members` (required, set of node ids; may be empty) — node ids that carry this label. Maintained by the indexer on every write.
 - `out_edges` (optional, list of Edge) — reserved for future label-to-label edges (hierarchy, parent links). Empty day one.
 
@@ -59,29 +59,29 @@ Author-supplied edges with `source` set are rejected at write time — provenanc
 
 ## Envelope
 
-A structured wrapper applied during retrieval. Both `invoke` and `read` return content wrapped in an envelope; the verb chooses which envelope is composed.
+A structured wrapper applied during retrieval. Both `hoplite_invoke_node` and `hoplite_read_node` return content wrapped in an envelope; the verb chooses which envelope is composed.
 
 Fields:
 
-- `framing` (required, string) — the primary contract for reading the body. For `invoke`: the body of the framing-axis label's envelope (defaults to the `reference` envelope when no framing-axis label is present). For `read`: the fixed content envelope, label-independent.
-- `primes` (required, list of `{label: string, body: string}`; may be empty) — supplementary label envelopes, alphabetical by label name. Populated by `invoke` with any non-framing-axis labels' envelope bodies. Always empty for `read`.
+- `framing` (required, string) — the primary contract for reading the body. For `hoplite_invoke_node`: the body of the framing-axis label's envelope (defaults to the `reference` envelope when no framing-axis label is present). For `hoplite_read_node`: the fixed content envelope, label-independent.
+- `primes` (required, list of `{label: string, body: string}`; may be empty) — supplementary label envelopes, alphabetical by label name. Populated by `hoplite_invoke_node` with any non-framing-axis labels' envelope bodies. Always empty for `hoplite_read_node`.
 
 The canonical display order is `framing` + `primes[*].body` + node `body`. Order matches LLM attention patterns: contract first, payload last, supplementary primes in the middle.
 
 ## Landing
 
-A search result returned by `match`. Carries enough metadata for the agent to pick a candidate without loading the full body.
+A search result returned by `hoplite_match_nodes`. Carries enough metadata for the agent to pick a candidate without loading the full body.
 
 Fields:
 
 - `id` (required, string) — the landing node's id.
 - `summary` (required, string) — cached lede.
 - `labels` (required, list of strings) — the node's labels.
-- `score` (required, float) — relevance score from the search. Comparable within a single `match()` call as a sort key. Not comparable across calls; absolute magnitudes depend on the predicate.
+- `score` (required, float) — relevance score from the search. Comparable within a single `hoplite_match_nodes()` call as a sort key. Not comparable across calls; absolute magnitudes depend on the predicate.
 
 ## TraversalHit
 
-A result from `traverse`. One per node reached.
+A result from `hoplite_traverse_nodes`. One per node reached.
 
 Fields:
 
@@ -95,9 +95,9 @@ The origin is not included in the result set. BFS uses a visited-set; cycles sho
 
 ## WriteResult
 
-Result returned by the write tools (`insert`, `update`, `delete`, `apply_framing`).
+Result returned by the write tools (`hoplite_insert_node`, `hoplite_update_node`, `hoplite_index_node`, `hoplite_delete_node`, `hoplite_apply_framing`).
 
 Fields:
 
-- `id` (required, string) — the affected node's id (or label's id, for `apply_framing`).
+- `id` (required, string) — the affected node's id (or label's id, for `hoplite_apply_framing`).
 - `warnings` (optional, list of strings) — non-fatal advisories from the write. Examples: dangling wiki-link targets, labels that didn't exist before this write and got created.

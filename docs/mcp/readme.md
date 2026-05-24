@@ -1,10 +1,10 @@
-# MCP graph runtime
+# Hoplite — MCP graph runtime
 
-The agent-facing spec for an MCP-backed knowledge graph runtime, split into stable contracts and the day-one implementation.
+The agent-facing spec for `hoplite_mcp`, an MCP-backed knowledge graph runtime. Split into stable contracts and the day-one implementation.
 
 ## What this is
 
-The MCP graph runtime is a knowledge-graph-backed knowledge base for agentic systems. Agents discover content through `match`, navigate via typed edges, invoke nodes under explicit framing contracts, and write back through transactional verbs. The graph compounds as the agent learns; the system maintains consistency the agent would otherwise have to remember.
+Hoplite is a knowledge-graph-backed knowledge base for agentic systems. Agents discover content through `hoplite_match_nodes`, navigate via typed edges, invoke nodes under explicit framing contracts, and write back through transactional verbs. The graph compounds as the agent learns; the system maintains consistency the agent would otherwise have to remember.
 
 This spec is organized as four contract files (stable, implementation-agnostic), one implementation file (the day-one SQLite-hybrid build target), and one roadmap file (deferred features). Contracts stay put across implementation changes.
 
@@ -14,8 +14,8 @@ This spec is organized as four contract files (stable, implementation-agnostic),
 - [tool-api.md](tool-api.md) — [Contract] Tool signatures and semantics. Ten agent-facing tools.
 - [behavior.md](behavior.md) — [Contract] Validation rules, envelope composition, label and edge vocabularies, error model.
 - [orchestrator-skill.md](orchestrator-skill.md) — [Contract] The SKILL.md body the agent loads on first interaction.
-- [implementation-sqlite-hybrid.md](implementation-sqlite-hybrid.md) — [Implementation] SQLite for the relational layer (`<repo-root>/.graph/graph.db` with FTS5), files for the prose layer (`<repo-root>/docs/` content plus envelope files under `.graph/`).
-- [roadmap.md](roadmap.md) — [Roadmap] Server-side reindex (MinHash, embeddings), multi-writer support, pagination for `match` and `traverse`, source files as graph nodes, external web references as first-class nodes, aspirational edge types, legacy-corpus migration.
+- [implementation-sqlite-hybrid.md](implementation-sqlite-hybrid.md) — [Implementation] `hoplite_mcp` Python server. SQLite for the relational layer (`<repo-root>/hoplite/graph.db` with FTS5), files for the prose layer (`<repo-root>/docs/` content plus envelope files under `<repo-root>/hoplite/`). stdio transport.
+- [roadmap.md](roadmap.md) — [Roadmap] Server-side reindex (MinHash, embeddings), multi-writer support, continuation-token pagination for `hoplite_match_nodes`, source files as graph nodes, external web references as first-class nodes, aspirational edge types, legacy-corpus migration.
 
 ## Contracts versus implementation
 

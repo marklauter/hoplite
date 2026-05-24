@@ -8,9 +8,21 @@ Notes, label envelope prose, the read envelope, and embedding blobs stay as file
 
 The tool API surface (see [tool-api.md](tool-api.md)) and behavior contracts (see [behavior.md](behavior.md)) are implementation-agnostic and hold unchanged regardless of how the persistence layer is realized. This document describes the persistence layer.
 
+## Server module and transport
+
+Python module: `hoplite_mcp` (following the `{service}_mcp` convention).
+
+Transport: stdio. Day-one deployment is local, single-user, single-corpus — the Claude Code client or another MCP-aware host spawns the server as a subprocess and communicates over stdin/stdout. No network configuration, no auth layer needed. Per MCP convention for stdio servers, all logging goes to stderr; stdout is reserved for the JSON-RPC protocol traffic.
+
+## Lifespan and connection management
+
+The MCP server opens a single SQLite connection at startup and holds it for the process lifetime. The PRAGMAs (`journal_mode = WAL`, `synchronous = NORMAL`, `foreign_keys = ON`, `busy_timeout = 5000`) apply once at connection open; FTS5 keeps internal state across queries that benefits from the persistent connection.
+
+In Python's MCP server framework, this maps to the `lifespan=app_lifespan` pattern — an async context manager that opens the connection on server startup and closes it on shutdown. The connection lives in the server's lifespan-scoped state, accessible from every tool handler.
+
 ## Storage layout
 
-Content lives anywhere under `<repo-root>/docs/`. The index lives at `<repo-root>/.graph/`. Two directories at the repo root, with disjoint responsibilities.
+Content lives anywhere under `<repo-root>/docs/`. The index lives at `<repo-root>/hoplite/`. Two directories at the repo root, with disjoint responsibilities.
 
 ```
 <repo-root>/
@@ -20,7 +32,7 @@ Content lives anywhere under `<repo-root>/docs/`. The index lives at `<repo-root
     journal/<iso-date>-<slug>.<ext>             journal entry (id: journal/...)
     mcp/<slug>.<ext>                            mcp spec page (id: mcp/...)
     ... any other folder structure the user wants
-  .graph/                                       INDEX — opaque to authors; managed by the MCP server
+  hoplite/                                       INDEX — opaque to authors; managed by the MCP server
     graph.db                                    SQLite database (all relational data)
     labels/<label>.md                           label envelope (pure markdown, optional prose)
     envelopes/read.md                           fixed content envelope applied by read()
@@ -30,12 +42,12 @@ Content lives anywhere under `<repo-root>/docs/`. The index lives at `<repo-root
 File responsibilities:
 
 - `docs/` contains every node's body. Subfolders organize by topic at the user's discretion; the indexer reads them as ids.
-- `.graph/graph.db` carries every structured query target: nodes (metadata), labels (metadata), label memberships, edges, and the full-text search index.
-- `.graph/labels/<label>.md` files carry label envelope prose.
-- `.graph/envelopes/read.md` is the fixed content envelope.
-- `.graph/embeddings/<flat-id>.npy` carries binary embedding vectors. The flat-id replaces `/` in the path with `-` (or another safe separator) so embedding files live flat at one level — easier for ML tooling than nested directories.
+- `hoplite/graph.db` carries every structured query target: nodes (metadata), labels (metadata), label memberships, edges, and the full-text search index.
+- `hoplite/labels/<label>.md` files carry label envelope prose.
+- `hoplite/envelopes/read.md` is the fixed content envelope.
+- `hoplite/embeddings/<flat-id>.npy` carries binary embedding vectors. The flat-id replaces `/` in the path with `-` (or another safe separator) so embedding files live flat at one level — easier for ML tooling than nested directories.
 
-The `.graph/` directory is hidden (leading dot) the same way `.git/` is — it's tool metadata, not content. Add `.graph/graph.db`, `.graph/graph.db-wal`, and `.graph/graph.db-shm` to `.gitignore` (the database is regenerable from `docs/` content).
+The `hoplite/` directory is named after the tool — like `node_modules/` or `target/` for other build tools. It's tool-managed metadata, not authored content; humans rarely need to look in it. Add `hoplite/graph.db`, `hoplite/graph.db-wal`, and `hoplite/graph.db-shm` to `.gitignore` (the database is regenerable from `docs/` content). Whether to commit the rest of `hoplite/` (label envelope prose, read envelope) is a user choice — they're authored content even though they live in the index directory.
 
 ## Database schema
 
@@ -49,7 +61,7 @@ CREATE TABLE nodes (
 CREATE TABLE labels (
   id              TEXT PRIMARY KEY,
   summary         TEXT,
-  has_envelope    INTEGER NOT NULL DEFAULT 0  -- 1 if .graph/labels/<id>.md exists
+  has_envelope    INTEGER NOT NULL DEFAULT 0  -- 1 if hoplite/labels/<id>.md exists
 );
 
 CREATE TABLE label_membership (
@@ -114,7 +126,7 @@ How each entity from [data-model.md](data-model.md) is realized.
 Two locations per node:
 
 - Authored content at `<corpus_root>/docs/<id>`. The id is a path expression including the file extension (`foo.md`, `notes/skill-composition.md`, `journal/2026-05-24-foo.md`, `mcp/data-model.md`). Pure markdown body, no YAML frontmatter. Body shape on lines 1-4 is fixed: `# Title` on line 1, blank on line 2, summary on line 3, blank on line 4, body sections from line 5 onward.
-- Metadata: one row in `nodes` (`id`, `summary`, `embedding_path`) plus rows in `edges` for each outbound edge. The body text is indexed in `nodes_fts` for `match`.
+- Metadata: one row in `nodes` (`id`, `summary`, `embedding_path`) plus rows in `edges` for each outbound edge. The body text is indexed in `nodes_fts` for `hoplite_match_nodes`.
 
 The two stores hold disjoint primary concerns: the file is the source of truth for body content; the database is the source of truth for metadata, edges, and the search index.
 
@@ -123,7 +135,7 @@ The two stores hold disjoint primary concerns: the file is the source of truth f
 Up to two locations per label:
 
 - One row in `labels` (`id`, optional `summary`, `has_envelope` boolean).
-- Optional `<corpus_root>/.graph/labels/<label>.md` carrying envelope prose. The `has_envelope` column tracks whether the file exists; the file is authoritative.
+- Optional `<corpus_root>/hoplite/labels/<label>.md` carrying envelope prose. The `has_envelope` column tracks whether the file exists; the file is authoritative.
 - Rows in `label_membership` for each member.
 
 Membership IS a relational table. Adding a node to a label is one `INSERT OR IGNORE`. Removing is one `DELETE`. Listing members is one query.
@@ -134,7 +146,7 @@ Each edge is a row in `edges`. Symmetric `:related` edges are written as two row
 
 ### Envelope
 
-The framing component for `invoke` comes from `<corpus_root>/.graph/labels/<label>.md` (the label envelope file). For `read`, from `<corpus_root>/.graph/envelopes/read.md`. The structured `Envelope` shape is composed by the server at retrieval time; on disk it's just the envelope file plus the structure built in memory.
+The framing component for `hoplite_invoke_node` comes from `<corpus_root>/hoplite/labels/<label>.md` (the label envelope file). For `hoplite_read_node`, from `<corpus_root>/hoplite/envelopes/read.md`. The structured `Envelope` shape is composed by the server at retrieval time; on disk it's just the envelope file plus the structure built in memory.
 
 ## Id and path rules
 
@@ -154,10 +166,10 @@ Auto-derived labels from the id:
 The MCP server reads a `corpus_root` config value at startup. Paths derive from it:
 
 - Content: `<corpus_root>/docs/<id>` for every node.
-- Database: `<corpus_root>/.graph/graph.db`.
-- Label envelopes: `<corpus_root>/.graph/labels/<label>.md`.
-- Read envelope: `<corpus_root>/.graph/envelopes/read.md`.
-- Embedding blobs: `<corpus_root>/.graph/embeddings/<flat-id>.npy`.
+- Database: `<corpus_root>/hoplite/graph.db`.
+- Label envelopes: `<corpus_root>/hoplite/labels/<label>.md`.
+- Read envelope: `<corpus_root>/hoplite/envelopes/read.md`.
+- Embedding blobs: `<corpus_root>/hoplite/embeddings/<flat-id>.npy`.
 
 Relocating or multi-corpus setups need no code changes.
 
@@ -168,7 +180,7 @@ SQLite handles every relational concern the filesystem was emulating:
 - Per-label membership becomes a real indexed join table. "All nodes labeled X" is a single SELECT, fast at any corpus size.
 - Bidirectional indexes — `idx_membership_member` and `idx_edges_target` let both "what labels does this node carry" and "what edges point at this node" run as indexed queries.
 - Edges become a first-class table. Symmetric `:related` edges, traversal predicates, and confidence filtering all map to standard SQL.
-- ACID transactions across the whole graph state. A single `insert` or `update` commits all node, edge, and membership changes atomically. No cross-file atomicity story to engineer.
+- ACID transactions across the whole graph state. A single `hoplite_insert_node` or `hoplite_update_node` commits all node, edge, and membership changes atomically. No cross-file atomicity story to engineer.
 - FTS5 gives BM25 search natively. No per-call rescoring; the index is incremental.
 
 Prose stays in files:
@@ -179,7 +191,7 @@ Prose stays in files:
 
 ## Write-time flow — common steps
 
-`insert`, `update`, and `index` share most of the indexing flow. They differ on the existence check (step 0) and whether step 4 writes the body file. The remaining steps are shared.
+`hoplite_insert_node`, `hoplite_update_node`, and `hoplite_index_node` share most of the indexing flow. They differ on the existence check (step 0) and whether step 4 writes the body file. The remaining steps are shared.
 
 Common steps, in order:
 
@@ -189,7 +201,7 @@ Common steps, in order:
 4. Resolve the file path: `<corpus_root>/docs/<id>`.
 5. Read or write the body (varies by tool — see per-tool sections).
 6. Parse `[[wiki-links]]` from the body; build the `:mentions` edges.
-7. Reconcile `out_edges` per [behavior.md](behavior.md#edge-reconciliation-on-update). On `insert`, no prior state. On `update` or `index` with prior state, preserve derived edges by querying the existing `edges` table for rows with `source` set and merging them in.
+7. Reconcile `out_edges` per [behavior.md](behavior.md#edge-reconciliation-on-update). On `hoplite_insert_node`, no prior state. On `hoplite_update_node` or `hoplite_index_node` with prior state, preserve derived edges by querying the existing `edges` table for rows with `source` set and merging them in.
 8. Compose auto-derived labels: the first path segment of the id when present, plus the ISO date label if the filename component matches `<iso-date>-<slug>.<ext>`.
 9. Parse the cached summary from the body — line 3.
 10. Open a SQLite transaction:
@@ -205,7 +217,7 @@ The SQLite transaction in step 10 is atomic — every relational change for this
 
 ## Insert flow
 
-`insert(id, body, labels, out_edges)`:
+`hoplite_insert_node(id, body, labels, out_edges)`:
 
 - Step 0 (existence check): reject if a row exists in `nodes` for the id, or if the file at the resolved path already exists.
 - Step 5: write the body to the resolved path via temp-and-rename. File write is atomic per-file; cross-boundary failure modes are covered in [Atomicity](#atomicity).
@@ -213,7 +225,7 @@ The SQLite transaction in step 10 is atomic — every relational change for this
 
 ## Update flow
 
-`update(id, body, labels, out_edges)`:
+`hoplite_update_node(id, body, labels, out_edges)`:
 
 - Step 0 (existence check): reject if no row exists in `nodes` for the id, or if the file at the resolved path does not exist.
 - Step 5: rewrite the body at the resolved path via temp-and-rename.
@@ -221,17 +233,17 @@ The SQLite transaction in step 10 is atomic — every relational change for this
 
 ## Index flow
 
-`index(id, labels, out_edges)`:
+`hoplite_index_node(id, labels, out_edges)`:
 
-- Step 0 (existence check): reject if the file at the resolved path does not exist. The database may or may not have a prior row — `index` is idempotent across both cases.
-- Step 5: read the body from the resolved path. Do not write — `index` indexes content that's already on disk.
+- Step 0 (existence check): reject if the file at the resolved path does not exist. The database may or may not have a prior row — `hoplite_index_node` is idempotent across both cases.
+- Step 5: read the body from the resolved path. Do not write — `hoplite_index_node` indexes content that's already on disk.
 - Otherwise runs the common steps. Edge reconciliation preserves derived edges if a prior database row exists.
 
-Use cases: ingesting files created out-of-band (external editor, script, migration); re-indexing after a hand-edit changes the body; bulk-ingesting an existing folder by walking it and calling `index` per file.
+Use cases: ingesting files created out-of-band (external editor, script, migration); re-indexing after a hand-edit changes the body; bulk-ingesting an existing folder by walking it and calling `hoplite_index_node` per file.
 
 ## Delete flow
 
-`delete(id)`:
+`hoplite_delete_node(id)`:
 
 1. Existence check. Reject if no row in `nodes` for the id.
 2. Resolve the file path and unlink the file.
@@ -242,7 +254,7 @@ Use cases: ingesting files created out-of-band (external editor, script, migrati
    - `DELETE FROM nodes WHERE id = ?`.
    - Commit.
 
-Wiki-link references in other notes' bodies still exist as raw `[[...]]` text but resolve to nothing — the broken-link semantic still applies. The next `update`/`index` to a note containing a stale `[[<deleted-id>]]` will re-parse and emit no edge.
+Wiki-link references in other notes' bodies still exist as raw `[[...]]` text but resolve to nothing — the broken-link semantic still applies. The next `hoplite_update_node`/`hoplite_index_node` to a note containing a stale `[[<deleted-id>]]` will re-parse and emit no edge.
 
 ## Atomicity
 
@@ -259,7 +271,7 @@ Source of truth: the authored note at `<corpus_root>/docs/<id>` is authoritative
 
 ## Search day one
 
-`match(predicate, k)` runs a single FTS5 query:
+`hoplite_match_nodes(predicate, limit)` runs a single FTS5 query:
 
 ```sql
 SELECT id, summary, score
@@ -283,45 +295,45 @@ No per-call rescoring of every node. The FTS index is incremental — `INSERT` /
 
 ## Soft reindex via the agent
 
-No server-side reindex pass day one. The agent-as-driver pattern covers the soft-reindex case through `index(id)`: walk `<corpus_root>/docs/`, call `index` on each file, and the write-time flow re-reads the body, re-parses wiki-links, regenerates the cached summary, rewrites the relational rows, and refreshes the FTS index. Stale rows, hand-edited bodies, and missing derived metadata fix themselves through normal `index` calls.
+No server-side reindex pass day one. The agent-as-driver pattern covers the soft-reindex case through `hoplite_index_node(id)`: walk `<corpus_root>/docs/`, call `hoplite_index_node` on each file, and the write-time flow re-reads the body, re-parses wiki-links, regenerates the cached summary, rewrites the relational rows, and refreshes the FTS index. Stale rows, hand-edited bodies, and missing derived metadata fix themselves through normal `hoplite_index_node` calls.
 
 Server-side reindex (MinHash, embeddings, derived `:related` edges) is on the [roadmap](roadmap.md#server-side-reindex-pass).
 
 ## Bootstrap — shipped envelope files
 
-Four envelope files arrive as bundled assets the plugin installer drops into `<corpus_root>/.graph/` at install time:
+Four envelope files arrive as bundled assets the plugin installer drops into `<corpus_root>/hoplite/` at install time:
 
-- `<corpus_root>/.graph/envelopes/read.md`
-- `<corpus_root>/.graph/labels/instruction.md`
-- `<corpus_root>/.graph/labels/reference.md`
-- `<corpus_root>/.graph/labels/observation.md`
+- `<corpus_root>/hoplite/envelopes/read.md`
+- `<corpus_root>/hoplite/labels/instruction.md`
+- `<corpus_root>/hoplite/labels/reference.md`
+- `<corpus_root>/hoplite/labels/observation.md`
 
 The corresponding `labels` rows (with `has_envelope = 1`) are inserted by a first-run migration when the server starts and notices the files. The exact prose for each envelope is in [behavior.md](behavior.md#day-one-envelope-prose).
 
-After install they're editable like any other authored file — by hand, or via `apply_framing` for the three framing-axis envelopes. `apply_framing` writes the file and updates `labels.has_envelope` in a single transaction.
+After install they're editable like any other authored file — by hand, or via `hoplite_apply_framing` for the three framing-axis envelopes. `hoplite_apply_framing` writes the file and updates `labels.has_envelope` in a single transaction.
 
-The `read` envelope is structurally separate; only edits through hand-edit or repair.
+The read content envelope (the one `hoplite_read_node` applies) is structurally separate; only edits through hand-edit or repair.
 
 ## Failure modes
 
 ### Mid-flight crashes
 
-A single `insert` or `update` touches one file plus one SQLite transaction (the latter wrapping all relational changes). A `delete` is similar.
+A single `hoplite_insert_node` or `hoplite_update_node` touches one file plus one SQLite transaction (the latter wrapping all relational changes). A `hoplite_delete_node` is similar.
 
 SQLite's WAL mode handles transaction durability. A crash during a transaction rolls back automatically on next startup. Per-file writes use temp-and-rename so the authored note never appears half-written.
 
 The cross-boundary failure mode is small: file written but database commit failed, or vice versa. Repair-on-startup detects orphans on either side:
 
-- Files in `<corpus_root>/docs/` (walked recursively) with no corresponding `nodes` row → re-index the orphan via the `index` flow.
+- Files in `<corpus_root>/docs/` (walked recursively) with no corresponding `nodes` row → re-index the orphan via the `hoplite_index_node` flow.
 - `nodes` rows with no corresponding authored file → drop the row (the file was deleted out-of-band, or the database survived a delete that the file didn't).
 - Labels in `labels` with no members and no envelope file → drop the row (the last member left, no envelope was authored).
 
 ### Read failures
 
-- Missing id: `invoke`, `read`, `traverse(from=missing)` return an error. "Missing" means no row in `nodes`.
+- Missing id: `hoplite_invoke_node`, `hoplite_read_node`, `hoplite_traverse_nodes(from=missing)` return an error. "Missing" means no row in `nodes`.
 - Missing authored file with `nodes` row present: surfaces as an error; the database expects a file that isn't there. Auto-repair drops the `nodes` row, or the operator restores the file. Deferred to repair.
-- Corrupt database: SQLite usually recovers via WAL replay. If the database is unrecoverable, the operational `repair --rebuild` walks every authored file and rebuilds the database from scratch. The corpus is fully self-describing from `<corpus_root>/docs/` + `<corpus_root>/.graph/labels/` + `<corpus_root>/.graph/envelopes/read.md`.
-- Dangling out_edge target: `invoke(target)` returns an error when the reader follows the edge. The indexer doesn't pre-validate edge targets at read time.
+- Corrupt database: SQLite usually recovers via WAL replay. If the database is unrecoverable, the operational `repair --rebuild` walks every authored file and rebuilds the database from scratch. The corpus is fully self-describing from `<corpus_root>/docs/` + `<corpus_root>/hoplite/labels/` + `<corpus_root>/hoplite/envelopes/read.md`.
+- Dangling out_edge target: `hoplite_invoke_node(target)` returns an error when the reader follows the edge. The indexer doesn't pre-validate edge targets at read time.
 
 ### Concurrency
 
@@ -343,7 +355,7 @@ The row in `nodes` for the mcp data-model spec page (id `mcp/data-model.md`):
 ```
 id              = "mcp/data-model.md"
 summary         = "the entities the graph carries and the fields each one holds"
-embedding_path  = ".graph/embeddings/mcp-data-model.md.npy"
+embedding_path  = "hoplite/embeddings/mcp-data-model.md.npy"
 ```
 
 Its rows in `edges`:
@@ -374,7 +386,7 @@ summary       = "operative guidance the agent should follow"
 has_envelope  = 1
 ```
 
-The envelope prose at `<corpus_root>/.graph/labels/instruction.md`:
+The envelope prose at `<corpus_root>/hoplite/labels/instruction.md`:
 
 ```markdown
 The following is operative guidance for your current task. Apply it directly to your next response. Read it as you would read an active section of your system prompt — not as background reading, not as one perspective among many.
