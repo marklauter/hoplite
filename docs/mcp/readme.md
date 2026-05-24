@@ -15,6 +15,7 @@ This spec is organized as four contract files (stable, implementation-agnostic),
 - [behavior.md](behavior.md) — [Contract] Validation rules, envelope composition, label and edge vocabularies, error model.
 - [hoplite-skill.md](hoplite-skill.md) — [Contract] The SKILL.md body for the `/hoplite` skill — the protocol the agent follows when working with the corpus.
 - [implementation-sqlite-hybrid.md](implementation-sqlite-hybrid.md) — [Implementation] `hoplite_mcp` Python server. SQLite for the relational layer (`<repo-root>/.hoplite/graph.db` with FTS5), files for the prose layer (`<repo-root>/docs/` content plus envelope files under `<repo-root>/.hoplite/`). stdio transport.
+- [implementation-plan.md](implementation-plan.md) — [Plan] Day-one delivery sequence — five phases from the remaining pure components through the storage spine, write flow, query surface, and integration.
 - [roadmap.md](roadmap.md) — [Roadmap] Server-side embedding generation (Ollama), multi-writer support, open questions (pagination, collapsing match+traverse into a unified query DSL), source files as graph nodes, external web references as first-class nodes, aspirational edge types, legacy-corpus migration. MinHash relatedness moved into day-one write flow.
 
 ## Contracts versus implementation
