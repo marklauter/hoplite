@@ -27,6 +27,15 @@ if [ ! -f "pyproject.toml" ]; then
     exit 2
 fi
 
+# Prepend the project's venv to PATH so ruff / pyright / pytest resolve
+# without an activate step. Windows venvs put binaries under .venv/Scripts;
+# POSIX venvs put them under .venv/bin.
+if [ -d ".venv/Scripts" ]; then
+    PATH="$PWD/.venv/Scripts:$PATH"
+elif [ -d ".venv/bin" ]; then
+    PATH="$PWD/.venv/bin:$PATH"
+fi
+
 ARG1="${1:-}"
 
 run_step() {
