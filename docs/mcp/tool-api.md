@@ -15,6 +15,22 @@ Two operational primitives stay outside the agent surface: `reindex` and `repair
 
 Entities referenced below are defined in [data-model.md](data-model.md).
 
+## MCP tool hints
+
+Each tool's MCP annotation hints. Clients use these to decide how to handle the tool — when to confirm with the user, when to cache, when to retry.
+
+- `readOnlyHint` — true means the tool doesn't modify state.
+- `destructiveHint` — true means the tool performs destructive (overwrite or delete) operations.
+- `idempotentHint` — true means repeat calls with the same arguments produce the same end state.
+- `openWorldHint` — true means the tool reaches into an external mutable system. False for every tool here — the corpus is a closed system.
+
+Per-tool settings:
+
+- `match`, `invoke`, `read`, `traverse`, `slugify` — readOnly: true, destructive: false, idempotent: true, openWorld: false. Pure reads or pure computation.
+- `insert` — readOnly: false, destructive: false, idempotent: false, openWorld: false. Creates only; second call with the same id rejects.
+- `update`, `index`, `apply_framing` — readOnly: false, destructive: true, idempotent: true, openWorld: false. Overwrite or replace prior state; safe to retry on transient failures.
+- `delete` — readOnly: false, destructive: true, idempotent: false, openWorld: false. Rejects if the id is missing; not safely retryable as specified.
+
 ## Discovery
 
 ### `match(predicate, k=5) -> [Landing]`
