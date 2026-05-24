@@ -9,6 +9,8 @@ Pure components shipped:
 - `parser.py` — label-expression recursive-descent parser, compiles to a `Callable[[set[str]], bool]`.
 - `filtering.py` — candidate filter that applies a compiled predicate to label sets.
 - `minhash.py` — MinHash signatures and Jaccard estimator. 64-bit hashes over Mersenne prime M_61, ~1024-byte blob per node.
+- `wikilinks.py` — `[[id]]` extractor. Returns unique ids in document order; the write flow consumes the list to emit `:mentions` edges.
+- `ids.py` — id validator, corpus-relative path resolver, and `slugify_text`. Owns every id-shape concern in one place. `tools.py` re-exports `slugify_text` so the agent surface is unchanged.
 
 Scaffolding:
 
@@ -65,7 +67,7 @@ Storage in, composed responses out. Pulls envelope composition rules from [behav
 
 ## Recommended next slice
 
-Items 1 and 2 in one PR. They share validator vocabulary (`[a-z0-9-]`, kebab-case), and landing them together folds `slugify_text` into `ids.py` without a churn commit. Items 3 and 4 in a second PR, then the storage spine as one larger PR.
+Item 3 (`labels.py`) and item 4 (`body.py`) as one PR — both are small, share no code but share the "extract structured fact from text" shape, and landing them together completes Phase 1. Storage spine follows as one larger PR.
 
 ## Out of scope
 
