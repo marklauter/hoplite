@@ -364,7 +364,7 @@ The cross-boundary failure mode is small: file written but database commit faile
 
 ### Read failures
 
-- Missing id: `hoplite_invoke_node`, `hoplite_read_node`, `hoplite_traverse_nodes(from=missing)` return an error. "Missing" means no row in `nodes`.
+- Missing id: `hoplite_invoke_node`, `hoplite_read_node`, `hoplite_traverse_nodes(from_=missing)` return an error. "Missing" means no row in `nodes`.
 - Missing authored file with `nodes` row present: surfaces as an error; the database expects a file that isn't there. Auto-repair drops the `nodes` row, or the operator restores the file. Deferred to repair.
 - Corrupt database: SQLite usually recovers via WAL replay. If the database is unrecoverable, the operational `repair --rebuild` walks every authored file and rebuilds the database from scratch. The corpus is fully self-describing from `<corpus_root>/docs/` + `<corpus_root>/.hoplite/labels/` + `<corpus_root>/.hoplite/envelopes/read.md`.
 - Dangling out_edge target: `hoplite_invoke_node(target)` returns an error when the reader follows the edge. The indexer doesn't pre-validate edge targets at read time.

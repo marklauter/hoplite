@@ -58,7 +58,7 @@ Idempotent. A second call against an initialized corpus restores any individuall
 
 The tool is uniquely available in uninitialized mode. Until `.hoplite/` exists, every other tool errors with a structured "corpus not initialized at `<cwd>`; call `hoplite_init_corpus` to create it." pointing the caller here. After init completes, the in-process server transitions to initialized mode and all other tools begin serving.
 
-Returns a `WriteResult` with the corpus root path and the list of files created (empty list on a no-op call against an already-initialized corpus).
+Returns a `WriteResult` whose `id` is the corpus root path. The `warnings` list surfaces any non-fatal advisories (e.g., bootstrap files that had to be restored).
 
 ## Discovery
 
@@ -77,7 +77,7 @@ At least one of `text` or `node_labels` must be supplied. When both are present,
 
 No pagination day one. The `k` cap is the result bound; the agent picks `k` to match how much it wants to look at. Pagination is on the [roadmap](roadmap.md#continuation-token-pagination-for-hoplite_match_nodes) for if-and-when scale demands it.
 
-### `hoplite_traverse_nodes(from, depth=1, predicate, response_format="json") -> [TraversalHit]`
+### `hoplite_traverse_nodes(from_, depth=1, predicate, response_format="json") -> [TraversalHit]`
 
 Breadth-first walk from a starting node. Returns up to `depth` layers of `TraversalHit` records from the origin. The origin is not included. `depth` must be `≥ 1`.
 
@@ -148,7 +148,7 @@ Passing empty content writes an empty envelope — the loader still finds it but
 
 ### `hoplite_slugify_text(s) -> string`
 
-Pure function. Returns the canonical kebab-case form of `s`: lowercase, whitespace converted to hyphens, characters outside `[a-z0-9-]` stripped. Doesn't mutate graph state.
+Pure function. Returns the canonical kebab-case form of `s`: lowercase; whitespace converted to hyphens; characters outside `[a-z0-9-]` stripped; consecutive hyphens collapsed to one; leading and trailing hyphens trimmed. Doesn't mutate graph state.
 
 This tool exists as a tool (rather than a library function the agent invokes inline) so the agent and the server share the same canonical implementation — whatever rule the server's validator enforces, this tool produces. The agent calls it at the input boundary when normalizing human-supplied strings (a title, a label, an id) before passing them to validating tools. The other tools reject non-canonical input rather than silently transforming, so `hoplite_slugify_text` is the explicit normalize-then-submit step.
 

@@ -7,7 +7,7 @@ the stub tool surface in `hoplite.tools` can return realistic returns.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 __all__ = [
     "Edge",
@@ -26,9 +26,8 @@ __all__ = [
 class Edge:
     type: str
     to: str | None = None
-    # Spec calls this `from`; Python keyword forces the trailing underscore.
-    # Real impl will alias on the wire.
-    from_: str | None = field(default=None, metadata={"wire_name": "from"})
+    # Trailing underscore avoids the Python keyword `from`; the JSON wire name matches.
+    from_: str | None = None
     confidence: float | None = None
     source: str | None = None
     rationale: str | None = None

@@ -40,7 +40,7 @@ async def _roundtrip() -> None:
 
         tool_list = await session.list_tools()
         names = {t.name for t in tool_list.tools}
-        assert names >= EXPECTED_TOOLS, f"missing: {EXPECTED_TOOLS - names}"
+        assert names == EXPECTED_TOOLS, f"expected exactly {EXPECTED_TOOLS}, got {names}"
 
         slug_result = await session.call_tool("hoplite_slugify_text", {"s": "Foo Bar Baz"})
         assert not slug_result.isError

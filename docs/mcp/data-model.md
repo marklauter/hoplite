@@ -50,7 +50,7 @@ Fields:
 
 - `type` (required, string) — edge type, lowercase kebab-case. Day-one vocabulary: `mentions`, `related`. Aspirational types reserved for future passes — see [behavior.md](behavior.md#edge-vocabulary).
 - `to` (required, string; for outgoing edges) — target node id.
-- `from` (required, string; for incoming edges) — source node id.
+- `from_` (required, string; for incoming edges) — source node id. Trailing underscore avoids the Python keyword `from`; the JSON wire name matches.
 - `confidence` (optional, float in `[0, 1]`) — edge strength. Authored edges carry implicit confidence 1.0. Derived edges carry the signal's score.
 - `source` (optional, string) — provenance for derived edges (e.g., `minhash`, `embedding-cosine`). Authored edges omit this field.
 - `rationale` (optional, string) — explanation, useful for derived edges where the reason is non-obvious.

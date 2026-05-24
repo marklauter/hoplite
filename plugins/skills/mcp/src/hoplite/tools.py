@@ -194,10 +194,13 @@ def apply_framing(label: str, content: str) -> WriteResult:
 
 _WS_RE: Final = re.compile(r"\s+")
 _STRIP_RE: Final = re.compile(r"[^a-z0-9-]+")
+_HYPHEN_RUN_RE: Final = re.compile(r"-+")
 
 
 def slugify_text(s: str) -> str:
-    """Lowercase, whitespace → hyphens, strip chars outside [a-z0-9-]."""
+    """Lowercase; whitespace → `-`; non-`[a-z0-9-]` stripped; `-+` collapsed; edges trimmed."""
     lowered = s.lower()
     hyphenated = _WS_RE.sub("-", lowered)
-    return _STRIP_RE.sub("", hyphenated)
+    stripped = _STRIP_RE.sub("", hyphenated)
+    collapsed = _HYPHEN_RUN_RE.sub("-", stripped)
+    return collapsed.strip("-")
