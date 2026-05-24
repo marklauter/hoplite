@@ -6,7 +6,7 @@
 
 The graph is a labeled multigraph. Nodes carry content and metadata. Labels are named sets that nodes belong to. Edges are typed connections between nodes. Envelopes wrap content during retrieval to set the reading contract.
 
-Six core entities plus three response types:
+Six core entities plus four response types:
 
 - Node — a content unit.
 - Label — a named set of nodes.
@@ -14,6 +14,7 @@ Six core entities plus three response types:
 - Envelope — a structured wrapper applied during retrieval.
 - Landing — a result from search.
 - TraversalHit — a result from graph walk.
+- FetchedNode — a result from retrieval (`hoplite_invoke_node` / `hoplite_read_node`).
 - WriteResult — a result from a write operation.
 
 ## Node
@@ -92,6 +93,23 @@ Fields:
 - `via_edges` (required, list of Edge) — the path taken from origin on first reach. One Edge per hop.
 
 The origin is not included in the result set. BFS uses a visited-set; cycles short-circuit, and equal-or-longer alternative paths to an already-visited node are dropped.
+
+## FetchedNode
+
+The retrieval-tool return shape — a Node augmented with the composed envelope. Both `hoplite_invoke_node` and `hoplite_read_node` return this; they differ only in which envelope is composed.
+
+Fields:
+
+- `id` (required, string) — the node's id.
+- `labels` (required, list of strings) — the node's labels.
+- `out_edges` (required, list of Edge; may be empty) — outbound edges from this node.
+- `summary` (required, string) — cached lede from line 3 of the body.
+- `body` (required, string) — the node's authored content.
+- `envelope` (required, Envelope) — the structured wrapper. `hoplite_invoke_node` populates it from the framing-axis label plus the node's other labels; `hoplite_read_node` populates it with the fixed content envelope and empty primes.
+- `in_edges` (optional, list of Edge) — cached inversion of incoming edges; present when materialized.
+- `embedding` (optional, opaque reference) — pointer to the node's vector embedding when one exists.
+
+`FetchedNode` is the response-typed sibling of `Node`. The structural overlap is intentional — the retrieval surface returns "the node, plus how to read it."
 
 ## LabelExpression
 

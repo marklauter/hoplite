@@ -75,9 +75,9 @@ At least one of `text` or `node_labels` must be supplied. When both are present,
 
 `score` on each Landing is a sort key within the call only — different predicates produce incomparable absolute magnitudes.
 
-No pagination day one. The `k` cap is the result bound; the agent picks `k` to match how much it wants to look at. Pagination is on the [roadmap](roadmap.md#continuation-token-pagination-for-hoplite_match_nodes) for if-and-when scale demands it.
+No pagination day one. The `k` cap is the result bound; the agent picks `k` to match how much it wants to look at. Pagination is on the [roadmap](roadmap.md#open-question--does-pagination-ever-land) for if-and-when scale demands it.
 
-### `hoplite_traverse_nodes(from_, depth=1, predicate, response_format="json") -> [TraversalHit]`
+### `hoplite_traverse_nodes(from_, predicate=None, depth=1, response_format="json") -> [TraversalHit]`
 
 Breadth-first walk from a starting node. Returns up to `depth` layers of `TraversalHit` records from the origin. The origin is not included. `depth` must be `≥ 1`.
 
@@ -90,7 +90,7 @@ The `predicate` controls both which edges the walk follows and which reached nod
 
 BFS uses a visited-set. Each node appears at most once, tagged with the shortest distance to it; `via_edges` records the path taken on that first reach.
 
-No pagination. Traversal results are bounded by `depth` (and by the predicate's filters). If the result set is too large, lower `depth` or tighten `node_labels`. Graph traversal doesn't paginate naturally — see [roadmap](roadmap.md#continuation-token-pagination-for-hoplite_match_nodes).
+No pagination. Traversal results are bounded by `depth` (and by the predicate's filters). If the result set is too large, lower `depth` or tighten `node_labels`. Graph traversal doesn't paginate naturally — see [roadmap](roadmap.md#open-question--does-pagination-ever-land).
 
 ## Retrieval
 

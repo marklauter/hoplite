@@ -237,7 +237,9 @@ The SQLite transaction in step 12 is atomic — every relational change for this
 
 ### MinHash details
 
-The signature lives directly on the `nodes` table as a `BLOB` column (`minhash_signature`). The signature is small (k 32-bit hashes, default k=128 → ~512 bytes) and rarely needed by read paths, so on-row storage avoids a second table while keeping the `nodes` row cache-friendly.
+The signature lives directly on the `nodes` table as a `BLOB` column (`minhash_signature`). The signature is small (k 64-bit hashes, default k=128 → ~1024 bytes) and rarely needed by read paths, so on-row storage avoids a second table while keeping the `nodes` row cache-friendly.
+
+Hash family: derive k independent hash functions from a single base hash via the universal-hashing linear transform, modulo the Mersenne prime `M_61 = 2^61 - 1`. Each `h_i(x) = (a_i * base_hash(x) + b_i) mod M_61`, where `a_i` and `b_i` are k pairs of fixed constants. The Mersenne prime fits comfortably in a 64-bit lane and admits fast modular reduction via bit-shift identities. The constants are deterministic across process invocations — signatures from different runs are comparable.
 
 Configuration:
 
@@ -389,7 +391,7 @@ The row in `nodes` for the mcp data-model spec page (id `mcp/data-model.md`):
 ```
 id                 = "mcp/data-model.md"
 summary            = "the entities the graph carries and the fields each one holds"
-minhash_signature  = <512-byte BLOB — 128 32-bit hashes>
+minhash_signature  = <1024-byte BLOB — 128 64-bit hashes mod M_61>
 embedding_path     = NULL                       (set when embeddings land)
 ```
 

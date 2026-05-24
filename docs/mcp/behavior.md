@@ -145,7 +145,7 @@ Aspirational edge types beyond these two (`cites`, `contradicts`, `requires`, `s
 
 ## Envelope composition
 
-Both `hoplite_invoke_node` and `hoplite_read_node` return the same shape (`FetchedNode` — see [data-model.md](data-model.md#node)). They differ in what populates the `envelope` field.
+Both `hoplite_invoke_node` and `hoplite_read_node` return the same shape (`FetchedNode` — see [data-model.md](data-model.md#fetchednode)). They differ in what populates the `envelope` field.
 
 For `hoplite_invoke_node`:
 
