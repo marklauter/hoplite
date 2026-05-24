@@ -1,12 +1,12 @@
 # SQLite-hybrid implementation
 
-[Implementation, alternative] How the contracts map onto SQLite for the relational layer with files for the prose layer.
+[Implementation, day-one] How the contracts map onto SQLite for the relational layer with files for the prose layer.
 
 ## Overview
 
 Notes, label envelope prose, the read envelope, and embedding blobs stay as files. Everything relational — node metadata, label metadata, label memberships, edges — lives in a single SQLite database. Search uses SQLite's FTS5 virtual table; no per-call BM25 recomputation.
 
-The tool API surface (see [tool-api.md](tool-api.md)) is identical to the file-based implementation. Behavior contracts (see [behavior.md](behavior.md)) hold unchanged. Only the persistence layer changes.
+The tool API surface (see [tool-api.md](tool-api.md)) and behavior contracts (see [behavior.md](behavior.md)) are implementation-agnostic and hold unchanged regardless of how the persistence layer is realized. This document describes the persistence layer.
 
 ## Storage layout
 
@@ -24,8 +24,6 @@ File responsibilities:
 - `.md` files carry human-readable content — authored notes and envelope prose.
 - `.npy` files carry binary embedding vectors.
 - `graph.db` carries every structured query target: nodes (metadata), labels (metadata), label memberships, edges, and the full-text search index.
-
-What's gone from the file-based shape: per-node `.yml` sidecars, per-label `.yml` sidecars, membership marker files, and the `docs/index/labels/<label>/` member folders. All collapse into SQLite rows.
 
 ## Database schema
 
@@ -138,7 +136,7 @@ Slug derivation matches the canonical rule (lowercase, whitespace to hyphens, st
 
 ## Corpus root configuration
 
-The MCP server reads a `corpus_root` config value at startup. The database path is `<corpus_root>/docs/index/graph.db`. All other paths derive from `corpus_root` the same way as in the file-based implementation.
+The MCP server reads a `corpus_root` config value at startup. The database path is `<corpus_root>/docs/index/graph.db`. All other paths (`docs/notes/`, `docs/index/labels/`, `docs/index/envelopes/`, `docs/index/embeddings/`) derive from `corpus_root`. Relocating or multi-corpus setups need no code changes.
 
 ## Why this shape
 
@@ -150,7 +148,7 @@ SQLite handles every relational concern the filesystem was emulating:
 - ACID transactions across the whole graph state. A single `insert` or `update` commits all node, edge, and membership changes atomically. No cross-file atomicity story to engineer.
 - FTS5 gives BM25 search natively. No per-call rescoring; the index is incremental.
 
-Prose stays in files for the same reasons it does in the file-based implementation:
+Prose stays in files:
 
 - Notes are greppable, git-diffable, and hand-editable.
 - Label envelope prose and the read envelope are content the agent (and the user) authors directly; their natural medium is markdown files.
@@ -234,12 +232,14 @@ No per-call rescoring of every node. The FTS index is incremental — `INSERT` /
 
 ## Reindex — deferred, not forgotten
 
-Same shape as the file-based implementation. The agent-as-driver pattern (walk notes, call `update` on each) does soft-reindex without a server-side pass. The features needing a server-side reindex are:
+No server-side reindex pass day one. The agent-as-driver pattern covers soft-reindex through the existing tools: walk `docs/notes/`, call `update(id, body=<current-body>, labels=<current-labels>)` on each, and the write-time flow re-parses wiki-links, regenerates the cached summary, rewrites the relational rows, and refreshes the FTS index. Stale rows, hand-edited bodies, and missing derived metadata fix themselves through normal `update` calls.
 
-- MinHash pairwise relatedness — Jaccard-similarity edges above `minhash_threshold` materialize as `:related` derived edges with `source: minhash`. Adds rows to `edges` in batches.
-- Embedding generation via Ollama — writes `.npy` files into `docs/index/embeddings/` and populates `nodes.embedding_path`.
+The features that genuinely need a server-side reindex are the ones the agent can't compute through the existing surface:
 
-A bulk reindex pass is much faster than under the file-based implementation: one SQLite transaction can insert thousands of `:related` edges without thousands of filesystem operations.
+- MinHash pairwise relatedness — Jaccard-similarity edges above `minhash_threshold` (0.20 default) materialize as `:related` derived edges with `source: minhash`. Adds rows to `edges` in batches.
+- Embedding generation via Ollama (`nomic-embed-text` candidate, 768-dim, ~270MB, CPU-fast) writes `.npy` files into `docs/index/embeddings/` and populates `nodes.embedding_path`. With embeddings, `match` switches from BM25 to vector similarity, and embedding-derived `:related` edges supplement MinHash.
+
+A bulk reindex pass is fast: one SQLite transaction can insert thousands of `:related` edges in a single commit.
 
 ## Bootstrap — shipped envelope files
 
@@ -352,9 +352,7 @@ instruction  | writing-prose
 
 ## Migration — deferred
 
-The current `docs/notes/` corpus predates the graph shape. Migration to the SQLite hybrid takes the same shape as migration to the file-based implementation: walk every note, derive labels from filenames and frontmatter, populate the database, write any necessary envelope files. Deferred — when migration lands, it runs as a one-time CLI pass.
-
-Migration from the file-based implementation to SQLite hybrid is itself a defined operation: walk the file-based index (`.yml` sidecars + label folders), insert equivalent rows into SQLite, leave the authored notes and envelope files untouched. The reverse migration (SQLite → file-based) is symmetric: dump rows into `.yml` sidecars and recreate the label folders.
+The current `docs/notes/` corpus predates the graph shape (no sidecars, no SQLite database, no envelope files). Migration requires a converter that walks every note, derives labels from filenames and existing frontmatter, populates the database, and writes the bootstrapped envelope files. Deferred — when migration lands, it runs as a one-time CLI pass that produces the initial database from existing content. Day-one development can use a fresh empty corpus or a hand-curated subset.
 
 ## Rename semantics
 
@@ -372,6 +370,3 @@ Slug change is one SQLite transaction plus two file operations:
 
 A `rename_node(old, new)` MCP call is a natural candidate for the indexer's surface.
 
-## YAML conventions
-
-Not applicable to this implementation. The label envelope files are pure markdown; the authored notes are pure markdown. No YAML on disk for the indexer to parse. SQLite handles its own type system.
