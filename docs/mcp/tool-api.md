@@ -50,7 +50,14 @@ Per [behavior.md](behavior.md#validation-and-error-model), the server distinguis
 
 ### `hoplite_match_nodes(predicate, k=5, response_format="json") -> [Landing]`
 
-Returns up to `k` `Landing` records ranked by relevance to the predicate. Day one, the predicate is a text string scored via BM25. Later, the predicate grows into a structured filter combining text, label constraints, and embedding similarity.
+Returns up to `k` `Landing` records ranked by relevance to the predicate.
+
+The `predicate` is a structured filter:
+
+- `text: string` (optional) — scored via BM25 over node bodies and summaries. Day one this is the primary signal. When embeddings land, cosine similarity supplements or replaces BM25.
+- `node_labels: LabelExpression` (optional) — a label expression that filters candidates. See [behavior.md](behavior.md#label-expressions) for the grammar. Example: `"(note | journal) & !draft"`.
+
+At least one of `text` or `node_labels` must be supplied. When both are present, candidates are first scored by `text` and then filtered by `node_labels` (post-filter, matching the Neo4j convention).
 
 `score` on each Landing is a sort key within the call only — different predicates produce incomparable absolute magnitudes.
 
@@ -60,15 +67,16 @@ No pagination day one. The `k` cap is the result bound; the agent picks `k` to m
 
 Breadth-first walk from a starting node. Returns up to `depth` layers of `TraversalHit` records from the origin. The origin is not included. `depth` must be `≥ 1`.
 
-The `predicate` filters which edges the walk follows:
+The `predicate` controls both which edges the walk follows and which reached nodes appear in the result:
 
-- `edge_types: [string]` — only follow edges of these types. Default: all types.
-- `min_confidence: float` — skip edges below this confidence. Default: no filter.
-- `direction: 'out' | 'in' | 'both'` — which edge direction to follow. Default: `'out'`.
+- `edge_types: [string]` (optional) — only follow edges of these types. Default: all types.
+- `min_confidence: float` (optional) — skip edges below this confidence. Default: no filter.
+- `direction: 'out' | 'in' | 'both'` (optional) — which edge direction to follow. Default: `'out'`.
+- `node_labels: LabelExpression` (optional) — a label expression that filters which reached nodes appear in the result. See [behavior.md](behavior.md#label-expressions) for the grammar. Applied as post-filter: the walk traverses through non-matching intermediate nodes; the result includes only nodes matching the expression. Example: `"note & mcp"` to find mcp-tagged notes reachable from the origin.
 
 BFS uses a visited-set. Each node appears at most once, tagged with the shortest distance to it; `via_edges` records the path taken on that first reach.
 
-No pagination. Traversal results are bounded by `depth` (and by the predicate's filters). If the result set is too large, lower `depth` or tighten the predicate. Graph traversal doesn't paginate naturally — see [roadmap](roadmap.md#continuation-token-pagination-for-hoplite_match_nodes).
+No pagination. Traversal results are bounded by `depth` (and by the predicate's filters). If the result set is too large, lower `depth` or tighten `node_labels`. Graph traversal doesn't paginate naturally — see [roadmap](roadmap.md#continuation-token-pagination-for-hoplite_match_nodes).
 
 ## Retrieval
 

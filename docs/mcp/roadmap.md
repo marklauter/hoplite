@@ -32,6 +32,28 @@ SQLite in WAL mode supports one writer plus many concurrent readers without bloc
 
 The remaining concern is the per-node authored file write: two writers updating the same `<corpus_root>/docs/<id>` race on the file. The SQLite transaction can still commit cleanly for whichever wins, but the file may not match what the last-committed transaction expected. Multi-writer support adds per-id file locking on the authored note path, paired with SQLite's native transaction serialization.
 
+## Open question — collapse match and traverse into a unified query DSL?
+
+Day one has two discovery tools: `hoplite_match_nodes` (BM25 similarity over the whole corpus, no notion of starting node) and `hoplite_traverse_nodes` (BFS walk from a known node, no notion of ranking). Each has a clear use case the agent picks between.
+
+A richer query language — Cypher-style `MATCH ... WHERE ... RETURN` — could collapse both into one tool. The expressive power would let queries combine ranking and traversal in one shot ("find nodes similar to this phrase that are also reachable from origin within 2 hops, ranked by relevance"), which today requires two-call composition by the agent.
+
+What you'd gain:
+
+- One discovery surface instead of two.
+- Combined queries — BM25 plus graph constraints plus label filtering in one expression — that today are awkward or impossible without multiple round trips.
+- Closer to a "real" graph query language; Cypher fluency carries over.
+
+What you'd lose:
+
+- The agent has to know enough of the DSL to compose valid queries. Two simple tools with one-line descriptions are easier to pick from than one expressive query language.
+- Implementation complexity. A SQL-backed query planner that handles ranking + traversal + label filtering is a larger build than the two simple flows day one.
+- The label expression added to predicates day one already covers most of the gap — `hoplite_match_nodes` with `node_labels` answers "find me notes about caching tagged architecture" without needing a DSL.
+
+A middle option: keep `hoplite_match_nodes` and `hoplite_traverse_nodes` as the simple primitives, add a third tool `hoplite_query` that takes a Cypher-ish expression for the cases that need combined ranking + traversal. Easy cases stay easy; expressive queries get their own tool.
+
+Open question — pending a corpus or agentic use case that recurrently wants combined queries. Until then, the two-tool surface with label expressions is the design.
+
 ## Continuation-token pagination for `hoplite_match_nodes`
 
 Day one, `hoplite_match_nodes` returns the top `k` results in one shot. The `k` cap is the natural bound — agents pick `k` to match how much they want to look at. No pagination day one.

@@ -88,6 +88,52 @@ The fixed content envelope used by `hoplite_read_node`:
 
 These envelopes are editable — changing them changes the contract without requiring code changes. The three framing-axis envelopes are editable through `hoplite_apply_framing`; the content envelope is structurally separate and updates through hand-edit or repair-style operations.
 
+## Label expressions
+
+Tools that filter by labels (`hoplite_match_nodes` and `hoplite_traverse_nodes`) accept a label expression — a boolean expression over label names that decides which nodes a query selects.
+
+Syntax follows the Cypher 5.x convention so anyone who's used Neo4j gets free intuition:
+
+```
+expr     ::= or_expr
+or_expr  ::= and_expr ( '|' and_expr )*
+and_expr ::= not_expr ( '&' not_expr )*
+not_expr ::= '!' not_expr
+           | atom
+atom     ::= label
+           | '(' expr ')'
+label    ::= [a-z0-9-]+
+```
+
+Operators:
+
+- `&` — intersection. `note & mcp` selects nodes carrying both labels.
+- `|` — union. `note | journal` selects nodes carrying either.
+- `!` — exclusion (negation). `!draft` selects nodes that don't carry `draft`.
+- `(...)` — grouping.
+
+Precedence: `!` binds tightest, then `&` and `|` at the same level, left-associative. Use parentheses for clarity when mixing `&` and `|`.
+
+Examples:
+
+- `note & mcp` — nodes labeled both `note` and `mcp`.
+- `note | journal` — nodes labeled either `note` or `journal`.
+- `(note | journal) & !draft` — notes or journal entries, excluding drafts.
+- `mcp & !2026-05-24` — mcp-labeled nodes excluding today's.
+- `instruction & skills` — instruction-framed nodes about skills.
+
+A bare label is itself a valid expression — `note` selects every node carrying the `note` label.
+
+### Semantics — post-filter on results
+
+Label expressions apply as post-filter on the result set, matching Neo4j's default. For `hoplite_match_nodes`, the expression filters the BM25-scored candidate list down to nodes that satisfy it. For `hoplite_traverse_nodes`, the walk proceeds per the edge predicate; the expression filters which reached nodes appear in the result. Non-matching intermediate nodes are still traversed through, so matching nodes on the far side of a non-matching intermediate are still reachable.
+
+Pre-filter semantics (confine the walk to matching nodes only) are deliberately not supported day one. Add an opt-in flag if the pattern recurs.
+
+### Empty expression
+
+When `node_labels` is absent or empty, no label filter applies. `hoplite_match_nodes` returns the top-`k` BM25 results unfiltered; `hoplite_traverse_nodes` returns every node the edge predicate reaches.
+
 ## Edge vocabulary
 
 Two day-one edge types:

@@ -16,7 +16,7 @@ The corpus is a labeled multigraph stored as files. Nodes are notes; edges are t
 
 ## Tools
 
-- `hoplite_match_nodes(predicate, k=5)` — find landings. Returns up to `k` `Landing` records (id, summary, labels, score) ranked by relevance to the predicate.
+- `hoplite_match_nodes(predicate, k=5)` — find landings. Returns up to `k` `Landing` records (id, summary, labels, score) ranked by relevance to the predicate. The predicate carries `text` (BM25-scored) and/or `node_labels` (a label expression like `note & mcp` or `(note | journal) & !draft`).
 - `hoplite_invoke_node(id)` — invoke a node as a directive. Returns the body with the framing envelope applied (framing prose plus stacked label bodies plus the node body).
 - `hoplite_read_node(id)` — read a node as content. Returns the body framed by the fixed content envelope (label-independent), telling the agent to treat the payload as data rather than directive.
 - `hoplite_insert_node(id, body, labels=[], out_edges=[])` — create a new node. Rejects if the id already exists.

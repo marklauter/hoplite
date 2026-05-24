@@ -93,6 +93,14 @@ Fields:
 
 The origin is not included in the result set. BFS uses a visited-set; cycles short-circuit, and equal-or-longer alternative paths to an already-visited node are dropped.
 
+## LabelExpression
+
+A string-typed boolean expression over label names. Used in tool predicates that filter by label membership.
+
+Fields: just the string itself. The grammar (operators `&`, `|`, `!`, `()`; precedence; left-associativity) is defined in [behavior.md](behavior.md#label-expressions). Examples: `note`, `note & mcp`, `(note | journal) & !draft`.
+
+A `LabelExpression` is validated at the boundary by the parser. An invalid expression returns a constraint error per the [validation model](behavior.md#validation-and-error-model).
+
 ## WriteResult
 
 Result returned by the write tools (`hoplite_insert_node`, `hoplite_update_node`, `hoplite_index_node`, `hoplite_delete_node`, `hoplite_apply_framing`).
