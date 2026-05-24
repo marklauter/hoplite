@@ -1,0 +1,12 @@
+rules:
+  - id: empty-generic-literal-needs-type-parameter
+    pattern-either:
+      - pattern: frozenset()
+      - pattern: set()
+    message: >-
+      Empty generic literal without a type parameter — write `frozenset[str]()`
+      or `set[str]()` so pyright in strict mode can pin the element type.
+      Populated literals like `frozenset({"x"})` infer fine from the elements
+      and are unaffected by this rule.
+    languages: [python]
+    severity: WARNING
