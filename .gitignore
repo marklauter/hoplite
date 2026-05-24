@@ -1,1 +1,3 @@
 .claude/settings.local.json
+plugins/skills/mcp/hello.db
+__pycache__/
