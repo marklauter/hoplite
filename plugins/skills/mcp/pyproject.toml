@@ -31,7 +31,14 @@ target-version = "py310"
 [tool.ruff.lint]
 select = ["A", "E", "F", "I", "B", "UP", "SIM", "RUF"]
 
+[tool.ruff.lint.per-file-ignores]
+# Tool function signatures mirror the MCP wire schema in
+# docs/mcp/tool-api.md, which uses `id` as the parameter name.
+"src/hoplite/tools.py" = ["A002"]
+
 [tool.pyright]
 include = ["src", "tests"]
 typeCheckingMode = "strict"
 pythonVersion = "3.10"
+venvPath = "."
+venv = ".venv"
