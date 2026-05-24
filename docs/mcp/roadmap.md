@@ -32,6 +32,19 @@ SQLite in WAL mode supports one writer plus many concurrent readers without bloc
 
 The remaining concern is the per-node authored file write: two writers updating the same `<corpus_root>/docs/<id>` race on the file. The SQLite transaction can still commit cleanly for whichever wins, but the file may not match what the last-committed transaction expected. Multi-writer support adds per-id file locking on the authored note path, paired with SQLite's native transaction serialization.
 
+## Pagination for `match` and `traverse`
+
+Day one, `match` returns up to `k` landings in one shot; `traverse` returns every node reachable within `depth` layers. Both are bounded but neither paginates.
+
+Pagination becomes useful when corpus growth makes `k` increasingly limiting (the agent wants the top 5 but knows there are 50 worth examining if needed), or when traversal at depth ≥ 2 across hub nodes returns hundreds of results that the agent wants to walk incrementally.
+
+Likely shape — cursor-based, following MCP convention:
+
+- `match(predicate, k=5, cursor=null)` returns `{landings: [...], nextCursor?: string}`. Passing the cursor back continues from where the prior response left off.
+- `traverse(from, depth=1, predicate, cursor=null)` follows the same pattern.
+
+Cursors encode the query state (predicate, position, deterministic sort order) opaquely. The agent treats them as opaque strings. Specifics decided when corpus scale makes the day-one limit felt.
+
 ## Source files as graph nodes
 
 The current spec implicitly scopes the corpus to markdown notes under `<corpus_root>/docs/`. The graph model itself is type-agnostic; indexing source code files as nodes is a natural extension.
