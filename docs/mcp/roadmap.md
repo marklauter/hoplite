@@ -9,7 +9,7 @@ Day one has no server-side reindex. The agent-as-driver pattern handles "soft re
 The features that genuinely need server-side compute live here:
 
 - MinHash pairwise relatedness — Jaccard-similarity edges above `minhash_threshold` (0.20 default) materialize as `:related` derived edges with `source: minhash`. Adds rows to `edges` in batches across one transaction.
-- Embedding generation via local Ollama (`nomic-embed-text` candidate, 768-dim, ~270MB, CPU-fast) writes `.npy` files into `<corpus_root>/hoplite/embeddings/` and populates `nodes.embedding_path`. With embeddings, `hoplite_match_nodes` switches from BM25 to vector similarity, and embedding-derived `:related` edges supplement MinHash.
+- Embedding generation via local Ollama (`nomic-embed-text` candidate, 768-dim, ~270MB, CPU-fast) writes `.npy` files into `<corpus_root>/.hoplite/embeddings/` and populates `nodes.embedding_path`. With embeddings, `hoplite_match_nodes` switches from BM25 to vector similarity, and embedding-derived `:related` edges supplement MinHash.
 
 A bulk reindex pass is fast under SQLite: one transaction can insert thousands of `:related` edges in a single commit.
 
@@ -115,4 +115,4 @@ Adding a new type is cheap once a pattern recurs: pick a name, document the sema
 
 ## Migration of legacy corpus
 
-The legacy `docs/notes/` corpus (with YAML frontmatter on notes from the pre-graph era) needs migration to the new shape. A converter walks every note, derives labels from filenames and existing frontmatter, populates the database, and writes the bootstrapped envelope files into `<corpus_root>/hoplite/`. Day-one development can use a fresh empty corpus or a hand-curated subset; full migration runs as a one-time CLI pass when it lands.
+The legacy `docs/notes/` corpus (with YAML frontmatter on notes from the pre-graph era) needs migration to the new shape. A converter walks every note, derives labels from filenames and existing frontmatter, populates the database, and writes the bootstrapped envelope files into `<corpus_root>/.hoplite/`. Day-one development can use a fresh empty corpus or a hand-curated subset; full migration runs as a one-time CLI pass when it lands.

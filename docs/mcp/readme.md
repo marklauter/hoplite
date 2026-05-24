@@ -14,7 +14,7 @@ This spec is organized as four contract files (stable, implementation-agnostic),
 - [tool-api.md](tool-api.md) — [Contract] Tool signatures and semantics. Ten agent-facing tools.
 - [behavior.md](behavior.md) — [Contract] Validation rules, envelope composition, label and edge vocabularies, error model.
 - [orchestrator-skill.md](orchestrator-skill.md) — [Contract] The SKILL.md body the agent loads on first interaction.
-- [implementation-sqlite-hybrid.md](implementation-sqlite-hybrid.md) — [Implementation] `hoplite_mcp` Python server. SQLite for the relational layer (`<repo-root>/hoplite/graph.db` with FTS5), files for the prose layer (`<repo-root>/docs/` content plus envelope files under `<repo-root>/hoplite/`). stdio transport.
+- [implementation-sqlite-hybrid.md](implementation-sqlite-hybrid.md) — [Implementation] `hoplite_mcp` Python server. SQLite for the relational layer (`<repo-root>/.hoplite/graph.db` with FTS5), files for the prose layer (`<repo-root>/docs/` content plus envelope files under `<repo-root>/.hoplite/`). stdio transport.
 - [roadmap.md](roadmap.md) — [Roadmap] Server-side reindex (MinHash, embeddings), multi-writer support, open questions (pagination, collapsing match+traverse into a unified query DSL), source files as graph nodes, external web references as first-class nodes, aspirational edge types, legacy-corpus migration.
 
 ## Contracts versus implementation
