@@ -245,5 +245,5 @@ def reindex() -> WriteResult:
 def dump_index(path: str | None = None) -> WriteResult:
     """Snapshot the in-memory graph to a SQLite file for debugging."""
     graph = _get_graph()
-    destination = Path(path) if path else _hoplite_state() / "index.db"
+    destination = Path(path) if path else _hoplite_state() / "index.sqlite"
     return graph.dump_index(destination)

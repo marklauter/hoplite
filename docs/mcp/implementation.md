@@ -172,7 +172,7 @@ Total: ~50s. Scales roughly linearly; 100 docs ≈ 5s, 5000 docs ≈ 5 minutes. 
 
 ## `hoplite_dump_index` schema
 
-The one-shot SQLite snapshot at `.hoplite/index.db` (or caller-supplied path) mirrors the in-memory shape:
+The one-shot SQLite snapshot at `.hoplite/index.sqlite` (or caller-supplied path) mirrors the in-memory shape:
 
 ```sql
 CREATE TABLE documents (

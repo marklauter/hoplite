@@ -1,7 +1,10 @@
-# Add a negation-grep self-review check to writing-prose Validation
-
-Tags: todo,skills,writing-prose,validation
-A mechanical self-review pass that greps draft prose for negation trigger words and prompts a rewrite-as-positive pass; operationalizes the golden rule of positive framing.
+---
+title: Add a negation-grep self-review check to writing-prose Validation
+summary: A mechanical self-review pass that greps draft prose for negation trigger words and prompts a rewrite-as-positive pass; operationalizes the golden rule of positive framing.
+tags: [todo, skills, writing-prose, validation]
+created: 2026-05-25
+aliases: []
+---
 
 ## Observation
 

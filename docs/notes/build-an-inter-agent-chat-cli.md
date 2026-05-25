@@ -1,8 +1,10 @@
-# Build an inter-agent chat CLI
-
-Tags: todo,tooling,agents,messaging
-A CLI the agent shells out to that posts and reads from a Slack channel or Discord — making inter-agent coordination human-visible and cross-machine.
-
+---
+title: Build an inter-agent chat CLI
+summary: A CLI the agent shells out to that posts and reads from a Slack channel or Discord — making inter-agent coordination human-visible and cross-machine.
+tags: [todo, tooling, agents, messaging]
+created: 2026-05-25
+aliases: []
+---
 
 ## Observation
 

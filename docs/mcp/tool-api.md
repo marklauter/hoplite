@@ -98,13 +98,13 @@ Snapshots the in-memory graph state to a SQLite file for SQL-level debugging.
 
 Parameters:
 
-- `path` (optional, string) — destination file path. Default: `.hoplite/index.db` relative to the corpus root.
+- `path` (optional, string) — destination file path. Default: `.hoplite/index.sqlite` relative to the corpus root.
 
 One-shot operation. The destination is overwritten on each call; no live mirroring. The schema mirrors the in-memory shape — `documents`, `tags`, `edges`, `document_tags`, `document_aliases`, plus an FTS5 mirror. Full DDL in [implementation.md](implementation.md#dump-schema).
 
 Returns a `WriteResult` with `path` set to the absolute path of the written file and `counts` populated with row counts per entity (`{"documents": N, "tags": M, "edges": K, "ghosts": G}`).
 
-Then `sqlite3 .hoplite/index.db` gives developers a full SQL surface over the derived state — useful for diagnosing "why didn't this query return that document" cases.
+Then `sqlite3 .hoplite/index.sqlite` gives developers a full SQL surface over the derived state — useful for diagnosing "why didn't this query return that document" cases.
 
 ## Error handling at the MCP boundary
 

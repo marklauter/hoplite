@@ -125,7 +125,7 @@ async def _drive_server(vault: Path) -> None:
 
         # dump_index — snapshot to a temp file and inspect.
         # .hoplite/ sits at the cwd level, alongside docs/, not inside it.
-        dump_destination = vault / ".hoplite" / "index.db"  # `vault` here is the cwd, not docs/
+        dump_destination = vault / ".hoplite" / "index.sqlite"  # `vault` here is the cwd, not docs/
         dump_result = await session.call_tool(
             "hoplite_dump_index",
             {"path": str(dump_destination)},

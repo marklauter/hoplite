@@ -1,7 +1,10 @@
-# Migrate run-tests.sh to vendored crucible
-
-Tags: todo,crucible
-Swap our in-repo bash test runner for the sibling crucible.sh; two small migration items block the cut.
+---
+title: Migrate run-tests.sh to vendored crucible
+summary: Swap our in-repo bash test runner for the sibling crucible.sh; two small migration items block the cut.
+tags: [todo, crucible]
+created: 2026-05-25
+aliases: []
+---
 
 ## Observation
 
