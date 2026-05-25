@@ -41,12 +41,13 @@ Linux distributions vary — `python3` resolves out of the box on most. If your 
 
 ### Skills
 
-Two agent-facing skills compose with the knowledge graph:
+Three agent-facing skills compose with the knowledge graph:
 
+- `hoplite` — query the graph. Loads the tool reference and edge vocabulary only; use this when you want to search, traverse, reindex, or dump without loading the authoring workflow.
 - `taking-notes` — author atomic notes under `docs/notes/`, each capturing the current state of one idea.
 - `journaling` — author dated, append-only entries under `docs/journal/`.
 
-Both inject the hoplite tool reference from `components/hoplite/`, so an agent writing a document also learns to call `hoplite_reindex` after saving. Pure-query workflows call the MCP tools directly — they register server-side, independent of any skill.
+The hoplite skill is a thin wrapper over `components/hoplite/tool-reference.md`. The authoring skills (`taking-notes`, `journaling`) inject the same tool-reference component alongside the frontmatter contract and editorial principles — so they cover both writing the document and indexing it. One canonical source for the tool reference; multiple invocation paths.
 
 ### MCP tools
 
