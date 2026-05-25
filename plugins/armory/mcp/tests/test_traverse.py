@@ -143,6 +143,51 @@ def test_cycle_short_circuits_on_visited(cycle_graph: Graph) -> None:
     assert {h.distance: h.path for h in hits} == {1: "b", 2: "c"}
 
 
+def test_self_loop_dropped() -> None:
+    """a → a plus a → b. The self-loop must not produce a hit for a itself."""
+    g = Graph()
+    _add_node(g, "a")
+    _add_node(g, "b")
+    _add_edge(g, "a", "a", "mentions")
+    _add_edge(g, "a", "b", "mentions")
+    _install(g)
+    hits = tools.traverse_nodes(from_="a", depth=5)
+    assert [h.path for h in hits] == ["b"]
+    assert "a" not in [h.path for h in hits]
+
+
+def test_two_node_cycle_visits_each_once() -> None:
+    """a ↔ b (two-edge cycle). b reached once at distance 1; cycle back to a dropped."""
+    g = Graph()
+    _add_node(g, "a")
+    _add_node(g, "b")
+    _add_edge(g, "a", "b", "mentions")
+    _add_edge(g, "b", "a", "mentions")
+    _install(g)
+    hits = tools.traverse_nodes(from_="a", depth=5)
+    assert [h.path for h in hits] == ["b"]
+
+
+def test_mid_graph_cycle_not_through_origin() -> None:
+    """a → b → c → b (cycle between b and c, not touching origin a).
+
+    b reached at distance 1 from a; c at distance 2 via b; the c→b cycle-back
+    is dropped because b is already in visited.
+    """
+    g = Graph()
+    for name in ("a", "b", "c"):
+        _add_node(g, name)
+    _add_edge(g, "a", "b", "mentions")
+    _add_edge(g, "b", "c", "mentions")
+    _add_edge(g, "c", "b", "mentions")
+    _install(g)
+    hits = tools.traverse_nodes(from_="a", depth=10)
+    assert {h.distance: h.path for h in hits} == {1: "b", 2: "c"}
+    # b appears exactly once; c appears exactly once.
+    counts = {h.path: 1 for h in hits}
+    assert sum(counts.values()) == len(hits)
+
+
 # ---------- diamond: a → b, a → c, b → d, c → d ----------
 
 

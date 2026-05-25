@@ -6,4 +6,4 @@ created: 2026-05-25
 aliases: []
 ---
 
-This is node three. End of the chain.
+This is node three. It links to [[notes/five.md]].

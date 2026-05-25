@@ -6,4 +6,4 @@ created: 2026-05-25
 aliases: []
 ---
 
-This is node two. It links to [[notes/three.md]].
+This is node two. It links to [[notes/three.md]] and [[notes/four.md]].
