@@ -8,6 +8,7 @@ the singleton so the next call rebuilds from the corpus.
 from __future__ import annotations
 
 from collections import deque
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Literal, TypedDict
 
@@ -265,7 +266,16 @@ def reindex() -> WriteResult:
 
 
 def dump_index(path: str | None = None) -> WriteResult:
-    """Snapshot the in-memory graph to a SQLite file for debugging."""
+    """Snapshot the in-memory graph to a SQLite file for debugging.
+
+    Default destination: ``.hoplite/<ISO-timestamp>.index.sqlite`` — each dump
+    produces a uniquely-named file so prior snapshots are kept for comparison.
+    Colons in the timestamp are replaced with dashes (Windows filename rule).
+    """
     graph = _get_graph()
-    destination = Path(path) if path else _hoplite_state() / "index.sqlite"
+    if path:
+        destination = Path(path)
+    else:
+        stamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H-%M-%S")
+        destination = _hoplite_state() / f"{stamp}.index.sqlite"
     return graph.dump_index(destination)

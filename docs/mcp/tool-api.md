@@ -102,13 +102,13 @@ Snapshots the in-memory graph state to a SQLite file for SQL-level debugging.
 
 Parameters:
 
-- `path` (optional, string) — destination file path. Default: `.hoplite/index.sqlite` relative to the corpus root.
+- `path` (optional, string) — destination file path. Default: `.hoplite/<ISO-timestamp>.index.sqlite` relative to the corpus root, where the timestamp is UTC `YYYY-MM-DDTHH-MM-SS` (colons replaced with dashes for Windows compatibility). Each dump produces a uniquely-named file; prior snapshots stay on disk for comparison.
 
-One-shot operation. The destination is overwritten on each call; no live mirroring. The schema mirrors the in-memory shape — `documents`, `tags`, `edges`, `document_tags`, `document_aliases`, plus an FTS5 mirror. Full DDL in [implementation.md](implementation.md#dump-schema).
+One-shot operation. The schema is the property-graph projection — `nodes`, `documents`, `node_properties`, `edges`, `edge_properties`, plus a contentless FTS5 mirror. Full DDL in [implementation.md](implementation.md#hoplite_dump_index-schema).
 
-Returns a `WriteResult` with `path` set to the absolute path of the written file and `counts` populated with row counts per entity (`{"documents": N, "tags": M, "edges": K, "ghosts": G}`).
+Returns a `WriteResult` with `path` set to the absolute path of the written file and `counts` populated with row counts per entity (`{"documents": N, "ghosts": G, "edges": K}`).
 
-Then `sqlite3 .hoplite/index.sqlite` gives developers a full SQL surface over the derived state — useful for diagnosing "why didn't this query return that document" cases.
+Then `sqlite3 .hoplite/<file>` gives developers a full SQL surface over the derived state — useful for diagnosing "why didn't this query return that document" cases.
 
 ## Error handling at the MCP boundary
 

@@ -176,7 +176,7 @@ Total: ~50s. Scales roughly linearly; 100 docs ≈ 5s, 5000 docs ≈ 5 minutes. 
 
 ## `hoplite_dump_index` schema
 
-The one-shot SQLite snapshot at `.hoplite/index.sqlite` (or caller-supplied path) is a normalized property-graph projection. Documents are nodes; tags are properties on documents (not nodes); edges connect documents to documents; everything from frontmatter lives in a single EAV `properties` table; bodies live only on the file system.
+The one-shot SQLite snapshot at `.hoplite/<ISO-timestamp>.index.sqlite` (or caller-supplied path) is a normalized property-graph projection. Documents are nodes; tags are properties on documents (not nodes); edges connect documents to documents; everything from frontmatter lives in a single EAV `properties` table; bodies live only on the file system.
 
 ```sql
 CREATE TABLE nodes (

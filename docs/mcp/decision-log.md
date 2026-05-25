@@ -106,12 +106,12 @@ Final MCP surface (4 tools):
 1. `hoplite_match_nodes(predicate, k)` — BM25 + tag-expression filter; returns `(path, summary, tags, score)` records
 2. `hoplite_traverse_nodes(from, depth, predicate)` — graph walk; returns `(path, summary, tags, distance, via_edges)` records
 3. `hoplite_reindex()` — optional explicit rescan; otherwise auto-detects via stat+content_hash on next query
-4. `hoplite_dump_index(path?)` — debug snapshot. Snapshots the in-memory state to a SQLite file. Default destination `.hoplite/index.sqlite` (hidden directory convention, alongside `.git/` and `.obsidian/`). Optional `path` parameter for custom destinations.
+4. `hoplite_dump_index(path?)` — debug snapshot. Snapshots the in-memory state to a SQLite file. Default destination `.hoplite/<ISO-timestamp>.index.sqlite` (hidden directory convention, alongside `.git/` and `.obsidian/`); each dump produces a uniquely-named file so prior snapshots stay on disk. Optional `path` parameter for custom destinations.
 
    - One-shot operation — the file is overwritten each call. No live mirroring.
    - Returns the absolute path of the written file plus row counts as a `WriteResult`.
    - Schema mirrors the in-memory shape (documents, document_tags, document_aliases, tags, edges, plus an FTS5 mirror). See "hoplite_dump_index schema" entry below for the full DDL.
-   - Then `sqlite3 .hoplite/index.sqlite` gives developers a full SQL surface over the derived state.
+   - Then `sqlite3 .hoplite/<file>` gives developers a full SQL surface over the derived state.
 
 ### Edge vocabulary — closed set of three
 [ACTIVE]
