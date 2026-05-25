@@ -59,8 +59,14 @@ _REQUIRED_FIELDS: Final = ("title", "summary", "tags", "created", "aliases")
 
 
 DUMP_SCHEMA: Final = """
+CREATE TABLE nodes (
+  id INTEGER PRIMARY KEY,
+  kind TEXT NOT NULL  -- 'document' | 'tag'
+);
+
 CREATE TABLE documents (
-  path TEXT PRIMARY KEY,
+  id INTEGER PRIMARY KEY REFERENCES nodes(id),
+  path TEXT NOT NULL UNIQUE,
   resolved INTEGER NOT NULL,
   title TEXT,
   summary TEXT,
@@ -71,36 +77,28 @@ CREATE TABLE documents (
   minhash BLOB
 );
 
-CREATE TABLE document_tags (
-  path TEXT NOT NULL,
-  tag TEXT NOT NULL,
-  PRIMARY KEY (path, tag)
-);
-
-CREATE TABLE document_aliases (
-  path TEXT NOT NULL,
-  alias TEXT NOT NULL,
-  PRIMARY KEY (path, alias)
-);
-
 CREATE TABLE tags (
-  slug TEXT PRIMARY KEY,
+  id INTEGER PRIMARY KEY REFERENCES nodes(id),
+  slug TEXT NOT NULL UNIQUE,
   text TEXT NOT NULL,
   summary TEXT
 );
 
+CREATE TABLE document_aliases (
+  document_id INTEGER NOT NULL REFERENCES documents(id),
+  alias TEXT NOT NULL,
+  PRIMARY KEY (document_id, alias)
+);
+
 CREATE TABLE edges (
-  src TEXT NOT NULL,
-  dst TEXT NOT NULL,
+  src INTEGER NOT NULL REFERENCES nodes(id),
+  dst INTEGER NOT NULL REFERENCES nodes(id),
   kind TEXT NOT NULL,
   confidence REAL,
-  source TEXT,
-  rationale TEXT,
-  source_path TEXT,
-  line INTEGER,
-  "column" INTEGER,
   PRIMARY KEY (src, dst, kind)
 );
+CREATE INDEX idx_edges_src ON edges(src);
+CREATE INDEX idx_edges_dst ON edges(dst);
 
 CREATE VIRTUAL TABLE fts USING fts5(path, title, summary, body);
 """
@@ -149,12 +147,23 @@ class Graph:
         if abs_path.exists():
             abs_path.unlink()
 
+        # Assign integer IDs to every node (document + tag), deterministic by sort.
+        # The combined map lets edge writes resolve src/dst regardless of node kind.
+        node_ids: dict[str, int] = {}
+        for path_key in sorted(self.documents):
+            node_ids[path_key] = len(node_ids) + 1
+        for slug in sorted(self.tags):
+            if slug in node_ids:
+                raise ValueError(f"node identifier collision: {slug!r} is both a document path and a tag slug")
+            node_ids[slug] = len(node_ids) + 1
+
         conn = sqlite3.connect(str(abs_path))
         try:
             conn.executescript(DUMP_SCHEMA)
-            self._write_documents(conn)
-            self._write_tags(conn)
-            self._write_edges(conn)
+            self._write_nodes(conn, node_ids)
+            self._write_documents(conn, node_ids)
+            self._write_tags(conn, node_ids)
+            self._write_edges(conn, node_ids)
             self._write_fts(conn)
             conn.commit()
         finally:
@@ -172,9 +181,18 @@ class Graph:
             },
         )
 
-    def _write_documents(self, conn: sqlite3.Connection) -> None:
+    def _write_nodes(self, conn: sqlite3.Connection, node_ids: dict[str, int]) -> None:
+        rows: list[tuple[int, str]] = []
+        for path_key in self.documents:
+            rows.append((node_ids[path_key], "document"))
+        for slug in self.tags:
+            rows.append((node_ids[slug], "tag"))
+        conn.executemany("INSERT INTO nodes VALUES (?, ?)", rows)
+
+    def _write_documents(self, conn: sqlite3.Connection, node_ids: dict[str, int]) -> None:
         rows = [
             (
+                node_ids[doc.path],
                 doc.path,
                 1 if doc.resolved else 0,
                 doc.title,
@@ -188,40 +206,36 @@ class Graph:
             for doc in self.documents.values()
         ]
         conn.executemany(
-            "INSERT INTO documents VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO documents VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             rows,
         )
-        tag_rows = [(doc.path, tag) for doc in self.documents.values() for tag in sorted(doc.tags)]
-        if tag_rows:
-            conn.executemany("INSERT INTO document_tags VALUES (?, ?)", tag_rows)
-        alias_rows = [(doc.path, alias) for doc in self.documents.values() for alias in doc.aliases]
+        alias_rows = [
+            (node_ids[doc.path], alias)
+            for doc in self.documents.values()
+            for alias in doc.aliases
+        ]
         if alias_rows:
             conn.executemany("INSERT INTO document_aliases VALUES (?, ?)", alias_rows)
 
-    def _write_tags(self, conn: sqlite3.Connection) -> None:
-        rows = [(tag.slug, tag.text, tag.summary) for tag in self.tags.values()]
+    def _write_tags(self, conn: sqlite3.Connection, node_ids: dict[str, int]) -> None:
+        rows = [(node_ids[tag.slug], tag.slug, tag.text, tag.summary) for tag in self.tags.values()]
         if rows:
-            conn.executemany("INSERT INTO tags VALUES (?, ?, ?)", rows)
+            conn.executemany("INSERT INTO tags VALUES (?, ?, ?, ?)", rows)
 
-    def _write_edges(self, conn: sqlite3.Connection) -> None:
+    def _write_edges(self, conn: sqlite3.Connection, node_ids: dict[str, int]) -> None:
         rows: list[tuple[Any, ...]] = [
             (
-                edge.src,
-                edge.dst,
+                node_ids[edge.src],
+                node_ids[edge.dst],
                 edge.kind,
                 edge.confidence,
-                edge.source,
-                edge.rationale,
-                edge.source_path,
-                edge.line,
-                edge.column,
             )
             for edges in self.out_edges.values()
             for edge in edges
         ]
         if rows:
             conn.executemany(
-                "INSERT INTO edges VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                "INSERT INTO edges VALUES (?, ?, ?, ?)",
                 rows,
             )
 
@@ -309,8 +323,11 @@ def walk(corpus_root: Path) -> Graph:
     # Pass 2: body load (already loaded above), edges, FTS, MinHash.
     for canonical, _meta, body in parsed:
         doc = graph.documents[canonical]
-        # Wikilink mentions edges.
-        for target, line, column in wikilinks.extract(body):
+        # Wikilink mentions edges (deduped per (src, dst) — multiple wikilinks to
+        # the same target collapse to one edge; the graph carries relationships,
+        # not source positions).
+        seen_targets: set[str] = set()
+        for target, _line, _column in wikilinks.extract(body):
             resolved_target = graph.resolve_wikilink(target)
             if resolved_target is None:
                 # Materialize a ghost.
@@ -318,14 +335,10 @@ def walk(corpus_root: Path) -> Graph:
                 graph.documents[target] = ghost
                 graph.casefold_index[target.casefold()] = target
                 resolved_target = target
-            edge = Edge(
-                src=canonical,
-                dst=resolved_target,
-                kind="mentions",
-                source_path=canonical,
-                line=line,
-                column=column,
-            )
+            if resolved_target in seen_targets:
+                continue
+            seen_targets.add(resolved_target)
+            edge = Edge(src=canonical, dst=resolved_target, kind="mentions")
             graph.add_edge(edge)
         # Tag member edges.
         for tag_slug in doc.tags:
@@ -432,7 +445,6 @@ def _emit_related_edges(graph: Graph) -> None:
                     dst=doc_b.path,
                     kind="related",
                     confidence=score,
-                    source="minhash",
                 ),
             )
             graph.add_edge(
@@ -441,7 +453,6 @@ def _emit_related_edges(graph: Graph) -> None:
                     dst=doc_a.path,
                     kind="related",
                     confidence=score,
-                    source="minhash",
                 ),
             )
 

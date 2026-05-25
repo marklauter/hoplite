@@ -75,18 +75,15 @@ Fields:
 - `dst` (required, string) — target node identifier. Always a document path day one.
 - `kind` (required, string) — edge type. Day-one vocabulary: `member`, `mentions`, `related`. No other kinds.
 - `confidence` (optional, float in `[0, 1]`) — edge strength. `related` edges carry the MinHash similarity score; `member` and `mentions` edges leave this null (implicit 1.0).
-- `source` (optional, string) — provenance for derived edges. `related` edges set this to `minhash`. `member` and `mentions` edges leave it null (authored).
-- `rationale` (optional, string) — explanation when the derivation reason is non-obvious. Null in practice day one.
-- `source_path` (optional, string) — for `mentions` edges, the path of the document containing the wikilink. Null for `member` and `related` edges.
-- `line` (optional, int) — for `mentions` edges, the 1-indexed line number where the wikilink appears. Null otherwise.
-- `column` (optional, int) — for `mentions` edges, the 1-indexed column. Null otherwise.
+
+Each `(src, dst, kind)` triple is unique — at most one edge per pair per kind.
 
 ### Edge vocabulary
 
 Three edge kinds, closed set:
 
 - `member` — tag → document. Materialized for every `(tag, doc)` pair where the document's frontmatter `tags` list contains the tag's slug. The external query verb `tagged: X` translates internally to traversal over `member` edges with `src` filtered to tag `X`.
-- `mentions` — document → document (or document → ghost document). Materialized from `[[wikilinks]]` parsed in the body. Carries source position metadata so dangling links can be located.
+- `mentions` — document → document (or document → ghost document). Materialized from `[[wikilinks]]` parsed in the body. Multiple wikilinks from one document to the same target collapse to a single edge; the graph records relationships, not occurrences.
 - `related` — document ↔ document, symmetric. Materialized from pairwise MinHash similarity above a configured threshold. Both directions emitted (two edge rows per related pair).
 
 No aspirational types are reserved. Use cases like "cites," "contradicts," and "requires" express through `mentions` plus body prose. Tag hierarchy doesn't exist day one.

@@ -61,9 +61,8 @@ class Tag:
 class Edge:
     """A typed connection between two nodes.
 
-    Day-one ``kind`` is one of ``member``, ``mentions``, ``related``.
-    Source-position fields (``source_path``, ``line``, ``column``) populate for
-    ``mentions`` edges only; ``confidence`` and ``source`` populate for
+    Day-one ``kind`` is one of ``member``, ``mentions``, ``related``. Each pair
+    of nodes carries at most one edge per kind; ``confidence`` populates for
     ``related`` edges only.
     """
 
@@ -71,11 +70,6 @@ class Edge:
     dst: str
     kind: str
     confidence: float | None = None
-    source: str | None = None
-    rationale: str | None = None
-    source_path: str | None = None
-    line: int | None = None
-    column: int | None = None
 
 
 @dataclass(frozen=True, slots=True)

@@ -72,7 +72,7 @@ For each `Document` registered in pass 1:
 1. Read the file body (everything after the closing `---` fence).
 2. Compute the sha256 content hash; store on the Document.
 3. Parse `[[wikilink]]` references from the body. The parser returns a list of `(target_text, line, column)` tuples — see [wikilinks](#wikilinks) below.
-4. For each wikilink target, resolve via the casefold index → alias index → canonical path. If the target resolves, emit a `mentions` edge from this document to the canonical target with `source_path`, `line`, `column` populated. If the target doesn't resolve, materialize a ghost `Document` (see [Ghost documents](#ghost-documents)) and emit the edge to it.
+4. For each wikilink target, resolve via the casefold index → alias index → canonical path. If the target resolves, emit a `mentions` edge from this document to the canonical target. If the target doesn't resolve, materialize a ghost `Document` (see [Ghost documents](#ghost-documents)) and emit the edge to it. The walker dedupes per resolved target: multiple wikilinks from one document to the same target collapse to a single edge.
 5. For each tag slug in the document's frontmatter `tags` list, ensure the corresponding `Tag` entity exists in `Graph.tags` (create on first sight) and emit a `member` edge from the tag to this document.
 6. Compute the MinHash signature of the body. Store on the Document.
 7. Insert into the in-memory FTS5 table: `(path, title, summary, body)`.
@@ -84,7 +84,7 @@ After pass 2, every `mentions` and `member` edge is in place; FTS5 holds every b
 After pass 2, run pairwise MinHash similarity:
 
 1. For every pair of resolved documents `(d1, d2)` where `d1 < d2` (path-ordered to avoid double-counting), compute Jaccard similarity from the two MinHash signatures.
-2. If similarity is above the configured threshold (default 0.20), emit two `related` edges — `(d1, d2)` and `(d2, d1)` — each with `confidence` set to the similarity score and `source="minhash"`.
+2. If similarity is above the configured threshold (default 0.20), emit two `related` edges — `(d1, d2)` and `(d2, d1)` — each with `confidence` set to the similarity score.
 
 Pairwise scan is O(N²) but cheap at our scale (128-int Jaccard comparisons are fast — ~100ms for 1000 documents). LSH bucketing is the optimization to reach for at much larger N; deferred to [roadmap.md](roadmap.md).
 
@@ -117,7 +117,7 @@ Wikilink extraction lives in `wikilinks.py`. The function signature is:
 def extract(body: str) -> list[tuple[str, int, int]]: ...
 ```
 
-Each tuple is `(target_text, line, column)`, 1-indexed. The walker uses the line and column to populate the `Edge.source_path`, `Edge.line`, `Edge.column` metadata, which lets users find dangling links and locate them in source.
+Each tuple is `(target_text, line, column)`, 1-indexed. The walker discards line and column after resolution; the day-one `Edge` model carries no source-position metadata. If a future tool needs to locate a wikilink in source, re-parse the body.
 
 Target text is whatever appeared between `[[` and `]]`, with leading and trailing whitespace stripped. The walker passes the target through case-insensitive ordinal lookup against the alias and canonical-path indexes.
 
@@ -176,11 +176,17 @@ Total: ~50s. Scales roughly linearly; 100 docs ≈ 5s, 5000 docs ≈ 5 minutes. 
 
 ## `hoplite_dump_index` schema
 
-The one-shot SQLite snapshot at `.hoplite/index.sqlite` (or caller-supplied path) mirrors the in-memory shape:
+The one-shot SQLite snapshot at `.hoplite/index.sqlite` (or caller-supplied path) is a normalized property-graph projection: a central `nodes` table assigns every document and tag an integer id, and `edges` connects them through foreign-key references.
 
 ```sql
+CREATE TABLE nodes (
+  id INTEGER PRIMARY KEY,
+  kind TEXT NOT NULL  -- 'document' | 'tag'
+);
+
 CREATE TABLE documents (
-  path TEXT PRIMARY KEY,
+  id INTEGER PRIMARY KEY REFERENCES nodes(id),
+  path TEXT NOT NULL UNIQUE,
   resolved INTEGER NOT NULL,
   title TEXT,
   summary TEXT,
@@ -191,48 +197,40 @@ CREATE TABLE documents (
   minhash BLOB
 );
 
-CREATE TABLE document_tags (
-  path TEXT NOT NULL,
-  tag TEXT NOT NULL,
-  PRIMARY KEY (path, tag)
-);
-
-CREATE TABLE document_aliases (
-  path TEXT NOT NULL,
-  alias TEXT NOT NULL,
-  PRIMARY KEY (path, alias)
-);
-
 CREATE TABLE tags (
-  slug TEXT PRIMARY KEY,
+  id INTEGER PRIMARY KEY REFERENCES nodes(id),
+  slug TEXT NOT NULL UNIQUE,
   text TEXT NOT NULL,
   summary TEXT
 );
 
+CREATE TABLE document_aliases (
+  document_id INTEGER NOT NULL REFERENCES documents(id),
+  alias TEXT NOT NULL,
+  PRIMARY KEY (document_id, alias)
+);
+
 CREATE TABLE edges (
-  src TEXT NOT NULL,
-  dst TEXT NOT NULL,
+  src INTEGER NOT NULL REFERENCES nodes(id),
+  dst INTEGER NOT NULL REFERENCES nodes(id),
   kind TEXT NOT NULL,
   confidence REAL,
-  source TEXT,
-  rationale TEXT,
-  source_path TEXT,
-  line INTEGER,
-  "column" INTEGER,
   PRIMARY KEY (src, dst, kind)
 );
+CREATE INDEX idx_edges_src ON edges(src);
+CREATE INDEX idx_edges_dst ON edges(dst);
 
 CREATE VIRTUAL TABLE fts USING fts5(path, title, summary, body);
 ```
 
 Notes:
 
+- `nodes.id` values are assigned at dump time (deterministic by sort: documents first ordered by path, then tags ordered by slug). The in-memory graph keys on strings (paths and slugs); ids exist only in the dump.
 - `documents.resolved` is the ghost-vs-real flag. Ghost documents have `resolved = 0` and `title, summary, body, content_hash, created_at, updated_at, minhash` all `NULL`.
 - `documents.updated_at` is populated from git history if the corpus is a git repo; `NULL` otherwise.
-- `column` is quoted because it's a SQLite reserved word.
-- `fts` is the same shape as the production in-memory mirror — lets developers reproduce match scoring with `SELECT path, bm25(fts) FROM fts WHERE fts MATCH ? ORDER BY rank`.
-- Edge `confidence`, `source`, `rationale` are nullable. `related` edges populate them; `member` and `mentions` edges leave them NULL.
-- `source_path`, `line`, `column` populate for `mentions` edges; NULL for `member` and `related`.
+- `fts` is the same shape as the production in-memory mirror — lets developers reproduce match scoring with `SELECT path, bm25(fts) FROM fts WHERE fts MATCH ? ORDER BY rank`. The FTS table keys on `path`, not `nodes.id`, because that's how the runtime mirror is built.
+- `edges.confidence` is nullable: `related` edges populate it with the MinHash similarity score; `member` and `mentions` edges leave it `NULL`.
+- Edges are `(src, dst, kind)` unique. Multiple wikilinks from one document to the same target collapse to a single `mentions` edge.
 
 The dump operation opens the destination, drops any prior tables (so the file is fully overwritten), runs the DDL above, bulk-inserts from the in-memory dicts, and returns a `WriteResult` with the absolute output path and per-table row counts.
 

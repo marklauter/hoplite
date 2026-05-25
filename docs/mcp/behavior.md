@@ -63,7 +63,7 @@ Tag membership is queryable through the predicate `tagged: <slug>`. See [Tag pre
 Three edge kinds materialize, closed set. No aspirational types reserved.
 
 - `member` — tag → document. The walker emits one `member` edge per `(tag, doc)` pair where the document's `tags` list contains the tag.
-- `mentions` — document → document (real or ghost). The walker emits one `mentions` edge per `[[wikilink]]` found in a body, carrying `source_path`, `line`, `column`.
+- `mentions` — document → document (real or ghost). The walker emits one `mentions` edge per `(source, target)` pair regardless of how many `[[wikilink]]` occurrences point at the target. Multiple references collapse to a single edge — the graph records relationships, not occurrences.
 - `related` — document ↔ document, symmetric. After the walker has computed every document's MinHash signature, a pairwise pass emits a bidirectional `related` edge for every pair whose Jaccard similarity exceeds a configured threshold (default 0.20). Both directions emitted as two edge rows.
 
 Use cases for richer relations (`cites`, `contradicts`, `requires`, `see-also`) express through `mentions` plus body prose. Tag hierarchy doesn't exist day one. See the [data model](data-model.md#edge-vocabulary) for the full field set.

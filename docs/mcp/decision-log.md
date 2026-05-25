@@ -175,7 +175,7 @@ Why ghost-as-first-class:
 
 Dataclass shape: single `Document` type with a `resolved: bool` flag. Ghost docs have `body=None, title=None, summary=None, content_hash=None`. One dict in the graph; queries filter by `resolved` when needed.
 
-Edge metadata: every Edge carries `(source_path, line, column)` so dangling links can be located and re-parsed. Cost: ~40 extra bytes per edge, ~400KB at 1000-doc scale.
+Edge metadata: minimal — `(src, dst, kind, confidence)`. Source positions are recoverable by re-parsing the body when needed; the graph carries relationships, not occurrences. (An earlier draft stored `(source_path, line, column)` on every Edge; dropped in favor of the simpler shape once the per-occurrence model proved unnecessary.)
 
 Walker is **two-pass logically** (three concerns, two file walks):
 
@@ -186,11 +186,17 @@ Two-pass is required (not just nice) — single-pass gets alias resolution wrong
 
 ### `hoplite_dump_index` schema
 [ACTIVE]
-The one-shot snapshot at `.hoplite/index.sqlite` mirrors the in-memory shape so developers can run SQL against the derived state.
+The one-shot snapshot at `.hoplite/index.sqlite` is a normalized property-graph projection — a central `nodes` table assigns every document and tag an integer id, and `edges` connects them through foreign-key references.
 
 ```sql
+CREATE TABLE nodes (
+  id INTEGER PRIMARY KEY,
+  kind TEXT NOT NULL  -- 'document' | 'tag'
+);
+
 CREATE TABLE documents (
-  path TEXT PRIMARY KEY,
+  id INTEGER PRIMARY KEY REFERENCES nodes(id),
+  path TEXT NOT NULL UNIQUE,
   resolved INTEGER NOT NULL,
   title TEXT,
   summary TEXT,
@@ -201,47 +207,39 @@ CREATE TABLE documents (
   minhash BLOB
 );
 
-CREATE TABLE document_tags (
-  path TEXT NOT NULL,
-  tag TEXT NOT NULL,
-  PRIMARY KEY (path, tag)
-);
-
-CREATE TABLE document_aliases (
-  path TEXT NOT NULL,
-  alias TEXT NOT NULL,
-  PRIMARY KEY (path, alias)
-);
-
 CREATE TABLE tags (
-  slug TEXT PRIMARY KEY,
+  id INTEGER PRIMARY KEY REFERENCES nodes(id),
+  slug TEXT NOT NULL UNIQUE,
   text TEXT NOT NULL,
   summary TEXT
 );
 
+CREATE TABLE document_aliases (
+  document_id INTEGER NOT NULL REFERENCES documents(id),
+  alias TEXT NOT NULL,
+  PRIMARY KEY (document_id, alias)
+);
+
 CREATE TABLE edges (
-  src TEXT NOT NULL,
-  dst TEXT NOT NULL,
+  src INTEGER NOT NULL REFERENCES nodes(id),
+  dst INTEGER NOT NULL REFERENCES nodes(id),
   kind TEXT NOT NULL,
   confidence REAL,
-  source TEXT,
-  rationale TEXT,
-  source_path TEXT,
-  line INTEGER,
-  "column" INTEGER,
   PRIMARY KEY (src, dst, kind)
 );
+CREATE INDEX idx_edges_src ON edges(src);
+CREATE INDEX idx_edges_dst ON edges(dst);
 
 CREATE VIRTUAL TABLE fts USING fts5(path, title, summary, body);
 ```
 
 Notes:
 
+- `nodes.id` values are assigned at dump time, deterministic by sort: documents first (ordered by path), then tags (ordered by slug). The in-memory graph keys on strings (paths and slugs); integer ids exist only in the dump.
 - `documents.resolved` is the ghost-vs-real flag from the wikilink-forward-references decision; ghost docs have `resolved = 0` and `title`, `summary`, `body`, `content_hash`, `created_at`, `updated_at`, `minhash` all NULL.
-- `column` is quoted because it's a SQLite reserved word.
-- The `fts` virtual table is the same shape as the production in-memory FTS5 mirror — lets developers reproduce match scoring with `SELECT path, bm25(fts) FROM fts WHERE fts MATCH ? ORDER BY rank`.
-- Edge `confidence`, `source`, `rationale` are nullable — only `:related` edges populate them; authored `:mentions` and `:member` edges leave them NULL.
-- `source_path`, `line`, `column` are populated for `:mentions` edges (where the wikilink lives in the source); NULL for derived edges.
+- The `fts` virtual table is the same shape as the production in-memory FTS5 mirror — lets developers reproduce match scoring with `SELECT path, bm25(fts) FROM fts WHERE fts MATCH ? ORDER BY rank`. The FTS table keys on `path`, not `nodes.id`, because that's how the runtime mirror is built.
+- `edges.confidence` is nullable: `related` edges populate it with the MinHash similarity score; `member` and `mentions` edges leave it NULL.
+- Edges are `(src, dst, kind)` unique. Multiple wikilinks from one document to the same target collapse to a single `mentions` edge; the graph records relationships, not occurrences. Source positions are recoverable by re-parsing the body when needed.
 
 ### Auto-reindex trigger — day-one explicit, aspirational per-query stat
 [ACTIVE]
@@ -302,7 +300,7 @@ The positioning frame. Obsidian's vault model — markdown files with YAML front
 [ACTIVE]
 Mathematically, a directed multigraph is symmetric: edges are nodes-with-arity-2-incidence (the bipartite incidence encoding makes this rigorous; line graph and subdivision functors operationalize it). In principle Hoplite could reify edges as nodes — letting one edge be the source or target of another, supporting "Alice contradicted Bob's claim about X" as an edge-on-edge.
 
-Day one doesn't do this. Edges live in `Graph.out_edges` / `Graph.in_edges` as their own structural type, distinct from nodes. The existing edge attributes (`confidence`, `source`, `rationale`, `source_path`, `line`, `column`) cover provenance, weight, and source position without needing reification.
+Day one doesn't do this. Edges live in `Graph.out_edges` / `Graph.in_edges` as their own structural type, distinct from nodes. The day-one edge attributes — `(src, dst, kind, confidence)` — cover relationship identity and weight without reification.
 
 If reification ever becomes a requirement, the schema grows toward it (an edge gets a path-like identity; `src` / `dst` can point to edges; the in-memory model adds an `edges` dict keyed by edge identity). Alternative: migrate to a hypergraph backend like HypergraphDB or AtomSpace, which take the symmetric view natively.
 
@@ -311,3 +309,12 @@ Flagging as a known design seam so the choice is conscious rather than rediscove
 ### Proxy-documents for external content confirmed as Obsidian-native
 [ACTIVE]
 Wrapping external content (source code, URLs, PDFs, transcripts, binaries) in a markdown document is a normal Obsidian workflow, not a Hoplite invention. The proxy document summarizes the source, carries its location (path, URL, or other reference), and participates in the graph like any other document. This validates the earlier "two node kinds only" decision — the external-content question never reaches the graph schema.
+
+### Schema simplification — nodes table + four-column Edge
+[ACTIVE]
+Two changes landed together once the dump exposed the contradictions in the earlier shape:
+
+- **Edge collapses to `(src, dst, kind, confidence)`.** `source_path`, `line`, `column`, `source`, and `rationale` are removed. The "one Edge per wikilink occurrence" model promised per-occurrence positions that no consumer used, and forced the schema to either widen its PK or accept duplicates. The honest model is one Edge per `(src, dst, kind)`; multiple wikilinks from doc A to doc B collapse to a single `mentions` edge. Source positions are recoverable by re-parsing the body if a future tool needs them.
+- **Dump schema introduces a `nodes` table.** Documents and tags both become typed projections of `nodes(id, kind)`. `edges.src` and `edges.dst` are integer foreign keys into `nodes(id)` rather than strings overloading two identifier spaces (tag slug vs document path) in one column. The in-memory graph still keys on strings (paths and slugs are the natural identities); integer ids exist only in the dump, assigned at write time by sort order.
+
+Net effect: the SQL is a real property-graph projection, the Edge dataclass is four fields, and the per-occurrence wikilink model is gone in favor of one edge per relationship.

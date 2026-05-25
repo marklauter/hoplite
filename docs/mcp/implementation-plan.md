@@ -37,7 +37,7 @@ Gate G1: build gate green; smoke test skipped.
 
 ## Phase 2 — Extend wikilinks for positions
 
-Goal: `wikilinks.extract` returns `list[tuple[str, int, int]]` (target, line, column) so the walker can populate `Edge.source_path`, `Edge.line`, `Edge.column` metadata.
+Goal: `wikilinks.extract` returns `list[tuple[str, int, int]]` (target, line, column). The walker uses the target for mentions-edge creation; line and column are discarded after a later schema simplification dropped per-occurrence Edge metadata.
 
 5. **`wikilinks.py`** — extend `extract()` signature in place. Track line and column during the regex sweep.
 6. **`tests/test_wikilinks.py`** — update tests for the new return shape. Add a multi-line test that exercises position tracking.
