@@ -22,7 +22,7 @@ __all__ = [
     "dump_index",
     "match_nodes",
     "reindex",
-    "set_corpus_root",
+    "set_root",
     "traverse_nodes",
 ]
 
@@ -40,21 +40,35 @@ class TraversePredicate(TypedDict, total=False):
 
 
 _graph: Graph | None = None
-_corpus_root: Path | None = None
+_vault_root: Path | None = None
+_hoplite_root: Path | None = None
 
 
-def set_corpus_root(root: Path) -> None:
-    """Set the corpus root and reset the cached graph. Called by the server lifespan."""
-    global _graph, _corpus_root
-    _corpus_root = root
+def set_root(cwd: Path) -> None:
+    """Configure the vault and Hoplite state directories from ``cwd``.
+
+    The vault lives at ``cwd/docs`` — the walker indexes every ``.md`` under it.
+    Hoplite-derived state lives at ``cwd/.hoplite`` — alongside the vault, not
+    inside it. Resets the cached graph so the next tool call rebuilds.
+    """
+    global _graph, _vault_root, _hoplite_root
+    _vault_root = cwd / "docs"
+    _hoplite_root = cwd / ".hoplite"
     _graph = None
+
+
+def _vault() -> Path:
+    return _vault_root if _vault_root is not None else Path.cwd() / "docs"
+
+
+def _hoplite_state() -> Path:
+    return _hoplite_root if _hoplite_root is not None else Path.cwd() / ".hoplite"
 
 
 def _get_graph() -> Graph:
     global _graph
     if _graph is None:
-        root = _corpus_root if _corpus_root is not None else Path.cwd()
-        _graph = graph_module.walk(root)
+        _graph = graph_module.walk(_vault())
     return _graph
 
 
@@ -75,13 +89,15 @@ def match_nodes(predicate: MatchPredicate, k: int = 5) -> list[Hit]:
         assert graph.fts is not None
         # Over-fetch so the tag post-filter still has results.
         over_fetch = k * 4 if tagged else k
-        cursor = graph.fts.execute(
-            "SELECT path, bm25(fts) AS score FROM fts WHERE fts MATCH ? ORDER BY score LIMIT ?",
-            (text, over_fetch),
-        )
-        # FTS5 bm25() returns negative values where smaller (more negative) is more relevant.
-        # Negate so the Hit.score reads as higher = better.
-        candidates = [(path, -score) for path, score in cursor.fetchall()]
+        escaped = _escape_fts5_query(text)
+        if escaped:
+            cursor = graph.fts.execute(
+                "SELECT path, bm25(fts) AS score FROM fts WHERE fts MATCH ? ORDER BY score LIMIT ?",
+                (escaped, over_fetch),
+            )
+            # FTS5 bm25() returns negative values where smaller (more negative) is more relevant.
+            # Negate so the Hit.score reads as higher = better.
+            candidates = [(path, -score) for path, score in cursor.fetchall()]
     else:
         # No text query — every resolved document is a candidate at score 0.
         candidates = [(doc.path, 0.0) for doc in graph.documents.values() if doc.resolved]
@@ -134,9 +150,9 @@ def traverse_nodes(
     tag_pred = parser.parse_predicate(tagged) if tagged else None
 
     graph = _get_graph()
-    if from_ not in graph.documents and from_ not in graph.aliases:
+    origin = graph.resolve_wikilink(from_)
+    if origin is None:
         raise ValueError(f"unknown starting document: {from_!r}")
-    origin = graph.resolve_wikilink(from_) or from_
 
     # BFS.
     visited: dict[str, int] = {origin: 0}
@@ -178,6 +194,19 @@ def traverse_nodes(
     return hits
 
 
+def _escape_fts5_query(text: str) -> str:
+    """Make user text safe for FTS5 MATCH; preserves AND semantics across whitespace tokens.
+
+    FTS5 raises on bare special chars (``"``, ``:``, ``(``, ``*``, etc.) and on operator
+    keywords (``AND``, ``OR``, ``NEAR``). Wrapping each whitespace-split token in double
+    quotes (with internal quotes doubled) escapes everything; FTS5's implicit AND across
+    space-separated terms preserves the multi-word search semantics callers expect.
+    Returns ``""`` for whitespace-only input (the caller skips the FTS5 query when empty).
+    """
+    terms = text.split()
+    return " ".join('"' + t.replace('"', '""') + '"' for t in terms)
+
+
 def _neighbors(
     graph: Graph,
     node: str,
@@ -205,10 +234,10 @@ def _neighbors(
 def reindex() -> WriteResult:
     """Rebuild the in-memory graph from the corpus."""
     global _graph
-    root = _corpus_root if _corpus_root is not None else Path.cwd()
-    _graph = graph_module.walk(root)
+    vault = _vault()
+    _graph = graph_module.walk(vault)
     return WriteResult(
-        path=str(root.resolve()),
+        path=str(vault.resolve()),
         warnings=list(_graph.warnings) if _graph.warnings else None,
     )
 
@@ -216,6 +245,5 @@ def reindex() -> WriteResult:
 def dump_index(path: str | None = None) -> WriteResult:
     """Snapshot the in-memory graph to a SQLite file for debugging."""
     graph = _get_graph()
-    root = _corpus_root if _corpus_root is not None else Path.cwd()
-    destination = Path(path) if path else root / ".hoplite" / "index.db"
+    destination = Path(path) if path else _hoplite_state() / "index.db"
     return graph.dump_index(destination)

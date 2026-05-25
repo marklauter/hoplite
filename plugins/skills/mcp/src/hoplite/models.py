@@ -99,7 +99,9 @@ class TraversalHit:
     via_edges: list[Edge]
 
 
-@dataclass(frozen=True, slots=True)
+# slots=True omitted: FastMCP's Pydantic schema generator reads the slot
+# member descriptor as a non-serializable default and warns at startup.
+@dataclass(frozen=True)
 class WriteResult:
     """Returned by ``hoplite_reindex`` and ``hoplite_dump_index``."""
 

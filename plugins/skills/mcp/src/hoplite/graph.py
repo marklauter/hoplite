@@ -52,7 +52,8 @@ def _empty_str_list() -> list[str]:
 
 
 # Frontmatter regex — matches `---\n...\n---\n` at the start of the file.
-_FRONTMATTER_RE: Final = re.compile(r"\A---\n(.*?)\n---\n?", re.DOTALL)
+# `\r?\n` covers both LF and CRLF line endings (Obsidian on Windows writes CRLF).
+_FRONTMATTER_RE: Final = re.compile(r"\A---\r?\n(.*?)\r?\n---\r?\n?", re.DOTALL)
 
 _REQUIRED_FIELDS: Final = ("title", "summary", "tags", "created", "aliases")
 
@@ -271,13 +272,17 @@ def walk(corpus_root: Path) -> Graph:
 
         tags_list = cast(list[object], tags_value)
         aliases_list = cast(list[object], aliases_value)
-        tag_strs = tuple(str(t) for t in tags_list)
+        tag_originals = tuple(str(t) for t in tags_list)
+        # Casefold tags at ingest so the predicate parser (which accepts only
+        # `[a-z0-9-]`) and the `name in tags` membership test reach the same
+        # canonical form. Tag.text preserves the original casing for display.
+        tag_slugs = tuple(t.casefold() for t in tag_originals)
         alias_strs = tuple(str(a) for a in aliases_list)
 
         doc = Document(
             path=canonical,
             resolved=True,
-            tags=frozenset(tag_strs),
+            tags=frozenset(tag_slugs),
             aliases=alias_strs,
             title=str(meta["title"]),
             summary=str(meta["summary"]),
@@ -292,11 +297,12 @@ def walk(corpus_root: Path) -> Graph:
             graph.aliases[alias] = canonical
             graph.casefold_index[alias.casefold()] = canonical
 
-        # Register tags up front so casefold_index can serve tag lookups.
-        for tag_slug in tag_strs:
-            if tag_slug not in graph.tags:
-                graph.tags[tag_slug] = Tag(slug=tag_slug, text=tag_slug)
-                graph.casefold_index[tag_slug.casefold()] = tag_slug
+        # Register tag nodes — slug is the canonical casefolded form;
+        # text preserves the original casing from the first frontmatter mention.
+        for slug, original in zip(tag_slugs, tag_originals, strict=True):
+            if slug not in graph.tags:
+                graph.tags[slug] = Tag(slug=slug, text=original)
+                graph.casefold_index[slug] = slug
 
         parsed.append((canonical, meta, body))
 

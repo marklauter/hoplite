@@ -41,8 +41,8 @@ aliases: []
 
 
 def _write_vault(root: Path) -> None:
-    """Build a 3-document vault under root with the shape the smoke test expects."""
-    notes = root / "notes"
+    """Build a 3-document vault under ``root/docs/`` with the shape the smoke test expects."""
+    notes = root / "docs" / "notes"
     notes.mkdir(parents=True, exist_ok=True)
     (notes / "alpha.md").write_text(
         _FRONTMATTER_TEMPLATE.format(
@@ -124,7 +124,8 @@ async def _drive_server(vault: Path) -> None:
         assert "notes/missing.md" in reached  # ghost is reachable too
 
         # dump_index — snapshot to a temp file and inspect.
-        dump_destination = vault / ".hoplite" / "index.db"
+        # .hoplite/ sits at the cwd level, alongside docs/, not inside it.
+        dump_destination = vault / ".hoplite" / "index.db"  # `vault` here is the cwd, not docs/
         dump_result = await session.call_tool(
             "hoplite_dump_index",
             {"path": str(dump_destination)},

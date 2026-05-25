@@ -1,8 +1,8 @@
 """FastMCP wiring for `hoplite_mcp`.
 
 Exposes the four-tool agent-facing surface defined in docs/mcp/tool-api.md.
-Tool bodies live in `hoplite.tools`; the corpus root is set at module import
-time and the in-memory graph builds lazily on the first tool call.
+Tool bodies live in `hoplite.tools`; the vault root is set at module import
+to ``<cwd>/docs`` and the in-memory graph builds lazily on the first tool call.
 """
 
 from __future__ import annotations
@@ -16,7 +16,7 @@ from hoplite import tools
 
 mcp = FastMCP("hoplite_mcp")
 
-tools.set_corpus_root(Path.cwd())
+tools.set_root(Path.cwd())
 
 
 _READONLY = ToolAnnotations(
