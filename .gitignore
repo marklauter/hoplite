@@ -1,5 +1,4 @@
 .claude/settings.local.json
-plugins/armory/mcp/hello.db
 .hoplite/
 __pycache__/
 .venv/

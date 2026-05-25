@@ -6,7 +6,7 @@ created: 2026-05-25
 aliases: []
 ---
 
-Contracts in [data-model.md](data-model.md), [tool-api.md](tool-api.md), [behavior.md](behavior.md), and [tool-reference.md](../../plugins/armory/components/hoplite/tool-reference.md) hold unchanged for everything below — the day-one shape leaves room for these without contract breakage.
+Contracts in [data-model.md](data-model.md), [tool-api.md](tool-api.md), [behavior.md](behavior.md), and [tool-reference.md](../../plugins/hoplite/components/hoplite/tool-reference.md) hold unchanged for everything below — the day-one shape leaves room for these without contract breakage.
 
 ## Server-side enrichment — embeddings
 

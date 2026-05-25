@@ -1,19 +1,20 @@
 {
-  "name": "armory",
+  "name": "hoplite",
   "version": "1.0.0",
-  "description": "MSL Armory — agent-facing skills plus the Hoplite knowledge graph",
+  "description": "Agentic note-taking with an in-memory knowledge graph over a vault of markdown documents",
   "author": {
-    "name": "MSL"
+    "name": "MSL.Armory"
   },
   "license": "MIT",
   "keywords": [
     "claude-code",
-    "skills",
-    "csharp",
-    "documentation",
+    "mcp",
+    "knowledge-graph",
+    "markdown",
     "notes",
     "journaling",
-    "review"
+    "obsidian",
+    "llm wiki"
   ],
   "mcpServers": {
     "hoplite": {

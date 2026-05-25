@@ -1,8 +1,8 @@
 [![claude code](https://img.shields.io/badge/Claude%20Code-plugin-d97757?logo=anthropic)](https://docs.claude.com/en/docs/claude-code/plugins)
 [![license](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
-![hoplite](https://raw.githubusercontent.com/marklauter/claude/main/images/hoplite.small.png "hoplite")
-![MSL Armory](https://raw.githubusercontent.com/marklauter/claude/main/images/msl.armory.small.png "MSL Armory")
+![hoplite](https://raw.githubusercontent.com/marklauter/hoplite/main/images/hoplite.small.png "hoplite")
+![MSL Armory](https://raw.githubusercontent.com/marklauter/hoplite/main/images/msl.armory.small.png "MSL Armory")
 
 # hoplite
 
@@ -24,10 +24,10 @@ From inside Claude Code, with `<repo>` as the absolute path to your clone (the d
 
 ```text
 /plugin marketplace add <repo>
-/plugin install armory@msl.armory
+/plugin install hoplite@msl.hoplite
 ```
 
-After source changes, run `/plugin uninstall armory@msl.armory` followed by `/plugin install armory@msl.armory` to refresh the cached SKILL.md and components. `/reload-plugins` alone respawns the MCP server but keeps stale cached prose.
+After source changes, run `/plugin uninstall hoplite@msl.hoplite` followed by `/plugin install hoplite@msl.hoplite` to refresh the cached SKILL.md and components. `/reload-plugins` alone respawns the MCP server but keeps stale cached prose.
 
 ## Prerequisites
 
@@ -48,11 +48,9 @@ Two agent-facing skills compose with the knowledge graph:
 
 Both inject the hoplite tool reference from `components/hoplite/`, so an agent writing a document also learns to call `hoplite_reindex` after saving. Pure-query workflows call the MCP tools directly — they register server-side, independent of any skill.
 
-The plugin also ships writing and reviewing skills today (`writing-prose`, `writing-csharp`, `writing-wiki`, `reviewing-csharp`, `reviewing-prose`, `reviewing-wiki`, `triaging-findings`, `managing-github-issues`). Those move to a sibling plugin in a subsequent release.
-
 ### MCP tools
 
-Four tools register under the `plugin:armory:hoplite` server:
+Four tools register under the `plugin:hoplite:hoplite` server:
 
 - `hoplite_match_nodes(predicate, k=5)` — search. BM25 over title, summary, and body; optional tag-expression post-filter (`notes & mcp`, `(plan | journal) & !draft`).
 - `hoplite_traverse_nodes(from_, predicate=None, depth=1)` — breadth-first walk from a starting document. Filters by edge kind, direction, similarity confidence, and tag predicate on reached nodes.
@@ -113,14 +111,14 @@ For depth on the data model and design rationale, see [docs/mcp/data-model.md](d
 The MCP server respawns on `/reload-plugins`, but Claude Code's cache of SKILL.md and `components/` only refreshes on `/plugin install`. If the agent loads stale skill prose after a source change, run:
 
 ```text
-/plugin uninstall armory@msl.armory
-/plugin install armory@msl.armory
+/plugin uninstall hoplite@msl.hoplite
+/plugin install hoplite@msl.hoplite
 ```
 
-The bootstrapped venv lives at `~/.claude/plugins/data/armory-msl-armory/venv/`. If a previous install left the venv in a stuck state, remove the data directory and start a fresh Claude Code session — the SessionStart hook rebuilds the venv on the next startup:
+The bootstrapped venv lives at `~/.claude/plugins/data/hoplite-msl-hoplite/venv/`. If a previous install left the venv in a stuck state, remove the data directory and start a fresh Claude Code session — the SessionStart hook rebuilds the venv on the next startup:
 
 ```bash
-rm -rf ~/.claude/plugins/data/armory-msl-armory
+rm -rf ~/.claude/plugins/data/hoplite-msl-hoplite
 ```
 
 Hooks (`bootstrap-venv.py`, `check-frontmatter.py`) run under system Python, separate from the MCP server's venv. `python3` must resolve at the system level for the hooks to fire — verify with `python3 --version` from your shell.
@@ -129,27 +127,22 @@ Hooks (`bootstrap-venv.py`, `check-frontmatter.py`) run under system Python, sep
 
 Layout:
 
-- `plugins/armory/mcp/` — the MCP server (Python). `src/hoplite/` holds the package; `tests/` holds the unit and smoke tests.
-- `plugins/armory/skills/` — skill bodies. One subdirectory per skill, each with a `SKILL.md`.
-- `plugins/armory/components/` — composable markdown fragments injected into skill bodies via shell expansion.
-- `plugins/armory/hooks/` — `hooks.json` plus the Python hook scripts.
-- `plugins/armory/scripts/` — shared bash scripts (finding readers and writers).
-- `plugins/armory/tests/` — bash test runner and tests for the shared scripts.
+- `plugins/hoplite/mcp/` — the MCP server (Python). `src/hoplite/` holds the package; `tests/` holds the unit and smoke tests.
+- `plugins/hoplite/skills/` — `taking-notes` and `journaling`, each with a `SKILL.md`.
+- `plugins/hoplite/components/hoplite/` — `frontmatter.md` (the YAML contract) and `tool-reference.md` (the MCP tools, edges, vocabulary). Both skills cat both components in.
+- `plugins/hoplite/hooks/` — `hooks.json` plus the Python hook scripts (`bootstrap-venv.py`, `check-frontmatter.py`).
 
 Running tests:
 
 ```bash
-# Python tests for the MCP server
-cd plugins/armory/mcp && pytest
-
-# Bash tests for the shared scripts
-bash plugins/armory/tests/run-tests.sh
-
-# Full build gate (ruff format check, ruff lint, pyright, pytest)
-bash plugins/armory/skills/writing-python/scripts/build-gate.sh
+cd plugins/hoplite/mcp && pytest
 ```
 
-Adding a skill: create `plugins/armory/skills/<skill-name>/SKILL.md`, then `/plugin uninstall` + `/plugin install` to refresh the cache.
+The MCP server's test suite is the only test corpus in this repo (~145 tests covering the walker, parser, filtering, minhash, wikilinks, traverse, and an end-to-end smoke).
+
+Build gate is `ruff format --check`, `ruff check`, `pyright`, then `pytest` — run each in sequence from `plugins/hoplite/mcp/`.
+
+Adding a skill: create `plugins/hoplite/skills/<skill-name>/SKILL.md`, then `/plugin uninstall` + `/plugin install` to refresh the cache.
 
 ## Reference
 
@@ -160,5 +153,5 @@ Adding a skill: create `plugins/armory/skills/<skill-name>/SKILL.md`, then `/plu
 - [docs/mcp/tool-api.md](docs/mcp/tool-api.md) — MCP tool signatures and semantics.
 - [docs/mcp/decision-log.md](docs/mcp/decision-log.md) — chronological record of design decisions.
 - [docs/mcp/roadmap.md](docs/mcp/roadmap.md) — named features deferred past day one.
-- [plugins/armory/components/hoplite/tool-reference.md](plugins/armory/components/hoplite/tool-reference.md) — the tool reference injected by the authoring skills.
-- [plugins/armory/components/hoplite/frontmatter.md](plugins/armory/components/hoplite/frontmatter.md) — the frontmatter contract injected by the authoring skills.
+- [plugins/hoplite/components/hoplite/tool-reference.md](plugins/hoplite/components/hoplite/tool-reference.md) — the tool reference injected by the authoring skills.
+- [plugins/hoplite/components/hoplite/frontmatter.md](plugins/hoplite/components/hoplite/frontmatter.md) — the frontmatter contract injected by the authoring skills.
