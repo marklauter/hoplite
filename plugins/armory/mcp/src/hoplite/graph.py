@@ -166,7 +166,7 @@ class Graph:
             self._write_node_properties(conn, node_ids)
             edge_ids = self._write_edges(conn, node_ids)
             self._write_edge_properties(conn, edge_ids)
-            self._write_fts(conn)
+            self._write_fts(conn, node_ids)
             conn.commit()
         finally:
             conn.close()
@@ -248,27 +248,26 @@ class Graph:
         if rows:
             conn.executemany("INSERT INTO edge_properties VALUES (?, ?, ?)", rows)
 
-    def _write_fts(self, conn: sqlite3.Connection) -> None:
+    def _write_fts(self, conn: sqlite3.Connection, node_ids: dict[str, int]) -> None:
         """Replay title/summary/body into the contentless FTS5 index.
 
         FTS5 contentless mode keeps only the inverted index; raw column values
-        are discarded after insert. The walker discarded bodies after the
-        in-memory FTS index was built, so this dump-time pass re-reads bodies
-        from disk to re-tokenize. Title and summary come from node_properties.
+        are discarded after insert. The rowid is set to ``documents.id`` so
+        consumers can join FTS back to ``documents`` via ``fts.rowid = id``.
+        Body lives only in the markdown file on disk — the dump's FTS index
+        carries title and summary tokens for debug-grade match queries.
         """
-        # No body cache in-memory after the walk — skip body for now in the dump.
-        # Bodies are recoverable by Read-ing the markdown file at path.
-        rows: list[tuple[str, str, str, str]] = []
+        rows: list[tuple[int, str, str, str, str]] = []
         for doc in self.documents.values():
             if not doc.resolved:
                 continue
             props = self.node_properties.get(doc.path, {})
             title = (props.get("title") or [""])[0]
             summary = (props.get("summary") or [""])[0]
-            rows.append((doc.path, title, summary, ""))
+            rows.append((node_ids[doc.path], doc.path, title, summary, ""))
         if rows:
             conn.executemany(
-                "INSERT INTO fts (path, title, summary, body) VALUES (?, ?, ?, ?)",
+                "INSERT INTO fts (rowid, path, title, summary, body) VALUES (?, ?, ?, ?, ?)",
                 rows,
             )
 
