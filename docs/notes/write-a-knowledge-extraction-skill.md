@@ -1,7 +1,7 @@
----
+﻿---
 title: Write a knowledge-extraction skill
 summary: Pulls notes and journals into a human-targeted wiki — the Karpathy-inspired knowledge-mining counterpart to taking-notes.
-tags: [todo, skills, documentation]
+tags: [note, todo, skills, documentation]
 created: 2026-05-25
 aliases: []
 ---

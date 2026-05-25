@@ -1,7 +1,7 @@
----
+﻿---
 title: Audit slug accumulation is a deferred cleanup problem
 summary: report-finding.sh auto-suffixes on slug collision (-2, -3, ...) so repeated audits leave duplicate-defect files; cleanup is manual.
-tags: [todo, skills, scripts, audit-mode-followup]
+tags: [note, todo, skills, scripts, audit-mode-followup]
 created: 2026-05-25
 aliases: []
 ---

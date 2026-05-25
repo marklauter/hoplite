@@ -1,7 +1,7 @@
----
+﻿---
 title: Source files as graph nodes
 summary: The MCP graph runtime data model is forward-compatible with indexing source code alongside markdown notes; scanner, auto-derived labels, and edge-extraction logic change while storage layout, sidecar shape, tool API, and envelope semantics generalize without redesign.
-tags: [hoplite, mcp, roadmap, source-code]
+tags: [note, hoplite, mcp, roadmap, source-code]
 created: 2026-05-25
 aliases: []
 ---

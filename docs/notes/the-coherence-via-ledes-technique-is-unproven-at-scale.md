@@ -1,7 +1,7 @@
----
+﻿---
 title: The Coherence-via-ledes technique is unproven at scale
 summary: The whole-wiki Coherence pass technique (read structural files + every page lede + build terminology map) has not been validated on a real audit.
-tags: [todo, skills, reviewing, wiki, audit-mode-followup]
+tags: [note, todo, skills, reviewing, wiki, audit-mode-followup]
 created: 2026-05-25
 aliases: []
 ---

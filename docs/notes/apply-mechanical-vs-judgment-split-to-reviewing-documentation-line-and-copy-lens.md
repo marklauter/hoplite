@@ -1,7 +1,7 @@
----
+﻿---
 title: Apply mechanical-vs-judgment split to reviewing-prose Line and Copy lenses
 summary: Once a prose linter (Vale, alex, write-good) is wired in, much of the Line and Copy per-lens signal lists belongs in the linter config, not the reviewer's eye.
-tags: [todo, skills, documentation, linting]
+tags: [note, todo, skills, documentation, linting]
 created: 2026-05-25
 aliases: []
 ---

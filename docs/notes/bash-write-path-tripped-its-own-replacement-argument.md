@@ -1,7 +1,7 @@
----
+﻿---
 title: Bash write-path tripped its own replacement argument
 summary: Writing the runtime-thesis note through record-note.sh tripped the heredoc-apostrophe collision the thesis argues to replace — concrete evidence the bash-stdin write-path fragility is recurring, not theoretical.
-tags: [evidence, bash, mcp, write-path, scripts]
+tags: [note, evidence, bash, mcp, write-path, scripts]
 created: 2026-05-25
 aliases: []
 ---

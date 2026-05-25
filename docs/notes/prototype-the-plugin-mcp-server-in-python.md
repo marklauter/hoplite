@@ -1,7 +1,7 @@
----
+﻿---
 title: Prototype the plugin MCP server in Python
 summary: Plain Python (stdio MCP server, no compiled binary) for the first MCP-server prototype in the skills plugin — chosen for source-inspectable distribution, near-universal runtime presence, and a tight dependency surface.
-tags: [decision, mcp, python, plugin, claude-code]
+tags: [note, decision, mcp, python, plugin, claude-code]
 created: 2026-05-25
 aliases: []
 ---

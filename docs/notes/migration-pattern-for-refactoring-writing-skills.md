@@ -1,7 +1,7 @@
----
+﻿---
 title: Migration pattern for refactoring writing skills
 summary: Transformation function for moving a legacy Philosophy/Guidance/Validation skill into the new foundation-composition + procedural-OODA shape; derived from the taking-notes refactor and reusable for journaling and other downstream skills.
-tags: [refactor, skills, writing-prose, migration, pattern]
+tags: [note, refactor, skills, writing-prose, migration, pattern]
 created: 2026-05-25
 aliases: []
 ---
