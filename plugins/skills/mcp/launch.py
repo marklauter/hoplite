@@ -1,10 +1,15 @@
-"""System-Python entry point that re-execs the MCP server under the bootstrapped venv.
+"""System-Python entry point that runs the MCP server under the bootstrapped venv.
 
 Invoked by Claude Code per the plugin manifest's ``mcpServers.skills.command``.
-Resolves ``${CLAUDE_PLUGIN_DATA}/venv/{Scripts,bin}/python(.exe)`` and execs
-``hoplite.server`` under it. The venv is created and populated by the SessionStart
-hook (``hooks/bootstrap-venv.py``); this script assumes it exists and fails loudly
-if it does not.
+Resolves ``${CLAUDE_PLUGIN_DATA}/venv/{Scripts,bin}/python(.exe)`` and runs
+``hoplite.server`` under it as a child process. The venv is created and populated by
+the SessionStart hook (``hooks/bootstrap-venv.py``); this script assumes it exists
+and fails loudly if it does not.
+
+Uses ``subprocess.run`` with inherited stdio rather than ``os.execv``. On Windows,
+``os.execv`` doesn't truly replace the process — CPython spawns a child and the
+parent exits, which breaks the MCP supervisor's stdio pipe management. The
+parent-stays-alive model works identically on Windows and POSIX.
 
 Stdlib only — runs under whatever Python is on PATH at the moment Claude Code spawns
 the MCP server.
@@ -13,6 +18,7 @@ the MCP server.
 from __future__ import annotations
 
 import os
+import subprocess
 import sys
 from pathlib import Path
 
@@ -40,10 +46,11 @@ def main() -> int:
         )
         return 1
 
-    # execv replaces the current process — the MCP supervisor sees one PID, one
-    # stdio pipe, and the venv Python running hoplite.server directly.
-    os.execv(str(python), [str(python), "-m", "hoplite.server"])
-    return 0  # unreachable on POSIX; reachable on Windows quirks
+    # Run the server as a child; stdin/stdout/stderr inherit from the parent so the
+    # MCP supervisor's pipes stay connected. The parent process stays alive until the
+    # child exits, propagating its return code. Signals (SIGINT/SIGTERM, or Windows
+    # console control events) reach the child via the OS process group.
+    return subprocess.run([str(python), "-m", "hoplite.server"]).returncode
 
 
 if __name__ == "__main__":
