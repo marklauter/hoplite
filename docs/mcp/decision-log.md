@@ -75,13 +75,13 @@ MinHash LSH bucketing is deferred — pairwise scan over signatures is fine at c
 [ACTIVE — surface list superseded by "All retrieval tools eliminated"]
 With SQLite gone and files as source of truth, the write-side MCP tools (`insert_node`, `update_node`, `delete_node`, `index_node`, `apply_framing`) lose their reason to exist. Agents have Write, Edit, and Bash through Claude Code; they can write `.md` files directly. The `/hoplite` skill teaches the file shape, location convention, and wikilink rules — discipline lives in the protocol, not in tool signatures.
 
-For the final surface (4 tools, not 6 — `invoke_node` and `read_node` die in the next entry), see "All retrieval tools eliminated; Hoplite is dataview over notes" below.
+For the final surface (4 tools, not 6 — `invoke_node` and `read_node` die in the next entry), see "All retrieval tools eliminated; Hoplite is dataview over documents" below.
 
 ### Framing collapses to verb-driven binary
 [SUPERSEDED by: All retrieval tools eliminated]
 Brief intermediate position: kill `apply_framing`, retire per-tag framing, keep `invoke` (instruction envelope) and `read` (read envelope) as verb-driven framing. Lasted one turn.
 
-### All retrieval tools eliminated; Hoplite is dataview over notes
+### All retrieval tools eliminated; Hoplite is dataview over documents
 [ACTIVE]
 `hoplite_invoke_node` and `hoplite_read_node` both die. Hoplite stops being a content-retrieval system entirely. Agents discover candidates through `match_nodes` and `traverse_nodes` (which return paths, summaries, tags — no bodies), then use Claude's built-in `Read` tool to fetch file content.
 
@@ -134,7 +134,7 @@ Internal `slugify` helper may or may not survive depending on whether the walker
 
 ### Drop SQLite; in-memory graph; files-as-source-of-truth
 [ACTIVE — refined]
-Dataview-style architecture. Scan corpus at startup, build in-memory graph from frontmatter and bodies, files are the only persistence. At Hoplite's expected scale (hundreds to low thousands of notes), SQLite as persistent storage is unnecessary overhead.
+Dataview-style architecture. Scan corpus at startup, build in-memory graph from frontmatter and bodies, files are the only persistence. At Hoplite's expected scale (hundreds to low thousands of documents), SQLite as persistent storage is unnecessary overhead.
 
 Refinement: SQLite later came back as an *in-memory derived index* for BM25 text scoring via FTS5 — see "BM25 via in-memory SQLite FTS5" above. The `:memory:` database is rebuilt at every startup; no persistent SQLite file. The "files as source of truth" principle holds — SQLite's role narrowed from storage substrate to disposable runtime index.
 
@@ -167,7 +167,7 @@ A wikilink to a path that doesn't yet exist resolves to a **ghost node** — a f
 Why ghost-as-first-class:
 
 - Same trick git uses (content-addressed hash, resource may or may not exist locally), the same trick the web uses (URL is identity, target may 404), the same trick Smalltalk's `become:` uses. Identity is decoupled from existence.
-- Makes "open loops" queryable for free — `unresolved_targets()` returns the ghost set, which is exactly the user's intent backlog of notes they've referenced but not yet written.
+- Makes "open loops" queryable for free — `unresolved_targets()` returns the ghost set, which is exactly the user's intent backlog of documents they've referenced but not yet written.
 
 Dataclass shape: single `Document` type with a `resolved: bool` flag. Ghost docs have `body=None, title=None, summary=None, content_hash=None`. One dict in the graph; queries filter by `resolved` when needed.
 
@@ -263,7 +263,7 @@ Roadmap candidate: optional Sonnet-driven enrichment as an opt-in flag on `hopli
 
 ### Frontmatter mandatory fields: `title`, `summary`, `tags`, `created`, `aliases`
 [ACTIVE]
-`title` and `summary` lifted from the body-shape contract. `tags` replaces `labels` (list of slugs; can be empty). `created` is new — every note carries a creation date in ISO format. `aliases` is a list; defaults to empty.
+`title` and `summary` lifted from the body-shape contract. `tags` replaces `labels` (list of slugs; can be empty). `created` is new — every document carries a creation date in ISO format. `aliases` is a list; defaults to empty.
 
 ### Frontmatter allows user-defined properties
 [ACTIVE]
@@ -304,6 +304,6 @@ If reification ever becomes a requirement, the schema grows toward it (an edge g
 
 Flagging as a known design seam so the choice is conscious rather than rediscovered.
 
-### Proxy-notes for external content confirmed as Obsidian-native
+### Proxy-documents for external content confirmed as Obsidian-native
 [ACTIVE]
-Wrapping external content (source code, URLs, PDFs, transcripts, binaries) in a markdown document is a normal Obsidian workflow, not a Hoplite invention. The proxy note summarizes the source, carries its location (path, URL, or other reference), and participates in the graph like any other note. This validates the earlier "two node kinds only" decision — the external-content question never reaches the graph schema.
+Wrapping external content (source code, URLs, PDFs, transcripts, binaries) in a markdown document is a normal Obsidian workflow, not a Hoplite invention. The proxy document summarizes the source, carries its location (path, URL, or other reference), and participates in the graph like any other document. This validates the earlier "two node kinds only" decision — the external-content question never reaches the graph schema.

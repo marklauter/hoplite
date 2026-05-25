@@ -42,7 +42,7 @@ The walker emits a `:mentions` edge for every wikilink it finds in a body, carry
 
 A wikilink whose target doesn't yet exist on disk resolves to a **ghost document** — a first-class graph entity with `resolved = false` and no body content. Inbound `:mentions` edges point at the ghost as if it were a real document.
 
-When a document at the matching path is later added (and reindex runs), the ghost is promoted in place: identity stays stable, content fields fill in, every inbound edge already points at the right node. The set of unresolved documents is queryable as an "open loops" view — notes referenced but not yet written.
+When a document at the matching path is later added (and reindex runs), the ghost is promoted in place: identity stays stable, content fields fill in, every inbound edge already points at the right node. The set of unresolved documents is queryable as an "open loops" view — documents referenced but not yet written.
 
 Wikilinks are never silently dropped. A target that doesn't exist on disk becomes a ghost; a target that does exist resolves to the real document. Either way an edge materializes.
 

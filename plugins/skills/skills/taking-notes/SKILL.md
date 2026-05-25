@@ -47,6 +47,7 @@ Notes are saved at `docs/notes/<slug>.md` where `<slug>` is a lowercase slug of 
 !`cat ${CLAUDE_PLUGIN_ROOT}/components/editorial-principles/title.md | sed "s|[$]{CLAUDE_PLUGIN_ROOT}|${CLAUDE_PLUGIN_ROOT}|g"`
 !`cat ${CLAUDE_PLUGIN_ROOT}/components/editorial-principles/summary.md | sed "s|[$]{CLAUDE_PLUGIN_ROOT}|${CLAUDE_PLUGIN_ROOT}|g"`
 !`cat ${CLAUDE_PLUGIN_ROOT}/components/editorial-principles/body.md | sed "s|[$]{CLAUDE_PLUGIN_ROOT}|${CLAUDE_PLUGIN_ROOT}|g"`
+!`cat ${CLAUDE_PLUGIN_ROOT}/components/hoplite/frontmatter.md | sed "s|[$]{CLAUDE_PLUGIN_ROOT}|${CLAUDE_PLUGIN_ROOT}|g"`
 !`cat ${CLAUDE_PLUGIN_ROOT}/components/editorial-principles/editorial-principles.md | sed "s|[$]{CLAUDE_PLUGIN_ROOT}|${CLAUDE_PLUGIN_ROOT}|g"`
 
 ## Rhetorical context

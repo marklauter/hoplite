@@ -12,7 +12,7 @@ The contract references entities and tools from [data-model.md](data-model.md) a
 
 # Hoplite
 
-Hoplite is a dataview over a vault of markdown notes. The vault is a directory of `.md` files with YAML frontmatter — Obsidian-compatible. Hoplite indexes the vault in memory at startup and serves four query tools so you can find, traverse, and reason about the notes. You read the notes themselves through your built-in `Read` tool, and you write new notes through your built-in `Write` and `Edit` tools.
+Hoplite is a dataview over a vault of markdown documents. The vault is a directory of `.md` files with YAML frontmatter — Obsidian-compatible. Hoplite indexes the vault in memory at startup and serves four query tools so you can find, traverse, and reason about the documents. You read the documents themselves through your built-in `Read` tool, and you write new documents through your built-in `Write` and `Edit` tools.
 
 Hoplite is the index; your file tools are the content surface. The protocol below covers both halves.
 
@@ -23,7 +23,7 @@ Hoplite is the index; your file tools are the content surface. The protocol belo
 - `hoplite_reindex()` — rebuild the in-memory graph from the current state of the corpus. Call this after you've written or edited `.md` files so your changes become visible to subsequent queries.
 - `hoplite_dump_index(path=None)` — debug. Snapshots the in-memory graph to a SQLite file (default `.hoplite/index.db`). Then you can `Bash sqlite3 .hoplite/index.db` for arbitrary SQL exploration. Useful when a query doesn't return what you expected.
 
-There is no CRUD tool. You write notes by writing `.md` files directly with `Write` / `Edit`; you delete them by removing the file with `Bash rm`. After any batch of writes, call `hoplite_reindex` so the graph picks up the changes.
+There is no CRUD tool. You write documents by writing `.md` files directly with `Write` / `Edit`; you delete them by removing the file with `Bash rm`. After any batch of writes, call `hoplite_reindex` so the graph picks up the changes.
 
 ## Reading protocol
 
@@ -41,7 +41,7 @@ You can also enter directly by path if you already know it — `Read` it and the
 
 ## Writing protocol
 
-To create a new note, `Write` a `.md` file under the corpus root with a YAML frontmatter block at the top, then call `hoplite_reindex`.
+To create a new document, `Write` a `.md` file under the corpus root with a YAML frontmatter block at the top, then call `hoplite_reindex`.
 
 Frontmatter shape — five mandatory fields, plus any user-defined keys you want:
 
@@ -65,9 +65,9 @@ Mandatory:
 
 User-defined keys pass through unchanged — `status: draft`, `priority: high`, anything you want. Hoplite stores them but doesn't act on them; they're available for your queries and for external tools like Obsidian.
 
-Body content goes after the closing `---` fence. The body has no required shape — it's just markdown. To link to another document, use `[[path/to/target.md]]` or `[[alias-name]]` — wikilinks resolve case-insensitively, and the indexer emits a `:mentions` edge for each one. A wikilink to a path that doesn't exist materializes a ghost document (queryable as your "open loops" backlog of notes you've mentioned but not yet written).
+Body content goes after the closing `---` fence. The body has no required shape — it's just markdown. To link to another document, use `[[path/to/target.md]]` or `[[alias-name]]` — wikilinks resolve case-insensitively, and the indexer emits a `:mentions` edge for each one. A wikilink to a path that doesn't exist materializes a ghost document (queryable as your "open loops" backlog of documents you've mentioned but not yet written).
 
-To modify an existing note, `Edit` or `Write` the file in place and call `hoplite_reindex`. To delete, `Bash rm path/to/note.md` and call `hoplite_reindex`. The corpus is the source of truth; Hoplite picks up whatever's on disk.
+To modify an existing document, `Edit` or `Write` the file in place and call `hoplite_reindex`. To delete, `Bash rm path/to/doc.md` and call `hoplite_reindex`. The corpus is the source of truth; Hoplite picks up whatever's on disk.
 
 ## Picking a filename
 

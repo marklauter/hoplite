@@ -47,7 +47,7 @@ Ghosts have:
 - `tags = frozenset()`, `aliases = ()`
 - All content fields (`title`, `summary`, `body`, `content_hash`, `created`, `minhash`) = `null`
 
-The set of unresolved documents is queryable — `[doc for doc in graph.documents.values() if not doc.resolved]` returns the agent's intent backlog of notes referenced but not yet written.
+The set of unresolved documents is queryable — `[doc for doc in graph.documents.values() if not doc.resolved]` returns the agent's intent backlog of documents referenced but not yet written.
 
 ## Tag
 
