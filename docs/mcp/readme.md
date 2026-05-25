@@ -17,7 +17,7 @@ The corpus of `.md` files is the only persistent state in the system. Everything
 - [data-model.md](data-model.md) — [Contract] Entities the graph carries: Document, Tag, Edge, and the result types Hit, TraversalHit, WriteResult.
 - [tool-api.md](tool-api.md) — [Contract] Tool signatures and semantics. Four agent-facing tools: `match_nodes`, `traverse_nodes`, `reindex`, `dump_index`.
 - [behavior.md](behavior.md) — [Contract] Frontmatter shape, wikilink resolution, tag predicates, edge derivation, reindex semantics, error model.
-- [SKILL.md](../../plugins/armory/skills/hoplite/SKILL.md) — [Contract] The skill body the agent loads — the protocol it follows when working with the vault.
+- [tool-reference.md](../../plugins/armory/components/hoplite/tool-reference.md) — [Contract] The hoplite tool reference component, injected into the `taking-notes` and `journaling` skills so an authoring agent also learns the query surface.
 - [implementation.md](implementation.md) — [Implementation] How the contracts map onto an in-memory graph with a disposable in-memory SQLite FTS5 index. Includes the two-pass walker, MinHash details, ghost-promotion semantics, and the `hoplite_dump_index` SQL schema.
 - [implementation-plan.md](implementation-plan.md) — [Plan] Day-one delivery sequence — four phases from scaffolding rewrite through Graph + walker, ending in end-to-end smoke.
 - [decision-log.md](decision-log.md) — [Log] Chronological record of design decisions from the long pivot session that produced the current shape. Canonical source for "what was decided and why."
@@ -36,7 +36,7 @@ Read in order on first pass:
 2. [data-model.md](data-model.md) — entities the system thinks in
 3. [tool-api.md](tool-api.md) — the API the agent calls
 4. [behavior.md](behavior.md) — how it composes and validates
-5. [SKILL.md](../../plugins/armory/skills/hoplite/SKILL.md) — the protocol the agent follows
+5. [tool-reference.md](../../plugins/armory/components/hoplite/tool-reference.md) — the tool reference the authoring skills inject
 6. [implementation.md](implementation.md) — how the day-one shipping version is built
 7. [roadmap.md](roadmap.md) — what comes later
 

@@ -55,7 +55,8 @@ Context/Attempted/Outcome/Decision/Next fits experiment-style entries; session-s
 !`cat ${CLAUDE_PLUGIN_ROOT}/components/editorial-principles/title.md | sed "s|[$]{CLAUDE_PLUGIN_ROOT}|${CLAUDE_PLUGIN_ROOT}|g"`
 !`cat ${CLAUDE_PLUGIN_ROOT}/components/editorial-principles/summary.md | sed "s|[$]{CLAUDE_PLUGIN_ROOT}|${CLAUDE_PLUGIN_ROOT}|g"`
 !`cat ${CLAUDE_PLUGIN_ROOT}/components/editorial-principles/body.md | sed "s|[$]{CLAUDE_PLUGIN_ROOT}|${CLAUDE_PLUGIN_ROOT}|g"`
-!`cat ${CLAUDE_PLUGIN_ROOT}/components/hoplite/frontmatter.md | sed "s|[$]{CLAUDE_PLUGIN_ROOT}|${CLAUDE_PLUGIN_ROOT}|g"`
+!`cat ${CLAUDE_PLUGIN_ROOT}/components/hoplite/frontmatter.md`
+!`cat ${CLAUDE_PLUGIN_ROOT}/components/hoplite/tool-reference.md`
 !`cat ${CLAUDE_PLUGIN_ROOT}/components/editorial-principles/editorial-principles.md | sed "s|[$]{CLAUDE_PLUGIN_ROOT}|${CLAUDE_PLUGIN_ROOT}|g"`
 
 ## Rhetorical context

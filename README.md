@@ -41,11 +41,12 @@ Linux distributions vary — `python3` resolves out of the box on most. If your 
 
 ### Skills
 
-Three agent-facing skills compose with the knowledge graph:
+Two agent-facing skills compose with the knowledge graph:
 
-- `hoplite` — query the graph, traverse wikilink and similarity neighborhoods, reindex after writes, dump the index for SQL debugging.
 - `taking-notes` — author atomic notes under `docs/notes/`, each capturing the current state of one idea.
 - `journaling` — author dated, append-only entries under `docs/journal/`.
+
+Both inject the hoplite tool reference from `components/hoplite/`, so an agent writing a document also learns to call `hoplite_reindex` after saving. Pure-query workflows call the MCP tools directly — they register server-side, independent of any skill.
 
 The plugin also ships writing and reviewing skills today (`writing-prose`, `writing-csharp`, `writing-wiki`, `reviewing-csharp`, `reviewing-prose`, `reviewing-wiki`, `triaging-findings`, `managing-github-issues`). Those move to a sibling plugin in a subsequent release.
 
@@ -87,13 +88,7 @@ Four tools register under the `plugin:armory:hoplite` server:
 
 3. Ask the agent to query the graph. The agent calls `hoplite_match_nodes({"text": "coffee"})` and gets back hits with summary and tags. Following the wikilink resolves through `hoplite_traverse_nodes(from_="notes/coffee.md")` — the unwritten `notes/brewing-methods.md` appears as a ghost node, queryable as an open loop.
 
-4. (Optional) Dump the index for SQL exploration:
-
-   ```text
-   /armory:hoplite
-   ```
-
-   Then `hoplite_dump_index()` writes `.hoplite/<timestamp>.index.sqlite`. Open it:
+4. (Optional) Dump the index for SQL exploration. Call `hoplite_dump_index()` — the tool writes `.hoplite/<timestamp>.index.sqlite`. Open it:
 
    ```bash
    sqlite3 .hoplite/<timestamp>.index.sqlite
@@ -165,4 +160,5 @@ Adding a skill: create `plugins/armory/skills/<skill-name>/SKILL.md`, then `/plu
 - [docs/mcp/tool-api.md](docs/mcp/tool-api.md) — MCP tool signatures and semantics.
 - [docs/mcp/decision-log.md](docs/mcp/decision-log.md) — chronological record of design decisions.
 - [docs/mcp/roadmap.md](docs/mcp/roadmap.md) — named features deferred past day one.
-- [plugins/armory/skills/hoplite/SKILL.md](plugins/armory/skills/hoplite/SKILL.md) — the skill body the agent loads.
+- [plugins/armory/components/hoplite/tool-reference.md](plugins/armory/components/hoplite/tool-reference.md) — the tool reference injected by the authoring skills.
+- [plugins/armory/components/hoplite/frontmatter.md](plugins/armory/components/hoplite/frontmatter.md) — the frontmatter contract injected by the authoring skills.
