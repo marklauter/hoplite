@@ -4,44 +4,62 @@
 
 ## Overview
 
-The graph is a labeled multigraph. Nodes carry content and metadata. Labels are named sets that nodes belong to. Edges are typed connections between nodes. Envelopes wrap content during retrieval to set the reading contract.
+The graph is an in-memory property graph over markdown files. Two node types — `Document` and `Tag` — connect via three edge kinds — `member`, `mentions`, `related`. Documents are markdown files in the corpus; tags are free-form annotations that documents carry. The corpus of `.md` files is the only persistent state; everything else is derived at MCP startup.
 
-Six core entities plus four response types:
+Three core entities plus three result types:
 
-- Node — a content unit.
-- Label — a named set of nodes.
-- Edge — a typed connection between two nodes.
-- Envelope — a structured wrapper applied during retrieval.
-- Landing — a result from search.
-- TraversalHit — a result from graph walk.
-- FetchedNode — a result from retrieval (`hoplite_invoke_node` / `hoplite_read_node`).
-- WriteResult — a result from a write operation.
+- `Document` — a markdown file in the corpus.
+- `Tag` — a free-form annotation, a first-class graph node with member documents.
+- `Edge` — a typed connection between nodes.
+- `Hit` — a result from search.
+- `TraversalHit` — a result from graph walk.
+- `WriteResult` — a result from an index-maintenance operation.
 
-## Node
+`Graph` is the in-memory container that holds documents, tags, and edges; see [implementation.md](implementation.md) for its runtime shape and walker.
 
-A unit of content identified by a stable id.
+## Document
 
-Fields:
-
-- `id` (required, string) — the node's stable identifier. Path from the content root including the file extension. Each path segment is lowercase kebab-case (`[a-z0-9-]`); segments separated by `/`; ends with `.<ext>`. Examples: `foo.md`, `notes/skill-composition.md`, `journal/2026-05-24-today-was-warm.md`, `mcp/data-model.md`.
-- `labels` (required, list of strings) — the set of labels this node carries. Includes both author-supplied labels and any labels the system auto-derives.
-- `out_edges` (required, list of Edge; may be empty) — edges originating from this node, both authored and derived.
-- `summary` (required, string) — one-sentence lede of the body content. Used by `hoplite_match_nodes`, `Landing`, and `TraversalHit` without requiring a full body read.
-- `in_edges` (optional, list of Edge) — cached inversion of incoming edges; populated when corpus size makes on-demand inversion slow.
-- `embedding` (optional, opaque reference) — opaque pointer to the node's vector embedding when one exists.
-- `body` (required, string) — the node's content. Authored prose, typically markdown.
-
-## Label
-
-A named set of nodes. A label exists as a graph entity once the first node references it.
+A markdown file in the corpus, identified by its relative path from the corpus root.
 
 Fields:
 
-- `id` (required, string) — the label name. Same slug rule as node ids.
-- `summary` (optional, string) — one-line description of what the label covers.
-- `envelope_body` (optional, string) — prose the loader inlines during `hoplite_invoke_node` when serving a node carrying this label. Present for the three shipped framing-axis labels and any topic labels the user has set framing on.
-- `members` (required, set of node ids; may be empty) — node ids that carry this label. Maintained by the indexer on every write.
-- `out_edges` (optional, list of Edge) — reserved for future label-to-label edges (hierarchy, parent links). Empty day one.
+- `path` (required, string) — relative path from the corpus root including the file extension. Example: `notes/property-graphs.md`. The path is the document's identity within the runtime graph; rename means update the path. Aliases handle wikilink continuity across renames.
+- `resolved` (required, bool) — `true` for documents that exist on disk; `false` for ghost documents (see below).
+- `title` (required when `resolved`, string; null when ghost) — from frontmatter.
+- `summary` (required when `resolved`, string; null when ghost) — from frontmatter; one-line lede used by `hoplite_match_nodes` and `hoplite_traverse_nodes` so callers can pick a candidate without fetching the body.
+- `body` (required when `resolved`, string; null when ghost) — markdown content after the YAML frontmatter block.
+- `tags` (required, frozenset of strings) — tag slugs the document carries. Empty for ghosts and for documents with no `tags:` field.
+- `aliases` (required, tuple of strings) — alternate paths that resolve to this document. Populates on rename; agents and humans can add entries manually. Empty by default.
+- `content_hash` (required when `resolved`, string; null when ghost) — sha256 of the body. Used for staleness detection on reindex.
+- `created` (required when `resolved`, ISO date string; null when ghost) — from frontmatter.
+- `minhash` (required when `resolved`, bytes; null when ghost) — 1024-byte MinHash signature (128 × uint64). Computed at startup; held in RAM, never persisted.
+
+The `updated` value isn't a Document field — it derives from git history when callers need it, not from frontmatter or filesystem mtime (mtime lies after git checkouts and file copies).
+
+### Ghost documents
+
+A wikilink pointing to a `path` that doesn't yet exist resolves to a **ghost document** — a first-class graph entity with the canonical identity but no body content. Inbound edges (typically `:mentions`) point at the ghost as if it were a real document. When a real document at the matching path is later added, the ghost is **promoted** in place: identity stays stable, content fields fill in, every inbound edge already points at the right node.
+
+Ghosts have:
+
+- `resolved = false`
+- `path` set to the wikilink target text (after casefold-normalized lookup against the alias index fails)
+- `tags = frozenset()`, `aliases = ()`
+- All content fields (`title`, `summary`, `body`, `content_hash`, `created`, `minhash`) = `null`
+
+The set of unresolved documents is queryable — `[doc for doc in graph.documents.values() if not doc.resolved]` returns the agent's intent backlog of notes referenced but not yet written.
+
+## Tag
+
+A free-form annotation. Tags are first-class graph nodes that contain documents as members.
+
+Fields:
+
+- `slug` (required, string) — canonical kebab-case form. Used as the dictionary key.
+- `text` (required, string) — human-readable original (preserves casing from first frontmatter occurrence).
+- `summary` (optional, string) — a one-line description of what the tag covers. Absent unless a user sets it.
+
+Tag membership is materialized as `member` edges from the tag to each document that carries it (see [Edge](#edge)). The set of member documents is derived from the edge adjacency, not stored on the `Tag` value itself.
 
 ## Edge
 
@@ -49,36 +67,38 @@ A typed, directional connection between two nodes.
 
 Fields:
 
-- `type` (required, string) — edge type, lowercase kebab-case. Day-one vocabulary: `mentions`, `related`. Aspirational types reserved for future passes — see [behavior.md](behavior.md#edge-vocabulary).
-- `to` (required, string; for outgoing edges) — target node id.
-- `from_` (required, string; for incoming edges) — source node id. Trailing underscore avoids the Python keyword `from`; the JSON wire name matches.
-- `confidence` (optional, float in `[0, 1]`) — edge strength. Authored edges carry implicit confidence 1.0. Derived edges carry the signal's score.
-- `source` (optional, string) — provenance for derived edges (e.g., `minhash`, `embedding-cosine`). Authored edges omit this field.
-- `rationale` (optional, string) — explanation, useful for derived edges where the reason is non-obvious.
+- `src` (required, string) — source node identifier. For `member` edges, a tag slug. For `mentions` and `related` edges, a document path.
+- `dst` (required, string) — target node identifier. Always a document path day one.
+- `kind` (required, string) — edge type. Day-one vocabulary: `member`, `mentions`, `related`. No other kinds.
+- `confidence` (optional, float in `[0, 1]`) — edge strength. `related` edges carry the MinHash similarity score; `member` and `mentions` edges leave this null (implicit 1.0).
+- `source` (optional, string) — provenance for derived edges. `related` edges set this to `minhash`. `member` and `mentions` edges leave it null (authored).
+- `rationale` (optional, string) — explanation when the derivation reason is non-obvious. Null in practice day one.
+- `source_path` (optional, string) — for `mentions` edges, the path of the document containing the wikilink. Null for `member` and `related` edges.
+- `line` (optional, int) — for `mentions` edges, the 1-indexed line number where the wikilink appears. Null otherwise.
+- `column` (optional, int) — for `mentions` edges, the 1-indexed column. Null otherwise.
 
-Author-supplied edges with `source` set are rejected at write time — provenance is reserved for derived edges produced by the indexer.
+### Edge vocabulary
 
-## Envelope
+Three edge kinds, closed set:
 
-A structured wrapper applied during retrieval. Both `hoplite_invoke_node` and `hoplite_read_node` return content wrapped in an envelope; the verb chooses which envelope is composed.
+- `member` — tag → document. Materialized for every `(tag, doc)` pair where the document's frontmatter `tags` list contains the tag's slug. The external query verb `tagged: X` translates internally to traversal over `member` edges with `src` filtered to tag `X`.
+- `mentions` — document → document (or document → ghost document). Materialized from `[[wikilinks]]` parsed in the body. Carries source position metadata so dangling links can be located.
+- `related` — document ↔ document, symmetric. Materialized from pairwise MinHash similarity above a configured threshold. Both directions emitted (two edge rows per related pair).
+
+No aspirational types are reserved. Use cases like "cites," "contradicts," and "requires" express through `mentions` plus body prose. Tag hierarchy doesn't exist day one.
+
+## Hit
+
+A result from `hoplite_match_nodes`. Carries enough metadata for the agent to pick a candidate without fetching the body.
 
 Fields:
 
-- `framing` (required, string) — the primary contract for reading the body. For `hoplite_invoke_node`: the body of the framing-axis label's envelope (defaults to the `reference` envelope when no framing-axis label is present). For `hoplite_read_node`: the fixed content envelope, label-independent.
-- `primes` (required, list of `{label: string, body: string}`; may be empty) — supplementary label envelopes, alphabetical by label name. Populated by `hoplite_invoke_node` with any non-framing-axis labels' envelope bodies. Always empty for `hoplite_read_node`.
+- `path` (required, string) — the matched document's path.
+- `summary` (required, string) — cached lede from frontmatter.
+- `tags` (required, list of strings) — the document's tags.
+- `score` (required, float) — BM25 score from FTS5. Comparable within a single call as a sort key; not comparable across calls (absolute magnitudes depend on the predicate).
 
-The canonical display order is `framing` + `primes[*].body` + node `body`. Order matches LLM attention patterns: contract first, payload last, supplementary primes in the middle.
-
-## Landing
-
-A search result returned by `hoplite_match_nodes`. Carries enough metadata for the agent to pick a candidate without loading the full body.
-
-Fields:
-
-- `id` (required, string) — the landing node's id.
-- `summary` (required, string) — cached lede.
-- `labels` (required, list of strings) — the node's labels.
-- `score` (required, float) — relevance score from the search. Comparable within a single `hoplite_match_nodes()` call as a sort key. Not comparable across calls; absolute magnitudes depend on the predicate.
+`hoplite_match_nodes` returns a list of `Hit` ordered by descending score.
 
 ## TraversalHit
 
@@ -86,44 +106,40 @@ A result from `hoplite_traverse_nodes`. One per node reached.
 
 Fields:
 
-- `id` (required, string) — the reached node's id.
+- `path` (required, string) — the reached document's path.
 - `summary` (required, string) — cached lede.
-- `labels` (required, list of strings) — the node's labels.
-- `distance` (required, int ≥ 1) — hops from origin to this node. Each node appears at the shortest distance from origin.
+- `tags` (required, list of strings) — the document's tags.
+- `distance` (required, int ≥ 1) — hops from origin. Each node appears at the shortest distance from origin.
 - `via_edges` (required, list of Edge) — the path taken from origin on first reach. One Edge per hop.
 
-The origin is not included in the result set. BFS uses a visited-set; cycles short-circuit, and equal-or-longer alternative paths to an already-visited node are dropped.
-
-## FetchedNode
-
-The retrieval-tool return shape — a Node augmented with the composed envelope. Both `hoplite_invoke_node` and `hoplite_read_node` return this; they differ only in which envelope is composed.
-
-Fields:
-
-- `id` (required, string) — the node's id.
-- `labels` (required, list of strings) — the node's labels.
-- `out_edges` (required, list of Edge; may be empty) — outbound edges from this node.
-- `summary` (required, string) — cached lede from line 3 of the body.
-- `body` (required, string) — the node's authored content.
-- `envelope` (required, Envelope) — the structured wrapper. `hoplite_invoke_node` populates it from the framing-axis label plus the node's other labels; `hoplite_read_node` populates it with the fixed content envelope and empty primes.
-- `in_edges` (optional, list of Edge) — cached inversion of incoming edges; present when materialized.
-- `embedding` (optional, opaque reference) — pointer to the node's vector embedding when one exists.
-
-`FetchedNode` is the response-typed sibling of `Node`. The structural overlap is intentional — the retrieval surface returns "the node, plus how to read it."
-
-## LabelExpression
-
-A string-typed boolean expression over label names. Used in tool predicates that filter by label membership.
-
-Fields: just the string itself. The grammar (operators `&`, `|`, `!`, `()`; precedence; left-associativity) is defined in [behavior.md](behavior.md#label-expressions). Examples: `note`, `note & mcp`, `(note | journal) & !draft`.
-
-A `LabelExpression` is validated at the boundary by the parser. An invalid expression returns a constraint error per the [validation model](behavior.md#validation-and-error-model).
+The origin is never included in the result set. BFS uses a visited-set; cycles short-circuit. Equal-or-longer alternative paths to an already-visited node are dropped.
 
 ## WriteResult
 
-Result returned by the write tools (`hoplite_insert_node`, `hoplite_update_node`, `hoplite_index_node`, `hoplite_delete_node`, `hoplite_apply_framing`).
+Returned by `hoplite_reindex` and `hoplite_dump_index`.
 
 Fields:
 
-- `id` (required, string) — the affected node's id (or label's id, for `hoplite_apply_framing`).
-- `warnings` (optional, list of strings) — non-fatal advisories from the write. Examples: dangling wiki-link targets, labels that didn't exist before this write and got created.
+- `path` (required, string) — for `reindex`, the corpus root that was scanned. For `dump_index`, the absolute path of the SQLite file written.
+- `counts` (optional, dict of string → int) — row counts by entity. Returned by `dump_index`: `{"documents": N, "tags": M, "edges": K, "ghosts": G}`. Omitted by `reindex`.
+- `warnings` (optional, list of strings) — non-fatal advisories. Examples: frontmatter parse errors with fallback applied, ambiguous aliases.
+
+## Predicate
+
+A string-typed boolean expression used by `hoplite_match_nodes` and `hoplite_traverse_nodes` to filter candidates by tag membership. The grammar is operators `&`, `|`, `!`, parentheses, with precedence `!` > `&` > `|`, left-associative. Examples: `notes`, `notes & mcp`, `(notes | journal) & !draft`.
+
+The external query verb `tagged:` is sugar; `tagged: graph-db` is equivalent to the predicate `graph-db`. See [tool-api.md](tool-api.md#predicates) for the wire shape.
+
+## Graph (runtime container)
+
+The in-memory shape that holds the entities at runtime. Not a contract entity — the spec describes the conceptual graph; the implementation defines the Python `Graph` class. Summarized here so cross-references make sense:
+
+- `documents: dict[str, Document]` — keyed by canonical path.
+- `tags: dict[str, Tag]` — keyed by canonical slug.
+- `out_edges: dict[str, list[Edge]]` — keyed by `src` (path or slug).
+- `in_edges: dict[str, list[Edge]]` — keyed by `dst`.
+- `aliases: dict[str, str]` — alternate path → canonical path.
+- `casefold_index: dict[str, str]` — casefolded key → canonical key. Used for case-insensitive wikilink and tag lookup.
+- `fts: sqlite3.Connection` — in-memory `:memory:` database with one FTS5 virtual table holding tokenized bodies for BM25 scoring.
+
+All entities (`Document`, `Tag`, `Edge`) are immutable values (frozen dataclasses); the `Graph` container is mutable.

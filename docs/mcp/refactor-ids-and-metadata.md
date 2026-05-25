@@ -1,6 +1,16 @@
 # Refactor: surrogate ids and explicit metadata
 
-[Refactor] Lift title and summary out of the body, generate ULIDs server-side, treat filenames as mutable presentation. Spec rewrite blocks on the labels and wikilinks mini-sessions.
+[SUPERSEDED — see [decision-log.md](decision-log.md)]
+
+This document captures an intermediate point in a longer design pivot. The "Decisions locked in" section below was the working snapshot at the time of writing; many of those decisions evolved further in subsequent turns. The current canonical record lives in [decision-log.md](decision-log.md), which traces the full design trail with supersession markers. Among the changes after this document was written:
+
+- ULIDs and the three-tier identity model were abandoned. Identity collapsed to a single tier: the document path. Aliases handle rename continuity.
+- SQLite as persistent storage was dropped. The runtime is now fully in-memory; SQLite returns only as an in-memory FTS5 index for BM25 scoring.
+- The 11-tool MCP surface collapsed to 4 query tools (no CRUD, no retrieval). Agents write `.md` files through their own file tools.
+- Labels and tags un-collapsed; Hoplite is schemaless. Only tags exist; no Neo4j-style label-as-type-discriminator concept.
+- Sidecars permanently dismissed. Frontmatter holds all authored metadata.
+
+Treat this document as archival session history. Read [decision-log.md](decision-log.md) for what's actually locked in.
 
 ## Motivation
 

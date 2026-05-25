@@ -1,74 +1,75 @@
 # Implementation plan
 
-[Plan] Day-one delivery sequence for `hoplite_mcp`. Five phases, dependency-ordered, mapped onto the [contracts](readme.md) and the [SQLite-hybrid implementation spec](implementation-sqlite-hybrid.md).
+[Plan] Day-one delivery sequence for `hoplite_mcp`. Four phases, dependency-ordered, mapped onto the [contracts](readme.md) and the [implementation spec](implementation.md).
 
 ## Current state
 
 Pure components shipped:
 
-- `parser.py` — label-expression recursive-descent parser, compiles to a `Callable[[set[str]], bool]`.
-- `filtering.py` — candidate filter that applies a compiled predicate to label sets.
-- `minhash.py` — MinHash signatures and Jaccard estimator. 64-bit hashes over Mersenne prime M_61, ~1024-byte blob per node.
-- `wikilinks.py` — `[[id]]` extractor. Returns unique ids in document order; the write flow consumes the list to emit `:mentions` edges.
-- `ids.py` — id validator, corpus-relative path resolver, and `slugify_text`. Owns every id-shape concern in one place. `tools.py` re-exports `slugify_text` so the agent surface is unchanged.
+- `parser.py` — predicate parser, compiles tag expressions to a `Callable[[frozenset[str]], bool]`.
+- `filtering.py` — candidate filter that applies a compiled predicate to a tag set.
+- `minhash.py` — MinHash signatures and Jaccard estimator. 64-bit hashes over Mersenne prime M_61, ~1024-byte signature per document.
+- `wikilinks.py` — `[[target]]` extractor. Returns unique targets in document order; needs extending in Phase 2 to also return line/column positions.
 
-Scaffolding:
+Scaffolding (now needs rewrite to match the post-pivot surface):
 
-- `models.py` — frozen dataclasses for the six entities plus four response types.
-- `server.py` — FastMCP wiring skeleton, no lifespan or init-mode gate yet.
-- `tools.py` — echo-style stubs for the eleven agent-facing tools. `slugify_text` is the one real implementation; the others return shaped fakes so the `/hoplite` skill can exercise wire shapes.
-- `test_smoke.py`, `test_slugify.py` — placeholder coverage of the stub surface.
+- `models.py` — pre-pivot dataclasses (Node, Label, Envelope, etc.) that will be replaced with the new entity types (`Document`, `Tag`, `Edge`).
+- `server.py` — FastMCP wiring skeleton currently registering 11 tools; will reduce to 4.
+- `tools.py` — echo-style stubs for 11 tools; collapses to 4 query handlers.
+- `test_smoke.py` — placeholder coverage; rewrites for the 4-tool surface.
 
-What remains is the four other pure components, the storage layer, and the orchestrators that compose them.
+What remains: rewrite the scaffolding modules against the new contracts, write the new `graph.py` module that holds the in-memory `Graph` and the corpus walker, extend `wikilinks.py` for source positions, and rewrite the smoke test.
 
-## Phase 1 — Finish the pure-component corridor
+## Phase 1 — Rewrite scaffolding for the new surface
 
-Four siblings of the existing pure modules. All text-in, value-out, no I/O, no storage. Each lands as a single `src/hoplite/<name>.py` with a matching `tests/test_<name>.py`.
+Goal: get the build gate green with the new entity types and the trimmed 4-tool surface. Stub bodies are fine; this phase is about shape, not behavior.
 
-1. `wikilinks.py` — extract every `[[id]]` from a body and return unique ids in document order. Regex `\[\[([^\]]+)\]\]`. Tests cover empty body, single link, repeated link dedup, multiple distinct links, and links embedded in fenced code blocks. The indexer emits a `:mentions` edge regardless of code-fence context.
-2. `ids.py` — id validator and corpus-relative path resolver. Validates the `<segment>(/<segment>)*.<ext>` rule from [behavior.md](behavior.md#slug-and-id-rules), rejects path traversal, resolves an id to a `pathlib.Path` rooted under `<corpus>/docs/`. Absorbs `slugify_text` from `tools.py` so every id concern sits in one module; `tools.py` re-exports from the new home.
-3. `labels.py` — auto-derived label extractor. Given an id, return the set of labels the indexer adds automatically: leading path segment when present, ISO date when the filename matches `<iso>-<slug>.<ext>`. Parametrized tests cover every example in [behavior.md](behavior.md#label-vocabulary).
-4. `body.py` — body-shape validator and summary extractor. Asserts the line-1-H1 / line-2-blank / line-3-summary / line-4-blank contract and returns the parsed summary. Raises `ValueError` on a malformed body so the write flow can surface a constraint error to the caller.
+1. **`models.py`** — replace contents with new dataclasses per [data-model.md](data-model.md): `Document` (with `resolved` flag and nullable content fields), `Tag`, `Edge`, plus result types `Hit`, `TraversalHit`, `WriteResult`. Drop `Node`, `Label`, `Envelope`, `FetchedNode`, `Landing`, `Prime`. All entity types frozen + slots.
+2. **`tools.py`** — replace 11 stubs with 4 handler functions: `match_nodes`, `traverse_nodes`, `reindex`, `dump_index`. Bodies return stub data shaped like the real returns; predicate parsing uses the existing `parser.parse_predicate`.
+3. **`server.py`** — replace tool registrations: 4 entries with appropriate `ToolAnnotations`. Drop the uninitialized-mode gate.
+4. **`test_smoke.py`** — temporarily skip or xfail; will be rewritten in Phase 4.
 
-Outcome: every input the write flow validates has a tested pure module behind it. Total work is small — roughly 75 lines of source across the four modules, plus tests.
+Gate G1: build gate green; smoke test skipped.
 
-## Phase 2 — Storage spine
+## Phase 2 — Extend wikilinks for positions
 
-I/O enters the codebase. One PR's worth of work.
+Goal: `wikilinks.extract` returns `list[tuple[str, int, int]]` (target, line, column) so the walker can populate `Edge.source_path`, `Edge.line`, `Edge.column` metadata.
 
-5. `storage.py` — SQLite connection management. Opens `<corpus>/.hoplite/graph.db`, sets WAL, applies the schema DDL from [implementation-sqlite-hybrid.md](implementation-sqlite-hybrid.md#schema): `nodes`, `edges`, `labels`, `label_membership`, and the `nodes_fts` FTS5 virtual table. Exposes a context-managed connection and a schema-version check. Tests use a temp-directory corpus and assert tables exist, FTS5 mirrors the nodes table, and WAL is on.
-6. Lifespan handler in `server.py` — at startup, look for `<cwd>/.hoplite/graph.db`. Found: open it and attach the connection to the FastMCP context. Missing: enter uninitialized mode where every tool except `hoplite_init_corpus` returns a constraint error directing the caller to init.
-7. Real `hoplite_init_corpus` — replaces the stub. Creates `<cwd>/.hoplite/`, applies the schema, seeds the three day-one framing-axis envelope rows from the constants already living in `tools.py`. Idempotent: a second call on an initialized corpus returns success with no changes.
+5. **`wikilinks.py`** — extend `extract()` signature in place. Track line and column during the regex sweep.
+6. **`tests/test_wikilinks.py`** — update tests for the new return shape. Add a multi-line test that exercises position tracking.
 
-## Phase 3 — Write flow
+Gate G2: build gate green.
 
-The orchestrators land. Each one sequences already-tested pure modules and runs one SQLite transaction. Logic lives in the phase-1 modules and the storage layer; these tools sequence.
+## Phase 3 — Graph and walker
 
-8. `hoplite_insert_node` — validate id (`ids.py`) → validate body shape and extract summary (`body.py`) → derive auto-labels (`labels.py`) → merge with author labels and enforce framing-axis exclusivity ([behavior.md](behavior.md#rejected-writes)) → parse wiki-links (`wikilinks.py`) → compute MinHash signature (`minhash.py`) → scan other nodes' signatures for matches at or above the threshold → write node row, label memberships, authored edges, `:mentions` edges, and bidirectional `:related` edges in one transaction. Reject when the id already exists.
-9. `hoplite_update_node` — same pipeline as insert against an existing id, with edge reconciliation per [behavior.md](behavior.md#edge-reconciliation-on-update): `:mentions` re-parsed from the new body, authored edges replaced, `:related` recomputed against the current corpus.
-10. `hoplite_delete_node` — remove the node row, its label memberships, its outbound edges, and the symmetric `:related` edges keyed on the deleted id. One transaction.
-11. `hoplite_index_node` — metadata-only path. Re-derives labels and edges and recomputes the signature without rewriting the body. Closes the loop for hand-edited corpora and stale cached metadata.
+Goal: build the in-memory `Graph` from the corpus at server startup. Real query results, not stubs.
 
-## Phase 4 — Read and query surface
+7. **`graph.py`** (new module) — `Graph` dataclass (`documents`, `tags`, `out_edges`, `in_edges`, `aliases`, `casefold_index`, `fts: sqlite3.Connection`) and the corpus walker:
+   - Pass 1 (identity collection) — glob `**/*.md`, parse frontmatter, build document skeletons, register aliases, populate casefold index.
+   - Pass 2 (body load + edges + indexes) — read bodies, parse wikilinks (with positions), materialize `mentions` and `member` edges with ghost creation on misses, populate FTS5, compute MinHash signatures.
+   - Aggregate pass — pairwise MinHash for `related` edges above threshold.
+   - `dump_index(path)` method — open destination SQLite, run DDL (verbatim from [implementation.md](implementation.md#hoplite_dump_index-schema)), bulk-insert from in-memory dicts, return `WriteResult` with row counts.
+8. **`tools.py`** — wire the 4 handlers to a real `Graph` instance instead of stubs.
+9. **`server.py`** — initialize the singleton `Graph` in the lifespan hook by running the walker against `Path.cwd()`.
 
-Storage in, composed responses out. Pulls envelope composition rules from [behavior.md](behavior.md#envelope-composition) and label-expression filtering from the phase-1 modules.
+Gate G3: build gate green; smoke test still skipped.
 
-12. `hoplite_read_node` — load node and outbound edges, attach the fixed `CONTENT_ENVELOPE`. No label-based composition.
-13. `hoplite_invoke_node` — load node and outbound edges, pick the framing-axis label's envelope (default `reference` when none is present), gather other labels' envelope bodies as `primes` sorted alphabetically.
-14. `hoplite_apply_framing` — upsert an envelope body for a given label. Replaces any prior body for that label.
-15. `hoplite_match_nodes` — FTS5 BM25 query for candidates, then `parser.parse_predicate(node_labels)` and `filtering.filter_candidates(...)` to narrow. Returns a `Landing` list sorted by score.
-16. `hoplite_traverse_nodes` — iterative breadth-first walk over the edges table honoring `edge_types`, `min_confidence`, `direction`, and `depth`. Same post-filter pipeline as `match_nodes`.
+## Phase 4 — Integration and verification
 
-## Phase 5 — Integration and polish
+Goal: end-to-end smoke test that exercises the real 4-tool surface against a real corpus.
 
-17. End-to-end smoke — extend `test_smoke.py` from the stub surface to a real `init → insert → match → invoke → update → traverse → delete` round-trip against a temp-directory corpus. This is the test that proves orchestration.
-18. Manual MCP exercise — run the server under the `/hoplite` skill, walk the protocol with an agent, fix any wire-level surprises.
-19. MinHash performance check — insert N=500 synthetic nodes and time the pairwise scan. Linear scan ships if it holds at the expected corpus size; a banded LSH index lands as a follow-up if it doesn't.
+10. **`test_smoke.py`** — rewrite:
+    - Build a temp vault via the `tmp_path` fixture: 2-3 `.md` files with frontmatter, at least one wikilink between them, at least one wikilink to a missing target (forward reference → ghost), at least one tag shared across two documents.
+    - Spawn the MCP server with `cwd=tmp_path`.
+    - Assert the tool surface is exactly `{hoplite_match_nodes, hoplite_traverse_nodes, hoplite_reindex, hoplite_dump_index}`.
+    - Call `hoplite_match_nodes` with text and tag predicates; assert expected paths in the result.
+    - Call `hoplite_traverse_nodes` from one document, depth 1; assert reaching the wikilinked target.
+    - Call `hoplite_dump_index` to a temp file; open it with `sqlite3`, assert documents table has expected real rows plus one ghost row.
+11. **Manual MCP exercise** — run the server under the `/hoplite` skill in Claude Code, walk a small real corpus, fix any wire-level surprises.
+12. **MinHash perf check** — generate 500 synthetic documents, time the cold-start MinHash + pairwise pass, confirm it's within the cold-start budget from [implementation.md](implementation.md#cold-start-budget).
 
-## Recommended next slice
-
-Item 3 (`labels.py`) and item 4 (`body.py`) as one PR — both are small, share no code but share the "extract structured fact from text" shape, and landing them together completes Phase 1. Storage spine follows as one larger PR.
+Gate G4: build gate green; smoke un-skipped and passing. Gate G5: specs done; readme cross-references verified.
 
 ## Out of scope
 
-[Roadmap](roadmap.md) features remain deferred: embedding-derived `:related` edges, multi-writer locking, cross-file transactional semantics, source files as graph nodes, external web references as first-class nodes, aspirational edge types, and legacy-corpus migration.
+[Roadmap](roadmap.md) features remain deferred: embedding-derived `:related` edges, multi-writer locking, file-watcher auto-reindex, LSH bucketing for MinHash, Sonnet-driven tag enrichment.

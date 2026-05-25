@@ -1,42 +1,43 @@
 # Hoplite — MCP graph runtime
 
-The agent-facing spec for `hoplite_mcp`, an MCP-backed knowledge graph runtime. Split into stable contracts and the day-one implementation.
+The agent-facing spec for `hoplite_mcp`, an MCP-backed knowledge graph runtime over a vault of markdown notes. Hoplite is the index; agents read content through their own file tools.
 
 ## What this is
 
-Hoplite is a knowledge-graph-backed knowledge base for agentic systems. Agents discover content through `hoplite_match_nodes`, navigate via typed edges, invoke nodes under explicit framing contracts, and write back through transactional verbs. The graph compounds as the agent learns; the system maintains consistency the agent would otherwise have to remember.
+Hoplite is Obsidian for agents. The vault is a directory of `.md` files with YAML frontmatter — fully Obsidian-compatible. Hoplite builds an in-memory graph from that vault at MCP server startup, exposing four query tools so agents can discover documents, traverse the graph, refresh after writing, and dump state for SQL debugging. Content reads happen through the agent's built-in `Read` tool; writes happen through `Write` and `Edit`. There is no CRUD surface on Hoplite itself.
 
-This spec is organized as four contract files (stable, implementation-agnostic), one implementation file (the day-one SQLite-hybrid build target), and one roadmap file (deferred features). Contracts stay put across implementation changes.
+The corpus of `.md` files is the only persistent state in the system. Everything else — edges, MinHash signatures, the FTS5 text index, alias and casefold lookup tables — is derived at startup and held in RAM.
 
 ## Status of each file
 
-- [data-model.md](data-model.md) — [Contract] Entity schemas. The data model the graph carries.
-- [tool-api.md](tool-api.md) — [Contract] Tool signatures and semantics. Eleven agent-facing tools.
-- [behavior.md](behavior.md) — [Contract] Validation rules, envelope composition, label and edge vocabularies, error model.
-- [hoplite-skill.md](hoplite-skill.md) — [Contract] The SKILL.md body for the `/hoplite` skill — the protocol the agent follows when working with the corpus.
-- [implementation-sqlite-hybrid.md](implementation-sqlite-hybrid.md) — [Implementation] `hoplite_mcp` Python server. SQLite for the relational layer (`<repo-root>/.hoplite/graph.db` with FTS5), files for the prose layer (`<repo-root>/docs/` content plus envelope files under `<repo-root>/.hoplite/`). stdio transport.
-- [implementation-plan.md](implementation-plan.md) — [Plan] Day-one delivery sequence — five phases from the remaining pure components through the storage spine, write flow, query surface, and integration.
-- [refactor-ids-and-metadata.md](refactor-ids-and-metadata.md) — [Refactor] Lift title and summary out of the body, generate ULIDs server-side, treat filenames as mutable presentation. Spec rewrite blocks on the labels and wikilinks mini-sessions.
-- [roadmap.md](roadmap.md) — [Roadmap] Server-side embedding generation (Ollama), multi-writer support, open questions (pagination, collapsing match+traverse into a unified query DSL), source files as graph nodes, external web references as first-class nodes, aspirational edge types, legacy-corpus migration. MinHash relatedness moved into day-one write flow.
+- [data-model.md](data-model.md) — [Contract] Entities the graph carries: Document, Tag, Edge, and the result types Hit, TraversalHit, WriteResult.
+- [tool-api.md](tool-api.md) — [Contract] Tool signatures and semantics. Four agent-facing tools: `match_nodes`, `traverse_nodes`, `reindex`, `dump_index`.
+- [behavior.md](behavior.md) — [Contract] Frontmatter shape, wikilink resolution, tag predicates, edge derivation, reindex semantics, error model.
+- [hoplite-skill.md](hoplite-skill.md) — [Contract] The SKILL.md body for the `/hoplite` skill — the protocol the agent follows when working with the vault.
+- [implementation.md](implementation.md) — [Implementation] How the contracts map onto an in-memory graph with a disposable in-memory SQLite FTS5 index. Includes the two-pass walker, MinHash details, ghost-promotion semantics, and the `hoplite_dump_index` SQL schema.
+- [implementation-plan.md](implementation-plan.md) — [Plan] Day-one delivery sequence — four phases from scaffolding rewrite through Graph + walker, ending in end-to-end smoke.
+- [decision-log.md](decision-log.md) — [Log] Chronological record of design decisions from the long pivot session that produced the current shape. Canonical source for "what was decided and why."
+- [refactor-ids-and-metadata.md](refactor-ids-and-metadata.md) — [Superseded] Intermediate-pivot snapshot. See [decision-log.md](decision-log.md) for the current state.
+- [roadmap.md](roadmap.md) — [Roadmap] Embeddings, Sonnet-driven tag enrichment, file-watcher auto-reindex, MinHash LSH, persistent MinHash cache, multi-writer support, pagination, unified query DSL, legacy-corpus migration.
 
 ## Contracts versus implementation
 
-A contract describes what entities exist, what tools do, and how behavior composes — without naming storage, formats, or I/O. The implementation maps the contracts onto a storage substrate. Day one uses SQLite for relational data and files for prose; the layered split means the contracts hold across any future implementation changes.
+A contract describes what entities exist, what tools do, and how behavior composes — without naming storage, formats, or I/O. The implementation maps the contracts onto a runtime shape. Day one uses an in-memory graph with disposable SQLite for text scoring; the contract layer holds across any future implementation changes (a persistent MinHash cache, a watchdog file-watcher, embeddings via Ollama — all swap into the implementation layer without touching the contracts).
 
 ## Navigation
 
 Read in order on first pass:
 
-1. [data-model.md](data-model.md) — entities the system thinks in
-2. [tool-api.md](tool-api.md) — the API the agent calls
-3. [behavior.md](behavior.md) — how it composes and validates
-4. [hoplite-skill.md](hoplite-skill.md) — the protocol the agent follows
-5. [implementation-sqlite-hybrid.md](implementation-sqlite-hybrid.md) — how the day-one shipping version maps onto SQLite + files
-6. [roadmap.md](roadmap.md) — what comes later
+1. [decision-log.md](decision-log.md) — what's locked in and why (orienting context for the rest)
+2. [data-model.md](data-model.md) — entities the system thinks in
+3. [tool-api.md](tool-api.md) — the API the agent calls
+4. [behavior.md](behavior.md) — how it composes and validates
+5. [hoplite-skill.md](hoplite-skill.md) — the protocol the agent follows
+6. [implementation.md](implementation.md) — how the day-one shipping version is built
+7. [roadmap.md](roadmap.md) — what comes later
 
 ## Cross-references
 
 - `[[mcp-server-as-skill-system-runtime]]` — the parent design-exploration note. Records how this design emerged.
 - `[[mcp-graph-runtime-data-model]]` — the legacy monolithic spec note, preserved for historical reference. This `docs/mcp/` folder is canonical.
-- `[[source-files-as-graph-nodes]]` — future-scope analysis of indexing source code alongside markdown notes. Referenced from `roadmap.md`.
 - `[[prototype-the-plugin-mcp-server-in-python]]` — the Python-as-language choice and shape options A through D for the write path.

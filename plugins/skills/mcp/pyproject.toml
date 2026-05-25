@@ -9,6 +9,7 @@ description = "MCP server for the skills plugin"
 requires-python = ">=3.10"
 dependencies = [
     "mcp>=1.0.0",
+    "pyyaml>=6.0",
 ]
 
 [project.optional-dependencies]
@@ -17,6 +18,7 @@ dev = [
     "ruff>=0.6",
     "pyright>=1.1.380",
     "hypothesis>=6.0",
+    "types-PyYAML>=6.0",
 ]
 
 [tool.setuptools.packages.find]
