@@ -186,60 +186,7 @@ Two-pass is required (not just nice) — single-pass gets alias resolution wrong
 
 ### `hoplite_dump_index` schema
 [ACTIVE]
-The one-shot snapshot at `.hoplite/index.sqlite` is a normalized property-graph projection — a central `nodes` table assigns every document and tag an integer id, and `edges` connects them through foreign-key references.
-
-```sql
-CREATE TABLE nodes (
-  id INTEGER PRIMARY KEY,
-  kind TEXT NOT NULL  -- 'document' | 'tag'
-);
-
-CREATE TABLE documents (
-  id INTEGER PRIMARY KEY REFERENCES nodes(id),
-  path TEXT NOT NULL UNIQUE,
-  resolved INTEGER NOT NULL,
-  title TEXT,
-  summary TEXT,
-  body TEXT,
-  content_hash TEXT,
-  created_at REAL,
-  updated_at REAL,
-  minhash BLOB
-);
-
-CREATE TABLE tags (
-  id INTEGER PRIMARY KEY REFERENCES nodes(id),
-  slug TEXT NOT NULL UNIQUE,
-  text TEXT NOT NULL,
-  summary TEXT
-);
-
-CREATE TABLE document_aliases (
-  document_id INTEGER NOT NULL REFERENCES documents(id),
-  alias TEXT NOT NULL,
-  PRIMARY KEY (document_id, alias)
-);
-
-CREATE TABLE edges (
-  src INTEGER NOT NULL REFERENCES nodes(id),
-  dst INTEGER NOT NULL REFERENCES nodes(id),
-  kind TEXT NOT NULL,
-  confidence REAL,
-  PRIMARY KEY (src, dst, kind)
-);
-CREATE INDEX idx_edges_src ON edges(src);
-CREATE INDEX idx_edges_dst ON edges(dst);
-
-CREATE VIRTUAL TABLE fts USING fts5(path, title, summary, body);
-```
-
-Notes:
-
-- `nodes.id` values are assigned at dump time, deterministic by sort: documents first (ordered by path), then tags (ordered by slug). The in-memory graph keys on strings (paths and slugs); integer ids exist only in the dump.
-- `documents.resolved` is the ghost-vs-real flag from the wikilink-forward-references decision; ghost docs have `resolved = 0` and `title`, `summary`, `body`, `content_hash`, `created_at`, `updated_at`, `minhash` all NULL.
-- The `fts` virtual table is the same shape as the production in-memory FTS5 mirror — lets developers reproduce match scoring with `SELECT path, bm25(fts) FROM fts WHERE fts MATCH ? ORDER BY rank`. The FTS table keys on `path`, not `nodes.id`, because that's how the runtime mirror is built.
-- `edges.confidence` is nullable: `related` edges populate it with the MinHash similarity score; `member` and `mentions` edges leave it NULL.
-- Edges are `(src, dst, kind)` unique. Multiple wikilinks from one document to the same target collapse to a single `mentions` edge; the graph records relationships, not occurrences. Source positions are recoverable by re-parsing the body when needed.
+See [implementation.md `hoplite_dump_index` schema](implementation.md#hoplite_dump_index-schema) for the canonical SQL. The shape: `nodes` (id, kind), `documents` (file-level metadata only — path, resolved, content_hash, minhash), `properties` (EAV — everything from YAML frontmatter), `edges` (document → document, kinds `mentions` and `related`), `fts` (contentless FTS5 — match-only, no raw column reads).
 
 ### Auto-reindex trigger — day-one explicit, aspirational per-query stat
 [ACTIVE]
@@ -310,11 +257,19 @@ Flagging as a known design seam so the choice is conscious rather than rediscove
 [ACTIVE]
 Wrapping external content (source code, URLs, PDFs, transcripts, binaries) in a markdown document is a normal Obsidian workflow, not a Hoplite invention. The proxy document summarizes the source, carries its location (path, URL, or other reference), and participates in the graph like any other document. This validates the earlier "two node kinds only" decision — the external-content question never reaches the graph schema.
 
-### Schema simplification — nodes table + four-column Edge
+### Schema refactor — EAV properties, document-only nodes, contentless FTS
 [ACTIVE]
-Two changes landed together once the dump exposed the contradictions in the earlier shape:
+A single design pass landed the following changes after the original schema's contradictions surfaced under the dump:
 
-- **Edge collapses to `(src, dst, kind, confidence)`.** `source_path`, `line`, `column`, `source`, and `rationale` are removed. The "one Edge per wikilink occurrence" model promised per-occurrence positions that no consumer used, and forced the schema to either widen its PK or accept duplicates. The honest model is one Edge per `(src, dst, kind)`; multiple wikilinks from doc A to doc B collapse to a single `mentions` edge. Source positions are recoverable by re-parsing the body if a future tool needs them.
-- **Dump schema introduces a `nodes` table.** Documents and tags both become typed projections of `nodes(id, kind)`. `edges.src` and `edges.dst` are integer foreign keys into `nodes(id)` rather than strings overloading two identifier spaces (tag slug vs document path) in one column. The in-memory graph still keys on strings (paths and slugs are the natural identities); integer ids exist only in the dump, assigned at write time by sort order.
+- **Tags are properties, not nodes or edges.** The original "Tag as first-class node with `member` edges" model muddled two different things: a Tag node type with no real identity (just a string), and edges that were really property assertions ("doc X is tagged Y"). The intermediate "tags are a kind of edge" framing nearly stuck, but the deeper realization is that **every frontmatter field is a property** — tags are the array-typed case of a general pattern. Once properties are first-class queryable, tags collapse out as one specific property key.
+- **One node type, day one: `document`.** With tags out as nodes, the schema simplifies to a single node kind. `nodes(id, kind)` retains the kind column so future node types (if any) slot in without schema change.
+- **EAV properties tables — symmetric for nodes and edges.** `node_properties(node_id, key, value)` and `edge_properties(edge_id, key, value)`, each with `PRIMARY KEY (owner_id, key, value)` and a secondary index on `(key, value)`. Every frontmatter field — mandatory and user-defined — lives in `node_properties`. Edge attributes (just `confidence` day one, but extensible) live in `edge_properties`. Same shape on both sides means the same query patterns work on both sides; the model becomes a real Labeled Property Graph.
+- **EAV chosen over JSON column.** Both can store heterogeneous properties; the deciding factor was indexing. SQLite expression indexes (`json_extract`) cover scalar paths but not array elements — tag queries through JSON arrays do full table scans. EAV with one composite index on `(key, value)` covers every property uniformly, arrays included.
+- **Inverted lookup is index-based, not table-based.** "Which nodes have key=X value=Y" runs against `idx_node_props_key_value`. The forward direction (start from a node) uses the PRIMARY KEY. Same data, different B-tree orderings — no duplicate inverted-properties table.
+- **Edges get identity.** `edges` now has `id INTEGER PRIMARY KEY` with `(src, dst, kind)` as a UNIQUE constraint instead of the PK. The id is the FK target for `edge_properties`. The `(src, dst, kind)` triple stays unique — multiple wikilinks from doc A to doc B still collapse to a single `mentions` edge.
+- **Edge metadata moves to properties.** `source_path`, `line`, `column`, `source`, `rationale`, and `confidence` are no longer columns on `edges`. The first five were dead weight (no consumer used positions). `confidence` becomes an `edge_properties(edge_id, 'confidence', '<score>')` row on `related` edges. Edges hold only identity and topology; everything else is properties.
+- **Two edge kinds, not three.** With `member` edges gone (tag membership is a property query now), the edge vocabulary is `mentions` and `related`. Edges express document → document relationships only.
+- **`documents` table is pure file-level metadata.** `path` (identity), `resolved` (ghost flag), `content_hash`, `minhash`. No title, no summary, no body — title and summary live in `properties`; body lives in the markdown file on disk and nowhere else.
+- **Contentless FTS5.** The `fts` virtual table is declared `content=''` — it builds the inverted index from titles, summaries, and bodies at insert time but discards the raw text. Match queries (`SELECT path, bm25(fts) FROM fts WHERE fts MATCH ?`) work; column reads (`SELECT body FROM fts`) do not. Body is not duplicated anywhere; the source markdown file is the only copy.
 
-Net effect: the SQL is a real property-graph projection, the Edge dataclass is four fields, and the per-occurrence wikilink model is gone in favor of one edge per relationship.
+Net effect: five tables (`nodes`, `documents`, `properties`, `edges`, `fts`), each with a clear job. Tag queries, user-property queries, and edge traversal all use the same SQL surface. The dump is metadata-only — the source-of-truth contract holds harder than before because the dump literally cannot reproduce a document's body.

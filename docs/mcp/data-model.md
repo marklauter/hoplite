@@ -8,83 +8,106 @@ aliases: []
 
 ## Overview
 
-The graph is an in-memory property graph over markdown files. Two node types — `Document` and `Tag` — connect via three edge kinds — `member`, `mentions`, `related`. Documents are markdown files in the corpus; tags are free-form annotations that documents carry. The corpus of `.md` files is the only persistent state; everything else is derived at MCP startup.
+The graph is an in-memory labeled property graph over markdown files. One node type — `Document` — connects to other documents via two edge kinds — `mentions`, `related`. Both nodes and edges carry arbitrary key-value properties. Everything authored in YAML frontmatter — including tags — is a node property. The corpus of `.md` files is the only persistent state; everything else is derived at MCP startup.
 
-Three core entities plus three result types:
+Four core entities plus three result types:
 
 - `Document` — a markdown file in the corpus.
-- `Tag` — a free-form annotation, a first-class graph node with member documents.
-- `Edge` — a typed connection between nodes.
+- `Edge` — a typed connection between two documents.
+- `NodeProperty` — a key-value pair attached to a node (a document). Tags, title, summary, created, aliases, and any user-defined frontmatter keys are all node properties.
+- `EdgeProperty` — a key-value pair attached to an edge. `confidence` for `related` edges is the day-one example.
 - `Hit` — a result from search.
 - `TraversalHit` — a result from graph walk.
 - `WriteResult` — a result from an index-maintenance operation.
 
-`Graph` is the in-memory container that holds documents, tags, and edges; see [implementation.md](implementation.md) for its runtime shape and walker.
+`Graph` is the in-memory container that holds documents, edges, and properties; see [implementation.md](implementation.md) for its runtime shape and walker.
 
 ## Document
 
 A markdown file in the corpus, identified by its relative path from the corpus root.
 
-Fields:
+Documents split into two parts: **file-level facts** (the file itself qua file on disk) and **declared properties** (everything authored in the YAML frontmatter). File-level facts live as fields on the `Document` value; declared properties live as separate `Property` records attached to the document by id (see [Property](#property)).
+
+File-level fields:
 
 - `path` (required, string) — relative path from the corpus root including the file extension. Example: `notes/property-graphs.md`. The path is the document's identity within the runtime graph; rename means update the path. Aliases handle wikilink continuity across renames.
 - `resolved` (required, bool) — `true` for documents that exist on disk; `false` for ghost documents (see below).
-- `title` (required when `resolved`, string; null when ghost) — from frontmatter.
-- `summary` (required when `resolved`, string; null when ghost) — from frontmatter; one-line lede used by `hoplite_match_nodes` and `hoplite_traverse_nodes` so callers can pick a candidate without fetching the body.
-- `body` (required when `resolved`, string; null when ghost) — markdown content after the YAML frontmatter block.
-- `tags` (required, frozenset of strings) — tag slugs the document carries. Empty for ghosts and for documents with no `tags:` field.
-- `aliases` (required, tuple of strings) — alternate paths that resolve to this document. Populates on rename; agents and humans can add entries manually. Empty by default.
 - `content_hash` (required when `resolved`, string; null when ghost) — sha256 of the body. Used for staleness detection on reindex.
-- `created` (required when `resolved`, ISO date string; null when ghost) — from frontmatter.
 - `minhash` (required when `resolved`, bytes; null when ghost) — 1024-byte MinHash signature (128 × uint64). Computed at startup; held in RAM, never persisted.
 
-The `updated` value isn't a Document field — it derives from git history when callers need it, not from frontmatter or filesystem mtime (mtime lies after git checkouts and file copies).
+Body lives in the markdown file on disk. Hoplite reads bodies during the walk to tokenize them for FTS5 and compute MinHash signatures, then discards them — body is never persisted in the graph or the dump. To read a document's body, `Read` the file at the `path`. The markdown file is the source of truth; the graph holds derived metadata only.
+
+Declared properties (lookup via the property store):
+
+- `title`, `summary`, `created` — mandatory frontmatter fields, scalar values.
+- `tags`, `aliases` — mandatory frontmatter fields, multi-value (one property row per element).
+- Any user-defined keys — passed through unchanged with whatever shape the author wrote.
+
+The `updated` value isn't anywhere on the model — it derives from git history when callers need it, not from frontmatter or filesystem mtime (mtime lies after git checkouts and file copies).
 
 ### Ghost documents
 
-A wikilink pointing to a `path` that doesn't yet exist resolves to a **ghost document** — a first-class graph entity with the canonical identity but no body content. Inbound edges (typically `:mentions`) point at the ghost as if it were a real document. When a real document at the matching path is later added, the ghost is **promoted** in place: identity stays stable, content fields fill in, every inbound edge already points at the right node.
+A wikilink pointing to a `path` that doesn't yet exist resolves to a **ghost document** — a first-class graph entity with the canonical identity but no body content and no declared properties. Inbound edges (typically `mentions`) point at the ghost as if it were a real document. When a real document at the matching path is later added, the ghost is **promoted** in place: identity stays stable, file-level fields fill in, properties populate from the new frontmatter, every inbound edge already points at the right node.
 
 Ghosts have:
 
 - `resolved = false`
 - `path` set to the wikilink target text (after casefold-normalized lookup against the alias index fails)
-- `tags = frozenset()`, `aliases = ()`
-- All content fields (`title`, `summary`, `body`, `content_hash`, `created`, `minhash`) = `null`
+- File-level fields: `content_hash`, `minhash` both `null`
+- No property rows in the property store
 
-The set of unresolved documents is queryable — `[doc for doc in graph.documents.values() if not doc.resolved]` returns the agent's intent backlog of documents referenced but not yet written.
+The set of unresolved documents is queryable — ghost documents are documents with `resolved = false`, returned as the agent's intent backlog of documents referenced but not yet written.
 
-## Tag
+## NodeProperty
 
-A free-form annotation. Tags are first-class graph nodes that contain documents as members.
+A key-value pair attached to a node. Every YAML frontmatter field — mandatory (`title`, `summary`, `tags`, `created`, `aliases`) and user-defined (`status`, `priority`, anything else) — is a node property on the owning document.
 
 Fields:
 
-- `slug` (required, string) — canonical kebab-case form. Used as the dictionary key.
-- `text` (required, string) — human-readable original (preserves casing from first frontmatter occurrence).
-- `summary` (optional, string) — a one-line description of what the tag covers. Absent unless a user sets it.
+- `node_id` (required, int) — the node the property belongs to.
+- `key` (required, string) — the frontmatter field name.
+- `value` (required, string) — the field value. SQLite type-affinity preserves numeric and date values authored as such, even though the column is declared TEXT.
 
-Tag membership is materialized as `member` edges from the tag to each document that carries it (see [Edge](#edge)). The set of member documents is derived from the edge adjacency, not stored on the `Tag` value itself.
+A document with an array-valued field (`tags: [graph-db, notes]`) carries one property row per array element. Array order is **not** preserved at the storage layer; multi-value reads return in alphabetical order by value.
+
+Tags are properties with `key='tags'`. Tag membership queries (`tagged: graph-db`) resolve to lookups against `key='tags' AND value='graph-db'`. There is no separate Tag node type; the unification is at the property level, not the node level.
+
+Properties never appear as edge endpoints. Edges connect nodes to nodes; properties describe what a node is.
+
+## EdgeProperty
+
+A key-value pair attached to an edge. Same shape as `NodeProperty`, keyed on `edge_id` instead of `node_id`.
+
+Fields:
+
+- `edge_id` (required, int) — the edge the property belongs to.
+- `key` (required, string) — the property name.
+- `value` (required, string) — the property value. Same type-affinity behavior as `NodeProperty.value`.
+
+Day-one usage: `related` edges carry `key='confidence', value=<minhash-jaccard-score>`. `mentions` edges have no properties. The table exists to keep the model symmetric — anything we want to attach to an edge (provenance markers, derivation timestamps, custom annotations) follows the same EAV pattern without schema change.
+
+The same indexing strategy applies: a B-tree on `(key, value)` serves the inverted lookup "which edges have this property?" without a separate table.
 
 ## Edge
 
-A typed, directional connection between two nodes.
+A typed, directional connection between two documents.
 
 Fields:
 
-- `src` (required, string) — source node identifier. For `member` edges, a tag slug. For `mentions` and `related` edges, a document path.
-- `dst` (required, string) — target node identifier. Always a document path day one.
-- `kind` (required, string) — edge type. Day-one vocabulary: `member`, `mentions`, `related`. No other kinds.
-- `confidence` (optional, float in `[0, 1]`) — edge strength. `related` edges carry the MinHash similarity score; `member` and `mentions` edges leave this null (implicit 1.0).
+- `src` (required, string) — source document's canonical path.
+- `dst` (required, string) — target document's canonical path (may be a ghost).
+- `kind` (required, string) — edge type. Day-one vocabulary: `mentions`, `related`. No other kinds.
 
-Each `(src, dst, kind)` triple is unique — at most one edge per pair per kind.
+Each `(src, dst, kind)` triple is unique — at most one edge per pair per kind. Edge metadata beyond these three columns lives in `EdgeProperty` rows (e.g., `confidence` for `related` edges).
 
 ### Edge vocabulary
 
-Three edge kinds, closed set:
+Two edge kinds, closed set:
 
-- `member` — tag → document. Materialized for every `(tag, doc)` pair where the document's frontmatter `tags` list contains the tag's slug. The external query verb `tagged: X` translates internally to traversal over `member` edges with `src` filtered to tag `X`.
-- `mentions` — document → document (or document → ghost document). Materialized from `[[wikilinks]]` parsed in the body. Multiple wikilinks from one document to the same target collapse to a single edge; the graph records relationships, not occurrences.
-- `related` — document ↔ document, symmetric. Materialized from pairwise MinHash similarity above a configured threshold. Both directions emitted (two edge rows per related pair).
+- `mentions` — document → document (or document → ghost document). Materialized from `[[wikilinks]]` parsed in the body. Multiple wikilinks from one document to the same target collapse to a single edge; the graph records relationships, not occurrences. No properties day one.
+- `related` — document ↔ document, symmetric. Materialized from pairwise MinHash similarity above a configured threshold. Both directions emitted (two edge rows per related pair). Carries a `confidence` property holding the Jaccard score.
+
+Tag membership is **not** an edge. Tags are properties on the document; queries like `tagged: graph-db` resolve to property lookups, not edge traversal.
 
 No aspirational types are reserved. Use cases like "cites," "contradicts," and "requires" express through `mentions` plus body prose. Tag hierarchy doesn't exist day one.
 
@@ -136,11 +159,11 @@ The external query verb `tagged:` is sugar; `tagged: graph-db` is equivalent to 
 The in-memory shape that holds the entities at runtime. Not a contract entity — the spec describes the conceptual graph; the implementation defines the Python `Graph` class. Summarized here so cross-references make sense:
 
 - `documents: dict[str, Document]` — keyed by canonical path.
-- `tags: dict[str, Tag]` — keyed by canonical slug.
-- `out_edges: dict[str, list[Edge]]` — keyed by `src` (path or slug).
-- `in_edges: dict[str, list[Edge]]` — keyed by `dst`.
+- `properties: dict[str, dict[str, list[str]]]` — keyed by canonical path, then by property key, yielding a list of values. `properties[path]['tags']` returns the tag list for `path`; `properties[path]['status']` returns a single-element list if `status: draft` was set.
+- `out_edges: dict[str, list[Edge]]` — keyed by `src` document path.
+- `in_edges: dict[str, list[Edge]]` — keyed by `dst` document path.
 - `aliases: dict[str, str]` — alternate path → canonical path.
-- `casefold_index: dict[str, str]` — casefolded key → canonical key. Used for case-insensitive wikilink and tag lookup.
+- `casefold_index: dict[str, str]` — casefolded key → canonical key. Used for case-insensitive wikilink lookup.
 - `fts: sqlite3.Connection` — in-memory `:memory:` database with one FTS5 virtual table holding tokenized bodies for BM25 scoring.
 
-All entities (`Document`, `Tag`, `Edge`) are immutable values (frozen dataclasses); the `Graph` container is mutable.
+All entities (`Document`, `Edge`) are immutable values (frozen dataclasses); the `Graph` container is mutable.

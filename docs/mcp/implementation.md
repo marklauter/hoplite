@@ -176,61 +176,68 @@ Total: ~50s. Scales roughly linearly; 100 docs ≈ 5s, 5000 docs ≈ 5 minutes. 
 
 ## `hoplite_dump_index` schema
 
-The one-shot SQLite snapshot at `.hoplite/index.sqlite` (or caller-supplied path) is a normalized property-graph projection: a central `nodes` table assigns every document and tag an integer id, and `edges` connects them through foreign-key references.
+The one-shot SQLite snapshot at `.hoplite/index.sqlite` (or caller-supplied path) is a normalized property-graph projection. Documents are nodes; tags are properties on documents (not nodes); edges connect documents to documents; everything from frontmatter lives in a single EAV `properties` table; bodies live only on the file system.
 
 ```sql
 CREATE TABLE nodes (
   id INTEGER PRIMARY KEY,
-  kind TEXT NOT NULL  -- 'document' | 'tag'
+  kind TEXT NOT NULL  -- 'document' (the only kind day one)
 );
 
 CREATE TABLE documents (
   id INTEGER PRIMARY KEY REFERENCES nodes(id),
   path TEXT NOT NULL UNIQUE,
   resolved INTEGER NOT NULL,
-  title TEXT,
-  summary TEXT,
-  body TEXT,
   content_hash TEXT,
-  created_at REAL,
-  updated_at REAL,
   minhash BLOB
 );
 
-CREATE TABLE tags (
-  id INTEGER PRIMARY KEY REFERENCES nodes(id),
-  slug TEXT NOT NULL UNIQUE,
-  text TEXT NOT NULL,
-  summary TEXT
+CREATE TABLE node_properties (
+  node_id INTEGER NOT NULL REFERENCES nodes(id),
+  key TEXT NOT NULL,
+  value TEXT NOT NULL,
+  PRIMARY KEY (node_id, key, value)
 );
-
-CREATE TABLE document_aliases (
-  document_id INTEGER NOT NULL REFERENCES documents(id),
-  alias TEXT NOT NULL,
-  PRIMARY KEY (document_id, alias)
-);
+CREATE INDEX idx_node_props_key_value ON node_properties(key, value);
 
 CREATE TABLE edges (
+  id INTEGER PRIMARY KEY,
   src INTEGER NOT NULL REFERENCES nodes(id),
   dst INTEGER NOT NULL REFERENCES nodes(id),
   kind TEXT NOT NULL,
-  confidence REAL,
-  PRIMARY KEY (src, dst, kind)
+  UNIQUE (src, dst, kind)
 );
 CREATE INDEX idx_edges_src ON edges(src);
 CREATE INDEX idx_edges_dst ON edges(dst);
 
-CREATE VIRTUAL TABLE fts USING fts5(path, title, summary, body);
+CREATE TABLE edge_properties (
+  edge_id INTEGER NOT NULL REFERENCES edges(id),
+  key TEXT NOT NULL,
+  value TEXT NOT NULL,
+  PRIMARY KEY (edge_id, key, value)
+);
+CREATE INDEX idx_edge_props_key_value ON edge_properties(key, value);
+
+CREATE VIRTUAL TABLE fts USING fts5(
+  path UNINDEXED,
+  title,
+  summary,
+  body,
+  tokenize = 'porter unicode61',
+  content = ''  -- contentless: only the inverted index is stored
+);
 ```
 
 Notes:
 
-- `nodes.id` values are assigned at dump time (deterministic by sort: documents first ordered by path, then tags ordered by slug). The in-memory graph keys on strings (paths and slugs); ids exist only in the dump.
-- `documents.resolved` is the ghost-vs-real flag. Ghost documents have `resolved = 0` and `title, summary, body, content_hash, created_at, updated_at, minhash` all `NULL`.
-- `documents.updated_at` is populated from git history if the corpus is a git repo; `NULL` otherwise.
-- `fts` is the same shape as the production in-memory mirror — lets developers reproduce match scoring with `SELECT path, bm25(fts) FROM fts WHERE fts MATCH ? ORDER BY rank`. The FTS table keys on `path`, not `nodes.id`, because that's how the runtime mirror is built.
-- `edges.confidence` is nullable: `related` edges populate it with the MinHash similarity score; `member` and `mentions` edges leave it `NULL`.
+- `nodes.id` values are assigned at dump time, deterministic by sort: documents ordered by path. Day one, the only node kind is `'document'`; the column exists so future kinds slot in without schema change. The in-memory graph keys on path strings; ids exist only in the dump.
+- `documents.resolved` is the ghost-vs-real flag. Ghost documents have `resolved = 0` and `content_hash`, `minhash` both `NULL`. They have no property rows.
+- Bodies are not stored in the dump. FTS5 is declared `content=''` (contentless mode): the inverted index is built from titles, summaries, and bodies at insert time, but the raw text is discarded. Match queries (`SELECT path, bm25(fts) FROM fts WHERE fts MATCH ?`) work; column reads (`SELECT body FROM fts`) do not. To read a document's body, `Read` the file at its `path`.
+- `fts.path` is `UNINDEXED` — stored as the row key for joins back to `documents`, but excluded from the search index itself.
+- `node_properties` holds every frontmatter field: `title`, `summary`, `created`, `tags`, `aliases`, and any user-defined keys. Array fields (`tags`, `aliases`) get one row per element; multi-value reads return alphabetically by value. SQLite type-affinity preserves the authored type — `priority: 5` stores `5` as integer, even though the column is declared TEXT.
+- `edges` carry identity (`id`) plus the (`src`, `dst`, `kind`) triple as a unique constraint, mirroring how `nodes` works. Edge properties — including `confidence` for `related` edges — live in `edge_properties` keyed on `edge_id`, following the same EAV shape as `node_properties`.
 - Edges are `(src, dst, kind)` unique. Multiple wikilinks from one document to the same target collapse to a single `mentions` edge.
+- **Inverted lookup is index-based, not table-based.** "Which nodes have `key=tags AND value=bean`?" runs against `idx_node_props_key_value`; "which edges have a given property value?" runs against `idx_edge_props_key_value`. The forward direction (start from a node or edge) is served by the respective PRIMARY KEY. No separate inversion tables — the same rows, accessed through different B-tree orderings.
 
 The dump operation opens the destination, drops any prior tables (so the file is fully overwritten), runs the DDL above, bulk-inserts from the in-memory dicts, and returns a `WriteResult` with the absolute output path and per-table row counts.
 
