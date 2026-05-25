@@ -1,6 +1,10 @@
-# Implementation plan
-
-[Plan] Day-one delivery sequence for `hoplite_mcp`. Four phases, dependency-ordered, mapped onto the [contracts](readme.md) and the [implementation spec](implementation.md).
+---
+title: Implementation plan
+summary: "[Plan] Day-one delivery sequence for `hoplite_mcp`. Four dependency-ordered phases mapped onto the contracts and the implementation spec."
+tags: [hoplite, mcp, plan]
+created: 2026-05-25
+aliases: []
+---
 
 ## Current state
 

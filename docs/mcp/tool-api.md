@@ -1,6 +1,10 @@
-# Tool API
-
-[Contract] Tool signatures, return types, and semantics — described in terms of entities, not storage.
+---
+title: Tool API
+summary: "[Contract] Tool signatures, return types, and semantics — described in terms of entities, not storage."
+tags: [hoplite, mcp, contract, tool-api]
+created: 2026-05-25
+aliases: []
+---
 
 ## Overview
 

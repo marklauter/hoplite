@@ -1,6 +1,10 @@
-# Hoplite — MCP graph runtime
-
-The agent-facing spec for `hoplite_mcp`, an MCP-backed knowledge graph runtime over a vault of markdown documents. Hoplite is the index; agents read content through their own file tools.
+---
+title: Hoplite — MCP graph runtime
+summary: Agent-facing spec for `hoplite_mcp`, an MCP-backed knowledge graph runtime over a vault of markdown documents. Hoplite is the index; agents read content through their own file tools.
+tags: [hoplite, mcp, readme, index]
+created: 2026-05-25
+aliases: []
+---
 
 ## What this is
 

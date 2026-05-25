@@ -1,7 +1,10 @@
-# writing-prose refactor task list
-
-Tags: todo,project,task-list,writing-prose,refactor
-Canonical task list driving the writing-prose foundation/downstream restructure; both completed and pending tasks captured; maintained as work proceeds.
+---
+title: writing-prose refactor task list
+summary: Canonical task list driving the writing-prose foundation/downstream restructure; both completed and pending tasks captured; maintained as work proceeds.
+tags: [todo, project, task-list, writing-prose, refactor]
+created: 2026-05-25
+aliases: []
+---
 
 ## Context
 

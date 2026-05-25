@@ -1,8 +1,10 @@
-# Make review skills degrade gracefully when no diff exists
-
-Tags: closed,skills,reviewing
-
-Closed 2026-05-16. The reviewer scripts now support explicit-scope audit modes; the three reviewer SKILL.md files declare per-skill defaults.
+---
+title: Make review skills degrade gracefully when no diff exists
+summary: Closed 2026-05-16. Reviewer scripts now support explicit-scope audit modes; the three reviewer SKILL.md files declare per-skill defaults.
+tags: [closed, skills, reviewing]
+created: 2026-05-25
+aliases: []
+---
 
 ## Resolution
 

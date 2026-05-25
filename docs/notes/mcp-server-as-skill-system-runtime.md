@@ -1,6 +1,10 @@
-# MCP server as skill-system runtime
-
-The MCP server is the runtime for a knowledge-graph-backed skill system — nodes (notes, decisions, skills) load on demand through a small stable tool surface, and a property-graph index projected from notes (mechanical edges at write, semantic edges via scheduled reindex) replaces the always-loaded skill-frontmatter cap with O(tool count) overhead.
+---
+title: MCP server as skill-system runtime
+summary: The MCP server is the runtime for a knowledge-graph-backed skill system — nodes load on demand through a small stable tool surface, replacing the always-loaded skill-frontmatter cap with O(tool count) overhead.
+tags: [hoplite, mcp, thesis, architecture]
+created: 2026-05-25
+aliases: []
+---
 
 > See `[[mcp-graph-runtime-data-model]]` for the resolved day-one specification. This note records the design exploration that led there. Sections marked _superseded_ below preserve the discovery path; specifics like tool names, edge types, and label capitalization have since been refined. The data-model is canonical when they conflict.
 

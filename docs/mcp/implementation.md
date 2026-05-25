@@ -1,6 +1,10 @@
-# Implementation
-
-[Implementation, day-one] How the contracts in [data-model.md](data-model.md) and [behavior.md](behavior.md) map onto the in-memory graph plus a disposable SQLite FTS5 index.
+---
+title: Implementation
+summary: "[Implementation, day-one] How the contracts in data-model.md and behavior.md map onto the in-memory graph plus a disposable SQLite FTS5 index."
+tags: [hoplite, mcp, implementation]
+created: 2026-05-25
+aliases: []
+---
 
 ## Overview
 

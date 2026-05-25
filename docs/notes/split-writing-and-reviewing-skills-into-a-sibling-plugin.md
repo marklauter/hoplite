@@ -1,6 +1,10 @@
-# Split writing and reviewing skills into a sibling plugin
-
-Extract the prose-shaped skills from `plugins/armory/` into a new `plugins/skills/` plugin so users can install the writing toolkit without the MCP bootstrap.
+---
+title: Split writing and reviewing skills into a sibling plugin
+summary: Extract the prose-shaped skills from `plugins/armory/` into a new `plugins/skills/` plugin so users can install the writing toolkit without the MCP bootstrap.
+tags: [todo, skills, plugin, architecture]
+created: 2026-05-25
+aliases: []
+---
 
 ## Motivation
 

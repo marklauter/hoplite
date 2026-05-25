@@ -1,8 +1,10 @@
-# Write the writing-skills and reviewing-skills pair
-
-Tags: todo,skills
-LLM-targeted structural pair layered on the writing-prose editorial spine; lands now that the documentation pair has settled.
-
+---
+title: Write the writing-skills and reviewing-skills pair
+summary: LLM-targeted structural pair layered on the writing-prose editorial spine; lands now that the documentation pair has settled.
+tags: [todo, skills]
+created: 2026-05-25
+aliases: []
+---
 
 ## Observation
 

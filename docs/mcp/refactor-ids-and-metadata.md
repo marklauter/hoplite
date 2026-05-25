@@ -1,4 +1,10 @@
-# Refactor: surrogate ids and explicit metadata
+---
+title: "Refactor: surrogate ids and explicit metadata"
+summary: "[SUPERSEDED — see decision-log.md] Intermediate-pivot snapshot from Hoplite design; ULIDs, three-tier identity, and persistent SQLite were dropped after this was written."
+tags: [hoplite, mcp, superseded, refactor]
+created: 2026-05-25
+aliases: []
+---
 
 [SUPERSEDED — see [decision-log.md](decision-log.md)]
 

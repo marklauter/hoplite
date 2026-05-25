@@ -1,6 +1,10 @@
-# Behavior
-
-[Contract] Frontmatter shape, wikilink resolution, tag predicates, edge derivation, reindex semantics, and the error model — pure behavioral spec.
+---
+title: Behavior
+summary: "[Contract] Frontmatter shape, wikilink resolution, tag predicates, edge derivation, reindex semantics, and the error model — pure behavioral spec."
+tags: [hoplite, mcp, contract, behavior]
+created: 2026-05-25
+aliases: []
+---
 
 ## Overview
 

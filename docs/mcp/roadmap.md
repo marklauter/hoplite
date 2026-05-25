@@ -1,6 +1,12 @@
-# Roadmap
+---
+title: Roadmap
+summary: "[Roadmap] Hoplite features designed and named but not in day one — embeddings, Sonnet tag enrichment, file-watcher reindex, MinHash LSH, multi-writer, pagination, unified query DSL."
+tags: [hoplite, mcp, roadmap]
+created: 2026-05-25
+aliases: []
+---
 
-[Roadmap] Features designed and named but not in day one. Each lands when the use case justifies the build. Contracts in [data-model.md](data-model.md), [tool-api.md](tool-api.md), [behavior.md](behavior.md), and [SKILL.md](../../plugins/armory/skills/hoplite/SKILL.md) hold unchanged for everything below — the day-one shape leaves room for these without contract breakage.
+Contracts in [data-model.md](data-model.md), [tool-api.md](tool-api.md), [behavior.md](behavior.md), and [SKILL.md](../../plugins/armory/skills/hoplite/SKILL.md) hold unchanged for everything below — the day-one shape leaves room for these without contract breakage.
 
 ## Server-side enrichment — embeddings
 

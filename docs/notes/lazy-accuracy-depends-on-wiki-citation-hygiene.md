@@ -1,7 +1,10 @@
-# Lazy Accuracy depends on wiki citation hygiene
-
-Tags: todo,skills,reviewing,wiki,audit-mode-followup
-Audit mode reads source files only when the wiki cites them — wikis with poor citation hygiene get incomplete Accuracy coverage.
+---
+title: Lazy Accuracy depends on wiki citation hygiene
+summary: Audit mode reads source files only when the wiki cites them — wikis with poor citation hygiene get incomplete Accuracy coverage.
+tags: [todo, skills, reviewing, wiki, audit-mode-followup]
+created: 2026-05-25
+aliases: []
+---
 
 ## Observation
 

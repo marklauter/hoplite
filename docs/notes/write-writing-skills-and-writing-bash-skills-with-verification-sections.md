@@ -1,7 +1,10 @@
-# Write writing-skills and writing-bash skills with verification sections
-
-Tags: todo,skills,writing-skills,writing-bash
-Two new skills to create; each must include a Validation section that names running the existing test suite, so the audit-mode test miss does not repeat.
+---
+title: Write writing-skills and writing-bash skills with verification sections
+summary: Two new skills to create; each must include a Validation section that names running the existing test suite, so the audit-mode test miss does not repeat.
+tags: [todo, skills, writing-skills, writing-bash]
+created: 2026-05-25
+aliases: []
+---
 
 ## Observation
 

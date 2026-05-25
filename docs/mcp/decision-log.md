@@ -1,6 +1,10 @@
-# Hoplite design decision log
-
-[Log] Running record of design decisions made during Hoplite design sessions. Append-only chronological list. Superseded entries stay in the log with a marker and a pointer to what replaced them.
+---
+title: Hoplite design decision log
+summary: "[Log] Running record of design decisions from Hoplite design sessions. Append-only chronological list; superseded entries stay with a marker and pointer to what replaced them."
+tags: [hoplite, mcp, log, decisions]
+created: 2026-05-25
+aliases: []
+---
 
 ## 2026-05-24
 

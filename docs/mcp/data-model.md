@@ -1,6 +1,10 @@
-# Data model
-
-[Contract] The entities the graph carries and the fields each one holds — pure schema, implementation-agnostic.
+---
+title: Data model
+summary: "[Contract] The entities the graph carries and the fields each one holds — pure schema, implementation-agnostic."
+tags: [hoplite, mcp, contract, data-model]
+created: 2026-05-25
+aliases: []
+---
 
 ## Overview
 

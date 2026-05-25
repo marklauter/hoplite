@@ -1,6 +1,10 @@
-# MCP graph runtime data model
-
-Legacy monolithic spec; canonical spec now lives at `docs/mcp/readme.md` and the six section files alongside it. This note is preserved for historical reference.
+---
+title: MCP graph runtime data model
+summary: Legacy monolithic spec; canonical spec now lives at `docs/mcp/readme.md` and the six section files alongside it. Preserved for historical reference.
+tags: [hoplite, mcp, superseded, legacy]
+created: 2026-05-25
+aliases: []
+---
 
 > See [`docs/mcp/readme.md`](../mcp/readme.md) for the current spec. The contracts (data model, tool API, behavior, orchestrator skill) and implementation (file-based day-one, alternatives) are split into separate files there so storage substrates swap without rewriting the whole spec.
 
