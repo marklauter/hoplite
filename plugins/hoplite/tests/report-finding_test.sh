@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Tests for plugins/skills/scripts/report-finding.sh
+# Tests for plugins/hoplite/scripts/report-finding.sh
 
 REPORT="$PLUGIN_ROOT/scripts/report-finding.sh"
 

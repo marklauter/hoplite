@@ -5,7 +5,7 @@ Canonical task list driving the writing-prose foundation/downstream restructure;
 
 ## Context
 
-writing-prose is being restructured from a single skill (Philosophy/Guidance/Validation with bullet pairs) into a foundation for prose-artifact skills. The new shape is Rhetorical context / Composition / Grammar-structure-referential-integrity / Validation. Downstream skills (taking-notes, journaling, writing-wiki, reviewing-wiki, and a future reviewing-prose) compose on top of the foundation. The work spans the SKILL.md itself, the `positive-transforms.md` sidecar, the per-principle `reference/` expansion directory, the reviewer scripts under `plugins/skills/scripts/`, and the paired reviewing-* skills.
+writing-prose is being restructured from a single skill (Philosophy/Guidance/Validation with bullet pairs) into a foundation for prose-artifact skills. The new shape is Rhetorical context / Composition / Grammar-structure-referential-integrity / Validation. Downstream skills (taking-notes, journaling, writing-wiki, reviewing-wiki, and a future reviewing-prose) compose on top of the foundation. The work spans the SKILL.md itself, the `positive-transforms.md` sidecar, the per-principle `reference/` expansion directory, the reviewer scripts under `plugins/hoplite/scripts/`, and the paired reviewing-* skills.
 
 This note is the canonical task list. The conversation task system is transient; this note is durable and updated as work proceeds.
 
@@ -29,7 +29,7 @@ This note is the canonical task list. The conversation task system is transient;
 - **#8 Update summarize.sh for the new writing-prose section structure** — `read_canonical_prose()` parses principle bullets from Composition, Grammar/structure/referential integrity, and Validation's judgement subsection. Original `read_canonical()` retained for writing-csharp and writing-wiki. Three new tests added; all 212 pass.
 - **#9 Update reviewing-prose rubric citations** — four references in `reviewing-prose/SKILL.md` and five in `reviewing-wiki/SKILL.md` updated from "Philosophy anchor / heading / section" to "principle name." Reviewer skills' own `## Philosophy` H2 sections left intact (their internal structure has not been ported to the new spine; revisit when #6 lands).
 - **#12 Extract named registers to sidecar reference doc** — was completed; subsequently the `registers.md` sidecar was *removed* and the named-registers catalog was re-inlined in the SKILL.md (the catalog is needed every load, so on-demand was the wrong call). `positive-transforms.md` remains as the sole sidecar.
-- **#14 Establish writing-prose reference/ expansion convention** — convention statement added to Composition intro; `reference/` directory (originally `deep/`, since renamed) created with 48 placeholder files; shared `bash plugins/skills/scripts/slugify.sh` utility written with 21 passing tests; convention round-trip verified against every principle bullet.
+- **#14 Establish writing-prose reference/ expansion convention** — convention statement added to Composition intro; `reference/` directory (originally `deep/`, since renamed) created with 48 placeholder files; shared `bash plugins/hoplite/scripts/slugify.sh` utility written with 21 passing tests; convention round-trip verified against every principle bullet.
 - **#10 Decide writing-csharp structural alignment** — decided: writing-csharp is a special case, structural divergence between prose and code families is accepted, reviewer scripts already handle both shapes. No further work unless friction emerges.
 - **#11 Design the rhetorical-context memo contract** — landed. (1) Each downstream skill declares a `## Rhetorical context` section in its own SKILL.md, bulleted list, one `Slot: value` line per slot. No YAML frontmatter, no per-directory override. (2) Foundation defaults live inline in writing-prose/SKILL.md under the Rhetorical context section (was a sidecar; inlined because needed every load). Subject and intent are too artifact-specific to default; every downstream must declare them. (3) Register is bundled shorthand atop the defaults: declaring a named register overrides only the few slots that distinguish it from defaults; the rest stay at default. Inheritance precedence: explicit slot declaration > register bundle > defaults.
 - **#6 Rename reviewing-documentation to reviewing-prose** — full sweep landed in one commit. Directory git-mv'd; frontmatter, H1, internal self-references updated; sweep across writing-prose, reviewing-wiki, writing-wiki, README, seven docs/notes/ files. Incidental cross-reference from reviewing-csharp removed. Finding type stays as `documentation` (names the artifact reviewed, not the rubric).
@@ -80,7 +80,7 @@ Quick orientation:
   symbol-based citations with explicit drift detection. 212 tests pass.
 - positive-transforms.md and default-rhetorical-context.md are the sidecars
   (positive-transforms.md sits under reference/ alongside the principle expansions).
-- bash plugins/skills/scripts/slugify.sh derives reference-file slugs deterministically.
+- bash plugins/hoplite/scripts/slugify.sh derives reference-file slugs deterministically.
 
 Remaining work (no decisions needed; pick by leverage):
 - #7 downstream refactor — taking-notes, journaling, writing-wiki, reviewing-wiki

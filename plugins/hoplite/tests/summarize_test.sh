@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Tests for plugins/skills/scripts/summarize.sh
+# Tests for plugins/hoplite/scripts/summarize.sh
 
 SUMMARIZE="$PLUGIN_ROOT/scripts/summarize.sh"
 

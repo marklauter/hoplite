@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Tests for plugins/skills/skills/triaging-findings/scripts/drop.sh
+# Tests for plugins/hoplite/skills/triaging-findings/scripts/drop.sh
 
 DROP="$PLUGIN_ROOT/skills/triaging-findings/scripts/drop.sh"
 

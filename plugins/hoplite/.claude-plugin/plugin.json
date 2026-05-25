@@ -1,7 +1,7 @@
 {
-  "name": "skills",
+  "name": "hoplite",
   "version": "0.1.0",
-  "description": "A collection of skills",
+  "description": "Knowledge graph over markdown plus agent-facing skills",
   "author": {
     "name": "MSL"
   },
@@ -16,8 +16,8 @@
     "review"
   ],
   "mcpServers": {
-    "skills": {
-      "command": "python",
+    "hoplite": {
+      "command": "python3",
       "args": ["${CLAUDE_PLUGIN_ROOT}/mcp/launch.py"]
     }
   }

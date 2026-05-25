@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Tests for plugins/skills/skills/triaging-findings/scripts/file.sh
+# Tests for plugins/hoplite/skills/triaging-findings/scripts/file.sh
 
 FILE="$PLUGIN_ROOT/skills/triaging-findings/scripts/file.sh"
 

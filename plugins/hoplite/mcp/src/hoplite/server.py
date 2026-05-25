@@ -28,7 +28,7 @@ _READONLY = ToolAnnotations(
 
 _REINDEX = ToolAnnotations(
     readOnlyHint=False,
-    destructiveHint=False,
+    destructiveHint=True,
     idempotentHint=True,
     openWorldHint=False,
 )

@@ -1,5 +1,5 @@
 .claude/settings.local.json
-plugins/skills/mcp/hello.db
+plugins/hoplite/mcp/hello.db
 __pycache__/
 .venv/
 *.egg-info/

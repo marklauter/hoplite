@@ -15,7 +15,7 @@ From inside Claude Code, with `<repo>` as the absolute path to your clone (the d
 
 ```text
 /plugin marketplace add <repo>
-/plugin install skills@msl.armory
+/plugin install hoplite@msl.armory
 ```
 
 After editing a skill, run `/reload-plugins` to apply.
@@ -24,8 +24,10 @@ After editing a skill, run `/reload-plugins` to apply.
 
 ```text
 .claude-plugin/marketplace.json           # marketplace manifest
-plugins/skills/                           # the "skills" plugin
+plugins/hoplite/                          # the "hoplite" plugin
   .claude-plugin/plugin.json
+  mcp/                                    # Hoplite MCP server (knowledge graph)
+  hooks/                                  # SessionStart bootstrap + PostToolUse validator
   scripts/                                # shared reviewer scripts
   tests/                                  # bash test runner + tests for shared scripts
   skills/<skill-name>/
@@ -39,8 +41,8 @@ docs/
 
 ## Adding a skill
 
-1. Create `plugins/skills/skills/<skill-name>/SKILL.md`.
-2. If the skill ships executable behavior, add `scripts/` and `tests/` subdirectories. Tests follow the `*_test.sh` convention documented at the top of `plugins/skills/tests/run-tests.sh`.
+1. Create `plugins/hoplite/skills/<skill-name>/SKILL.md`.
+2. If the skill ships executable behavior, add `scripts/` and `tests/` subdirectories. Tests follow the `*_test.sh` convention documented at the top of `plugins/hoplite/tests/run-tests.sh`.
 3. `/reload-plugins` in Claude Code to test.
 4. Commit and push.
 
@@ -63,13 +65,13 @@ GitHub:
 
 - `managing-github-issues` — list, search, dedupe, file, triage, comment.
 
-Shared scripts at `plugins/skills/scripts/` — the writer and readers over `.findings/`:
+Shared scripts at `plugins/hoplite/scripts/` — the writer and readers over `.findings/`:
 
 - `report-finding.sh` — writes a `.findings/<slug>.md` with the canonical head-field shape.
 - `list-findings.sh`, `query.sh`, `summarize.sh` — read the head fields; reviewer skills and `triaging-findings` invoke these instead of enumerating the directory.
 - `_lib.sh` — sourced helpers for head-field parsing and repo-anchored `.findings/` resolution.
 
-Bash test runner at `plugins/skills/tests/run-tests.sh`:
+Bash test runner at `plugins/hoplite/tests/run-tests.sh`:
 
 - Discovers `*_test.sh` files anywhere under the plugin and runs each `test_*` function in a fresh tmpdir under `set -e`.
 - Ships an assertion library (`assert_equal`, `assert_contains`, `assert_match`, `assert_exit_code`, `assert_file_exists`, ...) documented inline at the top of the file.
