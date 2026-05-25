@@ -61,7 +61,6 @@ mcp.tool(name="hoplite_update_node", annotations=_DESTRUCTIVE_IDEMPOTENT)(tools.
 mcp.tool(name="hoplite_index_node", annotations=_DESTRUCTIVE_IDEMPOTENT)(tools.index_node)
 mcp.tool(name="hoplite_delete_node", annotations=_DESTRUCTIVE_NON_IDEMPOTENT)(tools.delete_node)
 mcp.tool(name="hoplite_apply_framing", annotations=_DESTRUCTIVE_IDEMPOTENT)(tools.apply_framing)
-mcp.tool(name="hoplite_slugify_text", annotations=_READONLY)(tools.slugify_text)
 
 
 if __name__ == "__main__":

@@ -5,10 +5,6 @@ between calls. No validation, no init-mode gate, no error model. These stubs
 exist so the agent-side `/hoplite` skill can be drafted and exercised against
 the documented return shapes before the real storage layer lands.
 
-`hoplite_slugify_text` is the one tool implemented for real — the agent and
-server need to agree on canonical kebab-case, so the contract has no value
-behind a fake.
-
 Envelope strings are lifted verbatim from docs/mcp/behavior.md
 §Day-one envelope prose.
 """
@@ -18,7 +14,6 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Final, Literal, TypedDict
 
-from hoplite.ids import slugify_text
 from hoplite.models import (
     Edge,
     Envelope,
@@ -44,7 +39,6 @@ __all__ = [
     "invoke_node",
     "match_nodes",
     "read_node",
-    "slugify_text",
     "traverse_nodes",
     "update_node",
 ]
@@ -105,7 +99,7 @@ def match_nodes(
     response_format: ResponseFormat = "json",
 ) -> list[Landing]:
     text = predicate.get("text", "stub")
-    slug = slugify_text(text) or "stub"
+    slug = "stub"
     return [
         Landing(
             id=f"echo/{slug}-{i}.md",
@@ -123,7 +117,7 @@ def traverse_nodes(
     predicate: TraversePredicate | None = None,
     response_format: ResponseFormat = "json",
 ) -> list[TraversalHit]:
-    slug = slugify_text(from_) or "stub"
+    slug = "stub"
     return [
         TraversalHit(
             id=f"echo/{slug}-hop-{d}.md",

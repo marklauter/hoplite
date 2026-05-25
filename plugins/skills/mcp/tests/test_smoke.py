@@ -1,8 +1,6 @@
-"""Smoke test: spawn the server, check the 11-tool surface, run two roundtrips.
+"""Smoke test: spawn the server, check the tool surface, run one roundtrip.
 
-The slugify call is the only end-to-end assertion against a real implementation
-(slugify is implemented, not stubbed). The insert call validates echo-style
-return shape — WriteResult.id mirrors the input id.
+The insert call validates echo-style return shape — WriteResult.id mirrors the input id.
 """
 
 import asyncio
@@ -24,7 +22,6 @@ EXPECTED_TOOLS = frozenset(
         "hoplite_index_node",
         "hoplite_delete_node",
         "hoplite_apply_framing",
-        "hoplite_slugify_text",
     }
 )
 
@@ -41,11 +38,6 @@ async def _roundtrip() -> None:
         tool_list = await session.list_tools()
         names = {t.name for t in tool_list.tools}
         assert names == EXPECTED_TOOLS, f"expected exactly {EXPECTED_TOOLS}, got {names}"
-
-        slug_result = await session.call_tool("hoplite_slugify_text", {"s": "Foo Bar Baz"})
-        assert not slug_result.isError
-        slug_block = slug_result.content[0]
-        assert getattr(slug_block, "text", None) == "foo-bar-baz"
 
         insert_result = await session.call_tool(
             "hoplite_insert_node", {"id": "foo.md", "body": "hi"}
