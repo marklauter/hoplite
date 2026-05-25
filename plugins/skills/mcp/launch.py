@@ -20,7 +20,14 @@ from __future__ import annotations
 import os
 import subprocess
 import sys
+import time
 from pathlib import Path
+
+# Max wait for the venv interpreter to appear before giving up. The SessionStart
+# bootstrap takes ~5-10s cold-start; the 60s budget gives 6x margin and survives
+# any race where the MCP supervisor spawns launch.py before SessionStart finishes.
+_VENV_READY_TIMEOUT_SECONDS = 60.0
+_POLL_INTERVAL_SECONDS = 0.5
 
 
 def _resolve_venv_python(data: Path) -> Path | None:
@@ -32,17 +39,33 @@ def _resolve_venv_python(data: Path) -> Path | None:
     return None
 
 
+def _wait_for_venv(data: Path, timeout: float) -> Path | None:
+    """Poll for the venv interpreter to appear; return it or ``None`` on timeout.
+
+    Defends against the race where the MCP supervisor spawns launch.py before the
+    SessionStart bootstrap has finished creating the venv. The plugin docs don't
+    pin the ordering, so we wait rather than fail fast.
+    """
+    deadline = time.monotonic() + timeout
+    python = _resolve_venv_python(data)
+    while python is None and time.monotonic() < deadline:
+        time.sleep(_POLL_INTERVAL_SECONDS)
+        python = _resolve_venv_python(data)
+    return python
+
+
 def main() -> int:
     data = os.environ.get("CLAUDE_PLUGIN_DATA")
     if not data:
         sys.stderr.write("[hoplite-launch] CLAUDE_PLUGIN_DATA not set in environment\n")
         return 1
 
-    python = _resolve_venv_python(Path(data))
+    python = _wait_for_venv(Path(data), _VENV_READY_TIMEOUT_SECONDS)
     if python is None:
         sys.stderr.write(
-            f"[hoplite-launch] venv interpreter not found under {data}/venv; "
-            "the SessionStart bootstrap should have created it\n",
+            f"[hoplite-launch] venv interpreter not found under {data}/venv after "
+            f"{_VENV_READY_TIMEOUT_SECONDS:.0f}s; the SessionStart bootstrap may have "
+            "failed — check earlier [hoplite-bootstrap] stderr lines\n",
         )
         return 1
 

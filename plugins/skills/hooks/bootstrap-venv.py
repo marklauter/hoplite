@@ -53,13 +53,13 @@ def _rebuild(plugin_root: Path, data: Path) -> int:
         shutil.rmtree(venv, ignore_errors=True)
 
     _log(f"creating venv at {venv} (one-time ~5-10s setup)")
-    rc = subprocess.call([sys.executable, "-m", "venv", str(venv)])
+    rc = subprocess.run([sys.executable, "-m", "venv", str(venv)]).returncode
     if rc != 0:
         _log(f"venv creation failed (rc={rc})")
         return rc
 
     _log("installing hoplite + deps via pip (editable)")
-    rc = subprocess.call(
+    rc = subprocess.run(
         [
             str(python),
             "-m",
@@ -70,7 +70,7 @@ def _rebuild(plugin_root: Path, data: Path) -> int:
             "-e",
             str(mcp_dir),
         ],
-    )
+    ).returncode
     if rc != 0:
         _log(f"pip install failed (rc={rc})")
         return rc
