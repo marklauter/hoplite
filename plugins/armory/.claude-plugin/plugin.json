@@ -1,7 +1,7 @@
 {
-  "name": "hoplite",
+  "name": "armory",
   "version": "0.1.0",
-  "description": "Knowledge graph over markdown plus agent-facing skills",
+  "description": "MSL Armory — agent-facing skills plus the Hoplite knowledge graph",
   "author": {
     "name": "MSL"
   },

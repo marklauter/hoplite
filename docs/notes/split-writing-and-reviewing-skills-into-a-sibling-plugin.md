@@ -1,14 +1,14 @@
 # Split writing and reviewing skills into a sibling plugin
 
-Extract the prose-shaped skills from `plugins/hoplite/` into a new `plugins/skills/` plugin so users can install the writing toolkit without the MCP bootstrap.
+Extract the prose-shaped skills from `plugins/armory/` into a new `plugins/skills/` plugin so users can install the writing toolkit without the MCP bootstrap.
 
 ## Motivation
 
-The `hoplite` plugin currently bundles two distinct concerns: the Hoplite MCP server (knowledge graph, venv bootstrap, ~5-10s cold-start cost) and the agent-facing skills that consume it. A user who wants only the writing skills pays the bootstrap cost for an MCP server they never call. A user who wants only the knowledge graph pulls in skill definitions they ignore. Splitting separates the install paths.
+The `armory` plugin currently bundles two distinct concerns: the Hoplite MCP server (knowledge graph, venv bootstrap, ~5-10s cold-start cost) and the agent-facing skills that consume it. A user who wants only the writing skills pays the bootstrap cost for an MCP server they never call. A user who wants only the knowledge graph pulls in skill definitions they ignore. Splitting separates the install paths.
 
 ## Scope
 
-Stays in `plugins/hoplite/`:
+Stays in `plugins/armory/`:
 
 - `mcp/` — server source
 - `hooks/bootstrap-venv.py` — SessionStart venv builder
@@ -27,9 +27,9 @@ Moves to `plugins/skills/`:
 
 ## Dependency story
 
-The `skills` plugin has an undeclared dependency on `hoplite`: `taking-notes` and `journaling` inject `plugins/hoplite/components/hoplite/frontmatter.md`, and the `check-frontmatter.py` hook lives in hoplite. Document the prereq in `plugins/skills/README.md`; the skills fail visibly when hoplite is missing rather than silently producing malformed docs.
+The `skills` plugin has an undeclared dependency on `armory`: `taking-notes` and `journaling` inject `plugins/armory/components/hoplite/frontmatter.md`, and the `check-frontmatter.py` hook lives in armory. Document the prereq in `plugins/skills/README.md`; the skills fail visibly when armory is missing rather than silently producing malformed docs.
 
-Cross-plugin component reference resolves via absolute path `D:/claude/claude/plugins/hoplite/components/hoplite/frontmatter.md` (already the case today via the writing skills' injection slot). Verify the path survives the move.
+Cross-plugin component reference resolves via absolute path `D:/claude/claude/plugins/armory/components/hoplite/frontmatter.md` (already the case today via the writing skills' injection slot). Verify the path survives the move.
 
 ## Marketplace change
 
@@ -37,8 +37,8 @@ Cross-plugin component reference resolves via absolute path `D:/claude/claude/pl
 
 ```json
 "plugins": [
-  { "name": "hoplite", "source": "./plugins/hoplite" },
-  { "name": "skills",  "source": "./plugins/skills" }
+  { "name": "armory", "source": "./plugins/armory" },
+  { "name": "skills", "source": "./plugins/skills" }
 ]
 ```
 
@@ -48,7 +48,7 @@ Each plugin keeps its own `.claude-plugin/plugin.json`. The skills plugin's mani
 
 - Does Claude Code resolve `${CLAUDE_PLUGIN_ROOT}/...` paths across plugin boundaries? If skill A in plugin X injects a component from plugin Y, the env var resolves to X's root — the absolute path is required. Confirm before the move.
 - Should `components/editorial-principles/` live in `skills` (its consumers) or `hoplite` (alongside `components/hoplite/`)? Co-locate with consumers — moves to `skills`.
-- Test runner: `plugins/hoplite/tests/run-tests.sh` discovers `*_test.sh` under the plugin root. Splitting means two runners or one runner invoked twice. Decide based on whether tests cross-reference.
+- Test runner: `plugins/armory/tests/run-tests.sh` discovers `*_test.sh` under the plugin root. Splitting means two runners or one runner invoked twice. Decide based on whether tests cross-reference.
 
 ## Next
 

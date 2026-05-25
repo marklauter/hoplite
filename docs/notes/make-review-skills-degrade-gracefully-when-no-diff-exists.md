@@ -29,9 +29,9 @@ The standard wiki layout is sibling clones: source at `D:\{project}\{project}\` 
 
 ## Where the design lives
 
-- `plugins/hoplite/scripts/changes.sh`
-- `plugins/hoplite/scripts/report-finding.sh`
-- `plugins/hoplite/scripts/summarize.sh`
-- `plugins/hoplite/skills/reviewing-wiki/SKILL.md`
-- `plugins/hoplite/skills/reviewing-prose/SKILL.md`
-- `plugins/hoplite/skills/reviewing-csharp/SKILL.md`
+- `plugins/armory/scripts/changes.sh`
+- `plugins/armory/scripts/report-finding.sh`
+- `plugins/armory/scripts/summarize.sh`
+- `plugins/armory/skills/reviewing-wiki/SKILL.md`
+- `plugins/armory/skills/reviewing-prose/SKILL.md`
+- `plugins/armory/skills/reviewing-csharp/SKILL.md`

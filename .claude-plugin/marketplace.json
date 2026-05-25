@@ -7,13 +7,13 @@
   },
   "plugins": [
     {
-      "name": "hoplite",
-      "description": "Knowledge graph over markdown plus agent-facing skills",
+      "name": "armory",
+      "description": "MSL Armory — agent-facing skills plus the Hoplite knowledge graph",
       "author": {
         "name": "MSL"
       },
       "category": "productivity",
-      "source": "./plugins/hoplite"
+      "source": "./plugins/armory"
     }
   ]
 }

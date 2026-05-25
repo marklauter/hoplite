@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Tests for plugins/hoplite/scripts/query.sh (shared findings query)
+# Tests for plugins/armory/scripts/query.sh (shared findings query)
 
 QUERY="$PLUGIN_ROOT/scripts/query.sh"
 

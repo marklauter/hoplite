@@ -50,7 +50,7 @@ The awk command strips a `---`-delimited block only when one starts at line 1; f
 
 Edits to an injected fragment propagate via `/reload-plugins` without touching the consumer SKILL.md. The loader runs the bash command fresh on each load; fragments are read at injection time, not baked in at install time.
 
-Implication: a single shared fragment under `plugins/hoplite/components/<name>/` is the source of truth for cross-cutting content. Editing it updates every consuming skill on the next reload; consumer SKILL.md files stay untouched.
+Implication: a single shared fragment under `plugins/armory/components/<name>/` is the source of truth for cross-cutting content. Editing it updates every consuming skill on the next reload; consumer SKILL.md files stay untouched.
 
 ### The nested env-var limitation
 
@@ -106,7 +106,7 @@ A skill teaches the agent about a topic or task. It is an instructional block �
 
 ## The realized shape — composition from component instruction sets
 
-The injection mechanism fits the "always load this companion content" pattern — inline-not-sidecar in mechanical form. Plain-markdown fragments under `plugins/hoplite/components/<name>/` are the canonical home for cross-cutting content; consumer skills inject what they need via `!`cat`. Composite skills become a thin spine plus a handful of injected fragments — skill composition from component instruction sets.
+The injection mechanism fits the "always load this companion content" pattern — inline-not-sidecar in mechanical form. Plain-markdown fragments under `plugins/armory/components/<name>/` are the canonical home for cross-cutting content; consumer skills inject what they need via `!`cat`. Composite skills become a thin spine plus a handful of injected fragments — skill composition from component instruction sets.
 
 Under injection, prose that taught load-composition becomes overhead. Phrases like "downstream skills declare their full rhetorical context..." or "default values the downstream falls back to..." earn their place when the downstream is a separate file referencing defaults; once the same content is inlined at load time, there is no inheritance to teach. The substantive editorial content — principle bullets, grammar rules, validation greps — is universal and belongs verbatim in every consumer. When extracting a foundation into a component, trim the scaffolding prose and keep the substance.
 

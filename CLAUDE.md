@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Claude Code marketplace shipping one plugin, `hoplite`, at `plugins/hoplite/`. The plugin bundles the Hoplite MCP server (knowledge graph over markdown) with the agent-facing skills that consume it. README covers install; `plugins/hoplite/tests/run-tests.sh` documents the bash test runner inline.
+Claude Code marketplace shipping one plugin, `armory`, at `plugins/armory/`. The plugin bundles the Hoplite MCP server (knowledge graph over markdown) with the agent-facing skills that consume it. README covers install; `plugins/armory/tests/run-tests.sh` documents the bash test runner inline.
 
 ## Script-location trap
 

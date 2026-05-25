@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Tests for plugins/hoplite/scripts/list-findings.sh
+# Tests for plugins/armory/scripts/list-findings.sh
 
 LIST="$PLUGIN_ROOT/scripts/list-findings.sh"
 

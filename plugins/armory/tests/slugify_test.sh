@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Tests for plugins/hoplite/scripts/slugify.sh
+# Tests for plugins/armory/scripts/slugify.sh
 
 SLUGIFY="$PLUGIN_ROOT/scripts/slugify.sh"
 

@@ -28,7 +28,7 @@ This is the regression the whole design exists to fix. Run it first.
 
 ## Manifest drift
 
-Touch `plugins/hoplite/mcp/pyproject.toml` — bump the version field, change a whitespace, any byte-level change. Restart. The hook rebuilds the venv. Revert.
+Touch `plugins/armory/mcp/pyproject.toml` — bump the version field, change a whitespace, any byte-level change. Restart. The hook rebuilds the venv. Revert.
 
 ## Install failure — exposes the known bug
 
@@ -42,4 +42,4 @@ Revert the bogus dep, restart, confirm clean rebuild.
 
 ## The bug this scenario surfaces
 
-`plugins/hoplite/hooks/bootstrap-venv.py:62-76` — when `pip install` fails, the snapshot is unlinked but the venv directory survives. Fix: add `shutil.rmtree(venv, ignore_errors=True)` after the `_log("pip install failed")` line, before `return rc`. Run the install-failure scenario once the fix lands.
+`plugins/armory/hooks/bootstrap-venv.py:62-76` — when `pip install` fails, the snapshot is unlinked but the venv directory survives. Fix: add `shutil.rmtree(venv, ignore_errors=True)` after the `_log("pip install failed")` line, before `return rc`. Run the install-failure scenario once the fix lands.

@@ -1,6 +1,6 @@
 # Roadmap
 
-[Roadmap] Features designed and named but not in day one. Each lands when the use case justifies the build. Contracts in [data-model.md](data-model.md), [tool-api.md](tool-api.md), [behavior.md](behavior.md), and [SKILL.md](../../plugins/hoplite/skills/hoplite/SKILL.md) hold unchanged for everything below — the day-one shape leaves room for these without contract breakage.
+[Roadmap] Features designed and named but not in day one. Each lands when the use case justifies the build. Contracts in [data-model.md](data-model.md), [tool-api.md](tool-api.md), [behavior.md](behavior.md), and [SKILL.md](../../plugins/armory/skills/hoplite/SKILL.md) hold unchanged for everything below — the day-one shape leaves room for these without contract breakage.
 
 ## Server-side enrichment — embeddings
 

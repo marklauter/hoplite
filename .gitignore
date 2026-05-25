@@ -1,5 +1,5 @@
 .claude/settings.local.json
-plugins/hoplite/mcp/hello.db
+plugins/armory/mcp/hello.db
 __pycache__/
 .venv/
 *.egg-info/

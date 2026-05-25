@@ -5,8 +5,8 @@ Transformation function for moving a legacy Philosophy/Guidance/Validation skill
 
 ## Before and after
 
-- Legacy: `plugins/hoplite/skills/taking-notes/SKILL.old.md` — the input to this transformation.
-- Refactored: `plugins/hoplite/skills/taking-notes/SKILL.md` — the output.
+- Legacy: `plugins/armory/skills/taking-notes/SKILL.old.md` — the input to this transformation.
+- Refactored: `plugins/armory/skills/taking-notes/SKILL.md` — the output.
 
 ## Input: legacy shape
 
