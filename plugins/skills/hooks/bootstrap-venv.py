@@ -52,10 +52,11 @@ def _rebuild(plugin_root: Path, data: Path) -> int:
         _log(f"removing stale venv at {venv}")
         shutil.rmtree(venv, ignore_errors=True)
 
-    _log(f"creating venv at {venv} (one-time ~5-10s setup)")
+    _log(f"creating venv at {venv}")
     rc = subprocess.run([sys.executable, "-m", "venv", str(venv)]).returncode
     if rc != 0:
         _log(f"venv creation failed (rc={rc})")
+        shutil.rmtree(venv, ignore_errors=True)
         return rc
 
     _log("installing hoplite + deps via pip (editable)")
@@ -73,6 +74,9 @@ def _rebuild(plugin_root: Path, data: Path) -> int:
     ).returncode
     if rc != 0:
         _log(f"pip install failed (rc={rc})")
+        # Tear down the partially-populated venv so launch.py's poll times out
+        # cleanly instead of finding an empty venv and crashing on import yaml.
+        shutil.rmtree(venv, ignore_errors=True)
         return rc
 
     shutil.copyfile(bundled, snapshot)
