@@ -114,3 +114,21 @@ Open question — pending a corpus or use case that recurrently bumps into the d
 The pre-pivot `docs/notes/` corpus uses an older shape (no frontmatter, pure-markdown body with H1/blank/summary/blank structure). A migration converter walks every note, lifts the H1 and summary into a generated frontmatter block, derives tags from directory structure or filename prefixes, and writes the converted file back.
 
 One-time CLI pass. Day-one development uses a fresh corpus or a hand-curated subset; full migration runs when it's needed.
+
+## Columnar projection for multi-property predicates
+
+Day-one `node_properties` is pure EAV: every property is a row. Single-property lookups (`key='tags' AND value='hoplite'`) use the composite `(key, value)` index and run fast at any scale. Multi-property AND predicates require one self-join per additional clause:
+
+```sql
+-- status='draft' AND priority > 3
+SELECT n1.node_id FROM node_properties n1
+JOIN node_properties n2 ON n1.node_id = n2.node_id
+WHERE n1.key = 'status' AND n1.value = 'draft'
+  AND n2.key = 'priority' AND CAST(n2.value AS INTEGER) > 3;
+```
+
+At day-one corpus scale (hundreds to low thousands of documents, tens of thousands of property rows), SQLite handles the joins fine. At 10^5+ documents with three or more predicates, the planner's join cost compounds noticeably.
+
+Mitigation: emit a derived **`documents_wide`** table at dump time with one column per hot property — `(id, path, title, summary, status, priority, due, ...)`. Multi-predicate queries collapse to single-table scans. The wide table is a hot-path cache rebuilt each dump; `node_properties` stays the canonical source for arbitrary keys.
+
+Open question — pending a corpus that hits the cliff. The schema-mod is decision-reversible; the canonical EAV form keeps every property addressable.
