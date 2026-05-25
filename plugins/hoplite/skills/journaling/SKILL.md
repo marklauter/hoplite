@@ -32,6 +32,16 @@ Topic match is a judgment call. When in doubt, start a new entry.
 
 The journal is historically immutable. If an existing entry is wrong, compose a new compensating entry that references and corrects the prior one. The original stays as-written. Never use Write to replace an existing journal entry — only Edit to extend the body within the same cycle.
 
+## Tag the entry — type, domain, status
+
+Every entry carries a `tags` array in its frontmatter. Three categories of tags compose, applied in order:
+
+1. **Type tag — required: `journal`.** Every entry authored by this skill includes `journal` as a tag. Distinguishes from notes (`note`), references, decisions, and other artifact types that may share the corpus.
+2. **Domain tags — what the cycle was about.** Pick from the existing vocabulary when possible — query the corpus (`hoplite_match_nodes({"tagged": "<slug>"})` or grep `docs/journal/*.md` frontmatter) to see what's in use. Examples in active use: `hoplite`, `mcp`, `python`, `claude-code`, `skills`, `bash`, `architecture`, `design`. Add a new domain tag only when no existing slug fits.
+3. **Shape tags — optional.** Capture the cycle shape when it shapes how the entry reads: `experiment`, `decision`, `dead-end`, `session-summary`, `milestone`. Use sparingly; only when the reader benefits from the framing.
+
+Aim for three to six tags total — enough that the entry surfaces in tag queries, few enough that each tag earns its place. Slugs are kebab-case lowercase.
+
 ## Save the file — path and template
 
 Entries are saved at `docs/journal/<YYYY-MM-DD>-<HHMM>-<slug>.md` via the Write tool — sortable ISO date and time, then a lowercase slug of the H1 title. Use the current date and time at the write moment. Glob the target filename first; if a same-minute same-slug file exists, choose a more specific title or wait a minute. After saving, confirm with a minimal acknowledgment — for example, `entry saved: <filename>` — and let the file stand. No recital or recap.
