@@ -1,4 +1,4 @@
-﻿---
+---
 title: Write the scaffolding-csharp skill
 summary: New skill for setting up new C# projects — solution layout, Directory.Build.props, central package management, ArchUnit test scaffolding, the works.
 tags: [note, todo, skills, csharp, scaffolding]

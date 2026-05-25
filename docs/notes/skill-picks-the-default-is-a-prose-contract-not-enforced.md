@@ -1,4 +1,4 @@
-﻿---
+---
 title: Skill-picks-the-default is a prose contract, not enforced
 summary: SKILL.md text declares each reviewer's default invocation (audit for wiki, diff for csharp/documentation), but nothing in the scripts ensures Claude follows it.
 tags: [note, todo, skills, scripts, audit-mode-followup]

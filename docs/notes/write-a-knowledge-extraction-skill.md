@@ -1,4 +1,4 @@
-﻿---
+---
 title: Write a knowledge-extraction skill
 summary: Pulls notes and journals into a human-targeted wiki — the Karpathy-inspired knowledge-mining counterpart to taking-notes.
 tags: [note, todo, skills, documentation]

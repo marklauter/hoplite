@@ -1,4 +1,4 @@
-﻿---
+---
 title: MCP graph runtime data model
 summary: Legacy monolithic spec; canonical spec now lives at `docs/mcp/readme.md` and the six section files alongside it. Preserved for historical reference.
 tags: [note, hoplite, mcp, superseded, legacy]

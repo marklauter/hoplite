@@ -1,4 +1,4 @@
-﻿---
+---
 title: Skill composition
 summary: How SKILL.md files share content across skills. Two mechanisms coexist — load-composition (downstream loads foundation, inherits via prose contract) and component injection (consumer cat-injects shared fragments at load time).
 tags: [note, meta, skills, composition, architecture, injection, components]

@@ -1,4 +1,4 @@
-﻿---
+---
 title: Verify hoplite bootstrap with a cold-start test
 summary: Three-scenario verification for the SessionStart venv bootstrap — cold cache, manifest drift, install failure. The failure-recovery scenario exposes a known bug where a failed pip install leaves a usable-looking venv that crashes on import.
 tags: [note, hoplite, todo, mcp, verification]

@@ -1,4 +1,4 @@
-﻿---
+---
 title: Write the writing-architecture skill
 summary: Architectural concerns scoped out of writing-csharp deserve their own skill — persistence ignorance, layer boundaries, bounded contexts, adapter patterns.
 tags: [note, todo, skills, csharp, architecture]

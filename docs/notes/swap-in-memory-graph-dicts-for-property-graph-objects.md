@@ -1,4 +1,4 @@
-﻿---
+---
 title: Swap in-memory graph dicts for a property-graph object model
 summary: Hand-rolled adjacency dicts today; explore swapping to an object Graph<Node, Edge> once query patterns push past simple BFS and single-property filters.
 tags: [note, todo, hoplite, refactor, in-memory, graph]

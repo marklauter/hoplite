@@ -1,4 +1,4 @@
-﻿---
+---
 title: Set up linting workflows for GitHub wiki repos
 summary: The current writer/reviewer/triage loop is all editorial; there is no mechanical or structural pre-pass. CI in the wiki repo is the natural place to add it without putting npm on the dev box.
 tags: [note, todo, wiki, linting, github-actions, ci]

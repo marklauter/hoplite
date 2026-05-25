@@ -1,4 +1,4 @@
-﻿---
+---
 title: Writing-csharp skill evaluation
 summary: Above average for the genre, but pays a structural tax — three parallel passes over the same skeleton (Philosophy / Guidance / Validation) inflate it to ~300 lines for ~150 lines of load-bearing content.
 tags: [note, skills, writing-csharp, evaluation]

@@ -1,4 +1,4 @@
-﻿---
+---
 title: writing-prose refactor task list
 summary: Canonical task list driving the writing-prose foundation/downstream restructure; both completed and pending tasks captured; maintained as work proceeds.
 tags: [note, todo, project, task-list, writing-prose, refactor]
