@@ -10,17 +10,18 @@ after filtering.
 
 from __future__ import annotations
 
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Collection, Iterable
 
 __all__ = ["filter_candidates"]
 
 
 def filter_candidates(
     predicate: Callable[[frozenset[str]], bool],
-    candidates: Iterable[tuple[str, frozenset[str]]],
+    candidates: Iterable[tuple[str, Collection[str]]],
 ) -> list[str]:
     """Return ids of candidates whose labels satisfy the predicate.
 
-    Order matches the iteration order of ``candidates``.
+    Order matches the iteration order of ``candidates``. The label collection
+    converts to ``frozenset`` for predicate evaluation.
     """
-    return [node_id for node_id, labels in candidates if predicate(labels)]
+    return [node_id for node_id, labels in candidates if predicate(frozenset(labels))]

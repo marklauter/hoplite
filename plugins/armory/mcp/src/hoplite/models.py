@@ -7,69 +7,48 @@ mutable shell; entities are values projected from it.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Final
 
 __all__ = [
     "Document",
     "Edge",
     "Hit",
-    "Tag",
     "TraversalHit",
     "WriteResult",
 ]
-
-
-# Typed empty default for frozen-dataclass field defaults — `frozenset()` alone
-# produces frozenset[Unknown] under strict pyright.
-_NO_TAGS: Final[frozenset[str]] = frozenset()
 
 
 @dataclass(frozen=True, slots=True)
 class Document:
     """A markdown file in the corpus, identified by its relative path.
 
+    File-level facts only: identity (``path``), ghost-or-real flag (``resolved``),
+    and the two derived non-searchable artifacts (``content_hash``, ``minhash``).
+    Everything authored in YAML frontmatter — title, summary, tags, aliases,
+    created, and user-defined keys — lives in ``Graph.node_properties`` instead.
+
     Ghost documents (referenced by a wikilink but not yet on disk) have
-    ``resolved=False`` and all content fields ``None``.
+    ``resolved=False`` and the derived fields ``None``.
     """
 
     path: str
     resolved: bool
-    tags: frozenset[str] = _NO_TAGS
-    aliases: tuple[str, ...] = ()
-    title: str | None = None
-    summary: str | None = None
-    body: str | None = None
     content_hash: str | None = None
-    created: str | None = None
     minhash: bytes | None = None
 
 
 @dataclass(frozen=True, slots=True)
-class Tag:
-    """A free-form annotation. First-class graph node with members.
-
-    Tag membership is derived from ``member`` edges in the Graph, not stored
-    on the Tag value itself.
-    """
-
-    slug: str
-    text: str
-    summary: str | None = None
-
-
-@dataclass(frozen=True, slots=True)
 class Edge:
-    """A typed connection between two nodes.
+    """A typed connection between two documents.
 
-    Day-one ``kind`` is one of ``member``, ``mentions``, ``related``. Each pair
-    of nodes carries at most one edge per kind; ``confidence`` populates for
-    ``related`` edges only.
+    Day-one ``kind`` is one of ``mentions`` or ``related``. Each pair of nodes
+    carries at most one edge per kind. Edge properties (e.g., ``confidence`` for
+    ``related`` edges) live in ``Graph.edge_properties`` keyed on the
+    ``(src, dst, kind)`` triple.
     """
 
     src: str
     dst: str
     kind: str
-    confidence: float | None = None
 
 
 @dataclass(frozen=True, slots=True)

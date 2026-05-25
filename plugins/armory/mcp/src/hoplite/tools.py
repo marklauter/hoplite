@@ -72,6 +72,25 @@ def _get_graph() -> Graph:
     return _graph
 
 
+def _summary_for(graph: Graph, path: str) -> str:
+    return (graph.node_properties.get(path, {}).get("summary") or [""])[0]
+
+
+def _tags_for(graph: Graph, path: str) -> list[str]:
+    return graph.node_properties.get(path, {}).get("tags", [])
+
+
+def _edge_confidence(graph: Graph, edge: Edge) -> float | None:
+    triple = (edge.src, edge.dst, edge.kind)
+    values = graph.edge_properties.get(triple, {}).get("confidence")
+    if not values:
+        return None
+    try:
+        return float(values[0])
+    except ValueError:
+        return None
+
+
 def match_nodes(predicate: MatchPredicate, k: int = 5) -> list[Hit]:
     """Search the corpus. BM25 over body and summary, optional tag predicate post-filter."""
     if k < 1:
@@ -109,7 +128,7 @@ def match_nodes(predicate: MatchPredicate, k: int = 5) -> list[Hit]:
             filtering.filter_candidates(
                 pred,
                 (
-                    (path, graph.documents[path].tags)
+                    (path, _tags_for(graph, path))
                     for path, _ in candidates
                     if path in graph.documents
                 ),
@@ -126,8 +145,8 @@ def match_nodes(predicate: MatchPredicate, k: int = 5) -> list[Hit]:
         hits.append(
             Hit(
                 path=path,
-                summary=doc.summary or "",
-                tags=sorted(doc.tags),
+                summary=_summary_for(graph, path),
+                tags=sorted(_tags_for(graph, path)),
                 score=score,
             ),
         )
@@ -179,13 +198,14 @@ def traverse_nodes(
         doc = graph.documents.get(node)
         if doc is None:
             continue
-        if tag_pred is not None and not tag_pred(doc.tags):
+        node_tags = _tags_for(graph, node)
+        if tag_pred is not None and not tag_pred(frozenset(node_tags)):
             continue
         hits.append(
             TraversalHit(
                 path=node,
-                summary=doc.summary or "",
-                tags=sorted(doc.tags),
+                summary=_summary_for(graph, node),
+                tags=sorted(node_tags),
                 distance=distance,
                 via_edges=paths[node],
             ),
@@ -224,8 +244,10 @@ def _neighbors(
     for edge in candidates:
         if edge_types and edge.kind not in edge_types:
             continue
-        if edge.confidence is not None and edge.confidence < min_confidence:
-            continue
+        if min_confidence > 0.0:
+            confidence = _edge_confidence(graph, edge)
+            if confidence is None or confidence < min_confidence:
+                continue
         target = edge.dst if edge.src == node else edge.src
         result.append((target, edge))
     return result

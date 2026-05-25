@@ -134,22 +134,52 @@ async def _drive_server(vault: Path) -> None:
         dump_payload = cast(dict[str, Any], _parse_json(dump_result))
         assert dump_payload["counts"]["documents"] == 3
         assert dump_payload["counts"]["ghosts"] == 1
-        # Tags: shared, alpha-tag, beta-tag, gamma-tag — four total.
-        assert dump_payload["counts"]["tags"] == 4
 
         # Verify the dumped SQLite file matches the in-memory state.
         conn = sqlite3.connect(str(dump_destination))
         try:
+            # documents — five-column shape, three resolved + one ghost.
             cursor = conn.execute("SELECT COUNT(*) FROM documents WHERE resolved = 1")
             assert cursor.fetchone()[0] == 3
             cursor = conn.execute("SELECT COUNT(*) FROM documents WHERE resolved = 0")
             assert cursor.fetchone()[0] == 1
+
+            # nodes — every document has a row; kind is always 'document' day one.
+            cursor = conn.execute("SELECT COUNT(*) FROM nodes WHERE kind = 'document'")
+            assert cursor.fetchone()[0] == 4  # 3 resolved + 1 ghost
+
+            # edges — only mentions and related, no member.
             cursor = conn.execute("SELECT COUNT(*) FROM edges WHERE kind = 'mentions'")
             assert cursor.fetchone()[0] >= 2  # alpha→beta and alpha→missing
             cursor = conn.execute("SELECT COUNT(*) FROM edges WHERE kind = 'member'")
-            assert (
-                cursor.fetchone()[0] == 5
-            )  # alpha+beta on `shared`, alpha-tag, beta-tag, gamma-tag
+            assert cursor.fetchone()[0] == 0  # member edges abolished
+
+            # node_properties — tags live here as (node_id, 'tags', slug) rows.
+            cursor = conn.execute(
+                "SELECT COUNT(*) FROM node_properties WHERE key = 'tags' AND value = 'shared'",
+            )
+            assert cursor.fetchone()[0] == 2  # alpha and beta both carry 'shared'
+
+            # Every resolved document has a title property row.
+            cursor = conn.execute("""
+                SELECT COUNT(DISTINCT node_id) FROM node_properties WHERE key = 'title'
+            """)
+            assert cursor.fetchone()[0] == 3
+
+            # Cross-table join — relational shape works end-to-end.
+            cursor = conn.execute("""
+                SELECT d.path, COUNT(p.key) AS prop_count
+                FROM documents d
+                LEFT JOIN node_properties p ON p.node_id = d.id
+                WHERE d.resolved = 1
+                GROUP BY d.path
+                ORDER BY d.path
+            """)
+            rows = cursor.fetchall()
+            assert len(rows) == 3
+            for _path, prop_count in rows:
+                # Each resolved doc carries title, summary, created, tags (>=1 row) — at least 4.
+                assert prop_count >= 4
         finally:
             conn.close()
 
