@@ -52,7 +52,7 @@ def test_whitespace_only_capture_skipped() -> None:
 
 
 def test_link_inside_fenced_code_block_extracted() -> None:
-    # The walker emits `:mentions` edges regardless of fence context.
+    # The walker emits `mentions` edges regardless of fence context.
     body = "prose [[outside]]\n\n```\ncode with [[inside]] here\n```\n"
     result = extract(body)
     assert result == [("outside", 1, 7), ("inside", 4, 11)]

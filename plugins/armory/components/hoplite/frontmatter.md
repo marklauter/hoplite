@@ -25,7 +25,7 @@ status: draft
 ---
 ```
 
-The closing `---` fence ends the frontmatter. What follows has no required line-position shape — plain markdown, anything goes. Wikilinks anywhere in a document use `[[path/to/target.md]]` or `[[alias]]`; resolution is case-insensitive, and the indexer emits one `:mentions` edge per wikilink found. A wikilink to a target that doesn't yet exist materializes a ghost document — queryable as your "open loops" backlog of documents you've mentioned but not yet written.
+The closing `---` fence ends the frontmatter. What follows has no required line-position shape — plain markdown, anything goes. Wikilinks anywhere in a document use `[[path/to/target.md]]` or `[[alias]]`; resolution is case-insensitive, and the indexer emits one `mentions` edge per `(source, target)` pair (multiple wikilinks to the same target collapse to one edge). A wikilink to a target that doesn't yet exist materializes a ghost document — queryable as your "open loops" backlog of documents you've mentioned but not yet written.
 
 After writing or editing a document, call `hoplite_reindex()` so the knowledge graph picks up the change. The indexer validates each document's frontmatter and surfaces any parse failures in the `WriteResult.warnings` list. A document with a malformed or incomplete frontmatter block doesn't enter the graph until the YAML is fixed and reindex runs again.
 

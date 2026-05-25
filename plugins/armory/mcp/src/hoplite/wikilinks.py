@@ -1,6 +1,6 @@
 """Wiki-link extraction from a markdown body.
 
-Pure, I/O-free module the walker calls when deriving `:mentions` edges (see
+Pure, I/O-free module the walker calls when deriving `mentions` edges (see
 docs/mcp/behavior.md). Contract: body-in / (target, line, column) tuples out.
 No resolution, no validation — those live downstream in the walker.
 
@@ -22,7 +22,7 @@ Edge cases
 - Empty body and bodies with no ``[[...]]`` references return ``[]``.
 - ``[[]]`` and ``[[   ]]`` produce no entries.
 - Links inside fenced code blocks are extracted. The walker emits a
-  ``:mentions`` edge regardless of fence context; day-one behavior is
+  ``mentions`` edge regardless of fence context; day-one behavior is
   uniform across the body.
 
 Non-responsibilities
