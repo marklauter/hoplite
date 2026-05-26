@@ -46,7 +46,7 @@ Aim for three to six tags total — enough that the entry surfaces in tag querie
 
 Entries are saved at `docs/journal/<YYYY-MM-DD>-<HHMM>-<slug>.md` via the Write tool — sortable ISO date and time, then a lowercase slug of the H1 title. Use the current date and time at the write moment. Glob the target filename first; if a same-minute same-slug file exists, choose a more specific title or wait a minute. After saving, confirm with a minimal acknowledgment — for example, `entry saved: <filename>` — and let the file stand. No recital or recap.
 
-!`cat ${CLAUDE_PLUGIN_ROOT}/components/editorial-principles/template.md | sed "s|[$]{CLAUDE_PLUGIN_ROOT}|${CLAUDE_PLUGIN_ROOT}|g"`
+!`cat ${CLAUDE_PLUGIN_ROOT}/components/editorial-principles/template.md`
 
 The filename owns the date. Cross-references to entries use the full date-prefixed slug — `[[2026-05-20-1430-cache-investigation]]`. Cross-references to notes use the note slug — `[[cache-ttl-300s]]`.
 
@@ -62,12 +62,12 @@ For a question that gained an answer mid-cycle: pivot the title from interrogati
 
 Context/Attempted/Outcome/Decision/Next fits experiment-style entries; session-summary, decision, and milestone entries take whatever shape fits the cycle.
 
-!`cat ${CLAUDE_PLUGIN_ROOT}/components/editorial-principles/title.md | sed "s|[$]{CLAUDE_PLUGIN_ROOT}|${CLAUDE_PLUGIN_ROOT}|g"`
-!`cat ${CLAUDE_PLUGIN_ROOT}/components/editorial-principles/summary.md | sed "s|[$]{CLAUDE_PLUGIN_ROOT}|${CLAUDE_PLUGIN_ROOT}|g"`
-!`cat ${CLAUDE_PLUGIN_ROOT}/components/editorial-principles/body.md | sed "s|[$]{CLAUDE_PLUGIN_ROOT}|${CLAUDE_PLUGIN_ROOT}|g"`
+!`cat ${CLAUDE_PLUGIN_ROOT}/components/editorial-principles/title.md`
+!`cat ${CLAUDE_PLUGIN_ROOT}/components/editorial-principles/summary.md`
+!`cat ${CLAUDE_PLUGIN_ROOT}/components/editorial-principles/body.md`
 !`cat ${CLAUDE_PLUGIN_ROOT}/components/hoplite/frontmatter.md`
 !`cat ${CLAUDE_PLUGIN_ROOT}/components/hoplite/tool-reference.md`
-!`cat ${CLAUDE_PLUGIN_ROOT}/components/editorial-principles/editorial-principles.md | sed "s|[$]{CLAUDE_PLUGIN_ROOT}|${CLAUDE_PLUGIN_ROOT}|g"`
+!`cat ${CLAUDE_PLUGIN_ROOT}/components/editorial-principles/editorial-principles.md`
 
 ## Rhetorical context
 

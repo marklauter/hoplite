@@ -7,8 +7,9 @@ README covers install. Spec corpus lives at `docs/mcp/`.
 ## Layout
 
 - `plugins/hoplite/mcp/` — MCP server source (Python, FastMCP, src/tests layout).
-- `plugins/hoplite/skills/{taking-notes,journaling}/` — agent-facing skills. Both inject the components below.
+- `plugins/hoplite/skills/{using-graph,taking-notes,journaling}/` — agent-facing skills. `using-graph` is a thin wrapper over the tool-reference; the two authoring skills inject the components below.
 - `plugins/hoplite/components/hoplite/` — shared markdown fragments: `frontmatter.md` (the YAML contract) and `tool-reference.md` (the MCP tools, edges, vocabulary).
+- `plugins/hoplite/components/editorial-principles/` — slim editorial spine: `template.md`, `title.md`, `summary.md`, `body.md`, `editorial-principles.md`. Injected by the authoring skills.
 - `plugins/hoplite/hooks/` — `SessionStart` bootstrap (`bootstrap-venv.py`) and `PostToolUse` frontmatter validator (`check-frontmatter.py`).
 - `docs/mcp/` — spec corpus. Canonical data model, behavior, implementation, decision log, roadmap.
 - `docs/notes/` and `docs/journal/` — the agent's own corpus. Notes from the design history live here as historical record; agents are free to add new ones.
@@ -17,4 +18,5 @@ README covers install. Spec corpus lives at `docs/mcp/`.
 
 - Components start at H2; the consuming skill owns the H1.
 - Component paths in skill bodies are anchored on `${CLAUDE_PLUGIN_ROOT}/components/...`.
+- **Components contain no cat injections and no `${CLAUDE_PLUGIN_ROOT}` references in their bodies.** Cat invocations only live in skill SKILL.md files; components are leaf content. This means the consuming skill's injection is a bare `!`cat <path>`` — no sed pipe needed to expand placeholders, and no compound-command permission gate to negotiate. Composition stays one level deep: skill cats component; component cats nothing.
 - The bootstrapped venv at `${CLAUDE_PLUGIN_DATA}/venv/` is editable-pinned to `plugins/hoplite/mcp/src/`, so server-side Python changes take effect on the next process spawn.
