@@ -15,32 +15,7 @@ The journal is the only artifact in the corpus where intent precedes outcome. Re
 
 The journal answers the question — why is the system shaped like this?
 
-## What an entry is
-
-One cycle, one entry. A cycle is one experiment, one decision, one session wrap, one dead-end ruled out, one intent-versus-outcome comparison. Two cycles get two entries — collapsing them destroys the chronology the journal exists to preserve.
-
-Entries are historically immutable. Once recorded, the original stays as written. A wrong entry is corrected by a new compensating entry that references and corrects it, not by replacing the original.
-
-Cycle shapes: experiment, decision, session-summary, dead-end, milestone. Every entry opens with context — what was current going in, what was unknown. From there, draw the sections the cycle calls for:
-
-- Attempted — what was tried, including the hypothesis or intent.
-- Outcome — what happened.
-- Decision — what was decided.
-- Next — the next step, or `none` if the cycle closed cleanly.
-
-Use the sections that fit; skip the rest. An experiment may want all four; a session-summary may want none of them.
-
-After writing, a brief acknowledgment and short summary tell the user the entry landed.
-
-## Naming
-
-Filename: `docs/journal/<YYYY-MM-DD>-<HHMM>-<slug>.md`. Sortable ISO date and time, then a lowercase slug of the H1 title. The filename owns the date; the body does not repeat it. Entry cross-references use the full filename (minus the `.md`) as the slug.
-
-## Same cycle, last 24 hours
-
-Same topic within 24 hours is the same cycle — extend the existing entry. Past 24 hours or different topic, new entry. Topic match is a judgment call; default to new. Journal entries don't dedup the way notes do — same-topic entries on different days each capture one cycle, not one consolidated fact.
-
-## What belongs and what doesn't
+## When to write
 
 Included — cycles that produced something worth knowing:
 
@@ -55,11 +30,26 @@ Excluded:
 - Conversational ephemera with no durable cycle behind it.
 - Speculation the author isn't ready to commit to. Entries are immutable once recorded — compose only what you're ready to preserve.
 
-## Writing for future self
+Same topic within 24 hours is the same cycle — extend the existing entry. Past 24 hours or different topic, new entry. Topic match is a judgment call; default to new. Journal entries don't dedup the way notes do — same-topic entries on different days each capture one cycle, not one consolidated fact.
 
-Future self has lost the context. Names, paths, numbers, dates appear in full; references like "the thing we discussed earlier" or "as I said" lean on context the reader doesn't carry.
+## What an entry is
 
-## Tags
+One cycle, one entry. A cycle is one experiment, one decision, one session wrap, one dead-end ruled out, one intent-versus-outcome comparison. Two cycles get two entries — collapsing them destroys the chronology the journal exists to preserve.
+
+Entries are historically immutable. Once recorded, the original stays as written. A wrong entry is corrected by a new compensating entry that references and corrects it, not by replacing the original.
+
+## Entry anatomy
+
+Filename: `docs/journal/<YYYY-MM-DD>-<HHMM>-<slug>.md`. Sortable ISO date and time, then a lowercase slug of the H1 title. The filename owns the date; the body does not repeat it. Entry cross-references use the full filename (minus the `.md`) as the slug.
+
+Cycle shapes: experiment, decision, session-summary, dead-end, milestone. Every entry opens with context — what was current going in, what was unknown. From there, draw the sections the cycle calls for:
+
+- Attempted — what was tried, including the hypothesis or intent.
+- Outcome — what happened.
+- Decision — what was decided.
+- Next — the next step, or `none` if the cycle closed cleanly.
+
+Use the sections that fit; skip the rest. An experiment may want all four; a session-summary may want none of them.
 
 Every entry carries a `tags` array in its frontmatter. Three categories compose, applied in order:
 
@@ -67,12 +57,20 @@ Every entry carries a `tags` array in its frontmatter. Three categories compose,
 2. Domain tags — what the cycle was about. Existing vocabulary in active use: `hoplite`, `mcp`, `python`, `claude-code`, `skills`, `bash`, `architecture`, `design`. Query the corpus (`hoplite_match_nodes({"tagged": "<slug>"})` or grep `docs/journal/*.md` frontmatter) to see the current set. A new domain tag is justified only when no existing slug fits.
 3. Shape tags — optional. Capture the cycle shape when it shapes how the entry reads: `experiment`, `decision`, `dead-end`, `session-summary`, `milestone`. Used sparingly; only when the reader benefits from the framing.
 
-Three to six tags total — enough that the entry surfaces in tag queries, few enough that each earns its place. Slugs are kebab-case lowercase.
+Three to six tags total — enough that the entry surfaces in tag queries, few enough that each earns its place. Tag slugs are kebab-case lowercase.
 
 !`cat ${CLAUDE_PLUGIN_ROOT}/components/shape/artifact-structure.md`
 !`cat ${CLAUDE_PLUGIN_ROOT}/components/shape/frontmatter.md`
 !`cat ${CLAUDE_PLUGIN_ROOT}/components/hoplite/mcp-reference.md`
 !`cat ${CLAUDE_PLUGIN_ROOT}/components/prose/writing-prose.md`
+
+## Voice — writing for future self
+
+Future self has lost the context. Names, paths, numbers, dates appear in full; references like "the thing we discussed earlier" or "as I said" lean on context the reader doesn't carry.
+
+## After writing
+
+A brief acknowledgment and short summary tell the user the entry landed.
 
 ## Rhetorical context
 
