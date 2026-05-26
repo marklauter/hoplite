@@ -19,7 +19,10 @@ One to three sentences.
 - Body proves the summary — summary the lede, body the evidence.
 - Separates observation from interpretation — facts before meaning; two sentences or two sections mark the boundary.
 - Every claim wears an epistemic badge — observation, inference, or guess. Unlabeled guesses pass as fact.
-- Cross-references — `[[other-slug]]` inline; backlinks come from Grep.
+- Sentence-style headings — first word and proper nouns only; no title case.
+- Numbered lists for procedures, bullets for options, prose for reasoning.
+- Links — `[text](path)` with text that names the target; `[[other-slug]]` for cross-artifact references; backlinks come from Grep.
+- Skip bold and tables — they add noise to the markdown, making it hard to read; except in worked examples that demonstrate what to remove.
 
 ## Composition
 
@@ -37,15 +40,11 @@ One to three sentences.
 - Anticipate the reader's question — write what they need next, not what's next in your head.
 - Front-load important words — most informative first, in sentence and bullet.
 
-## Grammar
+## Punctuation
 
 - Em-dash (`—`) for parenthetical breaks, definitions, and appositives; not double hyphens.
 - Oxford comma — `nodes, edges, and properties` for lists of three or more.
 - Backticks for code, paths, identifiers, and CLI commands; fenced blocks with language tags for multi-line samples.
-- Sentence-style headings — first word and proper nouns only; no title case.
-- Numbered lists for procedures, bullets for options, prose for reasoning.
-- Skip bold and tables — except in worked examples that demonstrate what to remove.
-- Links: `[text](path)` with text that names the target; `[[slug]]` for cross-artifact references.
 
 ## Validation
 
