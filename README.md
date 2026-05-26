@@ -129,7 +129,7 @@ Hooks (`bootstrap-venv.py`, `check-frontmatter.py`) run under system Python, sep
 Layout:
 
 - `plugins/hoplite/mcp/` — the MCP server (Python). `src/hoplite/` holds the package; `tests/` holds the unit and smoke tests.
-- `plugins/hoplite/skills/` — `taking-notes` and `journaling`, each with a `SKILL.md`.
+- `plugins/hoplite/skills/` — `using-graph`, `taking-notes`, and `journaling`, each with a `SKILL.md`.
 - `plugins/hoplite/components/hoplite/` — `frontmatter.md` (the YAML contract) and `tool-reference.md` (the MCP tools, edges, vocabulary). Both skills cat both components in.
 - `plugins/hoplite/hooks/` — `hooks.json` plus the Python hook scripts (`bootstrap-venv.py`, `check-frontmatter.py`).
 
