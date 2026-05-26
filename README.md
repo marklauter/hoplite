@@ -1,22 +1,22 @@
 [![claude code](https://img.shields.io/badge/Claude%20Code-plugin-d97757?logo=anthropic)](https://docs.claude.com/en/docs/claude-code/plugins)
 [![license](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
-![hoplite](https://raw.githubusercontent.com/marklauter/hoplite/main/images/hoplite.small.png "hoplite")
+![hoplite](https://raw.githubusercontent.com/marklauter/hoplite/main/images/hoplite.small.png "Hoplite MCP")
 ![MSL Armory](https://raw.githubusercontent.com/marklauter/hoplite/main/images/msl.armory.small.png "MSL Armory")
 
-# hoplite
+# Hoplite MCP
 
 *Another weapon from the MSL Armory*
 
-Agentic note-taking with an in-memory knowledge graph over a vault of markdown documents.
+A knowledge graph over markdown documents. Claude Code MCP plugin that organizes your agent's thoughts.
 
 ## What hoplite is
 
-The vault is a directory of `.md` files under `docs/` with YAML frontmatter — Obsidian-compatible. Every document is a node; everything authored in frontmatter (`title`, `summary`, `tags`, `created`, `aliases`, plus any user-defined keys) becomes a property on that node.
+The vault is a directory of `.md` files with YAML frontmatter — fully Obsidian-compatible. At MCP server startup, hoplite builds an in-memory graph from the vault and exposes four query tools so agents can discover documents, traverse the graph, refresh after writing, and dump state for SQL debugging.
 
-At MCP server startup the walker parses each document's frontmatter into the property store, extracts `[[wikilinks]]` from the body and emits `mentions` edges, computes a MinHash signature per body and emits symmetric `related` edges above a similarity threshold, and tokenizes title, summary, and body into an in-memory SQLite FTS5 index for BM25 search.
+Content reads happen through the agent's built-in `Read` tool; writes happen through `Write` and `Edit`. There is no CRUD surface on hoplite itself.
 
-Agents query the graph through four MCP tools. Bodies live in the markdown files on disk — hoplite is the index, the markdown is the content. A debug-only SQLite dump renders the in-memory state as a property-graph schema you can explore with `sqlite3`.
+The corpus of `.md` files is the only persistent state in the system. Everything else — edges, MinHash signatures, the FTS5 text index, alias and casefold lookup tables — derives at startup and lives in RAM.
 
 ## Install
 
