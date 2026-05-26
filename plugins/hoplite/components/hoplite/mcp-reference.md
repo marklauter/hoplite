@@ -1,4 +1,4 @@
-## Hoplite — the knowledge graph and its tools
+## Hoplite — knowledge graph over markdown files
 
 Hoplite is a graph over the markdown vault at `docs/`. Each `.md` file is a document; YAML frontmatter at the top of each file feeds the index. Hoplite builds the graph in memory at MCP server startup and serves four tools so you can search, traverse, reindex, and dump for debugging.
 

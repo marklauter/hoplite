@@ -20,6 +20,8 @@ This folder holds the architectural spec for the runtime. The repo README covers
 
 ## Where else to look
 
-- [`plugins/hoplite/components/hoplite/tool-reference.md`](../../plugins/hoplite/components/hoplite/tool-reference.md) — the agent-loaded tool reference component, injected into `taking-notes` and `journaling` so the authoring skills also know the query surface.
-- [`plugins/hoplite/components/hoplite/frontmatter.md`](../../plugins/hoplite/components/hoplite/frontmatter.md) — the frontmatter contract component, injected into the same authoring skills.
+- [`plugins/hoplite/components/hoplite/mcp-reference.md`](../../plugins/hoplite/components/hoplite/mcp-reference.md) — the agent-loaded tool reference component, injected into `taking-notes` and `journaling` so the authoring skills also know the query surface.
+- [`plugins/hoplite/components/shape/frontmatter.md`](../../plugins/hoplite/components/shape/frontmatter.md) — the frontmatter contract component, injected into the same authoring skills.
+- [`plugins/hoplite/components/shape/artifact-structure.md`](../../plugins/hoplite/components/shape/artifact-structure.md) — document composition and template, injected into the same authoring skills.
+- [`plugins/hoplite/components/prose/writing-prose.md`](../../plugins/hoplite/components/prose/writing-prose.md) — title/summary/body virtues, composition, grammar, validation; injected into the same authoring skills.
 - [`plugins/hoplite/mcp/`](../../plugins/hoplite/mcp/) — server source. The implementation is the canonical reference for any behavior the spec doesn't cover.

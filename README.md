@@ -56,11 +56,11 @@ Linux distributions vary — `python3` resolves out of the box on most. If your 
 
 Three agent-facing skills compose with the knowledge graph:
 
-- `using-graph` — query the graph. Loads the tool reference and edge vocabulary only; use this when you want to search, traverse, reindex, or dump without loading the authoring workflow.
+- `graph-reference` — query the graph. Loads the tool reference and edge vocabulary only; use this when you want to search, traverse, reindex, or dump without loading the authoring workflow.
 - `taking-notes` — author atomic notes under `docs/notes/`, each capturing the current state of one idea.
 - `journaling` — author dated, append-only entries under `docs/journal/`.
 
-The `using-graph` skill is a thin wrapper over `components/hoplite/tool-reference.md`. The authoring skills (`taking-notes`, `journaling`) inject the same tool-reference component alongside the frontmatter contract and editorial principles — so they cover both writing the document and indexing it. One canonical source for the tool reference; multiple invocation paths.
+The `graph-reference` skill is a thin wrapper over `components/hoplite/mcp-reference.md`. The authoring skills (`taking-notes`, `journaling`) inject that same reference alongside `shape/artifact-structure.md`, `shape/frontmatter.md`, and `prose/writing-prose.md` — covering structure, frontmatter, query surface, and prose virtues. One canonical source per component; multiple invocation paths.
 
 ### MCP tools
 
@@ -144,8 +144,10 @@ If the MCP server times out on first install on Windows, the most common cause i
 Layout:
 
 - `plugins/hoplite/mcp/` — the MCP server (Python). `src/hoplite/` holds the package; `tests/` holds the unit and smoke tests.
-- `plugins/hoplite/skills/` — `using-graph`, `taking-notes`, and `journaling`, each with a `SKILL.md`.
-- `plugins/hoplite/components/hoplite/` — `frontmatter.md` (the YAML contract) and `tool-reference.md` (the MCP tools, edges, vocabulary). Both skills cat both components in.
+- `plugins/hoplite/skills/` — `graph-reference`, `taking-notes`, and `journaling`, each with a `SKILL.md`.
+- `plugins/hoplite/components/shape/` — `artifact-structure.md` (document composition + template) and `frontmatter.md` (the YAML contract).
+- `plugins/hoplite/components/hoplite/` — `mcp-reference.md` (the MCP tools, edges, vocabulary).
+- `plugins/hoplite/components/prose/` — `writing-prose.md` (title/summary/body virtues, composition, grammar, validation).
 - `plugins/hoplite/hooks/` — `hooks.json` plus the Python hook scripts (`bootstrap-venv.py`, `check-frontmatter.py`).
 
 Running tests:
@@ -166,5 +168,7 @@ Adding a skill: create `plugins/hoplite/skills/<skill-name>/SKILL.md`, then `/pl
 - [docs/hoplite/architecture.md](docs/hoplite/architecture.md) — corpus, graph, walker, FTS5, MinHash, dump schema, error model.
 - [docs/hoplite/tool-api.md](docs/hoplite/tool-api.md) — MCP tool signatures and semantics.
 - [docs/hoplite/roadmap.md](docs/hoplite/roadmap.md) — features deferred past day one.
-- [plugins/hoplite/components/hoplite/tool-reference.md](plugins/hoplite/components/hoplite/tool-reference.md) — the tool reference injected by the authoring skills.
-- [plugins/hoplite/components/hoplite/frontmatter.md](plugins/hoplite/components/hoplite/frontmatter.md) — the frontmatter contract injected by the authoring skills.
+- [plugins/hoplite/components/shape/artifact-structure.md](plugins/hoplite/components/shape/artifact-structure.md) — document composition and template, injected by the authoring skills.
+- [plugins/hoplite/components/shape/frontmatter.md](plugins/hoplite/components/shape/frontmatter.md) — the frontmatter contract, injected by the authoring skills.
+- [plugins/hoplite/components/hoplite/mcp-reference.md](plugins/hoplite/components/hoplite/mcp-reference.md) — the MCP tool reference, injected by all three skills.
+- [plugins/hoplite/components/prose/writing-prose.md](plugins/hoplite/components/prose/writing-prose.md) — title/summary/body virtues, composition, grammar, validation; injected by the authoring skills.

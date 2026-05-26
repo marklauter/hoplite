@@ -16,7 +16,7 @@ catches the structural issues that are cheap to detect:
 Wrong types, typos in keys, malformed YAML — left to the indexer.
 
 The canonical example shown in the advisory is read at hook-invocation time from
-``components/hoplite/frontmatter.md`` (the same fragment the writing skills inject),
+``components/shape/frontmatter.md`` (the same fragment the writing skills inject),
 so the advisory and the skill teach exactly the same shape.
 """
 
@@ -28,21 +28,21 @@ WATCHED_TOOLS = {"Write", "Edit", "MultiEdit"}
 REQUIRED_FIELDS = {"title", "summary", "tags", "created", "aliases"}
 
 # Hook lives at <plugin_root>/hooks/check-frontmatter.py;
-# component lives at <plugin_root>/components/hoplite/frontmatter.md.
+# component lives at <plugin_root>/components/shape/frontmatter.md.
 _PLUGIN_ROOT = Path(__file__).resolve().parent.parent
-_COMPONENT_PATH = _PLUGIN_ROOT / "components" / "hoplite" / "frontmatter.md"
+_COMPONENT_PATH = _PLUGIN_ROOT / "components" / "shape" / "frontmatter.md"
 
 ADVISORY_TEMPLATE = """\
 [frontmatter-check] {path} — {issue}.
 
 Hoplite skips documents with malformed frontmatter at reindex. The canonical shape
-(from components/hoplite/frontmatter.md):
+(from components/shape/frontmatter.md):
 
 {example}
 """
 
 _FALLBACK_EXAMPLE = (
-    "(canonical shape not found — see components/hoplite/frontmatter.md)"
+    "(canonical shape not found — see components/shape/frontmatter.md)"
 )
 
 

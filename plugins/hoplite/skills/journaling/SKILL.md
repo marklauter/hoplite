@@ -62,13 +62,10 @@ Context/Attempted/Outcome/Decision/Next fits experiment-style entries; session-s
 
 ## Shape and editorial guidance
 
-!`cat ${CLAUDE_PLUGIN_ROOT}/components/editorial-principles/template.md`
-!`cat ${CLAUDE_PLUGIN_ROOT}/components/editorial-principles/title.md`
-!`cat ${CLAUDE_PLUGIN_ROOT}/components/editorial-principles/summary.md`
-!`cat ${CLAUDE_PLUGIN_ROOT}/components/editorial-principles/body.md`
-!`cat ${CLAUDE_PLUGIN_ROOT}/components/hoplite/frontmatter.md`
-!`cat ${CLAUDE_PLUGIN_ROOT}/components/hoplite/tool-reference.md`
-!`cat ${CLAUDE_PLUGIN_ROOT}/components/editorial-principles/editorial-principles.md`
+!`cat ${CLAUDE_PLUGIN_ROOT}/components/shape/artifact-structure.md`
+!`cat ${CLAUDE_PLUGIN_ROOT}/components/shape/frontmatter.md`
+!`cat ${CLAUDE_PLUGIN_ROOT}/components/hoplite/mcp-reference.md`
+!`cat ${CLAUDE_PLUGIN_ROOT}/components/prose/writing-prose.md`
 
 ## Rhetorical context
 

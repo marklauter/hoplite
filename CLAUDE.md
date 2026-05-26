@@ -7,9 +7,10 @@ README covers install. Spec corpus lives at `docs/hoplite/`.
 ## Layout
 
 - `plugins/hoplite/mcp/` — MCP server source (Python, FastMCP, src/tests layout).
-- `plugins/hoplite/skills/{using-graph,taking-notes,journaling}/` — agent-facing skills. `using-graph` is a thin wrapper over the tool-reference; the two authoring skills inject the components below.
-- `plugins/hoplite/components/hoplite/` — shared markdown fragments: `frontmatter.md` (the YAML contract) and `tool-reference.md` (the MCP tools, edges, vocabulary).
-- `plugins/hoplite/components/editorial-principles/` — slim editorial spine: `template.md`, `title.md`, `summary.md`, `body.md`, `editorial-principles.md`. Injected by the authoring skills.
+- `plugins/hoplite/skills/{graph-reference,taking-notes,journaling}/` — agent-facing skills. `graph-reference` is a thin wrapper over the MCP tool reference; the two authoring skills inject the components below.
+- `plugins/hoplite/components/shape/` — `artifact-structure.md` (document composition + template) and `frontmatter.md` (the YAML contract).
+- `plugins/hoplite/components/hoplite/` — `mcp-reference.md` (the MCP tools, edges, vocabulary).
+- `plugins/hoplite/components/prose/` — `writing-prose.md` (title/summary/body virtues, composition, grammar, validation).
 - `plugins/hoplite/hooks/` — `SessionStart` bootstrap (`bootstrap-venv.py`) and `PostToolUse` frontmatter validator (`check-frontmatter.py`).
 - `docs/hoplite/` — spec corpus. Architecture, tool API, roadmap.
 - `docs/notes/` and `docs/journal/` — the agent's own corpus. Notes from the design history live here as historical record; agents are free to add new ones.

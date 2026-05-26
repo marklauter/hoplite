@@ -10,6 +10,10 @@ aliases: []
 
 Use plain Python (stdio MCP server, no compiled binary) for the first MCP-server prototype inside the skills plugin. Source ships in the plugin directory; users read every line before granting trust.
 
+## Resolution
+
+[Locked in] Shape C — native Python, bash deprecated. The MCP server is the only implementation; bash scripts (`record-note.sh`, `record-entry.sh`) are gone. Hoplite ships under `plugins/hoplite/mcp/` as the source-of-truth runtime; see [architecture.md](../hoplite/architecture.md) for the implementation shape that landed.
+
 ## What got ruled out and why
 
 - **TypeScript / Node**. The npm supply chain is the dominant attack vector for JS tooling. Anthropic moved the Claude Code CLI off Node distribution onto a standalone native binary — the move was itself a signal that the org takes the surface seriously.
@@ -88,5 +92,3 @@ The MCP server runs as a per-CLI subprocess on stdio transport. Every open Claud
 ## Open follow-ups
 
 - Confirm the Python MCP SDK's protocol-version compatibility with the Claude Code plugin loader.
-- Decide whether bash scripts get deprecated once the MCP path is solid, or stay parallel for CLI users.
-- The nested env-var limitation noted in `skill-composition.md` does not affect MCP tool I/O — MCP and `!cat` injection address different problems and coexist cleanly.
