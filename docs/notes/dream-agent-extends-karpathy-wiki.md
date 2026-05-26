@@ -1,6 +1,6 @@
 ---
 title: Dream agent extends Karpathy's LLM wiki with synthesis
-summary: Background agent samples the vault, traverses neighborhoods, and writes branching landing notes — pushing Karpathy's lint workflow from suggestion to synthesis, with dream-authored content isolated under docs/dreams/ and a dream tag.
+summary: Background agent samples the corpus, traverses neighborhoods, and writes branching landing notes — pushing Karpathy's lint workflow from suggestion to synthesis, with dream-authored content isolated under docs/dreams/ and a dream tag.
 tags: [note, architecture, roadmap, hoplite, dream]
 created: 2026-05-25
 aliases: []

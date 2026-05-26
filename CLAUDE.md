@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Claude Code marketplace `msl.hoplite` shipping one plugin, `hoplite`, at `plugins/hoplite/`. The plugin bundles the Hoplite MCP server (knowledge graph over markdown) with two agent-facing skills (`taking-notes`, `journaling`) that author into the vault and inject the hoplite tool reference from `components/hoplite/`.
+Claude Code marketplace `msl.hoplite` shipping one plugin, `hoplite`, at `plugins/hoplite/`. The plugin bundles the Hoplite MCP server (knowledge graph over markdown) with two agent-facing skills (`taking-notes`, `journaling`) that author into the corpus and inject the hoplite tool reference from `components/hoplite/`.
 
 README covers install. Spec corpus lives at `docs/hoplite/`.
 

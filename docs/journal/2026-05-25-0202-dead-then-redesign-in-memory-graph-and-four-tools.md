@@ -35,7 +35,7 @@ A sub-agent's clarification question about parsing the title from a body's line-
   - **MCP surface drops CRUD tools** — agents have Write, Edit, Bash through Claude Code; they can write `.md` files directly. The skill teaches the file shape and the wikilink rules.
   - **All retrieval tools eliminated; Hoplite is dataview over documents** — `invoke_node` and `read_node` die. Hoplite stops being a content-retrieval system. Agents discover candidates through `match_nodes` and `traverse_nodes` (returning paths, summaries, tags — no bodies), then use Claude's built-in `Read` to fetch content.
 - 2026-05-25 01:44 — "in-memory graph + 4-tool query surface". The implementation commit. The new shape lands as working code. The 4 tools: `hoplite_match_nodes`, `hoplite_traverse_nodes`, `hoplite_reindex`, `hoplite_dump_index`.
-- 2026-05-25 02:02 — "vault = <cwd>/docs; fix tag casefold, fts5 escape, traverse casefold, crlf frontmatter". The bug sweep after the first working state. Vault root resolves to `<cwd>/docs` rather than an env-var; tag matching casefolds for lookup; FTS5 special-character escape; traversal target lookup casefolds; CRLF-line-ending frontmatter parses correctly.
+- 2026-05-25 02:02 — "vault = <cwd>/docs; fix tag casefold, fts5 escape, traverse casefold, crlf frontmatter". The bug sweep after the first working state. Corpus root resolves to `<cwd>/docs` rather than an env-var; tag matching casefolds for lookup; FTS5 special-character escape; traversal target lookup casefolds; CRLF-line-ending frontmatter parses correctly.
 
 ## What the new shape looks like
 
@@ -67,7 +67,7 @@ For a long-running MCP server (start once per session, run for hours), the 50 s 
 
 ## Decisions captured
 
-- Hoplite is dataview over the vault. Inspired by the Obsidian Dataview plugin pattern: the corpus is the source of truth; the query layer is a derived view that returns landings, not content.
+- Hoplite is dataview over the corpus. Inspired by the Obsidian Dataview plugin pattern: the corpus is the source of truth; the query layer is a derived view that returns landings, not content.
 - All derived state in memory. The only persistence is the `.md` files. This retires the cache-invalidation problem the SQLite-hybrid still had under the hood — when there is no cache, there is no invalidation.
 - `:memory:` SQLite as a runtime detail. SQLite returns as a dependency, but only as an in-memory FTS5 engine for BM25 scoring. Files remain the source of truth; SQLite is a derived index that rebuilds at startup.
 - Reindex defaults to auto-detect. The MCP server stat-and-content-hashes documents on each query and rebuilds the index when divergence shows. `hoplite_reindex()` exists as an explicit-trigger escape hatch.

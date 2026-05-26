@@ -8,7 +8,7 @@
   "plugins": [
     {
       "name": "hoplite",
-      "description": "Agentic note-taking with an in-memory knowledge graph over a vault of markdown documents",
+      "description": "A knowledge graph over markdown documents. Claude Code MCP plugin that organizes your agent's thoughts.",
       "author": {
         "name": "MSL"
       },

@@ -1,6 +1,6 @@
 ## Hoplite
 
-Hoplite is a graph over the markdown vault at `docs/`. Each `.md` file is a document; YAML frontmatter at the top of each file feeds the index. Hoplite builds the graph in memory at MCP server startup.
+Hoplite is a graph over the markdown corpus at `docs/`. Each `.md` file is a document; YAML frontmatter at the top of each file feeds the index. Hoplite builds the graph in memory at MCP server startup.
 
 Hoplite is the index; your built-in `Read`, `Write`, `Edit`, and `Bash rm` tools are the content surface.
 
