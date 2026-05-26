@@ -42,11 +42,9 @@ Every entry carries a `tags` array in its frontmatter. Three categories of tags 
 
 Aim for three to six tags total — enough that the entry surfaces in tag queries, few enough that each tag earns its place. Slugs are kebab-case lowercase.
 
-## Save the file — path and template
+## Save the file
 
 Entries are saved at `docs/journal/<YYYY-MM-DD>-<HHMM>-<slug>.md` via the Write tool — sortable ISO date and time, then a lowercase slug of the H1 title. Use the current date and time at the write moment. Glob the target filename first; if a same-minute same-slug file exists, choose a more specific title or wait a minute. After saving, confirm with a minimal acknowledgment — for example, `entry saved: <filename>` — and let the file stand. No recital or recap.
-
-!`cat ${CLAUDE_PLUGIN_ROOT}/components/editorial-principles/template.md`
 
 The filename owns the date. Cross-references to entries use the full date-prefixed slug — `[[2026-05-20-1430-cache-investigation]]`. Cross-references to notes use the note slug — `[[cache-ttl-300s]]`.
 
@@ -62,6 +60,9 @@ For a question that gained an answer mid-cycle: pivot the title from interrogati
 
 Context/Attempted/Outcome/Decision/Next fits experiment-style entries; session-summary, decision, and milestone entries take whatever shape fits the cycle.
 
+## Shape and editorial guidance
+
+!`cat ${CLAUDE_PLUGIN_ROOT}/components/editorial-principles/template.md`
 !`cat ${CLAUDE_PLUGIN_ROOT}/components/editorial-principles/title.md`
 !`cat ${CLAUDE_PLUGIN_ROOT}/components/editorial-principles/summary.md`
 !`cat ${CLAUDE_PLUGIN_ROOT}/components/editorial-principles/body.md`

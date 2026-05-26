@@ -49,9 +49,11 @@ Every note carries a `tags` array in its frontmatter. Three categories of tags c
 
 Aim for three to six tags total — enough that the note surfaces in tag queries, few enough that each tag earns its place. Slugs are kebab-case lowercase (`graph-db`, not `Graph DB`).
 
-## Save the file — path and template
+## Save the file
 
 Notes are saved at `docs/notes/<slug>.md` where `<slug>` is a lowercase slug of the H1 title. Glob the target path first to learn whether the note exists. For a new note, use Write. For an existing note, use Edit to extend the body — adding content needs no approval. Removing content, or replacing the file wholesale, requires user approval. After saving, confirm with a minimal acknowledgment — for example, `note saved: <slug>.md`. No recital or recap.
+
+## Shape and editorial guidance
 
 !`cat ${CLAUDE_PLUGIN_ROOT}/components/editorial-principles/template.md`
 !`cat ${CLAUDE_PLUGIN_ROOT}/components/editorial-principles/title.md`
