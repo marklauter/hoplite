@@ -5,19 +5,11 @@ description: Use when the user asks to log this, journal this, add a journal ent
 
 # Journaling
 
-A developer journal is the durable, append-only, chronological record of an engineering project's progress — what was attempted, what was learned, what was decided.
-
-## Why the journal matters
-
-Code records the current state; the journal records how it got there. Notes record the current understanding of a topic; the journal records the cycle that produced that understanding — including the abandoned approaches and hypotheses that didn't survive contact with reality. Without the journal, the design path disappears and the same dead ends get walked again.
-
-The journal is the only artifact in the corpus where intent precedes outcome. Recording the hypothesis after the result is known turns every prediction into hindsight — the journal exists to defeat that.
-
-The journal answers the question — why is the system shaped like this?
+A journal is the append-only, episodic narrative of an engineering project — what was attempted, learned, decided. Notes hold the current state; the journal preserves the path so future readers see why each tradeoff was chosen. Record intent before outcome — hypotheses written after the answer is known are hindsight.
 
 ## When to write
 
-Included — cycles that produced something worth knowing:
+Included:
 
 - Observations. Something noticed worth preserving.
 - Decisions. A choice made and the reasoning behind it.
@@ -28,9 +20,9 @@ Excluded:
 
 - Cross-repo facts, user profile, persistent preferences. Memory holds those.
 - Conversational ephemera with no durable cycle behind it.
-- Speculation the author isn't ready to commit to. Entries are immutable once recorded — compose only what you're ready to preserve.
+- Speculation the author isn't ready to commit to.
 
-Same topic within 24 hours is the same cycle — extend the existing entry. Past 24 hours or different topic, new entry. Topic match is a judgment call; default to new. Journal entries don't dedup the way notes do — same-topic entries on different days each capture one cycle, not one consolidated fact.
+Same topic within 24 hours is the same cycle — extend the existing entry. Past 24 hours or different topic, new entry. Topic match is a judgment call; default to new. Journal entries are per-cycle — same-topic entries on different days each capture one cycle.
 
 ## After writing
 
@@ -38,9 +30,9 @@ A brief acknowledgment and short summary tell the user the entry landed.
 
 ## What an entry is
 
-One cycle, one entry. A cycle is one experiment, one decision, one session wrap, one dead-end ruled out, one intent-versus-outcome comparison. Two cycles get two entries — collapsing them destroys the chronology the journal exists to preserve.
+One cycle, one entry. A cycle is one experiment, one decision, one session wrap, one dead-end ruled out, one intent-versus-outcome comparison. Two cycles require two entries.
 
-Entries are historically immutable. Once recorded, the original stays as written. A wrong entry is corrected by a new compensating entry that references and corrects it, not by replacing the original.
+Once written, the entry is immutable. Use compensating entries for new discoveries and correct errors in-place.
 
 ## Entry anatomy
 
@@ -68,19 +60,8 @@ Three to six tags total — enough that the entry surfaces in tag queries, few e
 !`cat ${CLAUDE_PLUGIN_ROOT}/components/hoplite/mcp-reference.md`
 !`cat ${CLAUDE_PLUGIN_ROOT}/components/prose/writing-prose.md`
 
-## Voice — writing for future self
+## Voice
 
-Future self has lost the context. Names, paths, numbers, dates appear in full; references like "the thing we discussed earlier" or "as I said" lean on context the reader doesn't carry.
+Write for future self — the author later, a future agent, or a teammate reconstructing the design path. The reader has lost the shared context: names, paths, numbers, dates appear in full; phrases like "the thing we discussed earlier" rely on context the reader doesn't carry.
 
-## Rhetorical context
-
-- Writer: contributor
-- Voice: plainspoken — direct, terse, contractions OK, first-person acceptable; no puns, no performative warmth, no influencer cadence
-- Ethos: expert
-- Stance: neutral
-- Audience: future self — the author later, a future agent picking up the work, or a teammate reconstructing the design path
-- Subject: one session — what was attempted, what happened, what was decided
-- Genre: journal
-- Tone: professional, even-keeled
-- Register: journal — observation-based, chronological, append-only, first-person acceptable
-- Intent: preserve the chronological record of cycles so future readers can reconstruct intent, outcome, and the design path the work moved through
+Plainspoken — direct, terse, contractions OK, first-person acceptable. Professional and even-keeled; no puns, no performative warmth, no influencer cadence.
