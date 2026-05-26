@@ -21,12 +21,12 @@ One to three sentences.
 - Every claim wears an epistemic badge — observation, inference, or guess. Unlabeled guesses pass as fact.
 - Cross-references adjacent artifacts — `[[other-slug]]` inline; backlinks come from Grep.
 
-## Composition — authoring virtues
+## Composition
 
-- Say what is, not what it isn't — positive constructions deliver, negative ones gesture.
+- Say what is, not what it isn't — except in contrastive pairs that sharpen the positive claim.
 - Active voice over passive — agency stays with the actor; "the user signs in," not "sign-in is performed by the user."
 - Present tense for current state — "the function returns," not "the function will return." Past tense fits journal observations.
-- Second person for instructions — address the reader as "you"; avoid "the user" or "one."
+- Second person for instructions — address the reader as "you."
 - Concrete over abstract — "the cache" beats "the caching mechanism" unless the distinction is the point.
 - One idea per sentence — split complex sentences.
 - Strong verbs — over nominalizations ("decide" beats "make a decision") and verb-plus-adverb ("sprint" beats "run quickly").
@@ -37,7 +37,7 @@ One to three sentences.
 - Anticipate the reader's question — write what they need next, not what's next in your head.
 - Front-load important words — most informative first, in sentence and bullet.
 
-## Grammar and structure
+## Grammar
 
 - Em-dash (`—`) for parenthetical breaks, definitions, and appositives; not double hyphens.
 - Oxford comma — `nodes, edges, and properties` for lists of three or more.
@@ -48,7 +48,7 @@ One to three sentences.
 - Link form: `[text](path)`; the link text names the target, never `click here`.
 - Cross-artifact references: `[[slug]]` wiki-style.
 
-## Validation — self-check before saving
+## Validation
 
 - Lede check — first paragraph alone names what the artifact is for.
 - Negation grep — `not`, `don't`, `doesn't`, `won't`, `can't`, `never`, `avoid` → positive rewrite.
