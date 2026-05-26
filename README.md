@@ -12,7 +12,7 @@ A knowledge graph over markdown documents. Claude Code MCP plugin that organizes
 
 ## What hoplite is
 
-The vault is a directory of `.md` files with YAML frontmatter — fully Obsidian-compatible. At MCP server startup, hoplite builds an in-memory graph from the vault and exposes four query tools so agents can discover documents, traverse the graph, refresh after writing, and dump state for SQL debugging.
+The corpus is a directory of `.md` files with structured headers — Obsidian-compatible YAML frontmatter. Hoplite builds an in-memory graph from the corpus during Claude session start and exposes four query tools so agents can discover documents, traverse the graph, refresh after writing, and dump state as SQLite for debugging.
 
 Content reads happen through the agent's built-in `Read` tool; writes happen through `Write` and `Edit`. There is no CRUD surface on hoplite itself.
 
