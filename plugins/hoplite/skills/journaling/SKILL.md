@@ -22,15 +22,11 @@ Excluded:
 - Conversational ephemera with no durable cycle behind it.
 - Speculation the author isn't ready to commit to.
 
-Same topic within 24 hours is the same cycle — extend the existing entry. Past 24 hours or different topic, new entry. Topic match is a judgment call; default to new. Journal entries are per-cycle — same-topic entries on different days each capture one cycle.
-
-## After writing
-
-A brief acknowledgment and short summary tell the user the entry landed.
+Same topic within 24 hours is the same cycle — extend the existing entry. Past 24 hours or different topic, new entry. Topic match is a judgment call; default to new.
 
 ## What an entry is
 
-One cycle, one entry. A cycle is one experiment, one decision, one session wrap, one dead-end ruled out, one intent-versus-outcome comparison. Two cycles require two entries.
+One cycle, one entry. Two cycles require two entries.
 
 Once written, the entry is immutable. Use compensating entries for new discoveries and correct errors in-place.
 
@@ -47,10 +43,10 @@ Cycle shapes: experiment, decision, session-summary, dead-end, milestone. Every 
 
 Use the sections that fit; skip the rest. Experiments may want all four; session-summaries may want none.
 
-Every entry carries a `tags` array in its frontmatter. Three categories, in order:
+Every entry carries a `tags` array. Three categories, in order:
 
-1. Type tag — required: `journal`. Distinguishes from notes (`note`), references, decisions, and other artifact types that may share the corpus.
-2. Domain tags — what the cycle was about. Existing vocabulary in active use: `hoplite`, `mcp`, `python`, `claude-code`, `skills`, `bash`, `architecture`, `design`. Query the corpus (`hoplite_match_nodes({"tagged": "<slug>"})` or grep `docs/journal/*.md` frontmatter) to see the current set. A new domain tag is justified only when no existing slug fits.
+1. Type tag — required: `journal`. Distinguishes from notes (`note`), references, decisions, and other artifact types.
+2. Domain tags — what the cycle was about. Query the corpus (`hoplite_match_nodes({"tagged": "<slug>"})` or grep `docs/journal/*.md` frontmatter) to see the active vocabulary. A new domain tag is justified only when no existing slug fits.
 3. Shape tags — optional. Capture the cycle shape: `experiment`, `decision`, `dead-end`, `session-summary`, `milestone`. Used sparingly.
 
 Three to six tags total — enough that the entry surfaces in tag queries, few enough that each earns its place.
