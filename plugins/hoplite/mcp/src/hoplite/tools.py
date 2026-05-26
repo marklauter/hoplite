@@ -10,7 +10,9 @@ from __future__ import annotations
 from collections import deque
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Literal, TypedDict
+from typing import Annotated, Literal
+
+from pydantic import BaseModel, Field
 
 from hoplite import filtering, parser
 from hoplite import graph as graph_module
@@ -28,38 +30,60 @@ __all__ = [
 ]
 
 
-class MatchPredicate(TypedDict, total=False):
-    text: str
-    tagged: str
+class MatchPredicate(BaseModel):
+    text: str | None = Field(
+        default=None,
+        description=(
+            "BM25 text query over document body and summary. Whitespace tokens are AND-combined."
+        ),
+    )
+    tagged: str | None = Field(
+        default=None,
+        description=("Tag expression like 'note', 'note & mcp', or '(journal | note) & !draft'."),
+    )
 
 
-class TraversePredicate(TypedDict, total=False):
-    edge_types: list[str]
-    min_confidence: float
-    direction: Literal["out", "in", "both"]
-    tagged: str
+class TraversePredicate(BaseModel):
+    edge_types: list[str] | None = Field(
+        default=None,
+        description="Edge kinds to follow: 'mentions', 'related', or both if omitted.",
+    )
+    min_confidence: float = Field(
+        default=0.0,
+        ge=0.0,
+        le=1.0,
+        description="Minimum similarity confidence for 'related' edges (Jaccard score).",
+    )
+    direction: Literal["out", "in", "both"] = Field(
+        default="out",
+        description="Edge direction relative to the current node.",
+    )
+    tagged: str | None = Field(
+        default=None,
+        description="Tag expression to post-filter reached nodes.",
+    )
 
 
 _graph: Graph | None = None
-_vault_root: Path | None = None
+_corpus_root: Path | None = None
 _hoplite_root: Path | None = None
 
 
 def set_root(cwd: Path) -> None:
-    """Configure the vault and Hoplite state directories from ``cwd``.
+    """Configure the corpus and Hoplite state directories from ``cwd``.
 
-    The vault lives at ``cwd/docs`` — the walker indexes every ``.md`` under it.
-    Hoplite-derived state lives at ``cwd/.hoplite`` — alongside the vault, not
+    The corpus lives at ``cwd/docs`` — the walker indexes every ``.md`` under it.
+    Hoplite-derived state lives at ``cwd/.hoplite`` — alongside the corpus, not
     inside it. Resets the cached graph so the next tool call rebuilds.
     """
-    global _graph, _vault_root, _hoplite_root
-    _vault_root = cwd / "docs"
+    global _graph, _corpus_root, _hoplite_root
+    _corpus_root = cwd / "docs"
     _hoplite_root = cwd / ".hoplite"
     _graph = None
 
 
-def _vault() -> Path:
-    return _vault_root if _vault_root is not None else Path.cwd() / "docs"
+def _corpus() -> Path:
+    return _corpus_root if _corpus_root is not None else Path.cwd() / "docs"
 
 
 def _hoplite_state() -> Path:
@@ -69,7 +93,7 @@ def _hoplite_state() -> Path:
 def _get_graph() -> Graph:
     global _graph
     if _graph is None:
-        _graph = graph_module.walk(_vault())
+        _graph = graph_module.walk(_corpus())
     return _graph
 
 
@@ -92,12 +116,15 @@ def _edge_confidence(graph: Graph, edge: Edge) -> float | None:
         return None
 
 
-def match_nodes(predicate: MatchPredicate, k: int = 5) -> list[Hit]:
+def match_nodes(
+    predicate: MatchPredicate,
+    k: Annotated[int, Field(ge=1, description="Maximum hits to return.")] = 5,
+) -> list[Hit]:
     """Search the corpus. BM25 over body and summary, optional tag predicate post-filter."""
     if k < 1:
         raise ValueError(f"k must be >= 1; got {k}")
-    text = predicate.get("text", "").strip()
-    tagged = predicate.get("tagged", "").strip()
+    text = (predicate.text or "").strip()
+    tagged = (predicate.tagged or "").strip()
     if not text and not tagged:
         raise ValueError("predicate must include at least one of `text` or `tagged`")
 
@@ -157,16 +184,16 @@ def match_nodes(predicate: MatchPredicate, k: int = 5) -> list[Hit]:
 def traverse_nodes(
     from_: str,
     predicate: TraversePredicate | None = None,
-    depth: int = 1,
+    depth: Annotated[int, Field(ge=1, description="BFS depth from the origin.")] = 1,
 ) -> list[TraversalHit]:
     """BFS walk from a starting document. Returns hits at distances 1..depth."""
     if depth < 1:
         raise ValueError(f"depth must be >= 1; got {depth}")
-    predicate = predicate or {}
-    edge_types = set(predicate.get("edge_types", []))
-    min_confidence = predicate.get("min_confidence", 0.0)
-    direction = predicate.get("direction", "out")
-    tagged = predicate.get("tagged", "").strip()
+    pred = predicate or TraversePredicate()
+    edge_types = set(pred.edge_types or [])
+    min_confidence = pred.min_confidence
+    direction = pred.direction
+    tagged = (pred.tagged or "").strip()
     tag_pred = parser.parse_predicate(tagged) if tagged else None
 
     graph = _get_graph()
@@ -257,10 +284,10 @@ def _neighbors(
 def reindex() -> WriteResult:
     """Rebuild the in-memory graph from the corpus."""
     global _graph
-    vault = _vault()
-    _graph = graph_module.walk(vault)
+    corpus = _corpus()
+    _graph = graph_module.walk(corpus)
     return WriteResult(
-        path=str(vault.resolve()),
+        path=str(corpus.resolve()),
         warnings=list(_graph.warnings) if _graph.warnings else None,
     )
 

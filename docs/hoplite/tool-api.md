@@ -8,7 +8,7 @@ aliases: []
 
 ## Overview
 
-Server name: `hoplite_mcp` (Python module convention `{service}_mcp`).
+Server name: `graph_mcp` (Python module convention `{service}_mcp`; the plugin namespace already carries the `hoplite` product identity, so the server names its capability).
 
 Four agent-facing tools, all prefixed `hoplite_` to avoid collision with built-in tools and other MCP servers. Two for query, one for maintenance, one for debug.
 

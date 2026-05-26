@@ -45,3 +45,15 @@ typeCheckingMode = "strict"
 pythonVersion = "3.10"
 venvPath = "."
 venv = ".venv"
+
+# Test files exercise pytest fixtures and hypothesis strategies, neither of
+# which ships pyright-friendly type stubs. Silence those categories of noise
+# in tests/ only; src/ stays in strict mode. Real type errors
+# (reportAssignmentType, reportArgumentType, etc.) still surface here.
+[[tool.pyright.executionEnvironments]]
+root = "tests"
+reportUnknownMemberType = "none"
+reportUnknownVariableType = "none"
+reportUnknownArgumentType = "none"
+reportUntypedFunctionDecorator = "none"
+reportMissingImports = "none"

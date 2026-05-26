@@ -1,4 +1,4 @@
-"""End-to-end smoke test: spawn the MCP server against a tmp vault and exercise the 4 tools.
+"""End-to-end smoke test: spawn the MCP server against a tmp corpus and exercise the 4 tools.
 
 Builds a small corpus with mandatory frontmatter, a wikilink between two notes,
 a forward reference to a missing target (ghost materialization), and a shared
@@ -40,8 +40,8 @@ aliases: []
 """
 
 
-def _write_vault(root: Path) -> None:
-    """Build a 3-document vault under ``root/docs/`` with the shape the smoke test expects."""
+def _write_corpus(root: Path) -> None:
+    """Build a 3-document corpus under ``root/docs/`` with the shape the smoke test expects."""
     notes = root / "docs" / "notes"
     notes.mkdir(parents=True, exist_ok=True)
     (notes / "alpha.md").write_text(
@@ -75,18 +75,18 @@ def _write_vault(root: Path) -> None:
     )
 
 
-async def _drive_server(vault: Path) -> None:
+async def _drive_server(root: Path) -> None:
     params = StdioServerParameters(
         command=sys.executable,
         args=["-m", "hoplite.server"],
-        cwd=str(vault),
+        cwd=str(root),
     )
     async with (
         stdio_client(params) as (read, write),
         ClientSession(read, write) as session,
     ):
         init = await session.initialize()
-        assert init.serverInfo.name == "hoplite_mcp"
+        assert init.serverInfo.name == "graph_mcp"
 
         tool_list = await session.list_tools()
         names = {t.name for t in tool_list.tools}
@@ -125,7 +125,7 @@ async def _drive_server(vault: Path) -> None:
 
         # dump_index — snapshot to a temp file and inspect.
         # .hoplite/ sits at the cwd level, alongside docs/, not inside it.
-        dump_destination = vault / ".hoplite" / "index.sqlite"  # `vault` here is the cwd, not docs/
+        dump_destination = root / ".hoplite" / "index.sqlite"
         dump_result = await session.call_tool(
             "hoplite_dump_index",
             {"path": str(dump_destination)},
@@ -204,5 +204,5 @@ def _parse_json(result: object) -> Any:
 
 
 def test_server_end_to_end(tmp_path: Path) -> None:
-    _write_vault(tmp_path)
+    _write_corpus(tmp_path)
     asyncio.run(_drive_server(tmp_path))

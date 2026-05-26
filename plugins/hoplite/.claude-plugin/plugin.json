@@ -1,7 +1,7 @@
 {
   "name": "hoplite",
   "version": "1.0.0",
-  "description": "Agentic note-taking with an in-memory knowledge graph over a vault of markdown documents",
+  "description": "Agentic note-taking with an in-memory knowledge graph over a corpus of markdown documents",
   "author": {
     "name": "MSL.Armory"
   },
@@ -17,7 +17,7 @@
     "llm wiki"
   ],
   "mcpServers": {
-    "hoplite": {
+    "graph_mcp": {
       "command": "python3",
       "args": ["${CLAUDE_PLUGIN_ROOT}/mcp/launch.py"]
     }

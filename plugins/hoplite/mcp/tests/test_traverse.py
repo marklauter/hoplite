@@ -25,6 +25,7 @@ import pytest
 from hoplite import tools
 from hoplite.graph import Graph
 from hoplite.models import Document, Edge
+from hoplite.tools import TraversePredicate
 
 
 @pytest.fixture(autouse=True)
@@ -227,13 +228,21 @@ def kinded_graph() -> Graph:
 
 def test_edge_types_filter_mentions_only(kinded_graph: Graph) -> None:
     _install(kinded_graph)
-    hits = tools.traverse_nodes(from_="a", predicate={"edge_types": ["mentions"]}, depth=1)
+    hits = tools.traverse_nodes(
+        from_="a",
+        predicate=TraversePredicate(edge_types=["mentions"]),
+        depth=1,
+    )
     assert [h.path for h in hits] == ["b"]
 
 
 def test_edge_types_filter_related_only(kinded_graph: Graph) -> None:
     _install(kinded_graph)
-    hits = tools.traverse_nodes(from_="a", predicate={"edge_types": ["related"]}, depth=1)
+    hits = tools.traverse_nodes(
+        from_="a",
+        predicate=TraversePredicate(edge_types=["related"]),
+        depth=1,
+    )
     assert [h.path for h in hits] == ["c"]
 
 
@@ -258,19 +267,19 @@ def directional_graph() -> Graph:
 
 def test_direction_out_follows_outbound_only(directional_graph: Graph) -> None:
     _install(directional_graph)
-    hits = tools.traverse_nodes(from_="a", predicate={"direction": "out"}, depth=1)
+    hits = tools.traverse_nodes(from_="a", predicate=TraversePredicate(direction="out"), depth=1)
     assert [h.path for h in hits] == ["c"]
 
 
 def test_direction_in_follows_inbound_only(directional_graph: Graph) -> None:
     _install(directional_graph)
-    hits = tools.traverse_nodes(from_="a", predicate={"direction": "in"}, depth=1)
+    hits = tools.traverse_nodes(from_="a", predicate=TraversePredicate(direction="in"), depth=1)
     assert [h.path for h in hits] == ["b"]
 
 
 def test_direction_both_follows_both(directional_graph: Graph) -> None:
     _install(directional_graph)
-    hits = tools.traverse_nodes(from_="a", predicate={"direction": "both"}, depth=1)
+    hits = tools.traverse_nodes(from_="a", predicate=TraversePredicate(direction="both"), depth=1)
     assert sorted(h.path for h in hits) == ["b", "c"]
 
 
@@ -289,13 +298,13 @@ def confidence_graph() -> Graph:
 
 def test_min_confidence_excludes_low_scoring_edge(confidence_graph: Graph) -> None:
     _install(confidence_graph)
-    hits = tools.traverse_nodes(from_="a", predicate={"min_confidence": 0.5}, depth=1)
+    hits = tools.traverse_nodes(from_="a", predicate=TraversePredicate(min_confidence=0.5), depth=1)
     assert [h.path for h in hits] == ["b"]
 
 
 def test_min_confidence_zero_passes_all_edges(confidence_graph: Graph) -> None:
     _install(confidence_graph)
-    hits = tools.traverse_nodes(from_="a", predicate={"min_confidence": 0.0}, depth=1)
+    hits = tools.traverse_nodes(from_="a", predicate=TraversePredicate(min_confidence=0.0), depth=1)
     assert sorted(h.path for h in hits) == ["b", "c"]
 
 
@@ -315,13 +324,13 @@ def tagged_graph() -> Graph:
 
 def test_tagged_predicate_filters_reached_nodes(tagged_graph: Graph) -> None:
     _install(tagged_graph)
-    hits = tools.traverse_nodes(from_="a", predicate={"tagged": "keep"}, depth=1)
+    hits = tools.traverse_nodes(from_="a", predicate=TraversePredicate(tagged="keep"), depth=1)
     assert [h.path for h in hits] == ["b"]
 
 
 def test_tagged_predicate_excludes_all_when_no_match(tagged_graph: Graph) -> None:
     _install(tagged_graph)
-    hits = tools.traverse_nodes(from_="a", predicate={"tagged": "absent"}, depth=1)
+    hits = tools.traverse_nodes(from_="a", predicate=TraversePredicate(tagged="absent"), depth=1)
     assert hits == []
 
 
