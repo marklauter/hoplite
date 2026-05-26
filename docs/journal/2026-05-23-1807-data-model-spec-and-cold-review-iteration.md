@@ -62,7 +62,7 @@ The pattern that emerged: read the spec the way the implementer would read it, i
 
 Most of it. The next session brought SQLite-hybrid as a peer implementation; within a day SQLite-hybrid won and the file-based design was dropped. Within two days the entire surrogate-key ULID identity model died and identity collapsed to path. Within three days the retrieval tools died and Hoplite became dataview over documents.
 
-The spec was the scaffolding the design climbed up before being replaced. Reading it now (preserved in `_archive/mcp-from-claude/`) is reading a snapshot of an intermediate position. The cold-review iteration was right; the spec was right at the moment it was written; the design moved past it.
+The spec was the scaffolding the design climbed up before being replaced. It captured a snapshot of an intermediate position. The cold-review iteration was right; the spec was right at the moment it was written; the design moved past it.
 
 ## Next
 

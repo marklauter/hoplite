@@ -60,10 +60,10 @@ The 91 + 128 line deletion ratio sits in proportion to how much of the surface a
 
 The bigger move was identity collapsing to path. That decision touched the data model, the tool API, the agent surface, and the walker — not just the ids module. ids.py was the most concentrated artifact of the supersession; deleting it was symbolic and load-bearing at once.
 
-The accompanying `refactor-ids-and-metadata.md` note (preserved in `_archive/mcp-from-claude/`) captured the intermediate position where ULIDs were still alive. That note is the snapshot from after the body-shape problem surfaced but before the identity-collapse decision settled. Reading it now is reading the moment before the deletion.
+The accompanying `[[refactor-ids-and-metadata]]` note captured the intermediate position where ULIDs were still alive. That note is the snapshot from after the body-shape problem surfaced but before the identity-collapse decision settled. It captures the moment before the deletion.
 
 ## Cross-references
 
 - `[[2026-05-24-1918-first-hoplite-modules]]` — where ids.py was built.
 - `[[2026-05-25-0202-dead-then-redesign-in-memory-graph-and-four-tools]]` — the redesign that retired it.
-- `_archive/mcp-from-claude/refactor-ids-and-metadata.md` — the intermediate-snapshot note.
+- `[[refactor-ids-and-metadata]]` — the intermediate-snapshot note.

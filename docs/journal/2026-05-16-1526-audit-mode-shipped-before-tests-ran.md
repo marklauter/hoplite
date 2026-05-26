@@ -29,7 +29,7 @@ The writing-loop discipline as it stood did not require running an existing test
 - The immediate fix — update the failing tests to match the new behavior, or revert the breaking changes if the new behavior was wrong. (The new behavior was correct; the tests had to update.)
 - The systemic fix — a follow-up note proposing two new skills, `writing-skills` and `writing-bash`, both required to include a Validation section that explicitly names running the existing test suite as part of the writing loop. Encoding the discipline into the skill so future sessions inherit it.
 
-The follow-up note: see `[[write-writing-skills-and-writing-bash-skills-with-verification-sections]]` (preserved in `_archive/mcp-from-claude/`). That note traveled with the repo for a long time as a todo before the broader writing-prose refactor reabsorbed its requirements into the foundation skill's validation contract.
+The follow-up note: see `[[write-writing-skills-and-writing-bash-skills-with-verification-sections]]`. That note traveled with the repo for a long time as a todo before the broader writing-prose refactor reabsorbed its requirements into the foundation skill's validation contract.
 
 ## Decisions captured
 

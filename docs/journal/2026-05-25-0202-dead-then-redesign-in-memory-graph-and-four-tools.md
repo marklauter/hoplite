@@ -88,8 +88,8 @@ The 50 s cold-start cost felt expensive on paper. In practice the MCP server run
 ## Cross-references
 
 - `[[2026-05-24-0411-sqlite-hybrid-wins-file-based-dropped]]` — the day-old design that got superseded.
-- The full decision-log capturing the supersession trail is preserved in `_archive/mcp-from-claude/decision-log.md`.
-- The `refactor-ids-and-metadata` intermediate snapshot is preserved in `_archive/mcp-from-claude/refactor-ids-and-metadata.md`.
+- `[[decision-log]]` — the full record of the supersession trail.
+- `[[refactor-ids-and-metadata]]` — the intermediate-identity snapshot.
 
 ## Next
 

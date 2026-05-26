@@ -41,8 +41,8 @@ This is not a one-off worth a defensive comment in the script. It is a recurring
 ## Cross-references
 
 - `[[prototype-the-plugin-mcp-server-in-python]]` — the original motivation. Bash write-path scripts choke on quoting edge cases.
-- `[[mcp-server-as-skill-system-runtime]]` — the thesis note whose composition triggered this incident. (Preserved in `_archive/mcp-from-claude/`.)
-- The full observation note is preserved at `_archive/mcp-from-claude/bash-write-path-tripped-its-own-replacement-argument.md`.
+- `[[mcp-server-as-skill-system-runtime]]` — the thesis note whose composition triggered this incident.
+- `[[bash-write-path-tripped-its-own-replacement-argument]]` — the full observation note.
 
 ## Next
 

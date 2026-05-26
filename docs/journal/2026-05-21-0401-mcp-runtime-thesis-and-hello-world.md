@@ -19,7 +19,7 @@ The reframe: MCP is not the new write path. It is the runtime for a content laye
 ## What landed
 
 - 2026-05-21 04:01 — MCP hello-world server added to the skills plugin. A minimal server with a single tool, just enough to verify the plugin manifest registers MCP servers and the stdio transport works end-to-end.
-- 2026-05-21 04:01 — Runtime-thesis evolution captured in `mcp-server-as-skill-system-runtime.md` (preserved in `_archive/mcp-from-claude/`). The note traces the design path from write-path delivery to graph-runtime.
+- 2026-05-21 04:01 — Runtime-thesis evolution captured in `[[mcp-server-as-skill-system-runtime]]`. The note traces the design path from write-path delivery to graph-runtime.
 
 ## The argument that crystallized
 
