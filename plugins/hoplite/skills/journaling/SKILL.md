@@ -32,6 +32,10 @@ Excluded:
 
 Same topic within 24 hours is the same cycle — extend the existing entry. Past 24 hours or different topic, new entry. Topic match is a judgment call; default to new. Journal entries don't dedup the way notes do — same-topic entries on different days each capture one cycle, not one consolidated fact.
 
+## After writing
+
+A brief acknowledgment and short summary tell the user the entry landed.
+
 ## What an entry is
 
 One cycle, one entry. A cycle is one experiment, one decision, one session wrap, one dead-end ruled out, one intent-versus-outcome comparison. Two cycles get two entries — collapsing them destroys the chronology the journal exists to preserve.
@@ -67,10 +71,6 @@ Three to six tags total — enough that the entry surfaces in tag queries, few e
 ## Voice — writing for future self
 
 Future self has lost the context. Names, paths, numbers, dates appear in full; references like "the thing we discussed earlier" or "as I said" lean on context the reader doesn't carry.
-
-## After writing
-
-A brief acknowledgment and short summary tell the user the entry landed.
 
 ## Rhetorical context
 
