@@ -69,8 +69,6 @@ Every entry carries a `tags` array in its frontmatter. Three categories compose,
 
 Three to six tags total — enough that the entry surfaces in tag queries, few enough that each earns its place. Slugs are kebab-case lowercase.
 
-## Shape and editorial guidance
-
 !`cat ${CLAUDE_PLUGIN_ROOT}/components/shape/artifact-structure.md`
 !`cat ${CLAUDE_PLUGIN_ROOT}/components/shape/frontmatter.md`
 !`cat ${CLAUDE_PLUGIN_ROOT}/components/hoplite/mcp-reference.md`
