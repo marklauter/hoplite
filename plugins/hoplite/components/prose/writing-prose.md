@@ -4,7 +4,7 @@
 - States the artifact's claim, not its topic.
 - Declarative, present-tense, specific.
 
-Shape varies — claim, decision, question, reference. Defer to the user's request when given.
+Shape varies — claim, decision, question, reference. Defer to the user's request.
 
 ## Summaries
 
@@ -19,7 +19,7 @@ One to three sentences.
 - Body proves the summary — summary the lede, body the evidence.
 - Separates observation from interpretation — facts before meaning; two sentences or two sections mark the boundary.
 - Every claim wears an epistemic badge — observation, inference, or guess. Unlabeled guesses pass as fact.
-- Cross-references adjacent artifacts — `[[other-slug]]` inline; backlinks come from Grep.
+- Cross-references — `[[other-slug]]` inline; backlinks come from Grep.
 
 ## Composition
 
@@ -45,13 +45,12 @@ One to three sentences.
 - Sentence-style headings — first word and proper nouns only; no title case.
 - Numbered lists for procedures, bullets for options, prose for reasoning.
 - Skip bold and tables — except in worked examples that demonstrate what to remove.
-- Link form: `[text](path)`; the link text names the target, never `click here`.
-- Cross-artifact references: `[[slug]]` wiki-style.
+- Links: `[text](path)` with text that names the target; `[[slug]]` for cross-artifact references.
 
 ## Validation
 
 - Lede check — first paragraph alone names what the artifact is for.
-- Negation grep — `not`, `don't`, `doesn't`, `won't`, `can't`, `never`, `avoid` → positive rewrite.
+- Negation grep — `not`, `don't`, `doesn't`, `won't`, `can't`, `never`, `avoid` → positive rewrite, except contrastive pairs.
 - Hedge and filler grep — `might`, `perhaps`, `simply`, `just`, `actually`, `really`, `quite`, `very` → cut.
 - Tense drift grep — `will`, `would` → present tense.
 - Marketing grep — `seamless`, `powerful`, `easy`, `intuitive` → substance.
