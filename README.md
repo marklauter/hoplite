@@ -27,6 +27,8 @@ From inside Claude Code, with `<repo>` as the absolute path to your clone (the d
 /plugin install hoplite@msl.hoplite
 ```
 
+**After first install, fully restart Claude Code.** The plugin's MCP server runs under a venv that a `SessionStart` hook builds in `${CLAUDE_PLUGIN_DATA}` — this is Anthropic's [recommended pattern for plugins that ship language dependencies](https://code.claude.com/docs/en/plugins-reference#persistent-data-directory). `SessionStart` fires on session start, not on `/plugin install`, so the very first install requires one full Claude Code restart for the venv to build before the MCP server can connect. `/reload-plugins` alone is not enough — the supervisor would keep retrying against an empty venv and time out at 30 s.
+
 After source changes, run `/plugin uninstall hoplite@msl.hoplite` followed by `/plugin install hoplite@msl.hoplite` to refresh the cached SKILL.md and components. `/reload-plugins` alone respawns the MCP server but keeps stale cached prose.
 
 ## Prerequisites
