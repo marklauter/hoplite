@@ -36,7 +36,7 @@ Once written, the entry is immutable. Use compensating entries for new discoveri
 
 ## Entry anatomy
 
-Filename: `docs/journal/<YYYY-MM-DD>-<HHMM>-<slug>.md`. Sortable ISO date and time, then a lowercase slug of the H1 title. The filename owns the date; the body does not repeat it. Entry cross-references use the full filename (minus the `.md`) as the slug.
+Filename: `docs/journal/<YYYY-MM-DD>-<HHMM>-<slug>.md` — slug is the H1 title, kebab-case lowercase. The filename owns the date; the body does not repeat it. Entry cross-references use the full filename (minus the `.md`) as the slug.
 
 Cycle shapes: experiment, decision, session-summary, dead-end, milestone. Every entry opens with context — what was current going in, what was unknown. From there, draw the sections the cycle calls for:
 
@@ -45,15 +45,15 @@ Cycle shapes: experiment, decision, session-summary, dead-end, milestone. Every 
 - Decision — what was decided.
 - Next — the next step, or `none` if the cycle closed cleanly.
 
-Use the sections that fit; skip the rest. An experiment may want all four; a session-summary may want none of them.
+Use the sections that fit; skip the rest. Experiments may want all four; session-summaries may want none.
 
-Every entry carries a `tags` array in its frontmatter. Three categories compose, applied in order:
+Every entry carries a `tags` array in its frontmatter. Three categories, in order:
 
-1. Type tag — required: `journal`. Every entry authored by this skill includes `journal`. Distinguishes from notes (`note`), references, decisions, and other artifact types that may share the corpus.
+1. Type tag — required: `journal`. Distinguishes from notes (`note`), references, decisions, and other artifact types that may share the corpus.
 2. Domain tags — what the cycle was about. Existing vocabulary in active use: `hoplite`, `mcp`, `python`, `claude-code`, `skills`, `bash`, `architecture`, `design`. Query the corpus (`hoplite_match_nodes({"tagged": "<slug>"})` or grep `docs/journal/*.md` frontmatter) to see the current set. A new domain tag is justified only when no existing slug fits.
-3. Shape tags — optional. Capture the cycle shape when it shapes how the entry reads: `experiment`, `decision`, `dead-end`, `session-summary`, `milestone`. Used sparingly; only when the reader benefits from the framing.
+3. Shape tags — optional. Capture the cycle shape: `experiment`, `decision`, `dead-end`, `session-summary`, `milestone`. Used sparingly.
 
-Three to six tags total — enough that the entry surfaces in tag queries, few enough that each earns its place. Tag slugs are kebab-case lowercase.
+Three to six tags total — enough that the entry surfaces in tag queries, few enough that each earns its place.
 
 !`cat ${CLAUDE_PLUGIN_ROOT}/components/shape/artifact-structure.md`
 !`cat ${CLAUDE_PLUGIN_ROOT}/components/shape/frontmatter.md`
@@ -62,6 +62,6 @@ Three to six tags total — enough that the entry surfaces in tag queries, few e
 
 ## Voice
 
-Write for future self — the author later, a future agent, or a teammate reconstructing the design path. The reader has lost the shared context: names, paths, numbers, dates appear in full; phrases like "the thing we discussed earlier" rely on context the reader doesn't carry.
+Write for future self — the author later, a future agent, or a teammate reconstructing the design path. Names, paths, numbers, dates appear in full; phrases like "the thing we discussed earlier" rely on context the reader doesn't carry.
 
 Plainspoken — direct, terse, contractions OK, first-person acceptable. Professional and even-keeled; no puns, no performative warmth, no influencer cadence.
