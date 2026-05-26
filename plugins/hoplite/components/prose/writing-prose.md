@@ -22,6 +22,7 @@ One to three sentences.
 - Sentence-style headings — first word and proper nouns only; no title case.
 - Numbered lists for procedures, bullets for options, prose for reasoning.
 - Links — `[text](path)` with text that names the target; `[[other-slug]]` for cross-artifact references; backlinks come from Grep.
+- Open loops — `[[unwritten-slug]]` materializes a ghost document, queryable as your backlog of mentioned-but-unwritten work.
 - Skip bold and tables — they add noise to the markdown, making it hard to read; except in worked examples that demonstrate what to remove.
 
 ## Composition
