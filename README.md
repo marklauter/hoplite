@@ -33,7 +33,18 @@ After source changes, run `/plugin uninstall hoplite@msl.hoplite` followed by `/
 
 `python3` on `PATH`. The MCP server runs under a bootstrapped venv built at SessionStart; the bootstrap itself runs under system `python3`.
 
-On Windows: the Microsoft Store Python install ships both `python` and `python3` as working executables. The python.org installer ships only `python` and leaves `python3` as a Microsoft Store stub that opens the Store page. Use the Microsoft Store install for the simplest path, or symlink `python3.exe → python.exe` in a python.org install directory.
+On Windows: install Python 3.x **from the Microsoft Store** for the simplest path — it registers both `python` and `python3` as working executables on `PATH`.
+
+Modern Windows ships a `python3.exe` *App Execution Alias* at `%LOCALAPPDATA%\Microsoft\WindowsApps\python3.exe` that **looks** like Python but is actually a stub that opens the Microsoft Store page when invoked. If you skip the Store install (or installed only from python.org, which ships `python` but not `python3`), this stub is what `python3` resolves to. The SessionStart hook then silently fails to bootstrap the venv, and the MCP server reports `connection timed out after 30000ms` with no obvious cause.
+
+To verify your `python3` is real, not the stub:
+
+```powershell
+python3 --version   # should print "Python 3.x.y", not open the Store
+where.exe python3   # the first hit should NOT be under WindowsApps\python3.exe
+```
+
+If the first `where.exe` hit is the WindowsApps stub, either install Python from the Microsoft Store, or disable the alias under **Settings → Apps → Advanced app settings → App execution aliases** and symlink `python3.exe → python.exe` in your python.org install directory.
 
 Linux distributions vary — `python3` resolves out of the box on most. If your distribution ships only `python`, install `python-is-python3` or the equivalent.
 
@@ -105,7 +116,7 @@ The in-memory graph carries five surfaces: documents (file-level identity, `reso
 
 The dump renders this state as a property-graph projection. A `nodes(id, kind)` table assigns each document an integer id; `documents`, `node_properties`, `edges`, and `edge_properties` foreign-key into it. The FTS5 index ships in contentless mode — the inverted index survives the dump for `MATCH` queries, but bodies live only in the source markdown.
 
-For depth on the data model and design rationale, see [docs/mcp/data-model.md](docs/mcp/data-model.md), [docs/mcp/implementation.md](docs/mcp/implementation.md), and [docs/mcp/decision-log.md](docs/mcp/decision-log.md).
+For depth on the architecture, see [docs/hoplite/architecture.md](docs/hoplite/architecture.md).
 
 ## Troubleshooting
 
@@ -123,6 +134,8 @@ rm -rf ~/.claude/plugins/data/hoplite-msl-hoplite
 ```
 
 Hooks (`bootstrap-venv.py`, `check-frontmatter.py`) run under system Python, separate from the MCP server's venv. `python3` must resolve at the system level for the hooks to fire — verify with `python3 --version` from your shell.
+
+If the MCP server times out on first install on Windows, the most common cause is the WindowsApps `python3.exe` App Execution Alias being used instead of a real Python — see the Windows note under [Prerequisites](#prerequisites).
 
 ## Development
 
@@ -147,12 +160,9 @@ Adding a skill: create `plugins/hoplite/skills/<skill-name>/SKILL.md`, then `/pl
 
 ## Reference
 
-- [docs/mcp/readme.md](docs/mcp/readme.md) — spec corpus index.
-- [docs/mcp/data-model.md](docs/mcp/data-model.md) — entities and fields.
-- [docs/mcp/implementation.md](docs/mcp/implementation.md) — runtime shape, walker, dump schema.
-- [docs/mcp/behavior.md](docs/mcp/behavior.md) — frontmatter contract, wikilink resolution, edge derivation.
-- [docs/mcp/tool-api.md](docs/mcp/tool-api.md) — MCP tool signatures and semantics.
-- [docs/mcp/decision-log.md](docs/mcp/decision-log.md) — chronological record of design decisions.
-- [docs/mcp/roadmap.md](docs/mcp/roadmap.md) — named features deferred past day one.
+- [docs/hoplite/readme.md](docs/hoplite/readme.md) — spec index.
+- [docs/hoplite/architecture.md](docs/hoplite/architecture.md) — corpus, graph, walker, FTS5, MinHash, dump schema, error model.
+- [docs/hoplite/tool-api.md](docs/hoplite/tool-api.md) — MCP tool signatures and semantics.
+- [docs/hoplite/roadmap.md](docs/hoplite/roadmap.md) — features deferred past day one.
 - [plugins/hoplite/components/hoplite/tool-reference.md](plugins/hoplite/components/hoplite/tool-reference.md) — the tool reference injected by the authoring skills.
 - [plugins/hoplite/components/hoplite/frontmatter.md](plugins/hoplite/components/hoplite/frontmatter.md) — the frontmatter contract injected by the authoring skills.

@@ -1,12 +1,12 @@
 ---
 title: Roadmap
-summary: "[Roadmap] Hoplite features designed and named but not in day one — embeddings, Sonnet tag enrichment, file-watcher reindex, MinHash LSH, multi-writer, pagination, unified query DSL."
+summary: Hoplite features deferred past day one — embeddings, Sonnet tag enrichment, file-watcher reindex, MinHash LSH, multi-writer, pagination, unified query DSL, columnar projection.
 tags: [hoplite, mcp, roadmap]
 created: 2026-05-25
 aliases: []
 ---
 
-Contracts in [data-model.md](data-model.md), [tool-api.md](tool-api.md), [behavior.md](behavior.md), and [tool-reference.md](../../plugins/hoplite/components/hoplite/tool-reference.md) hold unchanged for everything below — the day-one shape leaves room for these without contract breakage.
+The day-one shape in [architecture.md](architecture.md) and [tool-api.md](tool-api.md) holds unchanged for everything below — these features extend the runtime without breaking the public surface.
 
 ## Server-side enrichment — embeddings
 
@@ -108,12 +108,6 @@ Two possible shapes if it lands:
 - Traverse stays unpaginated; bound by `depth` and predicate filtering.
 
 Open question — pending a corpus or use case that recurrently bumps into the day-one caps.
-
-## Migration of legacy corpus
-
-The pre-pivot `docs/notes/` corpus uses an older shape (no frontmatter, pure-markdown body with H1/blank/summary/blank structure). A migration converter walks every note, lifts the H1 and summary into a generated frontmatter block, derives tags from directory structure or filename prefixes, and writes the converted file back.
-
-One-time CLI pass. Day-one development uses a fresh corpus or a hand-curated subset; full migration runs when it's needed.
 
 ## Columnar projection for multi-property predicates
 

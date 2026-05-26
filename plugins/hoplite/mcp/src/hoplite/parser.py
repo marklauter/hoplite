@@ -1,6 +1,6 @@
 """Label expression parser.
 
-Grammar (Cypher 5.x convention, per docs/mcp/behavior.md#label-expressions):
+Grammar (per docs/hoplite/architecture.md#tag-predicates):
 
     expr     ::= or_expr
     or_expr  ::= and_expr ( '|' and_expr )*

@@ -79,7 +79,7 @@ def test_order_preserved_when_all_match() -> None:
     assert filter_candidates(predicate, candidates) == ["z.md", "m.md", "a.md"]
 
 
-# --- realistic predicates from docs/mcp/behavior.md ---------------------------
+# --- realistic predicates from docs/hoplite/architecture.md -------------------
 
 
 def test_doc_example_intersection() -> None:

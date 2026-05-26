@@ -1,6 +1,6 @@
 """FastMCP wiring for `hoplite_mcp`.
 
-Exposes the four-tool agent-facing surface defined in docs/mcp/tool-api.md.
+Exposes the four-tool agent-facing surface defined in docs/hoplite/tool-api.md.
 Tool bodies live in `hoplite.tools`; the vault root is set at module import
 to ``<cwd>/docs`` and the in-memory graph builds lazily on the first tool call.
 """

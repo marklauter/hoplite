@@ -1,7 +1,7 @@
 ---
 title: Tool API
-summary: "[Contract] Tool signatures, return types, and semantics — described in terms of entities, not storage."
-tags: [hoplite, mcp, contract, tool-api]
+summary: Tool signatures, return types, and semantics for the four agent-facing MCP tools.
+tags: [hoplite, mcp, tool-api]
 created: 2026-05-25
 aliases: []
 ---
@@ -16,9 +16,9 @@ Four agent-facing tools, all prefixed `hoplite_` to avoid collision with built-i
 - Maintenance: `hoplite_reindex`
 - Debug: `hoplite_dump_index`
 
-There is no CRUD surface. Agents write `.md` files directly through their own file tools (`Write`, `Edit`, `Bash`); Hoplite is the read/query/traversal head over the corpus, not its write path. The `/hoplite` skill teaches the file shape, the wikilink syntax, and the convention of calling `hoplite_reindex` after a batch of writes.
+There is no CRUD surface. Agents write `.md` files directly through their own file tools (`Write`, `Edit`, `Bash`); Hoplite is the read/query/traversal head over the corpus, not its write path. The `taking-notes` and `journaling` skills teach the file shape, the wikilink syntax, and the convention of calling `hoplite_reindex` after a batch of writes.
 
-Entities referenced below are defined in [data-model.md](data-model.md). Behavioral rules (frontmatter shape, wikilink resolution, ghost documents, edge derivation) live in [behavior.md](behavior.md).
+Entities referenced below — `Document`, `Edge`, `Hit`, `TraversalHit`, `WriteResult` — and the rules around frontmatter, wikilink resolution, ghost documents, and edge derivation are documented in [architecture.md](architecture.md).
 
 ## MCP tool hints
 
@@ -37,7 +37,7 @@ Per-tool settings:
 
 ## Predicates
 
-The two query tools accept a tag predicate that filters which documents appear in results. The predicate is a string with the grammar defined in [behavior.md](behavior.md#tag-predicates).
+The two query tools accept a tag predicate that filters which documents appear in results. The predicate is a string with the grammar defined in [architecture.md](architecture.md#tag-predicates).
 
 The wire format wraps the predicate string in a small JSON object so other filter dimensions (e.g., text search for `match_nodes`, edge-type filter for `traverse_nodes`) can ride alongside it:
 
@@ -48,7 +48,7 @@ The wire format wraps the predicate string in a small JSON object so other filte
 }
 ```
 
-The `tagged` key is the sugar — its value is the predicate string. The predicate parser interprets it directly; `tagged: graph-db` in user-facing prose is equivalent to a JSON object `{"tagged": "graph-db"}` on the wire.
+The `tagged` key is the sugar — its value is the predicate string. `tagged: hoplite` in user-facing prose is equivalent to a JSON object `{"tagged": "hoplite"}` on the wire. Internally, the predicate compiles to a property lookup over `key='tags' AND value=<slug>` against the in-memory property store; tags are properties on documents, not separate nodes.
 
 When `tagged` is absent or empty, no tag filter applies.
 
@@ -75,7 +75,7 @@ Breadth-first walk from a starting document. Returns up to `depth` layers of `Tr
 
 Predicate fields (all optional):
 
-- `edge_types` (list of strings) — only follow edges of these kinds. Default: all kinds (`member`, `mentions`, `related`).
+- `edge_types` (list of strings) — only follow edges of these kinds. Default: all kinds (`mentions`, `related`).
 - `min_confidence` (float in `[0, 1]`) — skip edges below this confidence. Default: no filter.
 - `direction` (`"out" | "in" | "both"`) — which edge direction to follow. Default: `"out"`.
 - `tagged` (string) — a tag predicate that filters which reached documents appear in the result. Applied as post-filter: the walk traverses through non-matching intermediate documents; the result includes only documents matching the expression.
@@ -94,7 +94,7 @@ No parameters. The walk runs against the corpus rooted at the server's CWD.
 
 Returns a `WriteResult` with `path` set to the corpus root. The `warnings` list surfaces non-fatal advisories — frontmatter parse failures, unparseable wikilinks, documents missing mandatory fields.
 
-Day one this is the only way to pick up file changes between queries. Agents that write `.md` files call `hoplite_reindex` afterward to make the new content visible. Human edits in Obsidian show up after the next reindex call. See [behavior.md](behavior.md#reindex) for the walk's two-pass shape.
+Day one this is the only way to pick up file changes between queries. Agents that write `.md` files call `hoplite_reindex` afterward to make the new content visible. Human edits in Obsidian show up after the next reindex call. See [architecture.md](architecture.md#the-walker) for the walk's two-pass shape.
 
 ### `hoplite_dump_index(path=None) -> WriteResult`
 
@@ -104,7 +104,7 @@ Parameters:
 
 - `path` (optional, string) — destination file path. Default: `.hoplite/<ISO-timestamp>.index.sqlite` relative to the corpus root, where the timestamp is UTC `YYYY-MM-DDTHH-MM-SS` (colons replaced with dashes for Windows compatibility). Each dump produces a uniquely-named file; prior snapshots stay on disk for comparison.
 
-One-shot operation. The schema is the property-graph projection — `nodes`, `documents`, `node_properties`, `edges`, `edge_properties`, plus a contentless FTS5 mirror. Full DDL in [implementation.md](implementation.md#hoplite_dump_index-schema).
+One-shot operation. The schema is the property-graph projection — `nodes`, `documents`, `node_properties`, `edges`, `edge_properties`, plus a contentless FTS5 mirror. Full DDL in [architecture.md](architecture.md#dump-schema).
 
 Returns a `WriteResult` with `path` set to the absolute path of the written file and `counts` populated with row counts per entity (`{"documents": N, "ghosts": G, "edges": K}`).
 
@@ -112,6 +112,6 @@ Then `sqlite3 .hoplite/<file>` gives developers a full SQL surface over the deri
 
 ## Error handling at the MCP boundary
 
-Per [behavior.md](behavior.md#validation-and-error-model), invariant violations throw exceptions (programming errors the caller could have prevented — `None` for a required string, malformed predicate); constraint violations ride along inside successful results as warnings (frontmatter parse failures, ghost-resolved wikilinks, unwritable dump destinations).
+Per [architecture.md](architecture.md#error-model), invariant violations throw exceptions (programming errors the caller could have prevented — `None` for a required string, malformed predicate); constraint violations ride along inside successful results as warnings (frontmatter parse failures, unwritable dump destinations).
 
 At the MCP wire boundary, thrown invariant exceptions surface as structured error content with `isError: true`. Constraint warnings ride inside the `warnings` field of `WriteResult` or the analogous shape on `hoplite_reindex` and `hoplite_dump_index` results. JSON-RPC protocol-level errors stay reserved for transport-level failures; tool-execution errors always come back as content the agent can read.

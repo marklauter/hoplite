@@ -24,7 +24,7 @@ The architectural cost: synthesis-as-action means LLM-authored content lands in 
 
 Dream-authored content stays separable from user-authored notes:
 
-- Folder — dream notes live under `docs/dreams/`. Authored notes stay under `docs/notes/`, `docs/mcp/`, and so on.
+- Folder — dream notes live under `docs/dreams/`. Authored notes stay under `docs/notes/`, `docs/hoplite/`, and so on.
 - Tag — every dream note carries `dream` in its tags list. Tag predicates (`tagged: !dream`) let foreground agents filter dreams in or out per query.
 - Frontmatter provenance — each dream note records the source paths it synthesized from and a content hash or git SHA per source, so a later pass detects divergence and re-dreams or retires.
 - Generational cap — dreams sample only authored notes, never other dreams; keeps the graph from drifting into recursive LLM slop.

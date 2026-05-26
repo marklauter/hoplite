@@ -1,5 +1,6 @@
 .claude/settings.local.json
 .hoplite/
+_archive/
 __pycache__/
 .venv/
 *.egg-info/

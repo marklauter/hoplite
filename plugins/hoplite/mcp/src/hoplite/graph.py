@@ -6,7 +6,7 @@ populated ``Graph`` by scanning ``.md`` files under a corpus root through two
 passes — identity collection, then body load with edge materialization —
 followed by an aggregate pairwise MinHash pass for ``related`` edges.
 
-See docs/mcp/implementation.md for the full architectural shape.
+See docs/hoplite/architecture.md for the full architectural shape.
 """
 
 from __future__ import annotations
