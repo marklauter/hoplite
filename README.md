@@ -64,7 +64,7 @@ The `graph-reference` skill is a thin wrapper over `components/hoplite/mcp-refer
 
 ### MCP tools
 
-Four tools register under the `plugin:hoplite:hoplite` server:
+Four tools register under the `plugin:hoplite:graph_mcp` server:
 
 - `hoplite_match_nodes(predicate, k=5)` — search. BM25 over title, summary, and body; optional tag-expression post-filter (`notes & mcp`, `(plan | journal) & !draft`).
 - `hoplite_traverse_nodes(from_, predicate=None, depth=1)` — breadth-first walk from a starting document. Filters by edge kind, direction, similarity confidence, and tag predicate on reached nodes.

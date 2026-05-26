@@ -8,7 +8,7 @@ aliases: []
 
 ## Overview
 
-Hoplite is an in-memory property graph over a vault of markdown documents. The `.md` files under `docs/` are the only persistent state. At MCP server startup a two-pass walker rebuilds the graph from frontmatter and body content; everything else — properties, edges, MinHash signatures, the FTS5 text index, alias and casefold lookup tables — is derived and held in RAM.
+Hoplite is an in-memory property graph over a corpus of markdown documents. The `.md` files under `docs/` are the only persistent state. At MCP server startup a two-pass walker rebuilds the graph from frontmatter and body content; everything else — properties, edges, MinHash signatures, the FTS5 text index, alias and casefold lookup tables — is derived and held in RAM.
 
 The agent reads document bodies through its own file tools (`Read`, `Write`, `Edit`, `Bash`). Hoplite serves four query tools — `hoplite_match_nodes`, `hoplite_traverse_nodes`, `hoplite_reindex`, `hoplite_dump_index` — over the in-memory graph. There is no CRUD surface on Hoplite itself; the markdown file on disk is the source of truth, and `hoplite_reindex` picks up whatever's there.
 
@@ -18,7 +18,7 @@ This document covers the system as one piece. Tool signatures and the 4-tool API
 
 A Hoplite corpus is a directory of `.md` files. The MCP server roots itself at the working directory when spawned; every file matching `**/*.md` under that root is a candidate document. Subdirectory structure is presentational — `docs/notes/coffee.md` and `docs/journal/2026-05-25-1430-roast.md` are both documents, identified by their relative paths.
 
-The vault is fully Obsidian-compatible — same frontmatter shape, same `[[wikilink]]` syntax, same tag convention. Hand-edits in Obsidian and writes by agents are indistinguishable from Hoplite's view; both round-trip through `hoplite_reindex`.
+The corpus is fully Obsidian-compatible — same frontmatter shape, same `[[wikilink]]` syntax, same tag convention. Hand-edits in Obsidian and writes by agents are indistinguishable from Hoplite's view; both round-trip through `hoplite_reindex`.
 
 ## Frontmatter — the YAML envelope
 
