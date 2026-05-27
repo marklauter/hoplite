@@ -364,6 +364,7 @@ def walk(corpus_root: Path) -> Graph:
                 ghost = Document(path=bare, resolved=False)
                 graph.documents[bare] = ghost
                 graph.casefold_index[bare.casefold()] = bare
+                graph.node_properties[bare] = {"tags": ["ghost"]}
                 resolved_target = bare
             if resolved_target in seen_targets:
                 continue
@@ -379,6 +380,7 @@ def walk(corpus_root: Path) -> Graph:
             if url not in graph.documents:
                 graph.documents[url] = Document(path=url, resolved=False)
                 graph.casefold_index[url.casefold()] = url
+                graph.node_properties[url] = {"tags": ["url"]}
             graph.add_edge(Edge(src=canonical, dst=url, kind="cites"))
         # MinHash signature.
         sig = minhash.signature(body)

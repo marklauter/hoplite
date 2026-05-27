@@ -146,8 +146,10 @@ def match_nodes(
             # Negate so the Hit.score reads as higher = better.
             candidates = [(path, -score) for path, score in cursor.fetchall()]
     else:
-        # No text query — every resolved document is a candidate at score 0.
-        candidates = [(doc.path, 0.0) for doc in graph.documents.values() if doc.resolved]
+        # No text query — every document is a candidate at score 0. Tag-only
+        # queries include ghosts and URL nodes (carrying synthetic `ghost`/`url`
+        # tags) since these never have FTS rows but are tag-discoverable.
+        candidates = [(doc.path, 0.0) for doc in graph.documents.values()]
 
     # Stage 2: optional tag predicate post-filter.
     if tagged:
@@ -165,10 +167,16 @@ def match_nodes(
         candidates = [c for c in candidates if c[0] in filtered_paths]
 
     # Stage 3: cap at k and build Hits.
+    # Text queries restrict to resolved docs (only those have FTS rows).
+    # Tag-only queries surface unresolved nodes (ghosts, URLs) too — their
+    # synthetic `ghost`/`url` tags are the only way to enumerate them.
+    require_resolved = bool(text)
     hits: list[Hit] = []
     for path, score in candidates[:k]:
         doc = graph.documents.get(path)
-        if doc is None or not doc.resolved:
+        if doc is None:
+            continue
+        if require_resolved and not doc.resolved:
             continue
         hits.append(
             Hit(

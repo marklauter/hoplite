@@ -95,6 +95,8 @@ URL nodes carry `resolved = false`, no frontmatter, no body, no FTS row — they
 
 No canonicalization. `https://example.com/`, `https://example.com`, and `http://example.com` are three distinct nodes — author authority. Same convention as wikilinks: matched-pair `[text](url)` markdown links inside backticks or fenced blocks are masked and skipped, so sample URLs in prose don't pollute the graph.
 
+The walker injects a synthetic `url` tag on every URL node and a synthetic `ghost` tag on every ghost node. Real documents author their own tags through frontmatter; unresolved nodes have no frontmatter, so the walker tags them by category. `where({"tagged": "url"})` enumerates every external URL the corpus cites; `where({"tagged": "ghost"})` enumerates every intentional open loop. Tag-only queries skip the FTS-resolved-only restriction — the no-text branch surfaces ghosts and URLs alongside real documents.
+
 For durable external references that earn metadata (tags, summary, "why this matters") or are reused across multiple documents, the convention is a proxy note at `docs/proxies/<slug>.md` carrying the URL via a markdown link plus context in the body. Other documents wikilink the proxy; the proxy emits the `cites` edge to the URL. Backlinks (`relatives` with `direction="in"`) over the proxy then show every doc that referenced the resource.
 
 ## Tag predicates
