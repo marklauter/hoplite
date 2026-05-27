@@ -68,11 +68,11 @@ Properties never appear as edge endpoints. Edges connect documents to documents;
 Two edge kinds, closed set. Edges connect documents to documents only.
 
 - `mentions` — document → document. Materialized from `[[wikilink]]` references in body text. The walker emits one edge per `(source, target)` pair regardless of how many wikilinks point at the target; the graph records relationships, not occurrences.
-- `related` — document ↔ document, symmetric. Materialized from pairwise MinHash similarity above a configured threshold. Both directions emitted as two edge rows. Carries a `confidence` property holding the Jaccard score.
+- `related` — document ↔ document, symmetric. Materialized from pairwise MinHash similarity above a configured threshold. Both directions emitted as two edge rows. Carries a `confidence` field holding the Jaccard score.
 
 Use cases for richer relations (`cites`, `contradicts`, `requires`, `see-also`) express through `mentions` plus body prose. No aspirational edge types reserved.
 
-Edges carry identity (`id`) plus the `(src, dst, kind)` triple as a UNIQUE constraint. Edge metadata beyond that lives in edge properties, following the same EAV pattern as node properties. Day one, only `related` edges carry a property (`confidence`); the symmetric edge-property table exists so future annotations slot in without schema change.
+Edges are keyed by the `(src, dst, kind)` triple — no synthetic id. `confidence` is first-class on the edge itself: `1.0` for authored edges (`mentions`, `cites`) and the MinHash Jaccard score for inferred `related` edges. Additional edge annotations live in a symmetric edge-property table following the same EAV pattern as node properties; day one no other edge metadata exists, but the table is in place so future annotations slot in without schema change.
 
 ## Wikilinks and ghost documents
 
@@ -227,37 +227,38 @@ The schema mirrors the in-memory `Graph` shape one-to-one. The whole point of th
 
 ```sql
 CREATE TABLE document (
-  path TEXT PRIMARY KEY,
+  id INTEGER PRIMARY KEY,
+  path TEXT NOT NULL UNIQUE,
   resolved INTEGER NOT NULL,
   content_hash TEXT,
   minhash BLOB
 );
+CREATE INDEX idx_document_path ON document(path);
 
 CREATE TABLE document_property (
-  path TEXT NOT NULL REFERENCES document(path),
+  id INTEGER NOT NULL REFERENCES document(id),
   key TEXT NOT NULL,
   value TEXT NOT NULL,
-  PRIMARY KEY (path, key, value)
+  PRIMARY KEY (id, key, value)
 );
 CREATE INDEX idx_document_property_key_value ON document_property(key, value);
 
 CREATE TABLE edge (
-  src TEXT NOT NULL REFERENCES document(path),
-  dst TEXT NOT NULL REFERENCES document(path),
+  id INTEGER PRIMARY KEY,
+  src INTEGER NOT NULL REFERENCES document(id),
+  dst INTEGER NOT NULL REFERENCES document(id),
   kind TEXT NOT NULL,
-  PRIMARY KEY (src, dst, kind)
+  confidence REAL NOT NULL,
+  UNIQUE (src, dst)
 );
-CREATE INDEX idx_edge_src ON edge(src);
-CREATE INDEX idx_edge_dst ON edge(dst);
+CREATE INDEX idx_edge_kind_src ON edge(kind, src, dst, confidence);
+CREATE INDEX idx_edge_kind_dst ON edge(kind, dst, src, confidence);
 
 CREATE TABLE edge_property (
-  src TEXT NOT NULL,
-  dst TEXT NOT NULL,
-  kind TEXT NOT NULL,
+  id INTEGER NOT NULL REFERENCES edge(id),
   key TEXT NOT NULL,
   value TEXT NOT NULL,
-  PRIMARY KEY (src, dst, kind, key, value),
-  FOREIGN KEY (src, dst, kind) REFERENCES edge(src, dst, kind)
+  PRIMARY KEY (id, key, value)
 );
 CREATE INDEX idx_edge_property_key_value ON edge_property(key, value);
 
@@ -272,12 +273,13 @@ CREATE VIRTUAL TABLE fts USING fts5(
 
 Notes:
 
-- Paths are the natural keys throughout. `document.path` ↔ `Graph.documents` (the in-memory dict's key). `document_property.path` ↔ entries in `Graph.document_properties`. The composite `(src, dst, kind)` on `edge` and `edge_property` ↔ `Graph.out_edges` / `Graph.edge_properties`. No synthetic integer IDs at runtime or in the dump.
+- `document.id` is an `INTEGER PRIMARY KEY` (rowid alias) assigned by the dump writer in iteration order; `document.path` is the natural key, kept UNIQUE with an explicit `idx_document_path` so wikilink-style lookups stay fast. Every other persisted table — `document_property`, `edge`, `edge_property` — joins back through `document.id`, so relational traversal is integer-keyed throughout the dump. Runtime `Graph.documents`, `Graph.document_properties`, `Graph.out_edges`, and `Graph.edge_properties` still key on path strings; the path → id translation happens only at dump time, threaded through the writers via a single `path_to_id` map built when `document` rows are emitted.
+- `edge.id` is also an `INTEGER PRIMARY KEY` (rowid alias). `(src, dst)` is `UNIQUE` rather than part of a composite key — at most one edge connects a given ordered pair, even across kinds. The walker enforces this implicitly: `mentions` targets resolved docs or ghosts, `cites` targets URL nodes (disjoint target domains), and `related` skips pairs already mentioned, so collisions never arise in practice. The constraint codifies that invariant. Edge traversal is kind-first: `idx_edge_kind_src` covers `WHERE kind = ? AND src = ?` (outbound), `idx_edge_kind_dst` covers `WHERE kind = ? AND dst = ?` (inbound). Both include `confidence` as the trailing column, so ranking queries — top-N `related` from a node, ordered by Jaccard — are covered without touching the table heap.
 - `document.resolved` flags ghost/URL/real. Ghosts (`path` starting with `ghost/`) have `resolved = 0`, `content_hash` and `minhash` `NULL`, and a synthetic `tags: ['ghost']` row in `document_property`. URL nodes (`path` starting with `http://`/`https://`) have the same shape but with `tags: ['url']`.
 - The dump is a byte-for-byte mirror of in-memory state. The dump's `fts` table replays `path`, `title`, `summary`, and `body` straight from the in-memory FTS5 connection — so a snapshot reflects exactly what the running server is matching against, with no shape drift between live and dumped indexes. FTS joins back to `document` via the `path` column (UNINDEXED but stored, so `SELECT path FROM fts WHERE fts MATCH ...` works directly).
 - `document_property` holds every frontmatter field — `title`, `summary`, `created`, `tags`, `aliases`, and any user-defined keys. Array fields produce one row per element. SQLite type-affinity preserves authored type — `priority: 5` stores `5` as integer even though the column is declared TEXT.
 - Inverted lookups ("which paths have `key='tags' AND value='hoplite'`?") run against `idx_document_property_key_value`. The forward direction (start from a known path) uses the PRIMARY KEY. Same rows, different B-tree orderings.
-- Edges hold only identity and topology. Everything else, including `confidence` on `related` edges, rides in `edge_property` keyed on the same `(src, dst, kind)` triple as the edge it annotates.
+- Edges carry topology plus `confidence` directly. The score is load-bearing for `relatives` ranking, so it sits on the edge row rather than detouring through `edge_property`. Anything beyond confidence rides in `edge_property` keyed on the same `(src, dst, kind)` triple.
 - A polymorphic-node `node(id, kind)` table is *not* present. The path prefix (`docs/`, `ghost/`, `http://`, `https://`) is the kind discriminator at both layers; specialization tables can be added the day a node kind earns columns of its own.
 
 The dump operation opens the destination, drops any prior tables (so the file is fully overwritten), runs the DDL above, bulk-inserts from the in-memory dicts, and returns a `WriteResult` with the absolute output path and row counts per entity.

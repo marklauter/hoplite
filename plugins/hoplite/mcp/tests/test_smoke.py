@@ -157,7 +157,7 @@ async def _drive_server(root: Path) -> None:
             cursor = conn.execute("SELECT COUNT(*) FROM edge WHERE kind = 'member'")
             assert cursor.fetchone()[0] == 0  # member edges abolished
 
-            # document_property — tags live here as (path, 'tags', slug) rows.
+            # document_property — tags live here as (id, 'tags', slug) rows.
             cursor = conn.execute(
                 "SELECT COUNT(*) FROM document_property WHERE key = 'tags' AND value = 'shared'",
             )
@@ -165,17 +165,17 @@ async def _drive_server(root: Path) -> None:
 
             # Every resolved document has a title property row.
             cursor = conn.execute("""
-                SELECT COUNT(DISTINCT path) FROM document_property WHERE key = 'title'
+                SELECT COUNT(DISTINCT id) FROM document_property WHERE key = 'title'
             """)
             assert cursor.fetchone()[0] == 3
 
-            # Cross-table join — relational shape works end-to-end on path keys.
+            # Cross-table join — relational shape works end-to-end on document.id.
             cursor = conn.execute("""
                 SELECT d.path, COUNT(p.key) AS prop_count
                 FROM document d
-                LEFT JOIN document_property p ON p.path = d.path
+                LEFT JOIN document_property p ON p.id = d.id
                 WHERE d.resolved = 1
-                GROUP BY d.path
+                GROUP BY d.id
                 ORDER BY d.path
             """)
             rows = cursor.fetchall()

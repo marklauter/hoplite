@@ -24,7 +24,7 @@ from hoplite import minhash, urls, wikilinks
 from hoplite.models import Document, Edge, WriteResult
 
 __all__ = [
-    "DUMP_SCHEMA",
+    "SCHEMA",
     "Graph",
     "walk",
 ]
@@ -61,51 +61,11 @@ _FRONTMATTER_RE: Final = re.compile(r"\A---\r?\n(.*?)\r?\n---\r?\n?", re.DOTALL)
 _REQUIRED_FIELDS: Final = ("title", "summary", "tags", "created")
 
 
-DUMP_SCHEMA: Final = """
-CREATE TABLE document (
-  path TEXT PRIMARY KEY,
-  resolved INTEGER NOT NULL,
-  content_hash TEXT,
-  minhash BLOB
-);
-
-CREATE TABLE document_property (
-  path TEXT NOT NULL REFERENCES document(path),
-  key TEXT NOT NULL,
-  value TEXT NOT NULL,
-  PRIMARY KEY (path, key, value)
-);
-CREATE INDEX idx_document_property_key_value ON document_property(key, value);
-
-CREATE TABLE edge (
-  src TEXT NOT NULL REFERENCES document(path),
-  dst TEXT NOT NULL REFERENCES document(path),
-  kind TEXT NOT NULL,
-  confidence REAL NOT NULL,
-  PRIMARY KEY (src, dst, kind)
-);
-CREATE INDEX idx_edge_src ON edge(src);
-CREATE INDEX idx_edge_dst ON edge(dst);
-
-CREATE TABLE edge_property (
-  src TEXT NOT NULL,
-  dst TEXT NOT NULL,
-  kind TEXT NOT NULL,
-  key TEXT NOT NULL,
-  value TEXT NOT NULL,
-  PRIMARY KEY (src, dst, kind, key, value),
-  FOREIGN KEY (src, dst, kind) REFERENCES edge(src, dst, kind)
-);
-CREATE INDEX idx_edge_property_key_value ON edge_property(key, value);
-
-CREATE VIRTUAL TABLE fts USING fts5(
-  path UNINDEXED,
-  title,
-  summary,
-  body,
-  tokenize = 'porter unicode61'
-);
-"""
+# Single source of DDL for both the dump and the in-memory `:memory:` connection.
+# The in-memory side only populates `fts`; the other tables sit empty there but
+# loading them is the cost of keeping one canonical schema instead of two strings
+# that can silently drift.
+SCHEMA: Final = (Path(__file__).parent / "schema.sql").read_text(encoding="utf-8")
 
 
 @dataclass
@@ -163,11 +123,11 @@ class Graph:
 
         conn = sqlite3.connect(str(abs_path))
         try:
-            conn.executescript(DUMP_SCHEMA)
-            self._write_documents(conn)
-            self._write_document_properties(conn)
-            self._write_edges(conn)
-            self._write_edge_properties(conn)
+            conn.executescript(SCHEMA)
+            path_to_id = self._write_documents(conn)
+            self._write_document_properties(conn, path_to_id)
+            edge_pair_to_id = self._write_edges(conn, path_to_id)
+            self._write_edge_properties(conn, edge_pair_to_id)
             self._write_fts(conn)
             conn.commit()
         finally:
@@ -190,54 +150,96 @@ class Graph:
             },
         )
 
-    def _write_documents(self, conn: sqlite3.Connection) -> None:
-        rows = [
-            (
-                doc.path,
-                1 if doc.resolved else 0,
-                doc.content_hash,
-                doc.minhash,
+    def _write_documents(self, conn: sqlite3.Connection) -> dict[str, int]:
+        """Insert documents with explicit integer ids and return the path → id map.
+
+        Edges reference documents by id (rowid alias), so the writer assigns
+        ids in iteration order here and hands the map back for the edge writers
+        to translate paths.
+        """
+        path_to_id: dict[str, int] = {}
+        rows: list[tuple[int, str, int, str | None, bytes | None]] = []
+        for doc_id, (path, doc) in enumerate(self.documents.items(), start=1):
+            path_to_id[path] = doc_id
+            rows.append(
+                (
+                    doc_id,
+                    doc.path,
+                    1 if doc.resolved else 0,
+                    doc.content_hash,
+                    doc.minhash,
+                ),
             )
-            for doc in self.documents.values()
-        ]
         conn.executemany(
-            "INSERT INTO document VALUES (?, ?, ?, ?)",
+            "INSERT INTO document VALUES (?, ?, ?, ?, ?)",
             rows,
         )
+        return path_to_id
 
-    def _write_document_properties(self, conn: sqlite3.Connection) -> None:
-        rows: list[tuple[str, str, str]] = []
+    def _write_document_properties(
+        self,
+        conn: sqlite3.Connection,
+        path_to_id: dict[str, int],
+    ) -> None:
+        rows: list[tuple[int, str, str]] = []
         for path_key, props in self.document_properties.items():
+            doc_id = path_to_id[path_key]
             for key, values in props.items():
                 for value in values:
-                    rows.append((path_key, key, value))
+                    rows.append((doc_id, key, value))
         if rows:
             conn.executemany("INSERT INTO document_property VALUES (?, ?, ?)", rows)
 
-    def _write_edges(self, conn: sqlite3.Connection) -> None:
-        seen: set[tuple[str, str, str]] = set()
-        rows: list[tuple[str, str, str, float]] = []
+    def _write_edges(
+        self,
+        conn: sqlite3.Connection,
+        path_to_id: dict[str, int],
+    ) -> dict[tuple[str, str], int]:
+        """Insert edges with explicit integer ids and return a `(src_path, dst_path) → id` map.
+
+        Edge properties FK to `edge.id`, so the writer assigns ids in iteration
+        order here and hands the map back for the property writer to translate
+        from the in-memory `(src, dst, kind)` triple — `(src, dst)` is the
+        unique key on edge, so the kind is redundant for lookup.
+        """
+        seen: set[tuple[str, str]] = set()
+        rows: list[tuple[int, int, int, str, float]] = []
+        edge_pair_to_id: dict[tuple[str, str], int] = {}
+        next_id = 1
         for edges in self.out_edges.values():
             for edge in edges:
-                triple = (edge.src, edge.dst, edge.kind)
-                if triple in seen:
+                pair = (edge.src, edge.dst)
+                if pair in seen:
                     continue
-                seen.add(triple)
-                rows.append((edge.src, edge.dst, edge.kind, edge.confidence))
+                seen.add(pair)
+                edge_pair_to_id[pair] = next_id
+                rows.append(
+                    (
+                        next_id,
+                        path_to_id[edge.src],
+                        path_to_id[edge.dst],
+                        edge.kind,
+                        edge.confidence,
+                    ),
+                )
+                next_id += 1
         if rows:
-            conn.executemany("INSERT INTO edge VALUES (?, ?, ?, ?)", rows)
+            conn.executemany("INSERT INTO edge VALUES (?, ?, ?, ?, ?)", rows)
+        return edge_pair_to_id
 
-    def _write_edge_properties(self, conn: sqlite3.Connection) -> None:
-        rows: list[tuple[str, str, str, str, str]] = []
-        for (src, dst, kind), props in self.edge_properties.items():
+    def _write_edge_properties(
+        self,
+        conn: sqlite3.Connection,
+        edge_pair_to_id: dict[tuple[str, str], int],
+    ) -> None:
+        rows: list[tuple[int, str, str]] = []
+        for (src, dst, _kind), props in self.edge_properties.items():
+            edge_id = edge_pair_to_id[(src, dst)]
             for key, values in props.items():
                 for value in values:
-                    rows.append((src, dst, kind, key, value))
+                    rows.append((edge_id, key, value))
         if rows:
-            conn.executemany(
-                "INSERT INTO edge_property VALUES (?, ?, ?, ?, ?)",
-                rows,
-            )
+            conn.executemany("INSERT INTO edge_property VALUES (?, ?, ?)", rows)
 
     def _write_fts(self, conn: sqlite3.Connection) -> None:
         """Mirror the in-memory FTS5 index into the dump.
@@ -378,17 +380,7 @@ def walk(corpus_root: Path) -> Graph:
 
 def _setup_fts(graph: Graph) -> None:
     conn = sqlite3.connect(":memory:")
-    conn.execute(
-        """
-        CREATE VIRTUAL TABLE fts USING fts5(
-            path UNINDEXED,
-            title,
-            summary,
-            body,
-            tokenize = 'porter unicode61'
-        )
-        """,
-    )
+    conn.executescript(SCHEMA)
     graph.fts = conn
 
 
