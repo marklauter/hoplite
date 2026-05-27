@@ -20,7 +20,7 @@ from typing import Any, Final, cast
 
 import yaml
 
-from hoplite import minhash, wikilinks
+from hoplite import minhash, urls, wikilinks
 from hoplite.models import Document, Edge, WriteResult
 
 __all__ = [
@@ -183,13 +183,19 @@ class Graph:
         finally:
             conn.close()
 
-        ghost_count = sum(1 for d in self.documents.values() if not d.resolved)
+        url_count = sum(
+            1
+            for d in self.documents.values()
+            if not d.resolved and (d.path.startswith("http://") or d.path.startswith("https://"))
+        )
+        ghost_count = sum(1 for d in self.documents.values() if not d.resolved) - url_count
         edge_count = sum(len(es) for es in self.out_edges.values())
         return WriteResult(
             path=str(abs_path),
             counts={
-                "documents": len(self.documents) - ghost_count,
+                "documents": len(self.documents) - ghost_count - url_count,
                 "ghosts": ghost_count,
+                "urls": url_count,
                 "edges": edge_count,
             },
         )
@@ -364,6 +370,16 @@ def walk(corpus_root: Path) -> Graph:
             seen_targets.add(resolved_target)
             edge = Edge(src=canonical, dst=resolved_target, kind="mentions")
             graph.add_edge(edge)
+        # External URL cites edges — markdown `[text](https://...)` links.
+        seen_urls: set[str] = set()
+        for url, _line, _column in urls.extract(body):
+            if url in seen_urls:
+                continue
+            seen_urls.add(url)
+            if url not in graph.documents:
+                graph.documents[url] = Document(path=url, resolved=False)
+                graph.casefold_index[url.casefold()] = url
+            graph.add_edge(Edge(src=canonical, dst=url, kind="cites"))
         # MinHash signature.
         sig = minhash.signature(body)
         sig_bytes = minhash.to_bytes(sig)

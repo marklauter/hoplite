@@ -252,6 +252,28 @@ def test_edge_types_omitted_follows_all_kinds(kinded_graph: Graph) -> None:
     assert sorted(h.path for h in hits) == ["b", "c"]
 
 
+# ---------- cites edge: a -cites→ https://example.com ----------
+
+
+@pytest.fixture
+def cites_graph() -> Graph:
+    g = Graph()
+    _add_node(g, "a")
+    _add_node(g, "https://example.com", resolved=False)
+    _add_edge(g, "a", "https://example.com", "cites")
+    return g
+
+
+def test_edge_types_filter_cites_only(cites_graph: Graph) -> None:
+    _install(cites_graph)
+    hits = tools.traverse_nodes(
+        from_="a",
+        predicate=TraversePredicate(edge_types=["cites"]),
+        depth=1,
+    )
+    assert [h.path for h in hits] == ["https://example.com"]
+
+
 # ---------- direction: b -mentions→ a -mentions→ c ----------
 
 

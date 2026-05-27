@@ -8,13 +8,13 @@ aliases: []
 
 ## Concept
 
-The dream cycle: pick a document at random, traverse its mentions and related neighborhood, study the region, then write a new branching note that summarizes the cluster and exposes navigation hints to foreground agents. A node x with neighbors a, b, c and topically-related l, m, n gets a hub note that says "x's region covers Y; for the contract see [[ghost/notes/a]]; for the decision history see [[ghost/notes/b]]; for the adjacent angle see [[ghost/notes/l]]."
+The dream cycle: pick a document at random, traverse its mentions and related neighborhood, study the region, then write a new branching note that summarizes the cluster and exposes navigation hints to foreground agents. A node x with neighbors a, b, c and topically-related l, m, n gets a hub note that says "x's region covers Y; for the contract see `[[docs/notes/a.md]]`; for the decision history see `[[docs/notes/b.md]]`; for the adjacent angle see `[[docs/notes/l.md]]`."
 
 Foreground (non-dreaming) agents traverse through these hubs to get progressive disclosure — a multi-layer index that compresses what would otherwise demand reading the whole cluster.
 
 ## Relationship to Karpathy's LLM wiki
 
-Karpathy's [[ghost/notes/karpathy-llm-wiki]] proposes three workflows: ingest, query, lint. Lint identifies orphans, contradictions, stale claims, and missing cross-references — and *suggests* investigations for a human or follow-up session to act on.
+Karpathy's [[docs/proxies/karpathy-llm-wiki.md]] proposes three workflows: ingest, query, lint. Lint identifies orphans, contradictions, stale claims, and missing cross-references — and *suggests* investigations for a human or follow-up session to act on.
 
 Dream extends lint from suggestion to action. Same diagnostic signal — orphan clusters, missing landing pages, related-but-uncrosslinked regions — and the dream agent writes the missing scaffolding directly rather than reporting it.
 

@@ -51,7 +51,9 @@ def _write_corpus(root: Path) -> None:
             body=(
                 # `[[docs/notes/beta.md]]` — full-path real reference.
                 # `[[ghost/missing]]` — intentional open loop (the convention's ghost form).
+                # `[external](https://example.com/alpha)` — markdown URL auto-indexed as `cites`.
                 "See [[docs/notes/beta.md]] for the next step. Also [[ghost/missing]] is unwritten.\n"
+                "Background: [external](https://example.com/alpha).\n"
             ),
         ),
         encoding="utf-8",
@@ -123,6 +125,7 @@ async def _drive_server(root: Path) -> None:
         reached = {h["path"] for h in traversal}
         assert "docs/notes/beta.md" in reached
         assert "ghost/missing" in reached  # ghost is reachable too
+        assert "https://example.com/alpha" in reached  # URL node cited from alpha
 
         # dump_index — snapshot to a temp file and inspect.
         # .hoplite/ sits at the cwd level, alongside docs/, not inside it.
@@ -135,23 +138,26 @@ async def _drive_server(root: Path) -> None:
         dump_payload = cast(dict[str, Any], _parse_json(dump_result))
         assert dump_payload["counts"]["documents"] == 3
         assert dump_payload["counts"]["ghosts"] == 1
+        assert dump_payload["counts"]["urls"] == 1
 
         # Verify the dumped SQLite file matches the in-memory state.
         conn = sqlite3.connect(str(dump_destination))
         try:
-            # documents — five-column shape, three resolved + one ghost.
+            # documents — five-column shape, three resolved + one ghost + one URL.
             cursor = conn.execute("SELECT COUNT(*) FROM documents WHERE resolved = 1")
             assert cursor.fetchone()[0] == 3
             cursor = conn.execute("SELECT COUNT(*) FROM documents WHERE resolved = 0")
-            assert cursor.fetchone()[0] == 1
+            assert cursor.fetchone()[0] == 2  # ghost/missing + the URL node
 
             # nodes — every document has a row; kind is always 'document' day one.
             cursor = conn.execute("SELECT COUNT(*) FROM nodes WHERE kind = 'document'")
-            assert cursor.fetchone()[0] == 4  # 3 resolved + 1 ghost
+            assert cursor.fetchone()[0] == 5  # 3 resolved + 1 ghost + 1 URL
 
-            # edges — only mentions and related, no member.
+            # edges — mentions for wikilinks, cites for external URLs.
             cursor = conn.execute("SELECT COUNT(*) FROM edges WHERE kind = 'mentions'")
             assert cursor.fetchone()[0] >= 2  # alpha→beta and alpha→missing
+            cursor = conn.execute("SELECT COUNT(*) FROM edges WHERE kind = 'cites'")
+            assert cursor.fetchone()[0] == 1  # alpha→external URL
             cursor = conn.execute("SELECT COUNT(*) FROM edges WHERE kind = 'member'")
             assert cursor.fetchone()[0] == 0  # member edges abolished
 

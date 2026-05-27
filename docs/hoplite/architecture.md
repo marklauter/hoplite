@@ -87,6 +87,16 @@ The ghost set is queryable as the agent's "open loops" backlog — documents ref
 
 Wikilinks are never silently dropped except for malformed targets. A `docs/`-shaped target that resolves becomes a real-to-real edge; one that doesn't becomes a real-to-ghost edge keyed at the authored path. A `ghost/`-shaped target always becomes a real-to-ghost edge keyed under `ghost/<slug>`.
 
+## External references
+
+Inline markdown links `[text](https://...)` are first-class graph signal alongside wikilinks. The walker's pass 2 matches every body-text occurrence of the pattern where the URL begins with `http://` or `https://`, registers the URL as a graph node keyed by the verbatim URL string, and emits a `cites` edge from the source document to that node. Multiple links from one document to the same URL collapse to one edge.
+
+URL nodes carry `resolved = false`, no frontmatter, no body, no FTS row — they're terminal. Discoverable through `relatives(predicate={"edge_types": ["cites"]})` from a containing document, never through `where` text search. The URL itself is the path, so a caller that gets a `cites` edge can `WebFetch` the URL or include it in another document's prose verbatim.
+
+No canonicalization. `https://example.com/`, `https://example.com`, and `http://example.com` are three distinct nodes — author authority. Same convention as wikilinks: matched-pair `[text](url)` markdown links inside backticks or fenced blocks are masked and skipped, so sample URLs in prose don't pollute the graph.
+
+For durable external references that earn metadata (tags, summary, "why this matters") or are reused across multiple documents, the convention is a proxy note at `docs/proxies/<slug>.md` carrying the URL via a markdown link plus context in the body. Other documents wikilink the proxy; the proxy emits the `cites` edge to the URL. Backlinks (`relatives` with `direction="in"`) over the proxy then show every doc that referenced the resource.
+
 ## Tag predicates
 
 The two query tools accept a tag predicate that filters which documents appear in results.
