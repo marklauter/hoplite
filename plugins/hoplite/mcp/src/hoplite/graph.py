@@ -140,7 +140,13 @@ class Graph:
         no document or alias matches. Lookup is case-insensitive ordinal
         (``str.casefold()``) and tolerant of an omitted ``.md`` extension
         (per docs/hoplite/architecture.md#wikilinks-and-ghost-documents).
+
+        Display syntax — ``#anchor`` and ``|alias`` — is stripped before
+        lookup. ``[[target#section|label]]`` resolves the same as ``[[target]]``.
         """
+        target = target.split("|", 1)[0].split("#", 1)[0].strip()
+        if not target:
+            return None
         if target in self.documents:
             return target
         if target in self.aliases:
