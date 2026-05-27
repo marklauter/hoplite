@@ -4,8 +4,9 @@ summary: Hoplite's categorical differentiator over off-the-shelf retrievers — 
 tags: [note, hoplite, mcp, retrieval, design, todo]
 created: 2026-05-27
 aliases: []
-priority: medium
-effort: high
+document.priority: medium
+document.effort: high
+document.status: open
 edge.blocked_by: [docs/notes/related-edges-rarely-fire-in-current-corpus.md]
 ---
 

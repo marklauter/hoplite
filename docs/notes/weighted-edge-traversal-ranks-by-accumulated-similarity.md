@@ -4,8 +4,9 @@ summary: Walking `tuple(related, P)` ranks by the path's product of edge confide
 tags: [note, hoplite, mcp, design, architecture, todo]
 created: 2026-05-27
 aliases: []
-priority: low
-effort: medium
+document.priority: low
+document.effort: medium
+document.status: open
 edge.blocked_by: [docs/notes/related-edges-rarely-fire-in-current-corpus.md]
 ---
 

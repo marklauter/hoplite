@@ -4,8 +4,9 @@ summary: MinHash Jaccard over shingles weights every shingle equally, suppressin
 tags: [note, hoplite, mcp, related-edges, bm25, ranking, design, todo]
 created: 2026-05-27
 aliases: []
-priority: high
-effort: high
+document.priority: high
+document.effort: high
+document.status: open
 ---
 
 # Rank related edges by BM25 cosine, not MinHash Jaccard

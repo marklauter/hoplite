@@ -4,8 +4,9 @@ summary: Spot-checks against the spec and journal documents show zero `related` 
 tags: [note, hoplite, mcp, graph, related-edges, minhash, todo, bug]
 created: 2026-05-26
 aliases: []
-priority: high
-effort: medium
+document.priority: high
+document.effort: medium
+document.status: open
 ---
 
 # Related edges rarely fire in current corpus

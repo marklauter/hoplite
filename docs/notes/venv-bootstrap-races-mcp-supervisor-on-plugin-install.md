@@ -4,8 +4,9 @@ summary: SessionStart hooks don't fire on /plugin install. The MCP launcher poll
 tags: [note, todo, hoplite, bootstrap, mcp, lifecycle, bug]
 created: 2026-05-25
 aliases: []
-priority: medium
-effort: medium
+document.priority: medium
+document.effort: medium
+document.status: open
 ---
 
 # Venv bootstrap races MCP supervisor on plugin install

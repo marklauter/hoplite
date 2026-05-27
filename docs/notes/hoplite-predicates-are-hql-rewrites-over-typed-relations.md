@@ -4,8 +4,9 @@ summary: Proposed predicate language for `where` and `relatives` — HQL (Hoplit
 tags: [note, hoplite, mcp, design, architecture, hql, todo]
 created: 2026-05-27
 aliases: []
-priority: high
-effort: high
+document.priority: high
+document.effort: high
+document.status: open
 ---
 
 # Hoplite predicates are HQL rewrites over typed relations

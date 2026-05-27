@@ -4,8 +4,9 @@ summary: High-priority TODO. The component at plugins/hoplite/components/hoplite
 tags: [note, todo, hoplite, mcp, design]
 created: 2026-05-26
 aliases: []
-priority: low
-effort: low
+document.priority: low
+document.effort: low
+document.status: open
 ---
 
 # mcp-reference undersells the graph against grep

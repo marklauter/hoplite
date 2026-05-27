@@ -4,8 +4,9 @@ summary: FastMCP logs a schema warning at startup about `WriteResult`'s `path` f
 tags: [note, todo, hoplite, mcp, fastmcp]
 created: 2026-05-25
 aliases: []
-priority: low
-effort: low
+document.priority: low
+document.effort: low
+document.status: open
 ---
 
 # FastMCP WriteResult schema warning is cosmetic

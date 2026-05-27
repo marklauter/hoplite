@@ -4,8 +4,9 @@ summary: The tag predicate compiles a Zanzibar-style rewrite expression but stri
 tags: [note, todo, hoplite, mcp, design, architecture, open-question]
 created: 2026-05-27
 aliases: []
-priority: low
-effort: low
+document.priority: low
+document.effort: low
+document.status: open
 edge.blocked_by: [docs/notes/hoplite-predicates-are-hql-rewrites-over-typed-relations.md]
 ---
 

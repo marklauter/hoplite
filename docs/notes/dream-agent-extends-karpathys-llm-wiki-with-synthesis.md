@@ -4,8 +4,9 @@ summary: Background agent samples the corpus, traverses neighborhoods, and write
 tags: [note, todo, architecture, roadmap, hoplite, dream]
 created: 2026-05-25
 aliases: []
-priority: low
-effort: high
+document.priority: low
+document.effort: high
+document.status: open
 ---
 
 # Dream agent extends Karpathy's LLM wiki with synthesis

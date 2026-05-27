@@ -4,8 +4,9 @@ summary: BM25 is orthogonal to predicate evaluation today — rewrite produces a
 tags: [note, hoplite, mcp, design, architecture, hql, open-question, todo]
 created: 2026-05-27
 aliases: []
-priority: low
-effort: medium
+document.priority: low
+document.effort: medium
+document.status: open
 edge.blocked_by: [docs/notes/hoplite-predicates-are-hql-rewrites-over-typed-relations.md]
 ---
 
