@@ -98,11 +98,11 @@ def _get_graph() -> Graph:
 
 
 def _summary_for(graph: Graph, path: str) -> str:
-    return (graph.node_properties.get(path, {}).get("summary") or [""])[0]
+    return (graph.document_properties.get(path, {}).get("summary") or [""])[0]
 
 
 def _tags_for(graph: Graph, path: str) -> list[str]:
-    return graph.node_properties.get(path, {}).get("tags", [])
+    return graph.document_properties.get(path, {}).get("tags", [])
 
 
 def _edge_confidence(graph: Graph, edge: Edge) -> float | None:

@@ -105,7 +105,7 @@ Four tools register under the `plugin:hoplite:catalog` server:
    sqlite3 .hoplite/<timestamp>.index.sqlite
    .tables
    SELECT d.path, p.value FROM documents d
-     JOIN node_properties p ON p.node_id = d.id
+     JOIN document_properties p ON p.path = d.path
      WHERE p.key = 'title';
    ```
 
@@ -113,9 +113,9 @@ Four tools register under the `plugin:hoplite:catalog` server:
 
 The markdown files on disk are the source of truth. Hoplite holds no canonical state of its own — every reindex rebuilds the in-memory graph from scratch by walking the corpus, parsing frontmatter, extracting wikilinks, and computing MinHash signatures.
 
-The in-memory graph carries five surfaces: documents (file-level identity, `resolved` flag, content hash, MinHash bytes), node properties (everything from frontmatter, in EAV form), edges (`mentions` from wikilinks, `related` from MinHash similarity), edge properties (currently `confidence` on `related` edges), and an in-memory SQLite FTS5 index for BM25 ranking. Tag membership is a node property, not an edge.
+The in-memory graph carries four surfaces: documents (file-level identity, `resolved` flag, content hash, MinHash bytes), document properties (everything from frontmatter, in EAV form), edges (`mentions` from wikilinks, `cites` from inline markdown URLs, `related` from MinHash similarity), and edge properties (currently `confidence` on `related` edges). An in-memory SQLite FTS5 index supports BM25 ranking. Tag membership is a document property, not an edge.
 
-The dump renders this state as a property-graph projection. A `nodes(id, kind)` table assigns each document an integer id; `documents`, `node_properties`, `edges`, and `edge_properties` foreign-key into it. The FTS5 index ships in contentless mode — the inverted index survives the dump for `MATCH` queries, but bodies live only in the source markdown.
+The dump renders this state as a property-graph projection that mirrors the in-memory shape one-to-one: `documents` keyed by path, `document_properties` and `edges` and `edge_properties` keyed on the same natural keys their in-memory dicts use. The FTS5 index ships in contentless mode — the inverted index survives the dump for `MATCH` queries, but bodies live only in the source markdown.
 
 For depth on the architecture, see [docs/hoplite/architecture.md](docs/hoplite/architecture.md).
 

@@ -24,7 +24,7 @@ class Document:
     File-level facts only: identity (``path``), ghost-or-real flag (``resolved``),
     and the two derived non-searchable artifacts (``content_hash``, ``minhash``).
     Everything authored in YAML frontmatter — title, summary, tags, aliases,
-    created, and user-defined keys — lives in ``Graph.node_properties`` instead.
+    created, and user-defined keys — lives in ``Graph.document_properties`` instead.
 
     Ghost documents (referenced by a wikilink but not yet on disk) have
     ``resolved=False`` and the derived fields ``None``.

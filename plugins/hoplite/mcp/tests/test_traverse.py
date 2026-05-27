@@ -9,7 +9,7 @@ and exercise each branch of the traversal predicate independently:
 - ``edge_types`` filter (mentions only, related only, omitted = all)
 - ``direction`` filter (out / in / both)
 - ``min_confidence`` filter against ``edge_properties``
-- ``tagged`` predicate against ``node_properties``
+- ``tagged`` predicate against ``document_properties``
 - ghost-target reachability
 - disconnected origin → empty result
 - unknown origin → ValueError
@@ -51,7 +51,7 @@ def _add_node(
         }
         if tags:
             props["tags"] = list(tags)
-        graph.node_properties[path] = props
+        graph.document_properties[path] = props
 
 
 def _add_edge(
@@ -394,7 +394,7 @@ def test_depth_zero_raises_value_error() -> None:
         tools.traverse_nodes(from_="a", depth=0)
 
 
-# ---------- result shape: summary and tags come from node_properties ----------
+# ---------- result shape: summary and tags come from document_properties ----------
 
 
 def test_hit_summary_and_tags_come_from_properties() -> None:

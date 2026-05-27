@@ -46,7 +46,7 @@ def _empty_str_list() -> list[str]:
     return []
 
 
-def _empty_node_props() -> dict[str, dict[str, list[str]]]:
+def _empty_doc_props() -> dict[str, dict[str, list[str]]]:
     return {}
 
 
@@ -69,13 +69,13 @@ CREATE TABLE documents (
   minhash BLOB
 );
 
-CREATE TABLE node_properties (
+CREATE TABLE document_properties (
   path TEXT NOT NULL REFERENCES documents(path),
   key TEXT NOT NULL,
   value TEXT NOT NULL,
   PRIMARY KEY (path, key, value)
 );
-CREATE INDEX idx_node_props_key_value ON node_properties(key, value);
+CREATE INDEX idx_doc_props_key_value ON document_properties(key, value);
 
 CREATE TABLE edges (
   src TEXT NOT NULL REFERENCES documents(path),
@@ -113,7 +113,7 @@ class Graph:
     """Mutable container for the in-memory graph state."""
 
     documents: dict[str, Document] = field(default_factory=_empty_documents)
-    node_properties: dict[str, dict[str, list[str]]] = field(default_factory=_empty_node_props)
+    document_properties: dict[str, dict[str, list[str]]] = field(default_factory=_empty_doc_props)
     edge_properties: dict[tuple[str, str, str], dict[str, list[str]]] = field(
         default_factory=_empty_edge_props,
     )
@@ -165,7 +165,7 @@ class Graph:
         try:
             conn.executescript(DUMP_SCHEMA)
             self._write_documents(conn)
-            self._write_node_properties(conn)
+            self._write_document_properties(conn)
             self._write_edges(conn)
             self._write_edge_properties(conn)
             self._write_fts(conn)
@@ -205,14 +205,14 @@ class Graph:
             rows,
         )
 
-    def _write_node_properties(self, conn: sqlite3.Connection) -> None:
+    def _write_document_properties(self, conn: sqlite3.Connection) -> None:
         rows: list[tuple[str, str, str]] = []
-        for path_key, props in self.node_properties.items():
+        for path_key, props in self.document_properties.items():
             for key, values in props.items():
                 for value in values:
                     rows.append((path_key, key, value))
         if rows:
-            conn.executemany("INSERT INTO node_properties VALUES (?, ?, ?)", rows)
+            conn.executemany("INSERT INTO document_properties VALUES (?, ?, ?)", rows)
 
     def _write_edges(self, conn: sqlite3.Connection) -> None:
         seen: set[tuple[str, str, str]] = set()
@@ -252,7 +252,7 @@ class Graph:
         for doc in self.documents.values():
             if not doc.resolved:
                 continue
-            props = self.node_properties.get(doc.path, {})
+            props = self.document_properties.get(doc.path, {})
             title = (props.get("title") or [""])[0]
             summary = (props.get("summary") or [""])[0]
             rows.append((doc.path, title, summary, ""))
@@ -295,9 +295,9 @@ def walk(corpus_root: Path) -> Graph:
             graph.warnings.append(f"{canonical}: tags and aliases must be lists")
             continue
 
-        # Populate node_properties from the full frontmatter dict — every key,
+        # Populate document_properties from the full frontmatter dict — every key,
         # scalar or list, becomes one or more (key, value) entries.
-        graph.node_properties[canonical] = _frontmatter_to_props(meta)
+        graph.document_properties[canonical] = _frontmatter_to_props(meta)
 
         alias_strs = tuple(str(a) for a in cast(list[object], aliases_value))
 
@@ -337,7 +337,7 @@ def walk(corpus_root: Path) -> Graph:
                 ghost = Document(path=bare, resolved=False)
                 graph.documents[bare] = ghost
                 graph.casefold_index[bare.casefold()] = bare
-                graph.node_properties[bare] = {"tags": ["ghost"]}
+                graph.document_properties[bare] = {"tags": ["ghost"]}
                 resolved_target = bare
             if resolved_target in seen_targets:
                 continue
@@ -353,14 +353,14 @@ def walk(corpus_root: Path) -> Graph:
             if url not in graph.documents:
                 graph.documents[url] = Document(path=url, resolved=False)
                 graph.casefold_index[url.casefold()] = url
-                graph.node_properties[url] = {"tags": ["url"]}
+                graph.document_properties[url] = {"tags": ["url"]}
             graph.add_edge(Edge(src=canonical, dst=url, kind="cites"))
         # MinHash signature.
         sig = minhash.signature(body)
         sig_bytes = minhash.to_bytes(sig)
         graph.documents[canonical] = _with_minhash(doc, sig_bytes)
         # FTS5 row — title and summary from properties, body raw for tokenization.
-        props = graph.node_properties.get(canonical, {})
+        props = graph.document_properties.get(canonical, {})
         title = (props.get("title") or [""])[0]
         summary = (props.get("summary") or [""])[0]
         assert graph.fts is not None
