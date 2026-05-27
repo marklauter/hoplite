@@ -39,7 +39,7 @@ aliases: []
 
 The refactor surfaced a problem that the inject-composition pivot resolves the next day. `taking-notes` declared its rhetorical-context override per the foundation contract — but the editorial principles from `writing-prose` still had to be duplicated, restated, or referenced by hand. The foundation/downstream coupling was conceptual; the mechanism was still "read the foundation alongside the downstream." A real injection mechanism was missing.
 
-The discoveries note about skill composition lands the following evening (2026-05-21), and the `!cat` injection adoption follows hours later. See `[[2026-05-21-0403-injection-composition-pivot]]`.
+The discoveries note about skill composition lands the following evening (2026-05-21), and the `!cat` injection adoption follows hours later. See `[[journal/2026-05-21-0403-injection-composition-pivot]]`.
 
 ## Next
 

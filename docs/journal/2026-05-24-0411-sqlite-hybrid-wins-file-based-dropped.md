@@ -47,15 +47,15 @@ The case for SQLite as the index layer: a real database under the hood, ACID sem
 
 ## What this set up
 
-- The next session draws the line between the spec and the code. Spec is stable; time to write Python. The Python toolchain (`writing-python` skill, ruff + pyright gate, src/tests layout) lands the same day. See `[[2026-05-24-1701-python-toolchain-and-writing-python-skill]]`.
+- The next session draws the line between the spec and the code. Spec is stable; time to write Python. The Python toolchain (`writing-python` skill, ruff + pyright gate, src/tests layout) lands the same day. See `[[journal/2026-05-24-1701-python-toolchain-and-writing-python-skill]]`.
 - The decision-log file grows. SQLite-hybrid wins gets recorded; ULIDs get marked superseded; the three-tier identity model gets marked superseded.
 
 ## What this didn't survive
 
-The SQLite-hybrid wins for ~24 hours. On the night of 2026-05-24 the architecture pivots again: persistent SQLite drops in favor of in-memory `:memory:` SQLite for FTS5 only. The hybrid name retires. See `[[2026-05-25-0202-dead-then-redesign-in-memory-graph-and-four-tools]]`.
+The SQLite-hybrid wins for ~24 hours. On the night of 2026-05-24 the architecture pivots again: persistent SQLite drops in favor of in-memory `:memory:` SQLite for FTS5 only. The hybrid name retires. See `[[journal/2026-05-25-0202-dead-then-redesign-in-memory-graph-and-four-tools]]`.
 
 The paths-as-ids decision survives the redesign and ships in day-one.
 
 ## Next
 
-The Python toolchain lands and the first hoplite modules start. See `[[2026-05-24-1701-python-toolchain-and-writing-python-skill]]`.
+The Python toolchain lands and the first hoplite modules start. See `[[journal/2026-05-24-1701-python-toolchain-and-writing-python-skill]]`.

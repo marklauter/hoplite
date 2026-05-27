@@ -12,7 +12,7 @@ MCP hello-world server lands in the skills plugin; the runtime-thesis note captu
 
 ## Intent
 
-`[[prototype-the-plugin-mcp-server-in-python]]` had framed the MCP server as a delivery mechanism — Python over bash for `record_note` and `record_journal_entry`, motivated by quoting edge cases in shell. That framing was narrow. The shape session opened with that framing and ended somewhere bigger.
+`[[notes/prototype-the-plugin-mcp-server-in-python]]` had framed the MCP server as a delivery mechanism — Python over bash for `record_note` and `record_journal_entry`, motivated by quoting edge cases in shell. That framing was narrow. The shape session opened with that framing and ended somewhere bigger.
 
 The reframe: MCP is not the new write path. It is the runtime for a content layer that lives as a knowledge graph on disk. Notes, journal entries, decisions, references — and possibly skill bodies themselves — are graph nodes. The agent loads any of them on demand through a small, stable MCP tool surface. The write path is one slice of that surface.
 
@@ -55,9 +55,9 @@ Many of these supersede later. The label-as-envelope concept dies during the red
 
 ## Cross-references
 
-- `[[prototype-the-plugin-mcp-server-in-python]]` — the parent that framed Python over alternatives, with shape options A through D for the write path.
-- `[[2026-05-21-0403-injection-composition-pivot]]` — the inject-composition pivot, happening minutes after this commit. The two events collided in time but were independent cycles.
+- `[[notes/prototype-the-plugin-mcp-server-in-python]]` — the parent that framed Python over alternatives, with shape options A through D for the write path.
+- `[[journal/2026-05-21-0403-injection-composition-pivot]]` — the inject-composition pivot, happening minutes after this commit. The two events collided in time but were independent cycles.
 
 ## Next
 
-The thesis demands a concrete data-model. The session two days later drafts the spec and runs three cold-review iterations through it. See `[[2026-05-23-1807-data-model-spec-and-cold-review-iteration]]`.
+The thesis demands a concrete data-model. The session two days later drafts the spec and runs three cold-review iterations through it. See `[[journal/2026-05-23-1807-data-model-spec-and-cold-review-iteration]]`.

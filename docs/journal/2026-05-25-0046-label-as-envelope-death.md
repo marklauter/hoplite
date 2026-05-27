@@ -12,7 +12,7 @@ The framing-axis labels (`instruction`, `reference`, `observation`) had carried 
 
 ## What the framing was for
 
-The MCP runtime thesis ([[2026-05-21-0401-mcp-runtime-thesis-and-hello-world]]) observed that loading a node from the graph was a delivery moment, and the delivery shape mattered. A skill body has authority because the skill loader frames it as guidance. An MCP tool result, structurally, returns as data. Same bytes, different effect on the agent.
+The MCP runtime thesis ([[journal/2026-05-21-0401-mcp-runtime-thesis-and-hello-world]]) observed that loading a node from the graph was a delivery moment, and the delivery shape mattered. A skill body has authority because the skill loader frames it as guidance. An MCP tool result, structurally, returns as data. Same bytes, different effect on the agent.
 
 The fix the thesis proposed: per-label envelopes. Three special tags would drive the response shape on retrieval:
 
@@ -28,7 +28,7 @@ Two verbs, four envelope files. The shape made sense.
 
 ## Why it died
 
-The redesign ([[2026-05-25-0202-dead-then-redesign-in-memory-graph-and-four-tools]]) deleted both retrieval tools. `invoke_node` retired. `read_node` retired. The agent stopped fetching bodies through Hoplite at all. Hoplite returned candidates (paths, summaries, tags); the agent used Claude's built-in `Read` tool to fetch the bodies.
+The redesign ([[journal/2026-05-25-0202-dead-then-redesign-in-memory-graph-and-four-tools]]) deleted both retrieval tools. `invoke_node` retired. `read_node` retired. The agent stopped fetching bodies through Hoplite at all. Hoplite returned candidates (paths, summaries, tags); the agent used Claude's built-in `Read` tool to fetch the bodies.
 
 The framing-axis labels had no remaining consumer. Their job was to drive the MCP server's envelope-prefixing behavior on retrieval; with no retrieval, there was no envelope to prefix.
 
@@ -63,7 +63,7 @@ Two takeaways:
 
 ## Cross-references
 
-- `[[2026-05-21-0401-mcp-runtime-thesis-and-hello-world]]` — where the framing-axis labels first appeared.
-- `[[2026-05-23-1807-data-model-spec-and-cold-review-iteration]]` — where the envelope composition got fully specified.
-- `[[2026-05-25-0202-dead-then-redesign-in-memory-graph-and-four-tools]]` — the redesign that killed the framings.
-- `[[2026-05-25-1138-tag-model-evolution]]` — the parallel collapse of the tag model from virtual nodes to properties.
+- `[[journal/2026-05-21-0401-mcp-runtime-thesis-and-hello-world]]` — where the framing-axis labels first appeared.
+- `[[journal/2026-05-23-1807-data-model-spec-and-cold-review-iteration]]` — where the envelope composition got fully specified.
+- `[[journal/2026-05-25-0202-dead-then-redesign-in-memory-graph-and-four-tools]]` — the redesign that killed the framings.
+- `[[journal/2026-05-25-1138-tag-model-evolution]]` — the parallel collapse of the tag model from virtual nodes to properties.

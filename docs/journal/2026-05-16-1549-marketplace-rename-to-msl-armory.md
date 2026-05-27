@@ -26,4 +26,4 @@ Settle the marketplace name. Until now the manifest carried experimentation-grad
 
 ## Next
 
-The plugin name survives until late on 2026-05-25, when the repo split temporarily renames the package `hoplite` and then settles back on `armory` for the surviving Claude-repo plugin. See `[[2026-05-25-1934-skill-md-to-component-and-the-repo-split]]`.
+The plugin name survives until late on 2026-05-25, when the repo split temporarily renames the package `hoplite` and then settles back on `armory` for the surviving Claude-repo plugin. See `[[journal/2026-05-25-1934-skill-md-to-component-and-the-repo-split]]`.

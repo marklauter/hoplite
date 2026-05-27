@@ -12,7 +12,7 @@ Draft the MCP graph runtime data-model spec; three cold-review passes tighten th
 
 ## Intent
 
-The runtime thesis from two days earlier ([[2026-05-21-0401-mcp-runtime-thesis-and-hello-world]]) declared a graph runtime; the data-model spec turns that thesis into something implementable. The spec needs concrete shapes for:
+The runtime thesis from two days earlier ([[journal/2026-05-21-0401-mcp-runtime-thesis-and-hello-world]]) declared a graph runtime; the data-model spec turns that thesis into something implementable. The spec needs concrete shapes for:
 
 - Storage layout — where notes live, where the index lives, what the sidecar file looks like.
 - Sidecar schema — fields, types, defaults.
@@ -66,4 +66,4 @@ The spec was the scaffolding the design climbed up before being replaced. It cap
 
 ## Next
 
-SQLite-hybrid lands as a peer implementation later that evening. See `[[2026-05-24-0220-sqlite-hybrid-wins-file-based-dropped]]`.
+SQLite-hybrid lands as a peer implementation later that evening. See `[[journal/2026-05-24-0411-sqlite-hybrid-wins-file-based-dropped]]`.

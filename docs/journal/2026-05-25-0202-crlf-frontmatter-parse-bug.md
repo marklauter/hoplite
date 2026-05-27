@@ -34,5 +34,5 @@ A fixture for CRLF input would have caught this in CI. After the fix, the test s
 
 ## Cross-references
 
-- `[[2026-05-25-0202-dead-then-redesign-in-memory-graph-and-four-tools]]` — the bug landed in the bug-sweep commit that closed the redesign night.
-- `[[2026-05-25-1934-skill-md-to-component-and-the-repo-split]]` — the PowerShell BOM trap that's a sibling Windows-tooling defect.
+- `[[journal/2026-05-25-0202-dead-then-redesign-in-memory-graph-and-four-tools]]` — the bug landed in the bug-sweep commit that closed the redesign night.
+- `[[journal/2026-05-25-1934-skill-md-to-component-and-the-repo-split]]` — the PowerShell BOM trap that's a sibling Windows-tooling defect.

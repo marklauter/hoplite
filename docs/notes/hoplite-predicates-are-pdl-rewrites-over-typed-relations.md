@@ -27,7 +27,7 @@ The current Hoplite parser at `parser.py` already accepts `!`, `&`, `|`, parens,
 
 - **Property relations** — each frontmatter key parameterized by value. `tag(notes)`, `tag(mcp)`, `status(draft)`, `priority(high)`, `aliases(foo)`. The userset of `tag(notes)` is the set of documents with a `node_properties` row where `(key='tags', value='notes')`. One indexed lookup per leaf.
 - **Edge relations** — `mentions`, `related`. The userset of `mentions` on a focus document is the set of documents mentioned by it (or mentioning it; direction is a parameter).
-- **Alias relations** — `aliases(foo)` resolves to the canonical document claiming `foo`. Loaded today, ungovernable through any tool — see [[predicate-leaves-should-carry-relation-identity]].
+- **Alias relations** — `aliases(foo)` resolves to the canonical document claiming `foo`. Loaded today, ungovernable through any tool — see [[notes/predicate-leaves-should-carry-relation-identity]].
 
 [Guess] Value-parameterized relations deviate from strict PDL, where a relation is a bare identifier with no argument. Alternatives — one relation per (key, value) pair (`tag_notes`, `tag_mcp`, exploding by tag cardinality), or relations whose userset contains (subject, value) pairs rather than just subjects (changes the set algebra) — are worse in their own ways. Parameterization keeps the relation count bounded and the surface readable.
 
@@ -81,10 +81,10 @@ Today's `notes & mcp` is the same query as `tag(notes) & tag(mcp)` with `tag(_)`
 - **Range and comparison.** `created(2026-05-27)` is equality. Range queries (`created > 2026-01-01`, `priority >= 3`) need a leaf shape outside pure PDL — a comparison operator on parameterized relations.
 - **Wildcards.** `tag(*)` meaning "any tag" — useful for "docs with tags" vs "docs without." Not in PDL; cheap to add, and the inverse `!tag(*)` reads naturally.
 - **Subject scope split.** PDL is defined relative to an object. `relatives` has an explicit origin and walks from it; `where` has no origin and ranges over the whole corpus. `tuple(_, _)` semantics differ between the two — from the origin in `relatives`, from each candidate in `where`. Worth making explicit in the tool API.
-- **Where the executor lives.** SQL against the live `node_properties` table, an in-memory inverted index per relation, or both. Touches the in-memory shape question — see [[swap-in-memory-graph-dicts-for-property-graph-objects]].
+- **Where the executor lives.** SQL against the live `node_properties` table, an in-memory inverted index per relation, or both. Touches the in-memory shape question — see [[notes/swap-in-memory-graph-dicts-for-property-graph-objects]].
 
 ## See also
 
-- [[predicate-leaves-should-carry-relation-identity]] — the design hole this proposal addresses. Today's predicate strips relation identity at the callsite; this note proposes the language that restores it.
-- [[swap-in-memory-graph-dicts-for-property-graph-objects]] — the in-memory shape axis. A relation-aware leaf executor needs an indexed lookup path; that note's inverted property index is one realization.
-- [[rerank-bm25-candidates-with-graph-signals]] — the rerank's tag-affinity feature consumes the same `(key, value)` lookup that property relations need. Shared executor.
+- [[notes/predicate-leaves-should-carry-relation-identity]] — the design hole this proposal addresses. Today's predicate strips relation identity at the callsite; this note proposes the language that restores it.
+- [[notes/swap-in-memory-graph-dicts-for-property-graph-objects]] — the in-memory shape axis. A relation-aware leaf executor needs an indexed lookup path; that note's inverted property index is one realization.
+- [[notes/rerank-bm25-candidates-with-graph-signals]] — the rerank's tag-affinity feature consumes the same `(key, value)` lookup that property relations need. Shared executor.

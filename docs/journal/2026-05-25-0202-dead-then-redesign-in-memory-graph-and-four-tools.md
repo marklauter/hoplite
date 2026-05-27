@@ -87,10 +87,10 @@ The 50 s cold-start cost felt expensive on paper. In practice the MCP server run
 
 ## Cross-references
 
-- `[[2026-05-24-0411-sqlite-hybrid-wins-file-based-dropped]]` — the day-old design that got superseded.
+- `[[journal/2026-05-24-0411-sqlite-hybrid-wins-file-based-dropped]]` — the day-old design that got superseded.
 - `[[decision-log]]` — the full record of the supersession trail.
 - `[[refactor-ids-and-metadata]]` — the intermediate-identity snapshot.
 
 ## Next
 
-The venv bootstrap dance for plugin install starts the same morning. SessionStart hook, launch.py dispatcher, race defenses. See `[[2026-05-25-0413-venv-bootstrap-race]]`.
+The venv bootstrap dance for plugin install starts the same morning. SessionStart hook, launch.py dispatcher, race defenses. See `[[journal/2026-05-25-0413-venv-bootstrap-race]]`.

@@ -47,13 +47,13 @@ The hoplite repo is now self-contained. The armory plugin in the Claude repo con
 
 ## What this didn't fix
 
-The plugin's marketplace manifest and the README in the hoplite repo still carry some armory-era language. The recompose / triage pass that follows in the same session cleans this up. See `[[2026-05-25-2247-post-1-0-hygiene]]`.
+The plugin's marketplace manifest and the README in the hoplite repo still carry some armory-era language. The recompose / triage pass that follows in the same session cleans this up. See `[[journal/2026-05-25-2247-post-1-0-hygiene]]`.
 
 ## Cross-references
 
-- `[[2026-05-21-0403-injection-composition-pivot]]` — the original injection pattern this extraction reuses.
-- `[[2026-05-25-0202-dead-then-redesign-in-memory-graph-and-four-tools]]` — the design that produced the four-tool surface this skill references.
+- `[[journal/2026-05-21-0403-injection-composition-pivot]]` — the original injection pattern this extraction reuses.
+- `[[journal/2026-05-25-0202-dead-then-redesign-in-memory-graph-and-four-tools]]` — the design that produced the four-tool surface this skill references.
 
 ## Next
 
-Post-1.0 hygiene: README dev layout updates, editorial-principles slim, component injection rules tighten, docs/mcp recomposes into docs/hoplite. See `[[2026-05-25-2247-post-1-0-hygiene]]`.
+Post-1.0 hygiene: README dev layout updates, editorial-principles slim, component injection rules tighten, docs/mcp recomposes into docs/hoplite. See `[[journal/2026-05-25-2247-post-1-0-hygiene]]`.

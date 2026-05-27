@@ -12,7 +12,7 @@ Two commits 9 seconds apart with the same message — first the doc-skills draft
 
 ## What happened
 
-The reviewer-family session ([[2026-05-13-0346-reviewer-family-doc-skills-multi-pass-discipline]]) had a peculiar shape in its commit log: two commits at the same minute with the same message.
+The reviewer-family session ([[journal/2026-05-13-0346-reviewer-family-doc-skills-multi-pass-discipline]]) had a peculiar shape in its commit log: two commits at the same minute with the same message.
 
 - `17332a3 2026-05-13 01:42:08 -0400 draft new skills`
 - `e9cda8c 2026-05-13 01:42:17 -0400 draft new skills`
@@ -37,4 +37,4 @@ The pattern itself is small. Worth recording because it shows up enough times in
 
 ## Cross-references
 
-- `[[2026-05-13-0346-reviewer-family-doc-skills-multi-pass-discipline]]` — the broader session this pair lived inside.
+- `[[journal/2026-05-13-0346-reviewer-family-doc-skills-multi-pass-discipline]]` — the broader session this pair lived inside.

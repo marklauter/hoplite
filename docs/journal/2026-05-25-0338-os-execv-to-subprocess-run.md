@@ -58,8 +58,8 @@ The overhead: one extra Python process holding open during the session. ~5 MB of
 
 ## What this is part of
 
-The venv-bootstrap arc — see [[2026-05-25-0413-venv-bootstrap-race]] for the broader cycle this fix lived inside. The execv defect surfaced minutes after the SessionStart bootstrap landed; the fix went in at 03:38, the bigger race-defense at 03:42, the pip-failure-teardown at 04:13.
+The venv-bootstrap arc — see [[journal/2026-05-25-0413-venv-bootstrap-race]] for the broader cycle this fix lived inside. The execv defect surfaced minutes after the SessionStart bootstrap landed; the fix went in at 03:38, the bigger race-defense at 03:42, the pip-failure-teardown at 04:13.
 
 ## Cross-references
 
-- `[[2026-05-25-0413-venv-bootstrap-race]]` — the broader bootstrap milestone.
+- `[[journal/2026-05-25-0413-venv-bootstrap-race]]` — the broader bootstrap milestone.

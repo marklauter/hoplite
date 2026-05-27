@@ -43,12 +43,12 @@ A `rank` parameter on `relatives` picks the executor strategy:
 
 ## Where this sits
 
-Ranking is a post-grammar concern. The PDL proposal at [[hoplite-predicates-are-pdl-rewrites-over-typed-relations]] defines the predicate language for `where` and `relatives`; the grammar leaves evaluation strategy to the executor. Two strategies satisfy the same `tuple(related, P)` expression, picked at call time.
+Ranking is a post-grammar concern. The PDL proposal at [[notes/hoplite-predicates-are-pdl-rewrites-over-typed-relations]] defines the predicate language for `where` and `relatives`; the grammar leaves evaluation strategy to the executor. Two strategies satisfy the same `tuple(related, P)` expression, picked at call time.
 
-Same shape as the graph-prior rerank at [[rerank-bm25-candidates-with-graph-signals]] — both are ranking layers between predicate evaluation and result return. Different purposes: the rerank reorders `where` candidates by topology relative to a focus node; weighted-traversal ranking reorders `relatives` hits by accumulated edge confidence. Both stay orthogonal to the leaf-identity work in [[predicate-leaves-should-carry-relation-identity]], which restores relation identity to the predicate evaluator.
+Same shape as the graph-prior rerank at [[notes/rerank-bm25-candidates-with-graph-signals]] — both are ranking layers between predicate evaluation and result return. Different purposes: the rerank reorders `where` candidates by topology relative to a focus node; weighted-traversal ranking reorders `relatives` hits by accumulated edge confidence. Both stay orthogonal to the leaf-identity work in [[notes/predicate-leaves-should-carry-relation-identity]], which restores relation identity to the predicate evaluator.
 
 The result schema gains a `score` field whose interpretation depends on `rank` — hop count for `distance`, accumulated confidence for `similarity`. Comparable within a single call. Cross-call comparison is meaningless, same caveat as BM25 scores from `where`.
 
 ## Dependency: related edges have to fire
 
-[Observation] [[related-edges-rarely-fire-in-current-corpus]] reports that `related` edges seldom materialize at current MinHash thresholds. Until that resolves, `similarity` mode runs over a sparse subgraph, and the rank distinction stays mostly theoretical. The work here remains worth specifying — the executor split is the right architecture regardless of how often `related` fires — but the practical payoff arrives with the edge-firing fix.
+[Observation] [[notes/related-edges-rarely-fire-in-current-corpus]] reports that `related` edges seldom materialize at current MinHash thresholds. Until that resolves, `similarity` mode runs over a sparse subgraph, and the rank distinction stays mostly theoretical. The work here remains worth specifying — the executor split is the right architecture regardless of how often `related` fires — but the practical payoff arrives with the edge-firing fix.

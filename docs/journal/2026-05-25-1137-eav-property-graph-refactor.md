@@ -92,8 +92,8 @@ Two edges remain: `mentions` (wikilinks) and `related` (MinHash). Both connect d
 
 ## Cross-references
 
-- `[[2026-05-25-0202-dead-then-redesign-in-memory-graph-and-four-tools]]` — the predecessor redesign. EAV is a follow-on refinement to the in-memory graph shape that landed there.
+- `[[journal/2026-05-25-0202-dead-then-redesign-in-memory-graph-and-four-tools]]` — the predecessor redesign. EAV is a follow-on refinement to the in-memory graph shape that landed there.
 
 ## Next
 
-The dump command had a long-latent bug: FTS5 rowid wasn't bound to `documents.id`, so dump paths resolved against the wrong rows. Fix lands later the same afternoon. See `[[2026-05-25-1724-fts5-rowid-bug-and-timestamped-dumps]]`.
+The dump command had a long-latent bug: FTS5 rowid wasn't bound to `documents.id`, so dump paths resolved against the wrong rows. Fix lands later the same afternoon. See `[[journal/2026-05-25-1724-fts5-rowid-bug-and-timestamped-dumps]]`.

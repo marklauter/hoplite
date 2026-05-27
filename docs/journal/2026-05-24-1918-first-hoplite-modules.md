@@ -57,9 +57,9 @@ Each module is a leaf, tested in isolation:
 
 ## Cross-references
 
-- `[[2026-05-24-1701-python-toolchain-and-writing-python-skill]]` — the toolchain these modules built against.
-- `[[2026-05-24-0411-sqlite-hybrid-wins-file-based-dropped]]` — the spec these modules implement against (mostly).
+- `[[journal/2026-05-24-1701-python-toolchain-and-writing-python-skill]]` — the toolchain these modules built against.
+- `[[journal/2026-05-24-0411-sqlite-hybrid-wins-file-based-dropped]]` — the spec these modules implement against (mostly).
 
 ## Next
 
-The ids module gets deleted overnight when identity collapses to path and the surrogate-key work retires. The MinHash, wikilinks, parser, and filtering modules survive the redesign mostly unchanged. See `[[2026-05-25-0202-dead-then-redesign-in-memory-graph-and-four-tools]]`.
+The ids module gets deleted overnight when identity collapses to path and the surrogate-key work retires. The MinHash, wikilinks, parser, and filtering modules survive the redesign mostly unchanged. See `[[journal/2026-05-25-0202-dead-then-redesign-in-memory-graph-and-four-tools]]`.

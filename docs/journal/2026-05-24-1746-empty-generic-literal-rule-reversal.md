@@ -46,5 +46,5 @@ The original pattern stays. `test_filtering.py` continues to use `frozenset[str]
 
 ## Cross-references
 
-- `[[2026-05-24-1918-first-hoplite-modules]]` — the broader Python module work this commit lived inside.
-- `[[2026-05-24-1701-python-toolchain-and-writing-python-skill]]` — the toolchain that the rule was being added to.
+- `[[journal/2026-05-24-1918-first-hoplite-modules]]` — the broader Python module work this commit lived inside.
+- `[[journal/2026-05-24-1701-python-toolchain-and-writing-python-skill]]` — the toolchain that the rule was being added to.

@@ -30,7 +30,7 @@ The corpus also needed work: 30 documents under `docs/` predated the frontmatter
 
 ## Decisions captured
 
-- The plugin name is `armory`. The MCP-server name and the skill name are `hoplite`. The split is durable: armory is the shipping container, hoplite is the knowledge-graph project inside it. (This decision held inside the Claude repo until the project moved out to its own repo later that day; see `[[2026-05-25-1934-skill-md-to-component-and-the-repo-split]]`.)
+- The plugin name is `armory`. The MCP-server name and the skill name are `hoplite`. The split is durable: armory is the shipping container, hoplite is the knowledge-graph project inside it. (This decision held inside the Claude repo until the project moved out to its own repo later that day; see `[[journal/2026-05-25-1934-skill-md-to-component-and-the-repo-split]]`.)
 - `python3` over `python`. The `python` alias is unreliable across distros; `python3` is the convention.
 - Reindex is destructive. The rebuild discards the in-memory graph and rebuilds from disk. The destructive label warns the agent against calling it casually mid-session — a long-running session pays the cold-start cost on every reindex.
 - Dump extension matches the file format. `.sqlite` over `.db`. A developer who picks up the file knows what to open it with.
@@ -42,9 +42,9 @@ The rename cascade was painful. Plugin name appears in the marketplace manifest,
 
 ## Cross-references
 
-- `[[2026-05-16-1549-marketplace-rename-to-msl-armory]]` — the original armory naming decision.
-- `[[2026-05-25-0202-dead-then-redesign-in-memory-graph-and-four-tools]]` — the redesign that created the package the rename was for.
+- `[[journal/2026-05-16-1549-marketplace-rename-to-msl-armory]]` — the original armory naming decision.
+- `[[journal/2026-05-25-0202-dead-then-redesign-in-memory-graph-and-four-tools]]` — the redesign that created the package the rename was for.
 
 ## Next
 
-The EAV property graph refactor lands later the same morning, replacing the per-doc-property storage shape with a node_properties/edge_properties EAV pattern. See `[[2026-05-25-1137-eav-property-graph-refactor]]`.
+The EAV property graph refactor lands later the same morning, replacing the per-doc-property storage shape with a node_properties/edge_properties EAV pattern. See `[[journal/2026-05-25-1137-eav-property-graph-refactor]]`.
