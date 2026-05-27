@@ -49,6 +49,17 @@ Part three — a one-line decision aid for the four tools, so the agent picks th
 
 The existing API descriptions stay below this framing — they're the spec, and the spec belongs in the doc. The framing tells the agent *when* to use the spec.
 
+## Refinement (2026-05-27)
+
+Reviewed and revised. Diagnosis stands; the recommended fix drifts toward imperative framing ("reach for hoplite first"), which conflicts with the component family's declarative-not-runbook style ([[skill-shape]]). Four declarative edits applied to `plugins/hoplite/components/hoplite/mcp-reference.md` — landing in the component, not the skill, because `research/SKILL.md` is a thin `cat` wrapper and the same component is injected by `taking-notes` and `journaling`. One edit propagates everywhere.
+
+1. **Extend the positioning paragraph, don't add a section.** The existing line already names hoplite's relationship to the content surface (`Read`/`Write`/`Edit`/`rm`). Parallel sentence added for the discovery surface: `Grep`/`Glob` are the literal surface (substrings, filename patterns); hoplite is the semantic surface (BM25 topical ranking, boolean tag expressions, `mentions` and `related` edges). Declarative contrast — the agent infers the recommendation.
+2. **Lead each tool bullet with intent.** `where` now opens with "rank documents by topical relevance" and explicitly contrasts BM25-over-FTS with literal-token matching (the gap the note flags at point 3). Mechanism follows intent.
+3. **Frame `related` edges as a discovery primitive in `relatives`.** The bullet now names both relationship kinds — authored (`mentions` from wikilinks) and inferred (`related` from MinHash) — and states the payoff: topical adjacency without an explicit wikilink. Addresses note points 4 and 7 together.
+4. **Refresh the ghost-document vocab entry.** Adds "first-class node in `relatives` results, so the corpus's unwritten cross-references stay visible." Capability, not just mechanism. Addresses note point 5.
+
+Deliberately omitted: the note's "one-line decision aid for the four tools" list. Once tool bullets lead with intent (#2 above), a separate decision list duplicates without adding signal.
+
 ## See also
 
 - `plugins/hoplite/components/hoplite/mcp-reference.md` — the file this note targets.
