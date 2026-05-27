@@ -1,7 +1,7 @@
 """MinHash signatures and Jaccard similarity over node bodies.
 
 Pure, I/O-free module the write flow calls when materializing `:related`
-edges (see docs/hoplite/architecture.md#minhash-signatures).
+edges (see docs/hoplite/hoplite-architecture.md#minhash-signatures).
 Contract: text-in / structured-value-out / structured-value-in /
 float-out. No SQLite, no file I/O, no edge logic — those live in the
 write flow.
@@ -33,7 +33,7 @@ On-disk format
 --------------
 `to_bytes` packs the signature as `k * 8` bytes, little-endian unsigned
 64-bit integers (`<Q` format). `from_bytes` inverts. Matches
-docs/hoplite/architecture.md#minhash-signatures (k 64-bit
+docs/hoplite/hoplite-architecture.md#minhash-signatures (k 64-bit
 hashes, ~1024 B blob). The `_SALT` constant carries a `v1` suffix as
 the format version marker; bumping it invalidates all stored
 signatures.

@@ -6,6 +6,10 @@ created: 2026-05-25
 aliases: []
 ---
 
+# Venv bootstrap races MCP supervisor on plugin install
+
+SessionStart hooks don't fire on `/plugin install`. The MCP launcher polls for the bootstrapped venv and times out before the venv can be built — first install of any hoplite-shaped plugin fails until a session restart or manual bootstrap.
+
 ## Symptom
 
 After `/plugin install hoplite@msl.hoplite` (or any rename or reinstall flow that produces a fresh `${CLAUDE_PLUGIN_DATA}` directory), the MCP supervisor reports `Failed to reconnect to plugin:hoplite:catalog: MCP server connection timed out after 30000ms`. The data directory at `~/.claude/plugins/data/hoplite-msl-hoplite/` exists but is empty — no `venv/`, no `pyproject.toml` snapshot.

@@ -6,6 +6,10 @@ created: 2026-05-26
 aliases: []
 ---
 
+# Refactor taking-notes to ambient-instructions model
+
+The `taking-notes` skill still reads as an imperative runbook ("Recording a note has four steps...") that loads as marching orders; rework it the way journaling was reworked — declarative description that loads as reference.
+
 ## Why
 
 When `taking-notes` loads — via description-match on phrases like "write this down for later", or via explicit slash invocation — the body's imperative shape ("Recording a note has four steps: spot the trigger, search for an existing note on the topic, compose the content, and save the file") causes the agent to charge through the procedure before the user has even asked for a note. The intent is *ambient*: information ready to use, not pre-executing. Journaling has been reworked along these lines; taking-notes was left because it's less symptomatic, but the same drag exists.

@@ -6,13 +6,17 @@ created: 2026-05-25
 aliases: []
 ---
 
+# Prototype the plugin MCP server in Python
+
+Plain Python (stdio MCP server, no compiled binary) for the first MCP-server prototype in the skills plugin — chosen for source-inspectable distribution, near-universal runtime presence, and a tight dependency surface.
+
 ## The decision
 
 Use plain Python (stdio MCP server, no compiled binary) for the first MCP-server prototype inside the skills plugin. Source ships in the plugin directory; users read every line before granting trust.
 
 ## Resolution
 
-[Locked in] Shape C — native Python, bash deprecated. The MCP server is the only implementation; bash scripts (`record-note.sh`, `record-entry.sh`) are gone. Hoplite ships under `plugins/hoplite/mcp/` as the source-of-truth runtime; see [[docs/hoplite/architecture.md]] for the implementation shape that landed.
+[Locked in] Shape C — native Python, bash deprecated. The MCP server is the only implementation; bash scripts (`record-note.sh`, `record-entry.sh`) are gone. Hoplite ships under `plugins/hoplite/mcp/` as the source-of-truth runtime; see [[docs/hoplite/hoplite-architecture.md]] for the implementation shape that landed.
 
 ## What got ruled out and why
 

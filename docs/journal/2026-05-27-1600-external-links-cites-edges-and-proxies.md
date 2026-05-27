@@ -11,7 +11,7 @@ One session, one arc — wikilinks went from a broken regex with garbage ghosts 
 
 ## The arc
 
-- **Alias/anchor stripping in the resolver** (`0dc018e`) — `[[hoplite/roadmap|roadmap.md]]` and `[[X#section]]` no longer materialize ghost paths carrying raw display syntax. Resolution slices on `|` and `#` before lookup.
+- **Alias/anchor stripping in the resolver** (`0dc018e`) — `[[hoplite/roadmap]]` and `[[X#section]]` no longer materialize ghost paths carrying raw display syntax. Resolution slices on `|` and `#` before lookup.
 - **Code-span and fenced-block exclusion** (`860f729`) — sample wikilinks inside backticks stop ghosting. Authoring rule: samples wear backticks; extractor honors it.
 - **Full `docs/...md` paths in wikilinks and query results** (`3cd15a2`) — walker computes paths relative to `corpus_root.parent`; stored keys and returned `path` fields carry the `docs/` segment so an agent can `Read` directly without rebasing.
 - **Explicit `ghost/<slug>` for intentional open loops** (`3cd15a2`) — walker rejects any target not starting with `docs/` or `ghost/`; malformed links surface as `WriteResult.warnings` rather than silent garbage.
@@ -24,7 +24,7 @@ One session, one arc — wikilinks went from a broken regex with garbage ghosts 
 
 ## Context
 
-The arc opened with the catalog export showing 31 ghost documents — a mix of intentional open loops, code fragments parsed as wikilinks, alias-leaked display syntax, and ordinary typos all jumbled into the same `resolved=false` bucket. Pulling at one thread (why does `hoplite/roadmap|roadmap.md` exist as a ghost when `docs/hoplite/roadmap.md` is a real file?) unraveled into the full convention shift. The cites-edges/proxies decision was the centerpiece; the schema collapse was the cleanup that followed once the rest was stable.
+The arc opened with the catalog export showing 31 ghost documents — a mix of intentional open loops, code fragments parsed as wikilinks, alias-leaked display syntax, and ordinary typos all jumbled into the same `resolved=false` bucket. Pulling at one thread (why does `hoplite/roadmap|roadmap.md` exist as a ghost when `docs/hoplite/hoplite-roadmap.md` is a real file?) unraveled into the full convention shift. The cites-edges/proxies decision was the centerpiece; the schema collapse was the cleanup that followed once the rest was stable.
 
 The original Part 1 trigger was a stale ghost: `ghost/notes/karpathy-llm-wiki`, intended as a pointer to Karpathy's LLM-wiki gist, which the corpus had no idiomatic way to cite. Resolving that one ghost forced both the strict wikilink rules (Part 1) and the external-reference design (Part 2).
 
@@ -70,7 +70,7 @@ Autolinks (`<https://...>`), bare URLs in prose, URL canonicalization, and link 
 
 ## See also
 
-- [[docs/hoplite/architecture.md]] — wikilinks, ghost documents, external references, and the dump-schema section all rewritten across the arc.
+- [[docs/hoplite/hoplite-architecture.md]] — wikilinks, ghost documents, external references, and the dump-schema section all rewritten across the arc.
 - [[docs/proxies/karpathy-llm-wiki.md]] — first proxy note in the corpus.
-- [[docs/notes/wikilink-resolver-leaves-alias-and-anchor-in-target.md]] — the note that opened the arc.
+- [[docs/notes/wikilink-resolver-leaves-alias-and-anchor-in-the-target.md]] — the note that opened the arc.
 - [[docs/journal/2026-05-25-2252-venv-bootstrap-follows-the-canonical-pattern.md]] — adjacent earlier entry that surfaced the original karpathy ghost reference.

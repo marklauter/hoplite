@@ -6,6 +6,10 @@ created: 2026-05-25
 aliases: []
 ---
 
+# FastMCP WriteResult schema warning is cosmetic
+
+FastMCP logs a schema warning at startup about `WriteResult`'s `path` field default; functionality is unaffected and the warning is safe to defer.
+
 ## Observation
 
 At server startup, FastMCP emits a schema warning naming the `path` field default on `WriteResult`. The tool returns correctly: `structuredContent` is populated, and the `dump_index` test verifies row counts via direct SQL against the populated index.

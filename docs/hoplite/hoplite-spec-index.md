@@ -1,9 +1,13 @@
 ---
 title: Hoplite spec index
-summary: Index of the Hoplite spec corpus — architecture, tool API, roadmap.
-tags: [hoplite, mcp, readme, index]
+summary: Entry point to the Hoplite spec corpus — architecture, tool API, roadmap, and the authoring components consuming skills pull from.
+tags: [hoplite, mcp, spec, index]
 created: 2026-05-25
 ---
+
+# Hoplite spec index
+
+Entry point to the Hoplite spec corpus — architecture, tool API, roadmap, and the authoring components consuming skills pull from.
 
 ## What this is
 
@@ -13,9 +17,9 @@ This folder holds the architectural spec for the runtime. The repo README covers
 
 ## The corpus
 
-- [[docs/hoplite/architecture.md|architecture.md]] — the system as it is. Corpus, frontmatter contract, graph entities (documents, properties, edges), wikilinks and ghosts, tag predicates, the walker, FTS5/BM25, MinHash, reindex semantics, dump schema, error model.
-- [[docs/hoplite/tool-api.md|tool-api.md]] — the four agent-facing tools. Signatures, parameters, return types, idempotency hints, error-handling semantics at the MCP boundary.
-- [[docs/hoplite/roadmap.md|roadmap.md]] — features deferred past day one. Embeddings, Sonnet-driven tag enrichment, file-watcher auto-reindex, MinHash LSH, persistent MinHash cache, multi-writer support, pagination, unified query DSL, columnar projection for multi-property predicates.
+- [[docs/hoplite/hoplite-architecture.md]] — the system as it is. Corpus, frontmatter contract, graph entities (documents, properties, edges), wikilinks and ghosts, tag predicates, the walker, FTS5/BM25, MinHash, reindex semantics, dump schema, error model.
+- [[docs/hoplite/hoplite-tool-api.md]] — the four agent-facing tools. Signatures, parameters, return types, idempotency hints, error-handling semantics at the MCP boundary.
+- [[docs/hoplite/hoplite-roadmap.md]] — features deferred past day one. Embeddings, Sonnet-driven tag enrichment, file-watcher auto-reindex, MinHash LSH, persistent MinHash cache, multi-writer support, pagination, unified query DSL, columnar projection for multi-property predicates.
 
 ## Where else to look
 

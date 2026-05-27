@@ -6,6 +6,10 @@ created: 2026-05-25
 aliases: []
 ---
 
+# Verify hoplite bootstrap with a cold-start test
+
+Three regression scenarios for the SessionStart venv bootstrap — cold cache, manifest drift, pip-install failure. Each exercises one branch of the bootstrap design; together they pin the contract.
+
 The SessionStart hook builds a Python venv at `${CLAUDE_PLUGIN_DATA}/venv` on first install and on `pyproject.toml` drift. Three paths need end-to-end runs to lock in the design: cold cache, manifest drift, install failure.
 
 ## Cold cache happy path

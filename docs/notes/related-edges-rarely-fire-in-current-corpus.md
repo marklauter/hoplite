@@ -7,6 +7,10 @@ aliases: []
 priority: high
 ---
 
+# Related edges rarely fire in current corpus
+
+Spot-checks against the spec and journal documents show zero `related` neighbors via `relatives`, despite MinHash running at build time. The connective tissue the `related` edge was meant to provide is largely absent — debugging needed before relying on similarity traversal.
+
 ## Observation
 
 In a 43-document, 82-edge corpus dumped at `2026-05-26T06-48-38.index.sqlite`, three traversals from semantically dense Hoplite documents returned no `related` neighbors at any depth:

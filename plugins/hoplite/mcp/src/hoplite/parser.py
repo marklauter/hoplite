@@ -1,6 +1,6 @@
 """Label expression parser.
 
-Grammar (per docs/hoplite/architecture.md#tag-predicates):
+Grammar (per docs/hoplite/hoplite-architecture.md#tag-predicates):
 
     expr     ::= or_expr
     or_expr  ::= and_expr ( '|' and_expr )*

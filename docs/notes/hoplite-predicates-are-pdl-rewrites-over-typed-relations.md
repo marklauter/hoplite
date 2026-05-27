@@ -81,10 +81,10 @@ Today's `notes & mcp` is the same query as `tag(notes) & tag(mcp)` with `tag(_)`
 - **Range and comparison.** `created(2026-05-27)` is equality. Range queries (`created > 2026-01-01`, `priority >= 3`) need a leaf shape outside pure PDL — a comparison operator on parameterized relations.
 - **Wildcards.** `tag(*)` meaning "any tag" — useful for "docs with tags" vs "docs without." Not in PDL; cheap to add, and the inverse `!tag(*)` reads naturally.
 - **Subject scope split.** PDL is defined relative to an object. `relatives` has an explicit origin and walks from it; `where` has no origin and ranges over the whole corpus. `tuple(_, _)` semantics differ between the two — from the origin in `relatives`, from each candidate in `where`. Worth making explicit in the tool API.
-- **Where the executor lives.** SQL against the live `node_properties` table, an in-memory inverted index per relation, or both. Touches the in-memory shape question — see [[docs/notes/swap-in-memory-graph-dicts-for-property-graph-objects.md]].
+- **Where the executor lives.** SQL against the live `node_properties` table, an in-memory inverted index per relation, or both. Touches the in-memory shape question — see [[docs/notes/swap-in-memory-graph-dicts-for-a-property-graph-object-model.md]].
 
 ## See also
 
 - [[docs/notes/predicate-leaves-should-carry-relation-identity.md]] — the design hole this proposal addresses. Today's predicate strips relation identity at the callsite; this note proposes the language that restores it.
-- [[docs/notes/swap-in-memory-graph-dicts-for-property-graph-objects.md]] — the in-memory shape axis. A relation-aware leaf executor needs an indexed lookup path; that note's inverted property index is one realization.
+- [[docs/notes/swap-in-memory-graph-dicts-for-a-property-graph-object-model.md]] — the in-memory shape axis. A relation-aware leaf executor needs an indexed lookup path; that note's inverted property index is one realization.
 - [[docs/notes/rerank-bm25-candidates-with-graph-signals.md]] — the rerank's tag-affinity feature consumes the same `(key, value)` lookup that property relations need. Shared executor.

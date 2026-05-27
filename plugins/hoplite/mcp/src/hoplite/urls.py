@@ -1,7 +1,7 @@
 """External URL extraction from a markdown body.
 
 Pure, I/O-free module the walker calls when deriving `cites` edges (see
-docs/hoplite/architecture.md#external-references). Contract: body-in /
+docs/hoplite/hoplite-architecture.md#external-references). Contract: body-in /
 (url, line, column) tuples out. No validation beyond the regex match.
 
 Contract

@@ -1,4 +1,4 @@
-"""Domain models for Hoplite — frozen dataclasses mirroring docs/hoplite/architecture.md.
+"""Domain models for Hoplite — frozen dataclasses mirroring docs/hoplite/hoplite-architecture.md.
 
 All record types are immutable. The Graph container (see hoplite.graph) is the
 mutable shell; entities are values projected from it.

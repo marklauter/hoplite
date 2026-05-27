@@ -6,6 +6,10 @@ created: 2026-05-25
 aliases: []
 ---
 
+# Dream agent extends Karpathy's LLM wiki with synthesis
+
+A background agent samples the corpus, traverses neighborhoods, and writes branching landing notes — pushing Karpathy's lint workflow from suggestion to synthesis, with dream-authored content isolated under `docs/dreams/` and a `dream` tag.
+
 ## Concept
 
 The dream cycle: pick a document at random, traverse its mentions and related neighborhood, study the region, then write a new branching note that summarizes the cluster and exposes navigation hints to foreground agents. A node x with neighbors a, b, c and topically-related l, m, n gets a hub note that says "x's region covers Y; for the contract see `[[docs/notes/a.md]]`; for the decision history see `[[docs/notes/b.md]]`; for the adjacent angle see `[[docs/notes/l.md]]`."

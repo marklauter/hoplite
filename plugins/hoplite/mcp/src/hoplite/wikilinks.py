@@ -1,7 +1,7 @@
 """Wiki-link extraction from a markdown body.
 
 Pure, I/O-free module the walker calls when deriving `mentions` edges (see
-docs/hoplite/architecture.md#wikilinks-and-ghost-documents). Contract: body-in / (target, line, column) tuples out.
+docs/hoplite/hoplite-architecture.md#wikilinks-and-ghost-documents). Contract: body-in / (target, line, column) tuples out.
 No resolution, no validation — those live downstream in the walker.
 
 Contract
@@ -11,7 +11,7 @@ Contract
   column are 1-indexed; column points at the opening ``[[``.
 - Dedupes — repeated occurrences of the same target collapse to one entry,
   with the line/column reflecting the first occurrence. Edge tables key on
-  ``(src, dst, kind)`` per docs/hoplite/architecture.md#edges, so per-target uniqueness
+  ``(src, dst, kind)`` per docs/hoplite/hoplite-architecture.md#edges, so per-target uniqueness
   matches the consumer's expectation.
 - Trims leading and trailing whitespace from each captured target before
   deduplication, so ``[[ foo ]]`` and ``[[foo]]`` resolve to the same

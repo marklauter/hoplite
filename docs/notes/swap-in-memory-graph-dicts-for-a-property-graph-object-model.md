@@ -6,6 +6,10 @@ created: 2026-05-25
 aliases: []
 ---
 
+# Swap in-memory graph dicts for a property-graph object model
+
+Hand-rolled adjacency dicts today; explore swapping to an object `Graph<Node, Edge>` once query patterns push past simple BFS and single-property filters.
+
 ## Motivation
 
 The day-one in-memory model is dicts of dataclasses — `documents: dict[str, Document]`, `out_edges: dict[str, list[Edge]]`, `node_properties: dict[str, dict[str, list[str]]]`, and so on. Every Hoplite query (BFS in `traverse_nodes`, predicate filter in `match_nodes`, ghost materialization in the walker) goes through plain dict lookups. The graph structure is implied by the access pattern; the type system doesn't enforce it.
@@ -36,7 +40,7 @@ Branches there explore adjacency list, adjacency matrix, incidence list, object-
 
 Worth doing when query patterns push past what dicts gracefully serve. Concretely, when any of these arrive:
 
-- Multi-property predicates that today require self-joins on the dump (see [[docs/hoplite/roadmap.md#columnar-projection-for-multi-property-predicates|columnar projection in roadmap]]) — an in-memory inverted index would serve them without leaving Python.
+- Multi-property predicates that today require self-joins on the dump (see [[docs/hoplite/hoplite-roadmap.md#columnar-projection-for-multi-property-predicates|columnar projection in roadmap]]) — an in-memory inverted index would serve them without leaving Python.
 - Embedding-similarity scoring blended with graph traversal in a single query.
 - Path-finding queries beyond simple BFS — shortest path, transitive closure, hub detection.
 - The Edge dataclass starts wanting more behavior than just data.
