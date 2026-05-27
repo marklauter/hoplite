@@ -3,9 +3,10 @@ title: Hoplite scales to the cross-repo knowledge graph
 summary: Two coupled upgrades make Hoplite usable across the multi-repo personal knowledge corpus — replace MinHash-as-ranker with BM25 cosine over the FTS5 tokens, and replace the single-cwd corpus root with a configurable vault collection sharing one global vocabulary. Two child notes collected here as one tracked deliverable.
 tags: [note, hoplite, scale, bm25, corpus, design, todo, epic]
 created: 2026-05-27
-priority: high
-effort: high
 aliases: []
+document.priority: high
+document.effort: high
+document.status: open
 ---
 
 # Hoplite scales to the cross-repo knowledge graph
