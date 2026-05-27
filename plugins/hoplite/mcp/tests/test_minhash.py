@@ -67,7 +67,7 @@ def test_empty_and_too_short_share_sentinel_signature() -> None:
     # Empty and any text shorter than shingle_size produce the same
     # sentinel signature — uniform across positions.
     sig_empty = signature("")
-    sig_short = signature("one two three four")  # four words; default shingle_size=5
+    sig_short = signature("one two three")  # three words; default shingle_size=4
     assert sig_empty == sig_short
     assert len(sig_empty.values) == DEFAULT_K
     assert all(v == sig_empty.values[0] for v in sig_empty.values)
@@ -157,9 +157,8 @@ def test_from_bytes_bad_length_raises() -> None:
 
 
 def test_default_constants_match_spec() -> None:
-    # Day-one defaults from implementation-sqlite-hybrid.md#minhash-details.
-    assert DEFAULT_K == 128
-    assert DEFAULT_SHINGLE_SIZE == 5
+    assert DEFAULT_K == 512
+    assert DEFAULT_SHINGLE_SIZE == 4
 
 
 # --- properties (hypothesis) --------------------------------------------------

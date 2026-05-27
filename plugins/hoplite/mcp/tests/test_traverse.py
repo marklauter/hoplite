@@ -59,11 +59,9 @@ def _add_edge(
     src: str,
     dst: str,
     kind: str,
-    confidence: float | None = None,
+    confidence: float = 1.0,
 ) -> None:
-    graph.add_edge(Edge(src=src, dst=dst, kind=kind))
-    if confidence is not None:
-        graph.edge_properties[(src, dst, kind)] = {"confidence": [str(confidence)]}
+    graph.add_edge(Edge(src=src, dst=dst, kind=kind, confidence=confidence))
 
 
 def _install(graph: Graph) -> None:

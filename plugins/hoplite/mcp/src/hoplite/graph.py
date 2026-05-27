@@ -81,6 +81,7 @@ CREATE TABLE edge (
   src TEXT NOT NULL REFERENCES document(path),
   dst TEXT NOT NULL REFERENCES document(path),
   kind TEXT NOT NULL,
+  confidence REAL NOT NULL,
   PRIMARY KEY (src, dst, kind)
 );
 CREATE INDEX idx_edge_src ON edge(src);
@@ -215,16 +216,16 @@ class Graph:
 
     def _write_edges(self, conn: sqlite3.Connection) -> None:
         seen: set[tuple[str, str, str]] = set()
-        rows: list[tuple[str, str, str]] = []
+        rows: list[tuple[str, str, str, float]] = []
         for edges in self.out_edges.values():
             for edge in edges:
                 triple = (edge.src, edge.dst, edge.kind)
                 if triple in seen:
                     continue
                 seen.add(triple)
-                rows.append(triple)
+                rows.append((edge.src, edge.dst, edge.kind, edge.confidence))
         if rows:
-            conn.executemany("INSERT INTO edge VALUES (?, ?, ?)", rows)
+            conn.executemany("INSERT INTO edge VALUES (?, ?, ?, ?)", rows)
 
     def _write_edge_properties(self, conn: sqlite3.Connection) -> None:
         rows: list[tuple[str, str, str, str, str]] = []
@@ -456,24 +457,30 @@ def _with_minhash(doc: Document, sig_bytes: bytes) -> Document:
 
 
 def _emit_related_edges(graph: Graph) -> None:
-    """Pairwise MinHash comparison; emit symmetric `related` edges above threshold."""
+    """Pairwise MinHash comparison; emit symmetric `related` edges above threshold.
+
+    Pairs already connected by an authored ``mentions`` edge (in either
+    direction) are skipped — the author already declared the link, so
+    reifying inferred similarity on top is redundant noise.
+    """
     resolved = [d for d in graph.documents.values() if d.resolved and d.minhash is not None]
     threshold = minhash.DEFAULT_THRESHOLD
+    mentioned: set[frozenset[str]] = {
+        frozenset((edge.src, edge.dst))
+        for edges in graph.out_edges.values()
+        for edge in edges
+        if edge.kind == "mentions"
+    }
     for i, doc_a in enumerate(resolved):
         assert doc_a.minhash is not None
         sig_a = minhash.from_bytes(doc_a.minhash)
         for doc_b in resolved[i + 1 :]:
+            if frozenset((doc_a.path, doc_b.path)) in mentioned:
+                continue
             assert doc_b.minhash is not None
             sig_b = minhash.from_bytes(doc_b.minhash)
             score = minhash.jaccard(sig_a, sig_b)
             if score < threshold:
                 continue
-            graph.add_edge(Edge(src=doc_a.path, dst=doc_b.path, kind="related"))
-            graph.add_edge(Edge(src=doc_b.path, dst=doc_a.path, kind="related"))
-            score_str = f"{score:.6f}"
-            graph.edge_properties[(doc_a.path, doc_b.path, "related")] = {
-                "confidence": [score_str],
-            }
-            graph.edge_properties[(doc_b.path, doc_a.path, "related")] = {
-                "confidence": [score_str],
-            }
+            graph.add_edge(Edge(src=doc_a.path, dst=doc_b.path, kind="related", confidence=score))
+            graph.add_edge(Edge(src=doc_b.path, dst=doc_a.path, kind="related", confidence=score))

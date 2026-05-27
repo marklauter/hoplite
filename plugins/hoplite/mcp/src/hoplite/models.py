@@ -40,15 +40,16 @@ class Document:
 class Edge:
     """A typed connection between two documents.
 
-    Day-one ``kind`` is one of ``mentions`` or ``related``. Each pair of nodes
-    carries at most one edge per kind. Edge properties (e.g., ``confidence`` for
-    ``related`` edges) live in ``Graph.edge_properties`` keyed on the
-    ``(src, dst, kind)`` triple.
+    Day-one ``kind`` is one of ``mentions``, ``cites``, or ``related``. Each
+    pair of nodes carries at most one edge per kind. ``confidence`` is
+    first-class on the edge: ``1.0`` for authored edges (``mentions``,
+    ``cites``) and the MinHash Jaccard score for inferred ``related`` edges.
     """
 
     src: str
     dst: str
     kind: str
+    confidence: float = 1.0
 
 
 @dataclass(frozen=True, slots=True)

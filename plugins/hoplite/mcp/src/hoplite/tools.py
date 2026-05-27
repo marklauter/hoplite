@@ -105,15 +105,6 @@ def _tags_for(graph: Graph, path: str) -> list[str]:
     return graph.document_properties.get(path, {}).get("tags", [])
 
 
-def _edge_confidence(graph: Graph, edge: Edge) -> float | None:
-    triple = (edge.src, edge.dst, edge.kind)
-    values = graph.edge_properties.get(triple, {}).get("confidence")
-    if not values:
-        return None
-    try:
-        return float(values[0])
-    except ValueError:
-        return None
 
 
 def match_nodes(
@@ -280,10 +271,8 @@ def _neighbors(
     for edge in candidates:
         if edge_types and edge.kind not in edge_types:
             continue
-        if min_confidence > 0.0:
-            confidence = _edge_confidence(graph, edge)
-            if confidence is None or confidence < min_confidence:
-                continue
+        if min_confidence > 0.0 and edge.confidence < min_confidence:
+            continue
         target = edge.dst if edge.src == node else edge.src
         result.append((target, edge))
     return result
