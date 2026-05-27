@@ -7,6 +7,8 @@ to ``<cwd>/docs`` and the in-memory graph builds lazily on the first tool call.
 
 from __future__ import annotations
 
+import logging
+import sys
 from pathlib import Path
 
 from mcp.server.fastmcp import FastMCP
@@ -14,9 +16,15 @@ from mcp.types import ToolAnnotations
 
 from hoplite import tools
 
+# FastMCP's stdio transport reserves stdout for JSON-RPC; stderr is the only
+# safe log channel. Claude Code surfaces this stream under `--debug mcp`.
+logging.basicConfig(level=logging.INFO, stream=sys.stderr, format="[hoplite-server] %(message)s")
+logger = logging.getLogger(__name__)
+
 mcp = FastMCP("catalog")
 
 tools.set_root(Path.cwd())
+logger.info("starting; corpus root = %s", Path.cwd() / "docs")
 
 
 mcp.tool(
