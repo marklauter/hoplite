@@ -102,8 +102,7 @@ CREATE VIRTUAL TABLE fts USING fts5(
   title,
   summary,
   body,
-  tokenize = 'porter unicode61',
-  content = ''
+  tokenize = 'porter unicode61'
 );
 """
 
@@ -240,22 +239,20 @@ class Graph:
             )
 
     def _write_fts(self, conn: sqlite3.Connection) -> None:
-        """Replay title/summary/body into the contentless FTS5 index.
+        """Mirror the in-memory FTS5 index into the dump.
 
-        FTS5 contentless mode keeps only the inverted index; raw column values
-        are discarded after insert. The ``path`` column (UNINDEXED) is the join
-        key back to ``documents.path``. Body lives only in the markdown file
-        on disk — the dump's FTS index carries title and summary tokens for
-        debug-grade match queries.
+        The dump must be byte-for-byte equivalent to live state — it exists as
+        a troubleshooting artifact, so any divergence between "what the server
+        sees" and "what the snapshot shows" defeats the purpose. Bodies are
+        replayed from ``self.fts`` (not re-read from disk) so the dump captures
+        exactly the tokens the running server is matching against. The ``path``
+        column is UNINDEXED so ``SELECT path FROM fts WHERE fts MATCH ...``
+        joins back to ``documents.path`` without an extra hop.
         """
-        rows: list[tuple[str, str, str, str]] = []
-        for doc in self.documents.values():
-            if not doc.resolved:
-                continue
-            props = self.document_properties.get(doc.path, {})
-            title = (props.get("title") or [""])[0]
-            summary = (props.get("summary") or [""])[0]
-            rows.append((doc.path, title, summary, ""))
+        assert self.fts is not None
+        rows = list(
+            self.fts.execute("SELECT path, title, summary, body FROM fts"),
+        )
         if rows:
             conn.executemany(
                 "INSERT INTO fts (path, title, summary, body) VALUES (?, ?, ?, ?)",

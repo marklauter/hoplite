@@ -103,7 +103,7 @@ Parameters:
 
 - `path` (optional, string) — destination file path. Default: `.hoplite/<ISO-timestamp>.index.sqlite` relative to the corpus root, where the timestamp is UTC `YYYY-MM-DDTHH-MM-SS` (colons replaced with dashes for Windows compatibility). Each dump produces a uniquely-named file; prior snapshots stay on disk for comparison.
 
-One-shot operation. The schema is the property-graph projection — `documents`, `document_properties`, `edges`, `edge_properties`, plus a contentless FTS5 mirror. Full DDL in [[docs/hoplite/architecture.md#dump-schema|architecture.md]].
+One-shot operation. The schema is a byte-for-byte mirror of in-memory state — `documents`, `document_properties`, `edges`, `edge_properties`, plus an FTS5 index over `path`, `title`, `summary`, and `body` replayed from the live FTS connection. Full DDL in [[docs/hoplite/architecture.md#dump-schema|architecture.md]].
 
 Returns a `WriteResult` with `path` set to the absolute path of the written file and `counts` populated with row counts per entity (`{"documents": N, "ghosts": G, "edges": K}`).
 

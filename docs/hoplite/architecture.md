@@ -262,8 +262,7 @@ CREATE VIRTUAL TABLE fts USING fts5(
   title,
   summary,
   body,
-  tokenize = 'porter unicode61',
-  content = ''  -- contentless: only the inverted index survives
+  tokenize = 'porter unicode61'
 );
 ```
 
@@ -271,7 +270,7 @@ Notes:
 
 - Paths are the natural keys throughout. `documents.path` ↔ `Graph.documents` (the in-memory dict's key). `document_properties.path` ↔ entries in `Graph.document_properties`. The composite `(src, dst, kind)` on `edges` and `edge_properties` ↔ `Graph.out_edges` / `Graph.edge_properties`. No synthetic integer IDs at runtime or in the dump.
 - `documents.resolved` flags ghost/URL/real. Ghosts (`path` starting with `ghost/`) have `resolved = 0`, `content_hash` and `minhash` `NULL`, and a synthetic `tags: ['ghost']` row in `document_properties`. URL nodes (`path` starting with `http://`/`https://`) have the same shape but with `tags: ['url']`.
-- Bodies are not stored. FTS5 is declared `content=''` (contentless mode): the inverted index is built from titles, summaries, and bodies at insert time, but the raw text is discarded. Match queries work; column reads do not. To read a body, `Read` the file at its `path`. FTS joins back to `documents` via the `path` column.
+- The dump is a byte-for-byte mirror of in-memory state. The dump's `fts` table replays `path`, `title`, `summary`, and `body` straight from the in-memory FTS5 connection — so a snapshot reflects exactly what the running server is matching against, with no shape drift between live and dumped indexes. FTS joins back to `documents` via the `path` column (UNINDEXED but stored, so `SELECT path FROM fts WHERE fts MATCH ...` works directly).
 - `document_properties` holds every frontmatter field — `title`, `summary`, `created`, `tags`, `aliases`, and any user-defined keys. Array fields produce one row per element. SQLite type-affinity preserves authored type — `priority: 5` stores `5` as integer even though the column is declared TEXT.
 - Inverted lookups ("which paths have `key='tags' AND value='hoplite'`?") run against `idx_doc_props_key_value`. The forward direction (start from a known path) uses the PRIMARY KEY. Same rows, different B-tree orderings.
 - Edges hold only identity and topology. Everything else, including `confidence` on `related` edges, rides in `edge_properties` keyed on the same `(src, dst, kind)` triple as the edge it annotates.
