@@ -45,6 +45,12 @@ Dependencies are edge stereotypes:
 
 Tags: `todo` plus the underlying note's domain tags. Status is a property, not a tag — adding `closed` or `resolved` as tags duplicates `document.status` and rots.
 
+## Epics
+
+A todo tagged `epic` decomposes into child todos. The epic's body wikilinks each child; `mentions` edges materialize the hierarchy. `where({"tagged": "todo & epic"})` enumerates epics; `relatives({from_: <epic>, edge_types: ["mentions"], tagged: "todo"})` walks the children.
+
+The epic's own `document.status` reflects the rollup of its children — `open` while any child stays `open` or `deferred`, `closed` once every child is `closed` or `declined`. The triager sets the rollup explicitly until a computed-property pass automates it.
+
 ## Triage as a pattern
 
 Priority and effort are both the triager's read at triage time, and both are revisable. Effort calls earn confidence when the triager reads the code the note points at, not just the note itself.
@@ -61,10 +67,6 @@ Sweep mode finds action-shaped notes that lack the `todo` tag. Tag them and tria
 !`cat ${CLAUDE_PLUGIN_ROOT}/components/shape/frontmatter.md`
 !`cat ${CLAUDE_PLUGIN_ROOT}/components/hoplite/mcp-reference.md`
 !`cat ${CLAUDE_PLUGIN_ROOT}/components/prose/writing-prose.md`
-
-## Open questions
-
-Master todos and sub-task hierarchy — the convention has no opinion yet. See [[docs/notes/master-todos-track-subtasks-via-wikilink.md]].
 
 ## Voice
 

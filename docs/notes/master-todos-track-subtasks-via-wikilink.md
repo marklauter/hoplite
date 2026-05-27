@@ -5,7 +5,7 @@ tags: [note, todo, hoplite, skills, open-question]
 created: 2026-05-27
 document.priority: low
 document.effort: medium
-document.status: open
+document.status: closed
 ---
 
 # Master todos track sub-tasks via wikilink
@@ -43,6 +43,14 @@ The rollup belongs in the executor (a future HQL leaf or a thin computed-propert
 ## When to resolve
 
 Open until the first composite todo lands and forces the decision. Until then the convention stays flat — a master todo is just a todo whose body happens to mention other todos.
+
+## Resolution
+
+Option A wins. A composite (parent) todo carries both the `todo` tag (identity as a todo) and the `epic` tag (composite shape). Children carry `todo` only. The relationship is authored as body wikilinks from the epic to each child — no new frontmatter stereotype. `where({"tagged": "todo & epic"})` lists epics; `relatives({from_: <epic>, edge_types: ["mentions"], tagged: "todo"})` walks the children.
+
+The `edge.subtask` frontmatter shape (Option B) stays unauthored. Adding `epic` as a sibling stereotype to `todo` keeps the convention extending sideways rather than growing a new stereotype namespace prematurely.
+
+Rollup status remains a triager judgment for now — set the epic's `document.status` to reflect the children. A computed-property pass can automate later once enough epics land to make the rule worth executing.
 
 ## See also
 
