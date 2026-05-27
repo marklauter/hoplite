@@ -86,7 +86,6 @@ Four tools register under the `plugin:hoplite:catalog` server:
    summary: Notes on brewing and beans.
    tags: [note, beverage]
    created: 2026-05-25
-   aliases: []
    ---
 
    Beans roast in three colors. Light, medium, dark. See [[notes/brewing-methods.md]] for extraction.

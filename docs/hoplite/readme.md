@@ -3,7 +3,6 @@ title: Hoplite spec index
 summary: Index of the Hoplite spec corpus — architecture, tool API, roadmap.
 tags: [hoplite, mcp, readme, index]
 created: 2026-05-25
-aliases: []
 ---
 
 ## What this is
@@ -14,9 +13,9 @@ This folder holds the architectural spec for the runtime. The repo README covers
 
 ## The corpus
 
-- [architecture.md](architecture.md) — the system as it is. Corpus, frontmatter contract, graph entities (documents, properties, edges), wikilinks and ghosts, tag predicates, the walker, FTS5/BM25, MinHash, reindex semantics, dump schema, error model.
-- [tool-api.md](tool-api.md) — the four agent-facing tools. Signatures, parameters, return types, idempotency hints, error-handling semantics at the MCP boundary.
-- [roadmap.md](roadmap.md) — features deferred past day one. Embeddings, Sonnet-driven tag enrichment, file-watcher auto-reindex, MinHash LSH, persistent MinHash cache, multi-writer support, pagination, unified query DSL, columnar projection for multi-property predicates.
+- [[hoplite/architecture|architecture.md]] — the system as it is. Corpus, frontmatter contract, graph entities (documents, properties, edges), wikilinks and ghosts, tag predicates, the walker, FTS5/BM25, MinHash, reindex semantics, dump schema, error model.
+- [[hoplite/tool-api|tool-api.md]] — the four agent-facing tools. Signatures, parameters, return types, idempotency hints, error-handling semantics at the MCP boundary.
+- [[hoplite/roadmap|roadmap.md]] — features deferred past day one. Embeddings, Sonnet-driven tag enrichment, file-watcher auto-reindex, MinHash LSH, persistent MinHash cache, multi-writer support, pagination, unified query DSL, columnar projection for multi-property predicates.
 
 ## Where else to look
 

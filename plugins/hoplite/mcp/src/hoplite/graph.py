@@ -58,7 +58,7 @@ def _empty_edge_props() -> dict[tuple[str, str, str], dict[str, list[str]]]:
 # `\r?\n` covers both LF and CRLF line endings (Obsidian on Windows writes CRLF).
 _FRONTMATTER_RE: Final = re.compile(r"\A---\r?\n(.*?)\r?\n---\r?\n?", re.DOTALL)
 
-_REQUIRED_FIELDS: Final = ("title", "summary", "tags", "created", "aliases")
+_REQUIRED_FIELDS: Final = ("title", "summary", "tags", "created")
 
 
 DUMP_SCHEMA: Final = """
@@ -305,7 +305,7 @@ def walk(corpus_root: Path) -> Graph:
             continue
 
         tags_value = meta["tags"]
-        aliases_value = meta["aliases"]
+        aliases_value = meta.get("aliases", [])
         if not isinstance(tags_value, list) or not isinstance(aliases_value, list):
             graph.warnings.append(f"{canonical}: tags and aliases must be lists")
             continue

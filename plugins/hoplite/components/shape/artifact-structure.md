@@ -12,7 +12,6 @@ title: <title>
 summary: <one-line summary>
 tags: [<tag>, ...]
 created: YYYY-MM-DD
-aliases: []
 ---
 
 # <one-line title>

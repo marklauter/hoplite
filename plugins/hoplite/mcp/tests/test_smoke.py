@@ -34,7 +34,6 @@ title: {title}
 summary: {summary}
 tags: [{tags}]
 created: 2026-05-25
-aliases: []
 ---
 {body}
 """

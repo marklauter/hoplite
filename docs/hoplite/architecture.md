@@ -3,7 +3,6 @@ title: Architecture
 summary: The Hoplite system as it is — corpus, graph, walker, FTS5, MinHash, dump schema, error model. One document covering the day-one shape end to end.
 tags: [hoplite, mcp, architecture]
 created: 2026-05-25
-aliases: []
 ---
 
 ## Overview
@@ -12,7 +11,7 @@ Hoplite is an in-memory property graph over a corpus of markdown documents. The 
 
 The agent reads document bodies through its own file tools (`Read`, `Write`, `Edit`, `Bash`). Hoplite serves four query tools — `where`, `relatives`, `refresh`, `export` — over the in-memory graph. There is no CRUD surface on Hoplite itself; the markdown file on disk is the source of truth, and `refresh` picks up whatever's there.
 
-This document covers the system as one piece. Tool signatures and the 4-tool API live in [tool-api.md](tool-api.md); deferred features in [roadmap.md](roadmap.md).
+This document covers the system as one piece. Tool signatures and the 4-tool API live in [[hoplite/tool-api|tool-api.md]]; deferred features in [[hoplite/roadmap|roadmap.md]].
 
 ## The corpus
 
@@ -22,13 +21,16 @@ The corpus is fully Obsidian-compatible — same frontmatter shape, same `[[wiki
 
 ## Frontmatter — the YAML envelope
 
-Every document opens with a YAML frontmatter block delimited by `---` fences. Five fields are mandatory:
+Every document opens with a YAML frontmatter block delimited by `---` fences. Four fields are mandatory:
 
 - `title` (string) — short, human-readable name.
 - `summary` (string) — one-line lede. Returned by the query tools so callers scan candidates without opening files.
 - `tags` (list of strings) — kebab-case slugs. Empty list (`tags: []`) is fine.
 - `created` (ISO date string, `YYYY-MM-DD`) — creation date.
-- `aliases` (list of strings) — alternate paths that resolve to this document. Empty list is fine.
+
+Optional fields:
+
+- `aliases` (list of strings) — alternate paths that resolve to this document. Omit when empty; add on rename so wikilinks pointing at the old name still resolve.
 
 Arbitrary user-defined keys pass through unchanged. `status: draft`, `priority: high`, `due: 2026-06-01` — Hoplite stores them; tools like Obsidian and Dataview read them.
 
@@ -53,7 +55,7 @@ Bodies live in the markdown file on disk. The walker reads bodies during indexin
 
 ### Properties
 
-Every YAML frontmatter field — mandatory (`title`, `summary`, `tags`, `created`, `aliases`) and user-defined (`status`, `priority`, anything) — becomes a property on the owning document. Properties are key-value pairs in EAV form: one row per `(node_id, key, value)` triple. Array-valued fields like `tags: [hoplite, note]` produce one row per element.
+Every YAML frontmatter field — mandatory (`title`, `summary`, `tags`, `created`), optional (`aliases`), and user-defined (`status`, `priority`, anything) — becomes a property on the owning document. Properties are key-value pairs in EAV form: one row per `(node_id, key, value)` triple. Array-valued fields like `tags: [hoplite, note]` produce one row per element.
 
 There is no separate `Tag` node type. Tag membership is a property lookup: `key='tags' AND value='hoplite'`. The unification is at the property level, not the node level.
 
@@ -114,7 +116,7 @@ Predicates apply as a post-filter on results. For `where`, the predicate narrows
 Glob `**/*.md` under the corpus root. For each file:
 
 1. Read the YAML frontmatter block.
-2. Parse the five mandatory fields plus any user-defined fields. Skip and warn on missing or unparseable frontmatter.
+2. Parse the four mandatory fields plus any optional or user-defined fields. Skip and warn on missing or unparseable frontmatter.
 3. Register the document under its relative path; register each alias; populate the casefold index for both canonical path and aliases.
 
 After pass 1, every real document is known and every alias resolves. The lookup table is complete before any wikilink is parsed — required because pass 2's wikilink resolution depends on knowing every canonical and alias up front.
@@ -137,7 +139,7 @@ After pass 2, run pairwise MinHash similarity:
 1. For every pair of resolved documents `(d1, d2)` where `d1 < d2` (path-ordered to avoid double-counting), compute Jaccard similarity from the two MinHash signatures.
 2. If similarity exceeds the configured threshold (default `0.20`), emit two `related` edges — `(d1, d2)` and `(d2, d1)` — each carrying `confidence = <score>` as an edge property.
 
-Pairwise scan is O(N²) but cheap at scale — 128-int Jaccard comparisons run in ~100ms for 1000 documents. LSH bucketing is the optimization to reach for past 10⁵ documents; see [roadmap.md](roadmap.md).
+Pairwise scan is O(N²) but cheap at scale — 128-int Jaccard comparisons run in ~100ms for 1000 documents. LSH bucketing is the optimization to reach for past 10⁵ documents; see [[hoplite/roadmap|roadmap.md]].
 
 ## Text search — FTS5 and BM25
 
@@ -196,7 +198,7 @@ Total: ~50s. Scales roughly linearly; 100 docs ≈ 5s, 5000 docs ≈ 5 minutes. 
 
 The server initializes the graph at startup by running the walk implicitly — same code path as a reindex call. No init tool, no init-mode gate; the graph is ready to serve as soon as the walk finishes.
 
-Per-query stat-checking is the most-likely future upgrade (see [roadmap.md](roadmap.md)).
+Per-query stat-checking is the most-likely future upgrade (see [[hoplite/roadmap|roadmap.md]]).
 
 ## Dump schema
 
@@ -284,4 +286,4 @@ Specific failure modes:
 
 ## Concurrency
 
-Single writer, single reader, single server process. The in-memory graph isn't safe for concurrent mutation; the MCP server's single-threaded request handler is the lock. Multi-writer support is deferred ([roadmap.md](roadmap.md)).
+Single writer, single reader, single server process. The in-memory graph isn't safe for concurrent mutation; the MCP server's single-threaded request handler is the lock. Multi-writer support is deferred ([[hoplite/roadmap|roadmap.md]]).

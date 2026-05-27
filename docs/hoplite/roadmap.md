@@ -3,10 +3,9 @@ title: Roadmap
 summary: Hoplite features deferred past day one — embeddings, Sonnet tag enrichment, file-watcher reindex, MinHash LSH, multi-writer, pagination, unified query DSL, columnar projection.
 tags: [hoplite, mcp, roadmap]
 created: 2026-05-25
-aliases: []
 ---
 
-The day-one shape in [architecture.md](architecture.md) and [tool-api.md](tool-api.md) holds unchanged for everything below — these features extend the runtime without breaking the public surface.
+The day-one shape in [[hoplite/architecture|architecture.md]] and [[hoplite/tool-api|tool-api.md]] holds unchanged for everything below — these features extend the runtime without breaking the public surface.
 
 ## Server-side enrichment — embeddings
 

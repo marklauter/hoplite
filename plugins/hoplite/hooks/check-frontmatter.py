@@ -11,7 +11,7 @@ catches the structural issues that are cheap to detect:
 
 - Missing opening ``---`` fence.
 - Missing closing ``---`` fence.
-- Any of the five mandatory keys (title, summary, tags, created, aliases) absent.
+- Any of the four mandatory keys (title, summary, tags, created) absent.
 
 Wrong types, typos in keys, malformed YAML — left to the indexer.
 
@@ -25,7 +25,7 @@ import sys
 from pathlib import Path
 
 WATCHED_TOOLS = {"Write", "Edit", "MultiEdit"}
-REQUIRED_FIELDS = {"title", "summary", "tags", "created", "aliases"}
+REQUIRED_FIELDS = {"title", "summary", "tags", "created"}
 
 # Hook lives at <plugin_root>/hooks/check-frontmatter.py;
 # component lives at <plugin_root>/components/shape/frontmatter.md.
