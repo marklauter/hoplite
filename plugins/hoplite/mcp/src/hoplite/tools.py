@@ -48,11 +48,14 @@ class TraversePredicate(BaseModel):
         default=None,
         description="Edge kinds to follow: 'mentions', 'related', or both if omitted.",
     )
-    min_confidence: float = Field(
-        default=0.0,
-        ge=0.0,
-        le=1.0,
-        description="Minimum similarity confidence for 'related' edges (Jaccard score).",
+    top_k_related: int | None = Field(
+        default=None,
+        ge=1,
+        description=(
+            "Cap the number of 'related' edges followed from each node, keeping the K "
+            "strongest by confidence. 'mentions' and 'cites' are always followed. "
+            "Unset = no cap."
+        ),
     )
     direction: Literal["out", "in", "both"] = Field(
         default="out",
@@ -190,7 +193,7 @@ def traverse_nodes(
         raise ValueError(f"depth must be >= 1; got {depth}")
     pred = predicate or TraversePredicate()
     edge_types = set(pred.edge_types or [])
-    min_confidence = pred.min_confidence
+    top_k_related = pred.top_k_related
     direction = pred.direction
     tagged = (pred.tagged or "").strip()
     tag_pred = parser.parse_predicate(tagged) if tagged else None
@@ -209,7 +212,7 @@ def traverse_nodes(
         current_distance = visited[current]
         if current_distance >= depth:
             continue
-        neighbors = _neighbors(graph, current, direction, edge_types, min_confidence)
+        neighbors = _neighbors(graph, current, direction, edge_types, top_k_related)
         for next_node, via in neighbors:
             if next_node in visited:
                 continue
@@ -254,28 +257,43 @@ def _escape_fts5_query(text: str) -> str:
     return " ".join('"' + t.replace('"', '""') + '"' for t in terms)
 
 
+_ALWAYS_FOLLOW: frozenset[str] = frozenset({"mentions", "cites"})
+
+
 def _neighbors(
     graph: Graph,
     node: str,
     direction: Literal["out", "in", "both"],
     edge_types: set[str],
-    min_confidence: float,
+    top_k_related: int | None,
 ) -> list[tuple[str, Edge]]:
-    """Return (target, edge) pairs adjacent to ``node`` per the predicate filters."""
+    """Return (target, edge) pairs adjacent to ``node`` per the predicate filters.
+
+    Authored edges (``mentions``, ``cites``) are always returned. ``related``
+    edges are ranked by descending confidence (lexicographic tie-break on the
+    target path) and truncated to ``top_k_related`` when set.
+    """
     candidates: list[Edge] = []
     if direction in ("out", "both"):
         candidates.extend(graph.out_edges.get(node, []))
     if direction in ("in", "both"):
         candidates.extend(graph.in_edges.get(node, []))
-    result: list[tuple[str, Edge]] = []
+
+    authored: list[tuple[str, Edge]] = []
+    ranked: list[tuple[str, Edge]] = []
     for edge in candidates:
         if edge_types and edge.kind not in edge_types:
             continue
-        if min_confidence > 0.0 and edge.confidence < min_confidence:
-            continue
         target = edge.dst if edge.src == node else edge.src
-        result.append((target, edge))
-    return result
+        if edge.kind in _ALWAYS_FOLLOW:
+            authored.append((target, edge))
+        else:
+            ranked.append((target, edge))
+
+    ranked.sort(key=lambda pair: (-pair[1].confidence, pair[0]))
+    if top_k_related is not None:
+        ranked = ranked[:top_k_related]
+    return authored + ranked
 
 
 def reindex() -> WriteResult:

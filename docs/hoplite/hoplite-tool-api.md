@@ -79,7 +79,7 @@ Breadth-first walk from a starting document. Returns up to `depth` layers of `Tr
 Predicate fields (all optional):
 
 - `edge_types` (list of strings) — only follow edges of these kinds. Default: all kinds (`mentions`, `related`).
-- `min_confidence` (float in `[0, 1]`) — skip edges below this confidence. Default: no filter.
+- `top_k_related` (positive integer or unset) — cap the number of `related` edges followed from each node, keeping the K strongest by confidence. `mentions` and `cites` are always followed (authored = full confidence). Default: no cap.
 - `direction` (`"out" | "in" | "both"`) — which edge direction to follow. Default: `"out"`.
 - `tagged` (string) — a tag predicate that filters which reached documents appear in the result. Applied as post-filter: the walk traverses through non-matching intermediate documents; the result includes only documents matching the expression.
 

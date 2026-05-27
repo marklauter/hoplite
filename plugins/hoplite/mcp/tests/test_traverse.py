@@ -8,7 +8,7 @@ and exercise each branch of the traversal predicate independently:
 - ``via_edges`` path reconstruction
 - ``edge_types`` filter (mentions only, related only, omitted = all)
 - ``direction`` filter (out / in / both)
-- ``min_confidence`` filter against ``edge_properties``
+- ``top_k_related`` cap on ranked related edges (mentions/cites always followed)
 - ``tagged`` predicate against ``document_properties``
 - ghost-target reachability
 - disconnected origin → empty result
@@ -303,29 +303,44 @@ def test_direction_both_follows_both(directional_graph: Graph) -> None:
     assert sorted(h.path for h in hits) == ["b", "c"]
 
 
-# ---------- confidence: a related→ b (0.9), a related→ c (0.3) ----------
+# ---------- top_k_related: a related→ b (0.9), c (0.5), d (0.3) ----------
 
 
 @pytest.fixture
-def confidence_graph() -> Graph:
+def ranked_graph() -> Graph:
     g = Graph()
-    for name in ("a", "b", "c"):
+    for name in ("a", "b", "c", "d"):
         _add_node(g, name)
     _add_edge(g, "a", "b", "related", confidence=0.9)
-    _add_edge(g, "a", "c", "related", confidence=0.3)
+    _add_edge(g, "a", "c", "related", confidence=0.5)
+    _add_edge(g, "a", "d", "related", confidence=0.3)
     return g
 
 
-def test_min_confidence_excludes_low_scoring_edge(confidence_graph: Graph) -> None:
-    _install(confidence_graph)
-    hits = tools.traverse_nodes(from_="a", predicate=TraversePredicate(min_confidence=0.5), depth=1)
-    assert [h.path for h in hits] == ["b"]
-
-
-def test_min_confidence_zero_passes_all_edges(confidence_graph: Graph) -> None:
-    _install(confidence_graph)
-    hits = tools.traverse_nodes(from_="a", predicate=TraversePredicate(min_confidence=0.0), depth=1)
+def test_top_k_related_caps_neighbors(ranked_graph: Graph) -> None:
+    _install(ranked_graph)
+    hits = tools.traverse_nodes(from_="a", predicate=TraversePredicate(top_k_related=2), depth=1)
     assert sorted(h.path for h in hits) == ["b", "c"]
+
+
+def test_top_k_related_unset_returns_all(ranked_graph: Graph) -> None:
+    _install(ranked_graph)
+    hits = tools.traverse_nodes(from_="a", predicate=TraversePredicate(), depth=1)
+    assert sorted(h.path for h in hits) == ["b", "c", "d"]
+
+
+def test_top_k_related_does_not_cap_mentions() -> None:
+    g = Graph()
+    for name in ("a", "m1", "m2", "m3", "r1", "r2"):
+        _add_node(g, name)
+    _add_edge(g, "a", "m1", "mentions")
+    _add_edge(g, "a", "m2", "mentions")
+    _add_edge(g, "a", "m3", "mentions")
+    _add_edge(g, "a", "r1", "related", confidence=0.9)
+    _add_edge(g, "a", "r2", "related", confidence=0.4)
+    _install(g)
+    hits = tools.traverse_nodes(from_="a", predicate=TraversePredicate(top_k_related=1), depth=1)
+    assert sorted(h.path for h in hits) == ["m1", "m2", "m3", "r1"]
 
 
 # ---------- tagged predicate ----------
