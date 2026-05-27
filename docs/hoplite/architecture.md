@@ -57,8 +57,6 @@ Bodies live in the markdown file on disk. The walker reads bodies during indexin
 
 Every YAML frontmatter field — mandatory (`title`, `summary`, `tags`, `created`), optional (`aliases`), and user-defined (`status`, `priority`, anything) — becomes a property on the owning document. Properties are key-value pairs in EAV form: one row per `(path, key, value)` triple. Array-valued fields like `tags: [hoplite, note]` produce one row per element.
 
-There is no separate `Tag` node type. Tag membership is a property lookup: `key='tags' AND value='hoplite'`. The unification is at the property level, not the node level.
-
 Properties never appear as edge endpoints. Edges connect documents to documents; properties describe what a document is.
 
 ### Edges
