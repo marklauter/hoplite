@@ -6,7 +6,7 @@ populated ``Graph`` by scanning ``.md`` files under a corpus root through two
 passes — identity collection, then body load with edge materialization —
 followed by an aggregate pairwise MinHash pass for ``related`` edges.
 
-See docs/hoplite/architecture.md for the full architectural shape.
+See docs/hoplite/hoplite-architecture.md for the full architectural shape.
 """
 
 from __future__ import annotations
@@ -62,40 +62,40 @@ _REQUIRED_FIELDS: Final = ("title", "summary", "tags", "created")
 
 
 DUMP_SCHEMA: Final = """
-CREATE TABLE documents (
+CREATE TABLE document (
   path TEXT PRIMARY KEY,
   resolved INTEGER NOT NULL,
   content_hash TEXT,
   minhash BLOB
 );
 
-CREATE TABLE document_properties (
-  path TEXT NOT NULL REFERENCES documents(path),
+CREATE TABLE document_property (
+  path TEXT NOT NULL REFERENCES document(path),
   key TEXT NOT NULL,
   value TEXT NOT NULL,
   PRIMARY KEY (path, key, value)
 );
-CREATE INDEX idx_doc_props_key_value ON document_properties(key, value);
+CREATE INDEX idx_document_property_key_value ON document_property(key, value);
 
-CREATE TABLE edges (
-  src TEXT NOT NULL REFERENCES documents(path),
-  dst TEXT NOT NULL REFERENCES documents(path),
+CREATE TABLE edge (
+  src TEXT NOT NULL REFERENCES document(path),
+  dst TEXT NOT NULL REFERENCES document(path),
   kind TEXT NOT NULL,
   PRIMARY KEY (src, dst, kind)
 );
-CREATE INDEX idx_edges_src ON edges(src);
-CREATE INDEX idx_edges_dst ON edges(dst);
+CREATE INDEX idx_edge_src ON edge(src);
+CREATE INDEX idx_edge_dst ON edge(dst);
 
-CREATE TABLE edge_properties (
+CREATE TABLE edge_property (
   src TEXT NOT NULL,
   dst TEXT NOT NULL,
   kind TEXT NOT NULL,
   key TEXT NOT NULL,
   value TEXT NOT NULL,
   PRIMARY KEY (src, dst, kind, key, value),
-  FOREIGN KEY (src, dst, kind) REFERENCES edges(src, dst, kind)
+  FOREIGN KEY (src, dst, kind) REFERENCES edge(src, dst, kind)
 );
-CREATE INDEX idx_edge_props_key_value ON edge_properties(key, value);
+CREATE INDEX idx_edge_property_key_value ON edge_property(key, value);
 
 CREATE VIRTUAL TABLE fts USING fts5(
   path UNINDEXED,
@@ -134,7 +134,7 @@ class Graph:
         Returns the canonical path for a resolved target, or ``None`` if
         no document or alias matches. Lookup is case-insensitive ordinal
         (``str.casefold()``) and tolerant of an omitted ``.md`` extension
-        (per docs/hoplite/architecture.md#wikilinks-and-ghost-documents).
+        (per docs/hoplite/hoplite-architecture.md#wikilinks-and-ghost-documents).
 
         Display syntax — ``#anchor`` and ``|alias`` — is stripped before
         lookup. ``[[target#section|label]]`` resolves the same as ``[[target]]``.
@@ -200,7 +200,7 @@ class Graph:
             for doc in self.documents.values()
         ]
         conn.executemany(
-            "INSERT INTO documents VALUES (?, ?, ?, ?)",
+            "INSERT INTO document VALUES (?, ?, ?, ?)",
             rows,
         )
 
@@ -211,7 +211,7 @@ class Graph:
                 for value in values:
                     rows.append((path_key, key, value))
         if rows:
-            conn.executemany("INSERT INTO document_properties VALUES (?, ?, ?)", rows)
+            conn.executemany("INSERT INTO document_property VALUES (?, ?, ?)", rows)
 
     def _write_edges(self, conn: sqlite3.Connection) -> None:
         seen: set[tuple[str, str, str]] = set()
@@ -224,7 +224,7 @@ class Graph:
                 seen.add(triple)
                 rows.append(triple)
         if rows:
-            conn.executemany("INSERT INTO edges VALUES (?, ?, ?)", rows)
+            conn.executemany("INSERT INTO edge VALUES (?, ?, ?)", rows)
 
     def _write_edge_properties(self, conn: sqlite3.Connection) -> None:
         rows: list[tuple[str, str, str, str, str]] = []
@@ -234,7 +234,7 @@ class Graph:
                     rows.append((src, dst, kind, key, value))
         if rows:
             conn.executemany(
-                "INSERT INTO edge_properties VALUES (?, ?, ?, ?, ?)",
+                "INSERT INTO edge_property VALUES (?, ?, ?, ?, ?)",
                 rows,
             )
 
@@ -247,7 +247,7 @@ class Graph:
         replayed from ``self.fts`` (not re-read from disk) so the dump captures
         exactly the tokens the running server is matching against. The ``path``
         column is UNINDEXED so ``SELECT path FROM fts WHERE fts MATCH ...``
-        joins back to ``documents.path`` without an extra hop.
+        joins back to ``document.path`` without an extra hop.
         """
         assert self.fts is not None
         rows = list(

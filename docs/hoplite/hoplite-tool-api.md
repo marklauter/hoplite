@@ -1,9 +1,13 @@
 ---
-title: Tool API
-summary: Tool signatures, return types, and semantics for the four agent-facing MCP tools.
-tags: [hoplite, mcp, tool-api]
+title: Hoplite tool API
+summary: Signatures, parameters, return types, and MCP-boundary semantics for the four agent-facing tools — where, relatives, refresh, export.
+tags: [hoplite, mcp, tool-api, spec]
 created: 2026-05-25
 ---
+
+# Hoplite tool API
+
+Signatures, parameters, return types, and MCP-boundary semantics for the four agent-facing tools — `where`, `relatives`, `refresh`, `export`.
 
 ## Overview
 
@@ -17,7 +21,7 @@ Four agent-facing tools. Two for query, one for maintenance, one for debug. The 
 
 There is no CRUD surface. Agents write `.md` files directly through their own file tools (`Write`, `Edit`, `Bash`); Hoplite is the read/query/traversal head over the corpus, not its write path. The `taking-notes` and `journaling` skills teach the file shape, the wikilink syntax, and the convention of calling `refresh` after a batch of writes.
 
-Entities referenced below — `Document`, `Edge`, `Hit`, `TraversalHit`, `WriteResult` — and the rules around frontmatter, wikilink resolution, ghost documents, and edge derivation are documented in [[docs/hoplite/architecture.md|architecture.md]].
+Entities referenced below — `Document`, `Edge`, `Hit`, `TraversalHit`, `WriteResult` — and the rules around frontmatter, wikilink resolution, ghost documents, and edge derivation are documented in [[docs/hoplite/hoplite-architecture.md]].
 
 ## MCP tool hints
 
@@ -36,7 +40,7 @@ Per-tool settings:
 
 ## Predicates
 
-The two query tools accept a tag predicate that filters which documents appear in results. The predicate is a string with the grammar defined in [[docs/hoplite/architecture.md#tag-predicates|architecture.md]].
+The two query tools accept a tag predicate that filters which documents appear in results. The predicate is a string with the grammar defined in [[docs/hoplite/hoplite-architecture.md#tag-predicates]].
 
 The wire format wraps the predicate string in a small JSON object so other filter dimensions (e.g., text search for `where`, edge-type filter for `relatives`) can ride alongside it:
 
@@ -66,7 +70,7 @@ When both are present, candidates are first scored by `text` and then filtered b
 
 `score` on each `Hit` is a sort key within the call only — different predicates produce incomparable absolute magnitudes.
 
-No pagination day one. The `k` cap is the result bound; the agent picks `k` to match how much it wants to look at. Pagination is on the [[docs/hoplite/roadmap.md|roadmap]].
+No pagination day one. The `k` cap is the result bound; the agent picks `k` to match how much it wants to look at. Pagination is on the [[docs/hoplite/hoplite-roadmap.md|roadmap]].
 
 ### `relatives(from_, predicate=None, depth=1) -> [TraversalHit]`
 
@@ -93,7 +97,7 @@ No parameters. The walk runs against the corpus rooted at the server's CWD.
 
 Returns a `WriteResult` with `path` set to the corpus root. The `warnings` list surfaces non-fatal advisories — frontmatter parse failures, unparseable wikilinks, documents missing mandatory fields.
 
-Day one this is the only way to pick up file changes between queries. Agents that write `.md` files call `refresh` afterward to make the new content visible. Human edits in Obsidian show up after the next reindex call. See [[docs/hoplite/architecture.md#the-walker|architecture.md]] for the walk's two-pass shape.
+Day one this is the only way to pick up file changes between queries. Agents that write `.md` files call `refresh` afterward to make the new content visible. Human edits in Obsidian show up after the next reindex call. See [[docs/hoplite/hoplite-architecture.md#the-walker]] for the walk's two-pass shape.
 
 ### `export(path=None) -> WriteResult`
 
@@ -103,7 +107,7 @@ Parameters:
 
 - `path` (optional, string) — destination file path. Default: `.hoplite/<ISO-timestamp>.index.sqlite` relative to the corpus root, where the timestamp is UTC `YYYY-MM-DDTHH-MM-SS` (colons replaced with dashes for Windows compatibility). Each dump produces a uniquely-named file; prior snapshots stay on disk for comparison.
 
-One-shot operation. The schema is a byte-for-byte mirror of in-memory state — `documents`, `document_properties`, `edges`, `edge_properties`, plus an FTS5 index over `path`, `title`, `summary`, and `body` replayed from the live FTS connection. Full DDL in [[docs/hoplite/architecture.md#dump-schema|architecture.md]].
+One-shot operation. The schema is a byte-for-byte mirror of in-memory state — `document`, `document_property`, `edge`, `edge_property`, plus an FTS5 index over `path`, `title`, `summary`, and `body` replayed from the live FTS connection. Full DDL in [[docs/hoplite/hoplite-architecture.md#dump-schema]].
 
 Returns a `WriteResult` with `path` set to the absolute path of the written file and `counts` populated with row counts per entity (`{"documents": N, "ghosts": G, "edges": K}`).
 
@@ -111,6 +115,6 @@ Then `sqlite3 .hoplite/<file>` gives developers a full SQL surface over the deri
 
 ## Error handling at the MCP boundary
 
-Per [[docs/hoplite/architecture.md#error-model|architecture.md]], invariant violations throw exceptions (programming errors the caller could have prevented — `None` for a required string, malformed predicate); constraint violations ride along inside successful results as warnings (frontmatter parse failures, unwritable dump destinations).
+Per [[docs/hoplite/hoplite-architecture.md#error-model]], invariant violations throw exceptions (programming errors the caller could have prevented — `None` for a required string, malformed predicate); constraint violations ride along inside successful results as warnings (frontmatter parse failures, unwritable dump destinations).
 
 At the MCP wire boundary, thrown invariant exceptions surface as structured error content with `isError: true`. Constraint warnings ride inside the `warnings` field of `WriteResult` or the analogous shape on `refresh` and `export` results. JSON-RPC protocol-level errors stay reserved for transport-level failures; tool-execution errors always come back as content the agent can read.

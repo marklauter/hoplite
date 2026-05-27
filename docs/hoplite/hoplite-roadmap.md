@@ -1,11 +1,15 @@
 ---
-title: Roadmap
-summary: Hoplite features deferred past day one — embeddings, Sonnet tag enrichment, file-watcher reindex, MinHash LSH, multi-writer, pagination, unified query DSL, columnar projection.
-tags: [hoplite, mcp, roadmap]
+title: Hoplite roadmap
+summary: Features deferred past day one — embeddings, Sonnet tag enrichment, file-watcher reindex, MinHash LSH, persistent MinHash cache, multi-writer, pagination, unified query DSL, columnar projection.
+tags: [hoplite, mcp, roadmap, spec]
 created: 2026-05-25
 ---
 
-The day-one shape in [[docs/hoplite/architecture.md|architecture.md]] and [[docs/hoplite/tool-api.md|tool-api.md]] holds unchanged for everything below — these features extend the runtime without breaking the public surface.
+# Hoplite roadmap
+
+Features deferred past day one — embeddings, Sonnet tag enrichment, file-watcher reindex, MinHash LSH, persistent MinHash cache, multi-writer, pagination, unified query DSL, columnar projection.
+
+The day-one shape in [[docs/hoplite/hoplite-architecture.md]] and [[docs/hoplite/hoplite-tool-api.md]] holds unchanged for everything below — these features extend the runtime without breaking the public surface.
 
 ## Server-side enrichment — embeddings
 
@@ -110,18 +114,18 @@ Open question — pending a corpus or use case that recurrently bumps into the d
 
 ## Columnar projection for multi-property predicates
 
-Day-one `document_properties` is pure EAV: every property is a row. Single-property lookups (`key='tags' AND value='hoplite'`) use the composite `(key, value)` index and run fast at any scale. Multi-property AND predicates require one self-join per additional clause:
+Day-one `document_property` is pure EAV: every property is a row. Single-property lookups (`key='tags' AND value='hoplite'`) use the composite `(key, value)` index and run fast at any scale. Multi-property AND predicates require one self-join per additional clause:
 
 ```sql
 -- status='draft' AND priority > 3
-SELECT n1.path FROM document_properties n1
-JOIN document_properties n2 ON n1.path = n2.path
+SELECT n1.path FROM document_property n1
+JOIN document_property n2 ON n1.path = n2.path
 WHERE n1.key = 'status' AND n1.value = 'draft'
   AND n2.key = 'priority' AND CAST(n2.value AS INTEGER) > 3;
 ```
 
 At day-one corpus scale (hundreds to low thousands of documents, tens of thousands of property rows), SQLite handles the joins fine. At 10^5+ documents with three or more predicates, the planner's join cost compounds noticeably.
 
-Mitigation: emit a derived **`documents_wide`** table at dump time with one column per hot property — `(path, title, summary, status, priority, due, ...)`. Multi-predicate queries collapse to single-table scans. The wide table is a hot-path cache rebuilt each dump; `document_properties` stays the canonical source for arbitrary keys.
+Mitigation: emit a derived **`document_wide`** table at dump time with one column per hot property — `(path, title, summary, status, priority, due, ...)`. Multi-predicate queries collapse to single-table scans. The wide table is a hot-path cache rebuilt each dump; `document_property` stays the canonical source for arbitrary keys.
 
 Open question — pending a corpus that hits the cliff. The schema-mod is decision-reversible; the canonical EAV form keeps every property addressable.

@@ -143,37 +143,37 @@ async def _drive_server(root: Path) -> None:
         # Verify the dumped SQLite file matches the in-memory state.
         conn = sqlite3.connect(str(dump_destination))
         try:
-            # documents — path-keyed, three resolved + one ghost + one URL.
-            cursor = conn.execute("SELECT COUNT(*) FROM documents WHERE resolved = 1")
+            # document — path-keyed, three resolved + one ghost + one URL.
+            cursor = conn.execute("SELECT COUNT(*) FROM document WHERE resolved = 1")
             assert cursor.fetchone()[0] == 3
-            cursor = conn.execute("SELECT COUNT(*) FROM documents WHERE resolved = 0")
+            cursor = conn.execute("SELECT COUNT(*) FROM document WHERE resolved = 0")
             assert cursor.fetchone()[0] == 2  # ghost/missing + the URL node
 
-            # edges — mentions for wikilinks, cites for external URLs.
-            cursor = conn.execute("SELECT COUNT(*) FROM edges WHERE kind = 'mentions'")
+            # edge — mentions for wikilinks, cites for external URLs.
+            cursor = conn.execute("SELECT COUNT(*) FROM edge WHERE kind = 'mentions'")
             assert cursor.fetchone()[0] >= 2  # alpha→beta and alpha→missing
-            cursor = conn.execute("SELECT COUNT(*) FROM edges WHERE kind = 'cites'")
+            cursor = conn.execute("SELECT COUNT(*) FROM edge WHERE kind = 'cites'")
             assert cursor.fetchone()[0] == 1  # alpha→external URL
-            cursor = conn.execute("SELECT COUNT(*) FROM edges WHERE kind = 'member'")
+            cursor = conn.execute("SELECT COUNT(*) FROM edge WHERE kind = 'member'")
             assert cursor.fetchone()[0] == 0  # member edges abolished
 
-            # document_properties — tags live here as (path, 'tags', slug) rows.
+            # document_property — tags live here as (path, 'tags', slug) rows.
             cursor = conn.execute(
-                "SELECT COUNT(*) FROM document_properties WHERE key = 'tags' AND value = 'shared'",
+                "SELECT COUNT(*) FROM document_property WHERE key = 'tags' AND value = 'shared'",
             )
             assert cursor.fetchone()[0] == 2  # alpha and beta both carry 'shared'
 
             # Every resolved document has a title property row.
             cursor = conn.execute("""
-                SELECT COUNT(DISTINCT path) FROM document_properties WHERE key = 'title'
+                SELECT COUNT(DISTINCT path) FROM document_property WHERE key = 'title'
             """)
             assert cursor.fetchone()[0] == 3
 
             # Cross-table join — relational shape works end-to-end on path keys.
             cursor = conn.execute("""
                 SELECT d.path, COUNT(p.key) AS prop_count
-                FROM documents d
-                LEFT JOIN document_properties p ON p.path = d.path
+                FROM document d
+                LEFT JOIN document_property p ON p.path = d.path
                 WHERE d.resolved = 1
                 GROUP BY d.path
                 ORDER BY d.path

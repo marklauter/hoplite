@@ -104,8 +104,8 @@ Four tools register under the `plugin:hoplite:catalog` server:
    ```bash
    sqlite3 .hoplite/<timestamp>.index.sqlite
    .tables
-   SELECT d.path, p.value FROM documents d
-     JOIN document_properties p ON p.path = d.path
+   SELECT d.path, p.value FROM document d
+     JOIN document_property p ON p.path = d.path
      WHERE p.key = 'title';
    ```
 
@@ -115,9 +115,9 @@ The markdown files on disk are the source of truth. Hoplite holds no canonical s
 
 The in-memory graph carries four surfaces: documents (file-level identity, `resolved` flag, content hash, MinHash bytes), document properties (everything from frontmatter, in EAV form), edges (`mentions` from wikilinks, `cites` from inline markdown URLs, `related` from MinHash similarity), and edge properties (currently `confidence` on `related` edges). An in-memory SQLite FTS5 index supports BM25 ranking. Tag membership is a document property, not an edge.
 
-The dump renders this state as a property-graph projection that mirrors the in-memory shape one-to-one: `documents` keyed by path, `document_properties` and `edges` and `edge_properties` keyed on the same natural keys their in-memory dicts use. The FTS5 index ships in contentless mode — the inverted index survives the dump for `MATCH` queries, but bodies live only in the source markdown.
+The dump renders this state as a property-graph projection that mirrors the in-memory shape one-to-one: `document` keyed by path, `document_property` and `edge` and `edge_property` keyed on the same natural keys their in-memory dicts use. The FTS5 index ships in contentless mode — the inverted index survives the dump for `MATCH` queries, but bodies live only in the source markdown.
 
-For depth on the architecture, see [docs/hoplite/architecture.md](docs/hoplite/architecture.md).
+For depth on the architecture, see [docs/hoplite/hoplite-architecture.md](docs/hoplite/hoplite-architecture.md).
 
 ## Troubleshooting
 
@@ -163,10 +163,10 @@ Adding a skill: create `plugins/hoplite/skills/<skill-name>/SKILL.md`, then `/pl
 
 ## Reference
 
-- [docs/hoplite/readme.md](docs/hoplite/readme.md) — spec index.
-- [docs/hoplite/architecture.md](docs/hoplite/architecture.md) — corpus, graph, walker, FTS5, MinHash, dump schema, error model.
-- [docs/hoplite/tool-api.md](docs/hoplite/tool-api.md) — MCP tool signatures and semantics.
-- [docs/hoplite/roadmap.md](docs/hoplite/roadmap.md) — features deferred past day one.
+- [docs/hoplite/hoplite-spec-index.md](docs/hoplite/hoplite-spec-index.md) — spec index.
+- [docs/hoplite/hoplite-architecture.md](docs/hoplite/hoplite-architecture.md) — corpus, graph, walker, FTS5, MinHash, dump schema, error model.
+- [docs/hoplite/hoplite-tool-api.md](docs/hoplite/hoplite-tool-api.md) — MCP tool signatures and semantics.
+- [docs/hoplite/hoplite-roadmap.md](docs/hoplite/hoplite-roadmap.md) — features deferred past day one.
 - [plugins/hoplite/components/shape/artifact-structure.md](plugins/hoplite/components/shape/artifact-structure.md) — document composition and template, injected by the authoring skills.
 - [plugins/hoplite/components/shape/frontmatter.md](plugins/hoplite/components/shape/frontmatter.md) — the frontmatter contract, injected by the authoring skills.
 - [plugins/hoplite/components/hoplite/mcp-reference.md](plugins/hoplite/components/hoplite/mcp-reference.md) — the MCP tool reference, injected by all three skills.

@@ -1,9 +1,13 @@
 ---
-title: Architecture
+title: Hoplite architecture
 summary: The Hoplite system as it is — corpus, graph, walker, FTS5, MinHash, dump schema, error model. One document covering the day-one shape end to end.
-tags: [hoplite, mcp, architecture]
+tags: [hoplite, mcp, architecture, spec]
 created: 2026-05-25
 ---
+
+# Hoplite architecture
+
+The Hoplite system as it is — corpus, graph, walker, FTS5, MinHash, dump schema, error model. One document covering the day-one shape end to end.
 
 ## Overview
 
@@ -11,7 +15,7 @@ Hoplite is an in-memory property graph over a corpus of markdown documents. The 
 
 The agent reads document bodies through its own file tools (`Read`, `Write`, `Edit`, `Bash`). Hoplite serves four query tools — `where`, `relatives`, `refresh`, `export` — over the in-memory graph. There is no CRUD surface on Hoplite itself; the markdown file on disk is the source of truth, and `refresh` picks up whatever's there.
 
-This document covers the system as one piece. Tool signatures and the 4-tool API live in [[docs/hoplite/tool-api.md|tool-api.md]]; deferred features in [[docs/hoplite/roadmap.md|roadmap.md]].
+This document covers the system as one piece. Tool signatures and the 4-tool API live in [[docs/hoplite/hoplite-tool-api.md]]; deferred features in [[docs/hoplite/hoplite-roadmap.md]].
 
 ## The corpus
 
@@ -154,7 +158,7 @@ After pass 2, run pairwise MinHash similarity:
 1. For every pair of resolved documents `(d1, d2)` where `d1 < d2` (path-ordered to avoid double-counting), compute Jaccard similarity from the two MinHash signatures.
 2. If similarity exceeds the configured threshold (default `0.20`), emit two `related` edges — `(d1, d2)` and `(d2, d1)` — each carrying `confidence = <score>` as an edge property.
 
-Pairwise scan is O(N²) but cheap at scale — 128-int Jaccard comparisons run in ~100ms for 1000 documents. LSH bucketing is the optimization to reach for past 10⁵ documents; see [[docs/hoplite/roadmap.md|roadmap.md]].
+Pairwise scan is O(N²) but cheap at scale — 128-int Jaccard comparisons run in ~100ms for 1000 documents. LSH bucketing is the optimization to reach for past 10⁵ documents; see [[docs/hoplite/hoplite-roadmap.md]].
 
 ## Text search — FTS5 and BM25
 
@@ -213,7 +217,7 @@ Total: ~50s. Scales roughly linearly; 100 docs ≈ 5s, 5000 docs ≈ 5 minutes. 
 
 The server initializes the graph at startup by running the walk implicitly — same code path as a reindex call. No init tool, no init-mode gate; the graph is ready to serve as soon as the walk finishes.
 
-Per-query stat-checking is the most-likely future upgrade (see [[docs/hoplite/roadmap.md|roadmap.md]]).
+Per-query stat-checking is the most-likely future upgrade (see [[docs/hoplite/hoplite-roadmap.md]]).
 
 ## Dump schema
 
@@ -222,40 +226,40 @@ Per-query stat-checking is the most-likely future upgrade (see [[docs/hoplite/ro
 The schema mirrors the in-memory `Graph` shape one-to-one. The whole point of the export is to see exactly what's in memory; the dump adds no indirection the runtime doesn't already carry.
 
 ```sql
-CREATE TABLE documents (
+CREATE TABLE document (
   path TEXT PRIMARY KEY,
   resolved INTEGER NOT NULL,
   content_hash TEXT,
   minhash BLOB
 );
 
-CREATE TABLE document_properties (
-  path TEXT NOT NULL REFERENCES documents(path),
+CREATE TABLE document_property (
+  path TEXT NOT NULL REFERENCES document(path),
   key TEXT NOT NULL,
   value TEXT NOT NULL,
   PRIMARY KEY (path, key, value)
 );
-CREATE INDEX idx_doc_props_key_value ON document_properties(key, value);
+CREATE INDEX idx_document_property_key_value ON document_property(key, value);
 
-CREATE TABLE edges (
-  src TEXT NOT NULL REFERENCES documents(path),
-  dst TEXT NOT NULL REFERENCES documents(path),
+CREATE TABLE edge (
+  src TEXT NOT NULL REFERENCES document(path),
+  dst TEXT NOT NULL REFERENCES document(path),
   kind TEXT NOT NULL,
   PRIMARY KEY (src, dst, kind)
 );
-CREATE INDEX idx_edges_src ON edges(src);
-CREATE INDEX idx_edges_dst ON edges(dst);
+CREATE INDEX idx_edge_src ON edge(src);
+CREATE INDEX idx_edge_dst ON edge(dst);
 
-CREATE TABLE edge_properties (
+CREATE TABLE edge_property (
   src TEXT NOT NULL,
   dst TEXT NOT NULL,
   kind TEXT NOT NULL,
   key TEXT NOT NULL,
   value TEXT NOT NULL,
   PRIMARY KEY (src, dst, kind, key, value),
-  FOREIGN KEY (src, dst, kind) REFERENCES edges(src, dst, kind)
+  FOREIGN KEY (src, dst, kind) REFERENCES edge(src, dst, kind)
 );
-CREATE INDEX idx_edge_props_key_value ON edge_properties(key, value);
+CREATE INDEX idx_edge_property_key_value ON edge_property(key, value);
 
 CREATE VIRTUAL TABLE fts USING fts5(
   path UNINDEXED,
@@ -268,13 +272,13 @@ CREATE VIRTUAL TABLE fts USING fts5(
 
 Notes:
 
-- Paths are the natural keys throughout. `documents.path` ↔ `Graph.documents` (the in-memory dict's key). `document_properties.path` ↔ entries in `Graph.document_properties`. The composite `(src, dst, kind)` on `edges` and `edge_properties` ↔ `Graph.out_edges` / `Graph.edge_properties`. No synthetic integer IDs at runtime or in the dump.
-- `documents.resolved` flags ghost/URL/real. Ghosts (`path` starting with `ghost/`) have `resolved = 0`, `content_hash` and `minhash` `NULL`, and a synthetic `tags: ['ghost']` row in `document_properties`. URL nodes (`path` starting with `http://`/`https://`) have the same shape but with `tags: ['url']`.
-- The dump is a byte-for-byte mirror of in-memory state. The dump's `fts` table replays `path`, `title`, `summary`, and `body` straight from the in-memory FTS5 connection — so a snapshot reflects exactly what the running server is matching against, with no shape drift between live and dumped indexes. FTS joins back to `documents` via the `path` column (UNINDEXED but stored, so `SELECT path FROM fts WHERE fts MATCH ...` works directly).
-- `document_properties` holds every frontmatter field — `title`, `summary`, `created`, `tags`, `aliases`, and any user-defined keys. Array fields produce one row per element. SQLite type-affinity preserves authored type — `priority: 5` stores `5` as integer even though the column is declared TEXT.
-- Inverted lookups ("which paths have `key='tags' AND value='hoplite'`?") run against `idx_doc_props_key_value`. The forward direction (start from a known path) uses the PRIMARY KEY. Same rows, different B-tree orderings.
-- Edges hold only identity and topology. Everything else, including `confidence` on `related` edges, rides in `edge_properties` keyed on the same `(src, dst, kind)` triple as the edge it annotates.
-- A polymorphic-node `nodes(id, kind)` table is *not* present. The path prefix (`docs/`, `ghost/`, `http://`, `https://`) is the kind discriminator at both layers; specialization tables can be added the day a node kind earns columns of its own.
+- Paths are the natural keys throughout. `document.path` ↔ `Graph.documents` (the in-memory dict's key). `document_property.path` ↔ entries in `Graph.document_properties`. The composite `(src, dst, kind)` on `edge` and `edge_property` ↔ `Graph.out_edges` / `Graph.edge_properties`. No synthetic integer IDs at runtime or in the dump.
+- `document.resolved` flags ghost/URL/real. Ghosts (`path` starting with `ghost/`) have `resolved = 0`, `content_hash` and `minhash` `NULL`, and a synthetic `tags: ['ghost']` row in `document_property`. URL nodes (`path` starting with `http://`/`https://`) have the same shape but with `tags: ['url']`.
+- The dump is a byte-for-byte mirror of in-memory state. The dump's `fts` table replays `path`, `title`, `summary`, and `body` straight from the in-memory FTS5 connection — so a snapshot reflects exactly what the running server is matching against, with no shape drift between live and dumped indexes. FTS joins back to `document` via the `path` column (UNINDEXED but stored, so `SELECT path FROM fts WHERE fts MATCH ...` works directly).
+- `document_property` holds every frontmatter field — `title`, `summary`, `created`, `tags`, `aliases`, and any user-defined keys. Array fields produce one row per element. SQLite type-affinity preserves authored type — `priority: 5` stores `5` as integer even though the column is declared TEXT.
+- Inverted lookups ("which paths have `key='tags' AND value='hoplite'`?") run against `idx_document_property_key_value`. The forward direction (start from a known path) uses the PRIMARY KEY. Same rows, different B-tree orderings.
+- Edges hold only identity and topology. Everything else, including `confidence` on `related` edges, rides in `edge_property` keyed on the same `(src, dst, kind)` triple as the edge it annotates.
+- A polymorphic-node `node(id, kind)` table is *not* present. The path prefix (`docs/`, `ghost/`, `http://`, `https://`) is the kind discriminator at both layers; specialization tables can be added the day a node kind earns columns of its own.
 
 The dump operation opens the destination, drops any prior tables (so the file is fully overwritten), runs the DDL above, bulk-inserts from the in-memory dicts, and returns a `WriteResult` with the absolute output path and row counts per entity.
 
@@ -297,4 +301,4 @@ Specific failure modes:
 
 ## Concurrency
 
-Single writer, single reader, single server process. The in-memory graph isn't safe for concurrent mutation; the MCP server's single-threaded request handler is the lock. Multi-writer support is deferred ([[docs/hoplite/roadmap.md|roadmap.md]]).
+Single writer, single reader, single server process. The in-memory graph isn't safe for concurrent mutation; the MCP server's single-threaded request handler is the lock. Multi-writer support is deferred ([[docs/hoplite/hoplite-roadmap.md]]).
