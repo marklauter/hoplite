@@ -16,14 +16,15 @@ Contract
 - Trims leading and trailing whitespace from each captured target before
   deduplication, so ``[[ foo ]]`` and ``[[foo]]`` resolve to the same
   target. Captures empty after trimming are skipped entirely.
+- Skips wikilinks inside inline-code spans (``` `[[X]]` ```) and fenced
+  code blocks (``` ```...[[X]]...``` ```). Authors mark sample wikilinks
+  with backticks; the extractor honors that convention to avoid ghosting
+  illustrative syntax.
 
 Edge cases
 ----------
 - Empty body and bodies with no ``[[...]]`` references return ``[]``.
 - ``[[]]`` and ``[[   ]]`` produce no entries.
-- Links inside fenced code blocks are extracted. The walker emits a
-  ``mentions`` edge regardless of fence context; day-one behavior is
-  uniform across the body.
 
 Non-responsibilities
 --------------------
@@ -41,19 +42,44 @@ __all__ = ["extract"]
 
 _WIKILINK_RE: Final = re.compile(r"\[\[([^\]]+)\]\]")
 
+# Fenced code block — three or more backticks, anything (including newlines),
+# closing run of backticks. Non-greedy to handle adjacent blocks.
+_FENCE_RE: Final = re.compile(r"```[\s\S]*?```")
+
+# Inline code span — a run of backticks, content without newlines or backticks,
+# closing run. Adequate for our corpus; no nested-backtick gymnastics.
+_INLINE_CODE_RE: Final = re.compile(r"`+[^`\n]+?`+")
+
+
+def _mask_code(body: str) -> str:
+    """Replace code-span and code-fence content with spaces.
+
+    Newlines stay so line numbers in the masked body match the original.
+    Other characters become spaces so column offsets stay correct and the
+    wikilink regex finds nothing inside masked regions.
+    """
+
+    def _to_spaces(match: re.Match[str]) -> str:
+        return re.sub(r"[^\n]", " ", match.group(0))
+
+    masked = _FENCE_RE.sub(_to_spaces, body)
+    masked = _INLINE_CODE_RE.sub(_to_spaces, masked)
+    return masked
+
 
 def extract(body: str) -> list[tuple[str, int, int]]:
     """Return unique ``[[target]]`` references as ``(target, line, column)``."""
+    masked = _mask_code(body)
     seen: set[str] = set()
     result: list[tuple[str, int, int]] = []
-    for match in _WIKILINK_RE.finditer(body):
+    for match in _WIKILINK_RE.finditer(masked):
         candidate = match.group(1).strip()
         if not candidate or candidate in seen:
             continue
         seen.add(candidate)
         start = match.start()
-        line = body.count("\n", 0, start) + 1
-        line_start = body.rfind("\n", 0, start) + 1
+        line = masked.count("\n", 0, start) + 1
+        line_start = masked.rfind("\n", 0, start) + 1
         column = start - line_start + 1
         result.append((candidate, line, column))
     return result

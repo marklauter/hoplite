@@ -32,4 +32,4 @@ The split belongs in the resolver, not the extractor — `extract` is contract-s
 
 ## Adjacent
 
-Two code-fragment ghosts in the same export — `...` and `frozenset[str` — are a distinct bug: extraction runs inside fenced code blocks and inline-code spans, where `[[X]]` is sample text rather than a link. Same family of "extraction is too eager," different fix.
+Two code-fragment ghosts in the same export — `...` and `frozenset[str` — were a distinct bug: extraction ran inside fenced code blocks and inline-code spans, where `[[X]]` is sample text rather than a link. Fixed in the same change set by masking code spans before the wikilink regex runs.

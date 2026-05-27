@@ -51,11 +51,29 @@ def test_whitespace_only_capture_skipped() -> None:
     assert extract("nothing here [[   ]] just spaces") == []
 
 
-def test_link_inside_fenced_code_block_extracted() -> None:
-    # The walker emits `mentions` edges regardless of fence context.
+def test_link_inside_fenced_code_block_skipped() -> None:
+    # Sample-wikilink convention: anything in a fenced block is illustration,
+    # not a cross-reference. Extract skips it.
     body = "prose [[outside]]\n\n```\ncode with [[inside]] here\n```\n"
+    assert extract(body) == [("outside", 1, 7)]
+
+
+def test_link_inside_inline_code_skipped() -> None:
+    # Same convention for inline code spans.
+    body = "real [[outside]] and sample `[[inside]]` in prose"
+    assert extract(body) == [("outside", 1, 6)]
+
+
+def test_link_after_fenced_block_still_extracted() -> None:
+    # Masking the fence shouldn't bleed into surrounding prose.
+    body = "```\nfenced [[sample]]\n```\nreal [[after]] link"
     result = extract(body)
-    assert result == [("outside", 1, 7), ("inside", 4, 11)]
+    assert result == [("after", 4, 6)]
+
+
+def test_link_with_double_backtick_inline_skipped() -> None:
+    body = "see ``[[double]]`` for the sample and [[real]] for the link"
+    assert extract(body) == [("real", 1, 39)]
 
 
 def test_path_shaped_target_extracted_verbatim() -> None:
