@@ -32,7 +32,7 @@ Once written, the entry is immutable. Use compensating entries for new discoveri
 
 ## Entry anatomy
 
-Filename: `docs/journal/<YYYY-MM-DD>-<HHMM>-<slug>.md` — slug is the H1 title, kebab-case lowercase. The filename owns the date; the body does not repeat it. Entry cross-references use the full filename (minus the `.md`) as the slug.
+Filename: `docs/journal/<YYYY-MM-DD>-<HHMM>-<slug>.md` — slug is the H1 title, kebab-case lowercase. The filename owns the date; the body does not repeat it. Cross-reference notes and other entries with wikilinks where the connection is durable.
 
 Cycle shapes: experiment, decision, session-summary, dead-end, milestone. Every entry opens with context — what was current going in, what was unknown. From there, draw the sections the cycle calls for:
 

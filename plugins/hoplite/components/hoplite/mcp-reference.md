@@ -27,4 +27,4 @@ Two edge kinds materialize. Edges connect documents to documents only — tag me
 - Hit — a search result from `where`. Fields: `path`, `summary`, `tags`, `score`.
 - TraversalHit — a result from `relatives`. Fields: `path`, `summary`, `tags`, `distance`, `via_edges`.
 - WriteResult — returned by `refresh` and `export`. Fields: `path`, `counts` (optional), `warnings` (optional).
-- Wikilink — `[[path-or-alias]]` syntax in body text.
+- Wikilink — an in-body cross-reference between documents; materializes a `mentions` edge.

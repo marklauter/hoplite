@@ -138,13 +138,19 @@ class Graph:
 
         Returns the canonical path for a resolved target, or ``None`` if
         no document or alias matches. Lookup is case-insensitive ordinal
-        (``str.casefold()``).
+        (``str.casefold()``) and tolerant of an omitted ``.md`` extension
+        (per docs/hoplite/architecture.md#wikilinks-and-ghost-documents).
         """
         if target in self.documents:
             return target
         if target in self.aliases:
             return self.aliases[target]
-        return self.casefold_index.get(target.casefold())
+        folded = self.casefold_index.get(target.casefold())
+        if folded is not None:
+            return folded
+        if not target.endswith(".md"):
+            return self.resolve_wikilink(target + ".md")
+        return None
 
     def dump_index(self, path: str | Path) -> WriteResult:
         """Snapshot the in-memory state to a SQLite file. Overwrites the destination."""

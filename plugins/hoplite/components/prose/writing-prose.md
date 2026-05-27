@@ -21,8 +21,9 @@ One to three sentences.
 - Every claim wears an epistemic badge — observation, inference, or guess. Unlabeled guesses pass as fact.
 - Sentence-style headings — first word and proper nouns only; no title case.
 - Numbered lists for procedures, bullets for options, prose for reasoning.
-- Links — `[text](path)` with text that names the target; `[[other-slug]]` for cross-artifact references; backlinks come from Grep.
-- Open loops — `[[unwritten-slug]]` materializes a ghost document, queryable as your backlog of mentioned-but-unwritten work.
+- Markdown links — `[text](path)` with text that names the target.
+- Wikilinks — `[[notes/coffee]]` for cross-artifact references; resolves to `docs/notes/coffee.md`. The target is a corpus-relative path (the corpus root is `docs/`, so `docs/` is *not* in the path); the `.md` extension is optional. `[[journal/2026-05-25-1430-roast]]` reaches a journal entry; an alias declared in a document's frontmatter resolves too.
+- Open loops — a wikilink whose target has no backing file (e.g. `[[notes/unwritten-idea]]`) materializes a ghost document, queryable as the backlog of mentioned-but-unwritten work.
 - Skip bold and tables — they add noise to the markdown, making it hard to read; except in worked examples that demonstrate what to remove.
 
 ## Composition

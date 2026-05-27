@@ -50,7 +50,9 @@ def _write_corpus(root: Path) -> None:
             summary="The alpha document references beta and a missing one.",
             tags="shared, alpha-tag",
             body=(
-                "See [[notes/beta.md]] for the next step. Also [[notes/missing.md]] is unwritten.\n"
+                # `[[notes/beta]]` exercises the spec's extension-tolerant resolution —
+                # it must resolve to notes/beta.md (per architecture.md#wikilinks-and-ghost-documents).
+                "See [[notes/beta]] for the next step. Also [[notes/missing.md]] is unwritten.\n"
             ),
         ),
         encoding="utf-8",
