@@ -55,7 +55,7 @@ Bodies live in the markdown file on disk. The walker reads bodies during indexin
 
 ### Properties
 
-Every YAML frontmatter field — mandatory (`title`, `summary`, `tags`, `created`), optional (`aliases`), and user-defined (`status`, `priority`, anything) — becomes a property on the owning document. Properties are key-value pairs in EAV form: one row per `(node_id, key, value)` triple. Array-valued fields like `tags: [hoplite, note]` produce one row per element.
+Every YAML frontmatter field — mandatory (`title`, `summary`, `tags`, `created`), optional (`aliases`), and user-defined (`status`, `priority`, anything) — becomes a property on the owning document. Properties are key-value pairs in EAV form: one row per `(path, key, value)` triple. Array-valued fields like `tags: [hoplite, note]` produce one row per element.
 
 There is no separate `Tag` node type. Tag membership is a property lookup: `key='tags' AND value='hoplite'`. The unification is at the property level, not the node level.
 
@@ -221,45 +221,41 @@ Per-query stat-checking is the most-likely future upgrade (see [[docs/hoplite/ro
 
 `export(path=None)` snapshots the in-memory graph to a SQLite file for SQL-level debugging. Default destination is `.hoplite/<ISO-timestamp>.index.sqlite` relative to the corpus root, with timestamp `YYYY-MM-DDTHH-MM-SS` (colons replaced for Windows). Each dump produces a uniquely-named file; prior snapshots survive on disk.
 
-The schema is a normalized property-graph projection:
+The schema mirrors the in-memory `Graph` shape one-to-one. The whole point of the export is to see exactly what's in memory; the dump adds no indirection the runtime doesn't already carry.
 
 ```sql
-CREATE TABLE nodes (
-  id INTEGER PRIMARY KEY,
-  kind TEXT NOT NULL  -- 'document' (the only kind day one)
-);
-
 CREATE TABLE documents (
-  id INTEGER PRIMARY KEY REFERENCES nodes(id),
-  path TEXT NOT NULL UNIQUE,
+  path TEXT PRIMARY KEY,
   resolved INTEGER NOT NULL,
   content_hash TEXT,
   minhash BLOB
 );
 
 CREATE TABLE node_properties (
-  node_id INTEGER NOT NULL REFERENCES nodes(id),
+  path TEXT NOT NULL REFERENCES documents(path),
   key TEXT NOT NULL,
   value TEXT NOT NULL,
-  PRIMARY KEY (node_id, key, value)
+  PRIMARY KEY (path, key, value)
 );
 CREATE INDEX idx_node_props_key_value ON node_properties(key, value);
 
 CREATE TABLE edges (
-  id INTEGER PRIMARY KEY,
-  src INTEGER NOT NULL REFERENCES nodes(id),
-  dst INTEGER NOT NULL REFERENCES nodes(id),
+  src TEXT NOT NULL REFERENCES documents(path),
+  dst TEXT NOT NULL REFERENCES documents(path),
   kind TEXT NOT NULL,
-  UNIQUE (src, dst, kind)
+  PRIMARY KEY (src, dst, kind)
 );
 CREATE INDEX idx_edges_src ON edges(src);
 CREATE INDEX idx_edges_dst ON edges(dst);
 
 CREATE TABLE edge_properties (
-  edge_id INTEGER NOT NULL REFERENCES edges(id),
+  src TEXT NOT NULL,
+  dst TEXT NOT NULL,
+  kind TEXT NOT NULL,
   key TEXT NOT NULL,
   value TEXT NOT NULL,
-  PRIMARY KEY (edge_id, key, value)
+  PRIMARY KEY (src, dst, kind, key, value),
+  FOREIGN KEY (src, dst, kind) REFERENCES edges(src, dst, kind)
 );
 CREATE INDEX idx_edge_props_key_value ON edge_properties(key, value);
 
@@ -275,12 +271,13 @@ CREATE VIRTUAL TABLE fts USING fts5(
 
 Notes:
 
-- `nodes.id` values are assigned at dump time, deterministic by sort (documents ordered by path). Day one, the only node kind is `'document'`; the column exists so future kinds slot in without schema change. The in-memory graph keys on path strings; ids exist only in the dump.
-- `documents.resolved` flags ghost-vs-real. Ghosts have `resolved = 0` and `content_hash`, `minhash` both `NULL`. They have no property rows.
-- Bodies are not stored. FTS5 is declared `content=''` (contentless mode): the inverted index is built from titles, summaries, and bodies at insert time, but the raw text is discarded. Match queries work; column reads do not. To read a body, `Read` the file at its `path`.
-- `node_properties` holds every frontmatter field — `title`, `summary`, `created`, `tags`, `aliases`, and any user-defined keys. Array fields produce one row per element; multi-value reads return alphabetically by value. SQLite type-affinity preserves authored type — `priority: 5` stores `5` as integer even though the column is declared TEXT.
-- Inverted lookups ("which nodes have `key='tags' AND value='hoplite'`?") run against `idx_node_props_key_value`. The forward direction (start from a known node) uses the PRIMARY KEY. Same rows, different B-tree orderings — no duplicate inverted-properties table.
-- Edges hold only identity and topology. Everything else, including `confidence` on `related` edges, lives in `edge_properties` keyed on `edge_id`.
+- Paths are the natural keys throughout. `documents.path` ↔ `Graph.documents` (the in-memory dict's key). `node_properties.path` ↔ entries in `Graph.node_properties`. The composite `(src, dst, kind)` on `edges` and `edge_properties` ↔ `Graph.out_edges` / `Graph.edge_properties`. No synthetic integer IDs at runtime or in the dump.
+- `documents.resolved` flags ghost/URL/real. Ghosts (`path` starting with `ghost/`) have `resolved = 0`, `content_hash` and `minhash` `NULL`, and a synthetic `tags: ['ghost']` row in `node_properties`. URL nodes (`path` starting with `http://`/`https://`) have the same shape but with `tags: ['url']`.
+- Bodies are not stored. FTS5 is declared `content=''` (contentless mode): the inverted index is built from titles, summaries, and bodies at insert time, but the raw text is discarded. Match queries work; column reads do not. To read a body, `Read` the file at its `path`. FTS joins back to `documents` via the `path` column.
+- `node_properties` holds every frontmatter field — `title`, `summary`, `created`, `tags`, `aliases`, and any user-defined keys. Array fields produce one row per element. SQLite type-affinity preserves authored type — `priority: 5` stores `5` as integer even though the column is declared TEXT.
+- Inverted lookups ("which paths have `key='tags' AND value='hoplite'`?") run against `idx_node_props_key_value`. The forward direction (start from a known path) uses the PRIMARY KEY. Same rows, different B-tree orderings.
+- Edges hold only identity and topology. Everything else, including `confidence` on `related` edges, rides in `edge_properties` keyed on the same `(src, dst, kind)` triple as the edge it annotates.
+- A polymorphic-node `nodes(id, kind)` table is *not* present. The path prefix (`docs/`, `ghost/`, `http://`, `https://`) is the kind discriminator at both layers; specialization tables can be added the day a node kind earns columns of its own.
 
 The dump operation opens the destination, drops any prior tables (so the file is fully overwritten), runs the DDL above, bulk-inserts from the in-memory dicts, and returns a `WriteResult` with the absolute output path and row counts per entity.
 

@@ -62,42 +62,38 @@ _REQUIRED_FIELDS: Final = ("title", "summary", "tags", "created")
 
 
 DUMP_SCHEMA: Final = """
-CREATE TABLE nodes (
-  id INTEGER PRIMARY KEY,
-  kind TEXT NOT NULL  -- 'document' (the only kind day one)
-);
-
 CREATE TABLE documents (
-  id INTEGER PRIMARY KEY REFERENCES nodes(id),
-  path TEXT NOT NULL UNIQUE,
+  path TEXT PRIMARY KEY,
   resolved INTEGER NOT NULL,
   content_hash TEXT,
   minhash BLOB
 );
 
 CREATE TABLE node_properties (
-  node_id INTEGER NOT NULL REFERENCES nodes(id),
+  path TEXT NOT NULL REFERENCES documents(path),
   key TEXT NOT NULL,
   value TEXT NOT NULL,
-  PRIMARY KEY (node_id, key, value)
+  PRIMARY KEY (path, key, value)
 );
 CREATE INDEX idx_node_props_key_value ON node_properties(key, value);
 
 CREATE TABLE edges (
-  id INTEGER PRIMARY KEY,
-  src INTEGER NOT NULL REFERENCES nodes(id),
-  dst INTEGER NOT NULL REFERENCES nodes(id),
+  src TEXT NOT NULL REFERENCES documents(path),
+  dst TEXT NOT NULL REFERENCES documents(path),
   kind TEXT NOT NULL,
-  UNIQUE (src, dst, kind)
+  PRIMARY KEY (src, dst, kind)
 );
 CREATE INDEX idx_edges_src ON edges(src);
 CREATE INDEX idx_edges_dst ON edges(dst);
 
 CREATE TABLE edge_properties (
-  edge_id INTEGER NOT NULL REFERENCES edges(id),
+  src TEXT NOT NULL,
+  dst TEXT NOT NULL,
+  kind TEXT NOT NULL,
   key TEXT NOT NULL,
   value TEXT NOT NULL,
-  PRIMARY KEY (edge_id, key, value)
+  PRIMARY KEY (src, dst, kind, key, value),
+  FOREIGN KEY (src, dst, kind) REFERENCES edges(src, dst, kind)
 );
 CREATE INDEX idx_edge_props_key_value ON edge_properties(key, value);
 
@@ -165,20 +161,14 @@ class Graph:
         if abs_path.exists():
             abs_path.unlink()
 
-        # Assign deterministic integer IDs to documents in path order.
-        node_ids: dict[str, int] = {
-            path_key: idx + 1 for idx, path_key in enumerate(sorted(self.documents))
-        }
-
         conn = sqlite3.connect(str(abs_path))
         try:
             conn.executescript(DUMP_SCHEMA)
-            self._write_nodes(conn, node_ids)
-            self._write_documents(conn, node_ids)
-            self._write_node_properties(conn, node_ids)
-            edge_ids = self._write_edges(conn, node_ids)
-            self._write_edge_properties(conn, edge_ids)
-            self._write_fts(conn, node_ids)
+            self._write_documents(conn)
+            self._write_node_properties(conn)
+            self._write_edges(conn)
+            self._write_edge_properties(conn)
+            self._write_fts(conn)
             conn.commit()
         finally:
             conn.close()
@@ -200,14 +190,9 @@ class Graph:
             },
         )
 
-    def _write_nodes(self, conn: sqlite3.Connection, node_ids: dict[str, int]) -> None:
-        rows = [(node_ids[path_key], "document") for path_key in self.documents]
-        conn.executemany("INSERT INTO nodes VALUES (?, ?)", rows)
-
-    def _write_documents(self, conn: sqlite3.Connection, node_ids: dict[str, int]) -> None:
+    def _write_documents(self, conn: sqlite3.Connection) -> None:
         rows = [
             (
-                node_ids[doc.path],
                 doc.path,
                 1 if doc.resolved else 0,
                 doc.content_hash,
@@ -216,76 +201,64 @@ class Graph:
             for doc in self.documents.values()
         ]
         conn.executemany(
-            "INSERT INTO documents VALUES (?, ?, ?, ?, ?)",
+            "INSERT INTO documents VALUES (?, ?, ?, ?)",
             rows,
         )
 
-    def _write_node_properties(self, conn: sqlite3.Connection, node_ids: dict[str, int]) -> None:
-        rows: list[tuple[int, str, str]] = []
+    def _write_node_properties(self, conn: sqlite3.Connection) -> None:
+        rows: list[tuple[str, str, str]] = []
         for path_key, props in self.node_properties.items():
-            node_id = node_ids[path_key]
             for key, values in props.items():
                 for value in values:
-                    rows.append((node_id, key, value))
+                    rows.append((path_key, key, value))
         if rows:
             conn.executemany("INSERT INTO node_properties VALUES (?, ?, ?)", rows)
 
-    def _write_edges(
-        self,
-        conn: sqlite3.Connection,
-        node_ids: dict[str, int],
-    ) -> dict[tuple[str, str, str], int]:
-        """Insert edge rows; return a map from (src, dst, kind) → assigned edge_id."""
-        edge_ids: dict[tuple[str, str, str], int] = {}
-        rows: list[tuple[int, int, int, str]] = []
+    def _write_edges(self, conn: sqlite3.Connection) -> None:
+        seen: set[tuple[str, str, str]] = set()
+        rows: list[tuple[str, str, str]] = []
         for edges in self.out_edges.values():
             for edge in edges:
                 triple = (edge.src, edge.dst, edge.kind)
-                if triple in edge_ids:
+                if triple in seen:
                     continue
-                edge_id = len(edge_ids) + 1
-                edge_ids[triple] = edge_id
-                rows.append((edge_id, node_ids[edge.src], node_ids[edge.dst], edge.kind))
+                seen.add(triple)
+                rows.append(triple)
         if rows:
-            conn.executemany("INSERT INTO edges VALUES (?, ?, ?, ?)", rows)
-        return edge_ids
+            conn.executemany("INSERT INTO edges VALUES (?, ?, ?)", rows)
 
-    def _write_edge_properties(
-        self,
-        conn: sqlite3.Connection,
-        edge_ids: dict[tuple[str, str, str], int],
-    ) -> None:
-        rows: list[tuple[int, str, str]] = []
-        for triple, props in self.edge_properties.items():
-            edge_id = edge_ids.get(triple)
-            if edge_id is None:
-                continue
+    def _write_edge_properties(self, conn: sqlite3.Connection) -> None:
+        rows: list[tuple[str, str, str, str, str]] = []
+        for (src, dst, kind), props in self.edge_properties.items():
             for key, values in props.items():
                 for value in values:
-                    rows.append((edge_id, key, value))
+                    rows.append((src, dst, kind, key, value))
         if rows:
-            conn.executemany("INSERT INTO edge_properties VALUES (?, ?, ?)", rows)
+            conn.executemany(
+                "INSERT INTO edge_properties VALUES (?, ?, ?, ?, ?)",
+                rows,
+            )
 
-    def _write_fts(self, conn: sqlite3.Connection, node_ids: dict[str, int]) -> None:
+    def _write_fts(self, conn: sqlite3.Connection) -> None:
         """Replay title/summary/body into the contentless FTS5 index.
 
         FTS5 contentless mode keeps only the inverted index; raw column values
-        are discarded after insert. The rowid is set to ``documents.id`` so
-        consumers can join FTS back to ``documents`` via ``fts.rowid = id``.
-        Body lives only in the markdown file on disk — the dump's FTS index
-        carries title and summary tokens for debug-grade match queries.
+        are discarded after insert. The ``path`` column (UNINDEXED) is the join
+        key back to ``documents.path``. Body lives only in the markdown file
+        on disk — the dump's FTS index carries title and summary tokens for
+        debug-grade match queries.
         """
-        rows: list[tuple[int, str, str, str, str]] = []
+        rows: list[tuple[str, str, str, str]] = []
         for doc in self.documents.values():
             if not doc.resolved:
                 continue
             props = self.node_properties.get(doc.path, {})
             title = (props.get("title") or [""])[0]
             summary = (props.get("summary") or [""])[0]
-            rows.append((node_ids[doc.path], doc.path, title, summary, ""))
+            rows.append((doc.path, title, summary, ""))
         if rows:
             conn.executemany(
-                "INSERT INTO fts (rowid, path, title, summary, body) VALUES (?, ?, ?, ?, ?)",
+                "INSERT INTO fts (path, title, summary, body) VALUES (?, ?, ?, ?)",
                 rows,
             )
 

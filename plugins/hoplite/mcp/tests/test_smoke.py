@@ -143,15 +143,11 @@ async def _drive_server(root: Path) -> None:
         # Verify the dumped SQLite file matches the in-memory state.
         conn = sqlite3.connect(str(dump_destination))
         try:
-            # documents — five-column shape, three resolved + one ghost + one URL.
+            # documents — path-keyed, three resolved + one ghost + one URL.
             cursor = conn.execute("SELECT COUNT(*) FROM documents WHERE resolved = 1")
             assert cursor.fetchone()[0] == 3
             cursor = conn.execute("SELECT COUNT(*) FROM documents WHERE resolved = 0")
             assert cursor.fetchone()[0] == 2  # ghost/missing + the URL node
-
-            # nodes — every document has a row; kind is always 'document' day one.
-            cursor = conn.execute("SELECT COUNT(*) FROM nodes WHERE kind = 'document'")
-            assert cursor.fetchone()[0] == 5  # 3 resolved + 1 ghost + 1 URL
 
             # edges — mentions for wikilinks, cites for external URLs.
             cursor = conn.execute("SELECT COUNT(*) FROM edges WHERE kind = 'mentions'")
@@ -161,7 +157,7 @@ async def _drive_server(root: Path) -> None:
             cursor = conn.execute("SELECT COUNT(*) FROM edges WHERE kind = 'member'")
             assert cursor.fetchone()[0] == 0  # member edges abolished
 
-            # node_properties — tags live here as (node_id, 'tags', slug) rows.
+            # node_properties — tags live here as (path, 'tags', slug) rows.
             cursor = conn.execute(
                 "SELECT COUNT(*) FROM node_properties WHERE key = 'tags' AND value = 'shared'",
             )
@@ -169,15 +165,15 @@ async def _drive_server(root: Path) -> None:
 
             # Every resolved document has a title property row.
             cursor = conn.execute("""
-                SELECT COUNT(DISTINCT node_id) FROM node_properties WHERE key = 'title'
+                SELECT COUNT(DISTINCT path) FROM node_properties WHERE key = 'title'
             """)
             assert cursor.fetchone()[0] == 3
 
-            # Cross-table join — relational shape works end-to-end.
+            # Cross-table join — relational shape works end-to-end on path keys.
             cursor = conn.execute("""
                 SELECT d.path, COUNT(p.key) AS prop_count
                 FROM documents d
-                LEFT JOIN node_properties p ON p.node_id = d.id
+                LEFT JOIN node_properties p ON p.path = d.path
                 WHERE d.resolved = 1
                 GROUP BY d.path
                 ORDER BY d.path
