@@ -5,7 +5,7 @@ tags: [hoplite, mcp, roadmap]
 created: 2026-05-25
 ---
 
-The day-one shape in [[hoplite/architecture|architecture.md]] and [[hoplite/tool-api|tool-api.md]] holds unchanged for everything below — these features extend the runtime without breaking the public surface.
+The day-one shape in [[docs/hoplite/architecture.md|architecture.md]] and [[docs/hoplite/tool-api.md|tool-api.md]] holds unchanged for everything below — these features extend the runtime without breaking the public surface.
 
 ## Server-side enrichment — embeddings
 

@@ -31,7 +31,7 @@ Closing the lexical-semantic gap with a cross-encoder is a commodity upgrade; ma
 
 ## Dependencies and risks
 
-- [Observation] The `related` edge currently rarely fires — see [[notes/related-edges-rarely-fire-in-current-corpus]]. Until that's fixed, the graph prior collapses to wikilinks + tags + recency, losing the inferred-adjacency signal that distinguishes graph-aware retrieval from "follow the links the author wrote." Reranking quality depends on `related` edges working.
+- [Observation] The `related` edge currently rarely fires — see [[docs/notes/related-edges-rarely-fire-in-current-corpus.md]]. Until that's fixed, the graph prior collapses to wikilinks + tags + recency, losing the inferred-adjacency signal that distinguishes graph-aware retrieval from "follow the links the author wrote." Reranking quality depends on `related` edges working.
 - [Guess] On a corpus this small (tens of documents), the graph prior may overfit — a few wikilinks dominate the topology, and the rerank becomes deterministic. The signal sharpens as the corpus grows; worth measuring before claiming a quality win.
 - [Inference] A "focus node" requires the agent to declare one — implicit (last document read in the session) or explicit (passed as a query parameter). The implicit version needs state the MCP server doesn't currently carry; the explicit version needs the agent to know what to pass.
 
@@ -43,5 +43,5 @@ Stack them. BM25 retrieves top-50, cross-encoder rescores by joint query-documen
 
 ## See also
 
-- [[notes/related-edges-rarely-fire-in-current-corpus]] — load-bearing dependency. The graph prior loses its inferred-adjacency signal until MinHash edges actually fire.
-- [[notes/mcp-reference-undersells-the-graph-against-grep]] — adjacent intervention. That note is about *prose framing* to redirect agents to existing tools; this note is about an *algorithmic* upgrade to the matching itself. Both make Hoplite categorically different from grep, at different layers.
+- [[docs/notes/related-edges-rarely-fire-in-current-corpus.md]] — load-bearing dependency. The graph prior loses its inferred-adjacency signal until MinHash edges actually fire.
+- [[docs/notes/mcp-reference-undersells-the-graph-against-grep.md]] — adjacent intervention. That note is about *prose framing* to redirect agents to existing tools; this note is about an *algorithmic* upgrade to the matching itself. Both make Hoplite categorically different from grep, at different layers.

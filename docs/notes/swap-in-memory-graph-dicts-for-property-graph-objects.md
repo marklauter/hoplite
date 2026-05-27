@@ -36,7 +36,7 @@ Branches there explore adjacency list, adjacency matrix, incidence list, object-
 
 Worth doing when query patterns push past what dicts gracefully serve. Concretely, when any of these arrive:
 
-- Multi-property predicates that today require self-joins on the dump (see [[hoplite/roadmap#columnar-projection-for-multi-property-predicates|columnar projection in roadmap]]) — an in-memory inverted index would serve them without leaving Python.
+- Multi-property predicates that today require self-joins on the dump (see [[docs/hoplite/roadmap.md#columnar-projection-for-multi-property-predicates|columnar projection in roadmap]]) — an in-memory inverted index would serve them without leaving Python.
 - Embedding-similarity scoring blended with graph traversal in a single query.
 - Path-finding queries beyond simple BFS — shortest path, transitive closure, hub detection.
 - The Edge dataclass starts wanting more behavior than just data.

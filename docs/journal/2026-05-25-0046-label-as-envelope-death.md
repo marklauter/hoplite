@@ -12,7 +12,7 @@ The framing-axis labels (`instruction`, `reference`, `observation`) had carried 
 
 ## What the framing was for
 
-The MCP runtime thesis ([[journal/2026-05-21-0401-mcp-runtime-thesis-and-hello-world]]) observed that loading a node from the graph was a delivery moment, and the delivery shape mattered. A skill body has authority because the skill loader frames it as guidance. An MCP tool result, structurally, returns as data. Same bytes, different effect on the agent.
+The MCP runtime thesis ([[docs/journal/2026-05-21-0401-mcp-runtime-thesis-and-hello-world.md]]) observed that loading a node from the graph was a delivery moment, and the delivery shape mattered. A skill body has authority because the skill loader frames it as guidance. An MCP tool result, structurally, returns as data. Same bytes, different effect on the agent.
 
 The fix the thesis proposed: per-label envelopes. Three special tags would drive the response shape on retrieval:
 
@@ -28,7 +28,7 @@ Two verbs, four envelope files. The shape made sense.
 
 ## Why it died
 
-The redesign ([[journal/2026-05-25-0202-dead-then-redesign-in-memory-graph-and-four-tools]]) deleted both retrieval tools. `invoke_node` retired. `read_node` retired. The agent stopped fetching bodies through Hoplite at all. Hoplite returned candidates (paths, summaries, tags); the agent used Claude's built-in `Read` tool to fetch the bodies.
+The redesign ([[docs/journal/2026-05-25-0202-dead-then-redesign-in-memory-graph-and-four-tools.md]]) deleted both retrieval tools. `invoke_node` retired. `read_node` retired. The agent stopped fetching bodies through Hoplite at all. Hoplite returned candidates (paths, summaries, tags); the agent used Claude's built-in `Read` tool to fetch the bodies.
 
 The framing-axis labels had no remaining consumer. Their job was to drive the MCP server's envelope-prefixing behavior on retrieval; with no retrieval, there was no envelope to prefix.
 

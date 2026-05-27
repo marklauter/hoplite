@@ -33,4 +33,4 @@ In a 43-document, 82-edge corpus dumped at `2026-05-26T06-48-38.index.sqlite`, t
 
 ## Why this matters
 
-The `related` edge is the load-bearing differentiator for the graph against grep — it surfaces content adjacency without shared keywords or authored wikilinks. If it never fires, `relatives` collapses to wikilink traversal, which a human reader could follow by clicking. See [[notes/mcp-reference-undersells-the-graph-against-grep]] for the related rhetoric problem.
+The `related` edge is the load-bearing differentiator for the graph against grep — it surfaces content adjacency without shared keywords or authored wikilinks. If it never fires, `relatives` collapses to wikilink traversal, which a human reader could follow by clicking. See [[docs/notes/mcp-reference-undersells-the-graph-against-grep.md]] for the related rhetoric problem.

@@ -12,7 +12,7 @@ Echo-style stubs for the hoplite MCP tool surface went through a real review pas
 
 ## The pattern
 
-The stubs ([[journal/2026-05-24-1918-first-hoplite-modules]]) wired every MCP tool through the FastMCP server with echo-style fakes — the tool received its arguments, the body returned a fixture matching the expected shape, every codepath the agent would exercise existed end-to-end without any real storage layer behind it. The agent integration could land before the storage layer existed.
+The stubs ([[docs/journal/2026-05-24-1918-first-hoplite-modules.md]]) wired every MCP tool through the FastMCP server with echo-style fakes — the tool received its arguments, the body returned a fixture matching the expected shape, every codepath the agent would exercise existed end-to-end without any real storage layer behind it. The agent integration could land before the storage layer existed.
 
 The natural thing would have been to treat the stubs as throwaway scaffolding. Move on to the real implementations; review the real code. The pattern at 17:33 instead was: review the stubs.
 
@@ -35,7 +35,7 @@ The stub-review fix commit (17:33) closed all four classes in one pass.
 
 ## What this is a piece of
 
-The leaves-first-trunk-second ordering ([[journal/2026-05-24-1918-first-hoplite-modules]]) included a sub-ordering: build the leaves, stub the surface, review the surface, build the trunk. The 21-minute gap between stub and stub-review was deliberate — the review pass was scheduled into the sequence.
+The leaves-first-trunk-second ordering ([[docs/journal/2026-05-24-1918-first-hoplite-modules.md]]) included a sub-ordering: build the leaves, stub the surface, review the surface, build the trunk. The 21-minute gap between stub and stub-review was deliberate — the review pass was scheduled into the sequence.
 
 The pattern recurred in subsequent work. The dump-tool stubbed first, then reviewed, then implemented. The traverse-tool stubbed, reviewed, implemented. Each stub-review pass caught contract issues that would have been more expensive to fix downstream.
 

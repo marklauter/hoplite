@@ -12,7 +12,7 @@ After spec wraps in the morning, the afternoon stands up the Python side — `wr
 
 ## Intent
 
-The data-model and the SQLite-hybrid storage decision settled overnight. Implementation needs to land next, and Python is the chosen language ([[notes/prototype-the-plugin-mcp-server-in-python]] settled this). Before writing actual hoplite logic, the toolchain needs to be in place — linter, type-checker, layout, skill body teaching how to author Python here.
+The data-model and the SQLite-hybrid storage decision settled overnight. Implementation needs to land next, and Python is the chosen language ([[docs/notes/prototype-the-plugin-mcp-server-in-python.md]] settled this). Before writing actual hoplite logic, the toolchain needs to be in place — linter, type-checker, layout, skill body teaching how to author Python here.
 
 Doing the toolchain first is deliberate. The bash plugin established that fail-fast posture matters; the Python side should ship with the same discipline from line one.
 

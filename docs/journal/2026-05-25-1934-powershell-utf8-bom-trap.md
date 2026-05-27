@@ -12,7 +12,7 @@ Windows PowerShell 5.1's `Out-File` with `-Encoding utf8` writes a byte-order ma
 
 ## What happened
 
-The tag-discipline backfill ([[journal/2026-05-25-1934-skill-md-to-component-and-the-repo-split]]) needed to walk every doc under `docs/notes/`, add the `note` tag if missing, and rewrite the file. The backfill ran from a PowerShell session — the natural Windows shell for this repo. PowerShell's idiomatic write-file shape is `Set-Content` or `Out-File`. Both produce a BOM by default on Windows PowerShell 5.1.
+The tag-discipline backfill ([[docs/journal/2026-05-25-1934-skill-md-to-component-and-the-repo-split.md]]) needed to walk every doc under `docs/notes/`, add the `note` tag if missing, and rewrite the file. The backfill ran from a PowerShell session — the natural Windows shell for this repo. PowerShell's idiomatic write-file shape is `Set-Content` or `Out-File`. Both produce a BOM by default on Windows PowerShell 5.1.
 
 After the backfill, the indexer started failing on every touched note. The `---` opening fence had a `﻿` byte sitting in front of it, invisible in most editors but a real byte to the YAML parser. The parser saw the file as starting with `﻿---` and concluded the frontmatter fence was missing.
 

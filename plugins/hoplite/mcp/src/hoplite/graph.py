@@ -295,11 +295,11 @@ def walk(corpus_root: Path) -> Graph:
     # Pass 1: identity collection.
     for md_path in md_paths:
         try:
-            relative = md_path.relative_to(corpus_root)
+            relative = md_path.relative_to(corpus_root.parent)
         except ValueError:
             continue
         canonical = relative.as_posix()
-        if canonical.startswith(".hoplite/"):
+        if "/.hoplite/" in canonical or canonical.startswith(".hoplite/"):
             continue
         try:
             text = md_path.read_text(encoding="utf-8")
@@ -343,13 +343,22 @@ def walk(corpus_root: Path) -> Graph:
         # Wikilink mentions edges — dedupe per resolved target.
         seen_targets: set[str] = set()
         for target, _line, _column in wikilinks.extract(body):
+            # Convention check: real wikilinks live under docs/, intentional
+            # ghosts under ghost/. Anything else is malformed — warn and skip
+            # rather than silently materializing a ghost at a garbage path.
+            bare = target.split("|", 1)[0].split("#", 1)[0].strip()
+            if not (bare.startswith("docs/") or bare.startswith("ghost/")):
+                graph.warnings.append(
+                    f"{canonical}: wikilink target '{target}' must start with 'docs/' or 'ghost/'",
+                )
+                continue
             resolved_target = graph.resolve_wikilink(target)
             if resolved_target is None:
-                # Materialize a ghost.
-                ghost = Document(path=target, resolved=False)
-                graph.documents[target] = ghost
-                graph.casefold_index[target.casefold()] = target
-                resolved_target = target
+                # Materialize a ghost at the bare (alias/anchor-stripped) target.
+                ghost = Document(path=bare, resolved=False)
+                graph.documents[bare] = ghost
+                graph.casefold_index[bare.casefold()] = bare
+                resolved_target = bare
             if resolved_target in seen_targets:
                 continue
             seen_targets.add(resolved_target)

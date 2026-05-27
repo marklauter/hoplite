@@ -12,7 +12,7 @@ Use plain Python (stdio MCP server, no compiled binary) for the first MCP-server
 
 ## Resolution
 
-[Locked in] Shape C — native Python, bash deprecated. The MCP server is the only implementation; bash scripts (`record-note.sh`, `record-entry.sh`) are gone. Hoplite ships under `plugins/hoplite/mcp/` as the source-of-truth runtime; see [[hoplite/architecture]] for the implementation shape that landed.
+[Locked in] Shape C — native Python, bash deprecated. The MCP server is the only implementation; bash scripts (`record-note.sh`, `record-entry.sh`) are gone. Hoplite ships under `plugins/hoplite/mcp/` as the source-of-truth runtime; see [[docs/hoplite/architecture.md]] for the implementation shape that landed.
 
 ## What got ruled out and why
 

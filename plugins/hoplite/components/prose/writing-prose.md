@@ -22,9 +22,9 @@ One to three sentences.
 - Sentence-style headings — first word and proper nouns only; no title case.
 - Numbered lists for procedures, bullets for options, prose for reasoning.
 - Markdown links — `[text](path)` with text that names the target.
-- Wikilinks — `[[notes/coffee]]` for cross-artifact references; resolves to `docs/notes/coffee.md`. The target is a corpus-relative path (the corpus root is `docs/`, so `docs/` is *not* in the path); the `.md` extension is optional. `[[journal/2026-05-25-1430-roast]]` reaches a journal entry; an alias declared in a document's frontmatter resolves too.
-- Open loops — a wikilink whose target has no backing file (e.g. `[[notes/unwritten-idea]]`) materializes a ghost document, queryable as the backlog of mentioned-but-unwritten work.
-- Sample wikilinks always wear backticks — illustrative `[[X]]`, `[[notes/example]]`, or any wikilink-shaped string demonstrating syntax sits inside backticks or a fenced block. Bare `[[X]]` in prose materializes a ghost; the resolver treats backticked spans as code and skips them.
+- Wikilinks — `[[docs/notes/coffee.md]]` for cross-artifact references. The target is the *full* repo-relative path including the `docs/` root and the `.md` extension. Query results return that same full path, so an agent can read the file without hunting it down. `[[docs/journal/2026-05-25-1430-roast.md]]` reaches a journal entry; an alias declared in a document's frontmatter resolves too.
+- Open loops — an intentional reference to a not-yet-written document. Authored as `[[ghost/<slug>]]` — the `ghost/` prefix declares the intent explicitly, distinct from a malformed link. Ghost documents store under that path and surface in `relatives` results as the backlog of mentioned-but-unwritten work. When the file lands on disk, rewrite the link to its real `docs/...` path.
+- Sample wikilinks always wear backticks — illustrative `[[X]]`, `[[docs/notes/example.md]]`, or any wikilink-shaped string demonstrating syntax sits inside backticks or a fenced block. Bare `[[X]]` in prose materializes a ghost; the resolver treats backticked spans as code and skips them.
 - Skip bold and tables — they add noise to the markdown, making it hard to read; except in worked examples that demonstrate what to remove.
 
 ## Composition

@@ -15,16 +15,16 @@ Hoplite is the index; your built-in `Read`, `Write`, `Edit`, and `Bash rm` tools
 
 Two edge kinds materialize. Edges connect documents to documents only — tag membership is a property, not an edge.
 
-- `mentions` — document → document. One per `(source, target)` pair from `[[wikilink]]` occurrences in body text. Multiple wikilinks from one document to the same target collapse to a single edge. Unresolved wikilinks create ghost documents.
+- `mentions` — document → document. One per `(source, target)` pair from `[[wikilink]]` occurrences in body text. Multiple wikilinks from one document to the same target collapse to a single edge. A `[[docs/<path>.md]]` target that lacks a backing file or a `[[ghost/<slug>]]` target creates a ghost document.
 - `related` — document ↔ document, symmetric. Emitted by MinHash similarity above threshold. Carries a `confidence` property holding the Jaccard score.
 
 ### Vocabulary
 
-- Document — a markdown file in the corpus. Identified by relative path. The only node type day one.
+- Document — a markdown file in the corpus. Identified by its repo-relative path: `docs/<sub>/<name>.md` for real documents, `ghost/<slug>` for intentional open loops. The same path appears in `Hit.path` and `TraversalHit.path`, so an agent can `Read` the file without rebasing.
 - Tag — a free-form annotation authored in a document's frontmatter `tags:` list. Tags are properties on documents, not separate nodes. Stored casefolded for case-insensitive matching. Query with `tagged: <expression>`.
 - Property — a key-value pair from a document's frontmatter. Every YAML field (mandatory or user-defined) becomes one or more property rows on the owning document.
-- Ghost document — a wikilink target without a backing file (`resolved = false`). First-class node in `relatives` results, so the corpus's unwritten cross-references stay visible. Promoted in place when the file lands on disk.
+- Ghost document — a wikilink target without a backing file (`resolved = false`). Authored as `[[ghost/<slug>]]` for intentional open loops. First-class node in `relatives` results, so the corpus's unwritten cross-references stay visible.
 - Hit — a search result from `where`. Fields: `path`, `summary`, `tags`, `score`.
 - TraversalHit — a result from `relatives`. Fields: `path`, `summary`, `tags`, `distance`, `via_edges`.
-- WriteResult — returned by `refresh` and `export`. Fields: `path`, `counts` (optional), `warnings` (optional).
-- Wikilink — an in-body cross-reference between documents; materializes a `mentions` edge.
+- WriteResult — returned by `refresh` and `export`. Fields: `path`, `counts` (optional), `warnings` (optional). The reindex's `warnings` list surfaces malformed wikilink targets (anything not starting with `docs/` or `ghost/`) so you can fix them.
+- Wikilink — an in-body cross-reference between documents; materializes a `mentions` edge. Two valid shapes: `[[docs/<path>.md]]` for real refs and `[[ghost/<slug>]]` for intentional open loops.

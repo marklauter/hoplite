@@ -49,9 +49,9 @@ def _write_corpus(root: Path) -> None:
             summary="The alpha document references beta and a missing one.",
             tags="shared, alpha-tag",
             body=(
-                # `[[notes/beta]]` exercises the spec's extension-tolerant resolution —
-                # it must resolve to notes/beta.md (per architecture.md#wikilinks-and-ghost-documents).
-                "See [[notes/beta]] for the next step. Also [[notes/missing.md]] is unwritten.\n"
+                # `[[docs/notes/beta.md]]` — full-path real reference.
+                # `[[ghost/missing]]` — intentional open loop (the convention's ghost form).
+                "See [[docs/notes/beta.md]] for the next step. Also [[ghost/missing]] is unwritten.\n"
             ),
         ),
         encoding="utf-8",
@@ -101,7 +101,7 @@ async def _drive_server(root: Path) -> None:
         assert not match_result.isError, match_result.content
         hits = cast(list[dict[str, Any]], _parse_json(match_result))
         hit_paths = {h["path"] for h in hits}
-        assert "notes/alpha.md" in hit_paths
+        assert "docs/notes/alpha.md" in hit_paths
 
         # match_nodes — tag predicate post-filter narrows to the two docs tagged "shared".
         tag_result = await session.call_tool(
@@ -111,18 +111,18 @@ async def _drive_server(root: Path) -> None:
         assert not tag_result.isError, tag_result.content
         tag_hits = cast(list[dict[str, Any]], _parse_json(tag_result))
         tag_paths = {h["path"] for h in tag_hits}
-        assert tag_paths == {"notes/alpha.md", "notes/beta.md"}
+        assert tag_paths == {"docs/notes/alpha.md", "docs/notes/beta.md"}
 
         # traverse_nodes — from alpha at depth 1 reaches beta via the wikilink edge.
         traverse_result = await session.call_tool(
             "relatives",
-            {"from_": "notes/alpha.md", "depth": 1},
+            {"from_": "docs/notes/alpha.md", "depth": 1},
         )
         assert not traverse_result.isError, traverse_result.content
         traversal = cast(list[dict[str, Any]], _parse_json(traverse_result))
         reached = {h["path"] for h in traversal}
-        assert "notes/beta.md" in reached
-        assert "notes/missing.md" in reached  # ghost is reachable too
+        assert "docs/notes/beta.md" in reached
+        assert "ghost/missing" in reached  # ghost is reachable too
 
         # dump_index — snapshot to a temp file and inspect.
         # .hoplite/ sits at the cwd level, alongside docs/, not inside it.

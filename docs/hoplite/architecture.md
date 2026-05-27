@@ -11,7 +11,7 @@ Hoplite is an in-memory property graph over a corpus of markdown documents. The 
 
 The agent reads document bodies through its own file tools (`Read`, `Write`, `Edit`, `Bash`). Hoplite serves four query tools — `where`, `relatives`, `refresh`, `export` — over the in-memory graph. There is no CRUD surface on Hoplite itself; the markdown file on disk is the source of truth, and `refresh` picks up whatever's there.
 
-This document covers the system as one piece. Tool signatures and the 4-tool API live in [[hoplite/tool-api|tool-api.md]]; deferred features in [[hoplite/roadmap|roadmap.md]].
+This document covers the system as one piece. Tool signatures and the 4-tool API live in [[docs/hoplite/tool-api.md|tool-api.md]]; deferred features in [[docs/hoplite/roadmap.md|roadmap.md]].
 
 ## The corpus
 
@@ -44,9 +44,9 @@ The graph carries one node type and two edge kinds. Everything authored in front
 
 ### Documents
 
-A `Document` represents one markdown file, identified by its relative path from the corpus root. File-level fields:
+A `Document` represents one markdown file, identified by its repo-relative path (including the `docs/` root segment). File-level fields:
 
-- `path` — relative path including the `.md` extension. The document's identity within the runtime graph.
+- `path` — repo-relative path starting with `docs/` and ending in `.md` for real documents; `ghost/<slug>` for intentional open loops. The document's identity within the runtime graph and the value returned to query callers.
 - `resolved` — `true` for files that exist on disk; `false` for ghost documents.
 - `content_hash` — sha256 of the body. Used for staleness detection on reindex. Null on ghosts.
 - `minhash` — 1024-byte MinHash signature (128 × uint64). Computed at startup; held in RAM, never persisted. Null on ghosts.
@@ -74,13 +74,18 @@ Edges carry identity (`id`) plus the `(src, dst, kind)` triple as a UNIQUE const
 
 ## Wikilinks and ghost documents
 
-Body text uses Obsidian's wikilink syntax: `[[target]]`. The target is a path relative to the corpus root (with or without the `.md` extension) or an alias declared in some document's `aliases` list. Resolution is case-insensitive ordinal — `[[Notes/Foo.MD]]`, `[[notes/foo.md]]`, and `[[NOTES/foo.MD]]` all resolve to the same target.
+Body text uses Obsidian's wikilink syntax: `[[target]]`. Two shapes are valid:
 
-A wikilink whose target doesn't yet exist materializes a ghost document — a first-class graph entity with `resolved = false` and no body or properties. Inbound `mentions` edges point at the ghost as if it were a real document. When a file at the matching path is later added and reindex runs, the ghost is promoted in place: identity stays stable, file-level fields fill in, properties populate from the new frontmatter, every inbound edge already points at the right node.
+- `[[docs/<path>.md]]` — a real cross-reference. The target is the full repo-relative path including the `docs/` root and the `.md` extension. `where` and `relatives` return that same path in their `path` field, so a downstream agent can `Read` the file directly without rebasing. An alias declared in some document's `aliases` list resolves too. Resolution is case-insensitive ordinal — `[[Docs/Notes/Foo.MD]]` and `[[docs/notes/foo.md]]` reach the same target.
+- `[[ghost/<slug>]]` — an intentional open loop. The author knows the document doesn't exist; the `ghost/` prefix declares the intent. Ghost documents are first-class graph entities with `resolved = false`, no body, no properties. Inbound `mentions` edges point at the ghost as if it were real.
+
+Anything else is malformed. The reindex pass validates every extracted target and appends a warning to `WriteResult.warnings` if a wikilink starts with neither `docs/` nor `ghost/` — the link is skipped rather than silently producing a garbage-shaped ghost. Sample wikilinks in prose live inside backticks (` ` ` ` or ``` ` ``` ` ``` `) so the extractor masks them; this convention is described in the prose component.
+
+When a file at the matching `docs/...` path is later added and reindex runs, a ghost referenced at that path is promoted in place: identity stays stable, file-level fields fill in, properties populate from the new frontmatter, every inbound edge already points at the right node. Promotion across the `docs/` ↔ `ghost/` boundary is the author's job — rewrite the wikilink from `[[ghost/<slug>]]` to `[[docs/<path>.md]]` when the file lands.
 
 The ghost set is queryable as the agent's "open loops" backlog — documents referenced but not yet written.
 
-Wikilinks are never silently dropped. A target that resolves becomes a real-to-real edge; a target that doesn't becomes a real-to-ghost edge. Either way an edge materializes.
+Wikilinks are never silently dropped except for malformed targets. A `docs/`-shaped target that resolves becomes a real-to-real edge; one that doesn't becomes a real-to-ghost edge keyed at the authored path. A `ghost/`-shaped target always becomes a real-to-ghost edge keyed under `ghost/<slug>`.
 
 ## Tag predicates
 
@@ -117,7 +122,7 @@ Glob `**/*.md` under the corpus root. For each file:
 
 1. Read the YAML frontmatter block.
 2. Parse the four mandatory fields plus any optional or user-defined fields. Skip and warn on missing or unparseable frontmatter.
-3. Register the document under its relative path; register each alias; populate the casefold index for both canonical path and aliases.
+3. Register the document under its repo-relative `docs/...` path; register each alias; populate the casefold index for both canonical path and aliases.
 
 After pass 1, every real document is known and every alias resolves. The lookup table is complete before any wikilink is parsed — required because pass 2's wikilink resolution depends on knowing every canonical and alias up front.
 
@@ -127,7 +132,7 @@ For each registered document:
 
 1. Read the body (everything after the closing `---` fence).
 2. Compute the sha256 content hash; store on the document.
-3. Parse `[[wikilink]]` references. For each, resolve via the casefold → alias → canonical-path chain. Resolved targets get a `mentions` edge; unresolved targets materialize a ghost and get an edge to it. Multiple wikilinks from one document to the same target collapse to a single edge.
+3. Parse `[[wikilink]]` references. Reject any target that doesn't start with `docs/` or `ghost/` — append a warning, skip the link. For valid targets, resolve via the casefold → alias → canonical-path chain. Resolved `docs/...` targets get a `mentions` edge to the real document; unresolved `docs/...` targets and all `ghost/...` targets materialize a ghost keyed at the authored path and get a `mentions` edge to it. Multiple wikilinks from one document to the same target collapse to a single edge.
 4. Materialize node properties from the frontmatter — one row per scalar field, one row per array element for `tags` and `aliases` and any other multi-value key.
 5. Compute the MinHash signature of the body. Store on the document.
 6. Insert into the in-memory FTS5 table: `(path, title, summary, body)`.
@@ -139,7 +144,7 @@ After pass 2, run pairwise MinHash similarity:
 1. For every pair of resolved documents `(d1, d2)` where `d1 < d2` (path-ordered to avoid double-counting), compute Jaccard similarity from the two MinHash signatures.
 2. If similarity exceeds the configured threshold (default `0.20`), emit two `related` edges — `(d1, d2)` and `(d2, d1)` — each carrying `confidence = <score>` as an edge property.
 
-Pairwise scan is O(N²) but cheap at scale — 128-int Jaccard comparisons run in ~100ms for 1000 documents. LSH bucketing is the optimization to reach for past 10⁵ documents; see [[hoplite/roadmap|roadmap.md]].
+Pairwise scan is O(N²) but cheap at scale — 128-int Jaccard comparisons run in ~100ms for 1000 documents. LSH bucketing is the optimization to reach for past 10⁵ documents; see [[docs/hoplite/roadmap.md|roadmap.md]].
 
 ## Text search — FTS5 and BM25
 
@@ -198,7 +203,7 @@ Total: ~50s. Scales roughly linearly; 100 docs ≈ 5s, 5000 docs ≈ 5 minutes. 
 
 The server initializes the graph at startup by running the walk implicitly — same code path as a reindex call. No init tool, no init-mode gate; the graph is ready to serve as soon as the walk finishes.
 
-Per-query stat-checking is the most-likely future upgrade (see [[hoplite/roadmap|roadmap.md]]).
+Per-query stat-checking is the most-likely future upgrade (see [[docs/hoplite/roadmap.md|roadmap.md]]).
 
 ## Dump schema
 
@@ -286,4 +291,4 @@ Specific failure modes:
 
 ## Concurrency
 
-Single writer, single reader, single server process. The in-memory graph isn't safe for concurrent mutation; the MCP server's single-threaded request handler is the lock. Multi-writer support is deferred ([[hoplite/roadmap|roadmap.md]]).
+Single writer, single reader, single server process. The in-memory graph isn't safe for concurrent mutation; the MCP server's single-threaded request handler is the lock. Multi-writer support is deferred ([[docs/hoplite/roadmap.md|roadmap.md]]).
