@@ -1,9 +1,11 @@
 ---
 title: mcp-reference undersells the graph against grep
 summary: High-priority TODO. The component at plugins/hoplite/components/hoplite/mcp-reference.md reads like an API spec rather than a recommendation, so agents default to Grep/Glob when they should be calling where and relatives. Seven specific gaps and a one-paragraph fix to add at the top.
-tags: [note, todo, high-priority, hoplite, mcp, design]
+tags: [note, todo, hoplite, mcp, design]
 created: 2026-05-26
 aliases: []
+priority: low
+effort: low
 ---
 
 # mcp-reference undersells the graph against grep
@@ -65,3 +67,7 @@ Deliberately omitted: the note's "one-line decision aid for the four tools" list
 - `plugins/hoplite/components/hoplite/mcp-reference.md` — the file this note targets.
 - `plugins/hoplite/skills/taking-notes/SKILL.md` and `plugins/hoplite/skills/journaling/SKILL.md` — both inject mcp-reference.md, so the fix lands once and propagates everywhere agents see the tool surface.
 - `plugins/hoplite/skills/using-graph/SKILL.md` — the thin skill that loads only mcp-reference.md; the most-direct beneficiary of clearer "use this first" framing.
+
+## Resolution
+
+All four refinement edits are live in `plugins/hoplite/components/hoplite/mcp-reference.md`. The positioning paragraph contrasts the literal surface (`Grep`, `Glob`) with the semantic surface (BM25, tag expressions, edges). The `where` bullet leads with "rank documents by topical relevance" and explicitly opposes BM25-over-FTS to literal-token matching. The `relatives` bullet names both authored (`mentions` from wikilinks) and inferred (`related` from MinHash) relationships and states the payoff. The ghost-document vocabulary entry adds "first-class node in `relatives` results." The deliberately-omitted decision-aid list stays omitted.

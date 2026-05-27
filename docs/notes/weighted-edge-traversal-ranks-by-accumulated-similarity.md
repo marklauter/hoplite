@@ -4,6 +4,9 @@ summary: Walking `tuple(related, P)` ranks by the path's product of edge confide
 tags: [note, hoplite, mcp, design, architecture, todo]
 created: 2026-05-27
 aliases: []
+priority: low
+effort: medium
+edge.blocked_by: [docs/notes/related-edges-rarely-fire-in-current-corpus.md]
 ---
 
 # Weighted-edge traversal ranks by accumulated similarity
@@ -43,7 +46,7 @@ A `rank` parameter on `relatives` picks the executor strategy:
 
 ## Where this sits
 
-Ranking is a post-grammar concern. The PDL proposal at [[docs/notes/hoplite-predicates-are-pdl-rewrites-over-typed-relations.md]] defines the predicate language for `where` and `relatives`; the grammar leaves evaluation strategy to the executor. Two strategies satisfy the same `tuple(related, P)` expression, picked at call time.
+Ranking is a post-grammar concern. The HQL proposal at [[docs/notes/hoplite-predicates-are-hql-rewrites-over-typed-relations.md]] defines the predicate language for `where` and `relatives`; the grammar leaves evaluation strategy to the executor. Two strategies satisfy the same `tuple(related, P)` expression, picked at call time.
 
 Same shape as the graph-prior rerank at [[docs/notes/rerank-bm25-candidates-with-graph-signals.md]] — both are ranking layers between predicate evaluation and result return. Different purposes: the rerank reorders `where` candidates by topology relative to a focus node; weighted-traversal ranking reorders `relatives` hits by accumulated edge confidence. Both stay orthogonal to the leaf-identity work in [[docs/notes/predicate-leaves-should-carry-relation-identity.md]], which restores relation identity to the predicate evaluator.
 

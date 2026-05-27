@@ -4,6 +4,8 @@ summary: Three regression scenarios for the SessionStart venv bootstrap — cold
 tags: [note, hoplite, todo, mcp, verification]
 created: 2026-05-25
 aliases: []
+priority: medium
+effort: low
 ---
 
 # Verify hoplite bootstrap with a cold-start test

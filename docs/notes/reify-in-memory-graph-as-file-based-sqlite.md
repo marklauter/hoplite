@@ -3,6 +3,8 @@ title: Reify the in-memory graph as a file-based SQLite database
 summary: The in-memory graph model has stabilized across several iterations; revisit persistent file-based SQLite so cold-start cost stops scaling with corpus size.
 tags: [note, todo, sqlite, graph]
 created: 2026-05-27
+priority: low
+effort: high
 ---
 
 # Reify the in-memory graph as a file-based SQLite database

@@ -1,7 +1,7 @@
 ---
 title: Wikilink resolver leaves alias and anchor in the target
 summary: Anchor and alias syntax survive wikilink capture and resolution, producing ghost paths like `hoplite/roadmap|roadmap.md` for documents that already exist.
-tags: [note, hoplite, mcp, wikilinks, bug]
+tags: [note, hoplite, mcp, wikilinks, bug, resolved]
 created: 2026-05-27
 ---
 
@@ -33,3 +33,7 @@ The split belongs in the resolver, not the extractor — `extract` is contract-s
 ## Adjacent
 
 Two code-fragment ghosts in the same export — `...` and `frozenset[str` — were a distinct bug: extraction ran inside fenced code blocks and inline-code spans, where `[[X]]` is sample text rather than a link. Fixed in the same change set by masking code spans before the wikilink regex runs.
+
+## Resolution
+
+Landed. `resolve_wikilink` at `plugins/hoplite/mcp/src/hoplite/graph.py:143` now strips alias and anchor before the lookup chain: `target.split("|", 1)[0].split("#", 1)[0].strip()`. The docstring records the contract — "Display syntax — `#anchor` and `|alias` — is stripped before lookup." The walker's convention check at `graph.py:326` strips the same suffixes before the `docs/` / `ghost/` prefix gate, so malformed-target warnings no longer false-positive on aliased or anchored links.

@@ -4,6 +4,8 @@ summary: FastMCP logs a schema warning at startup about `WriteResult`'s `path` f
 tags: [note, todo, hoplite, mcp, fastmcp]
 created: 2026-05-25
 aliases: []
+priority: low
+effort: low
 ---
 
 # FastMCP WriteResult schema warning is cosmetic
@@ -21,3 +23,7 @@ The warning concerns schema metadata, not runtime behavior — inference. Worth 
 ## Follow-up
 
 Investigate the `WriteResult` model definition and adjust the `path` field so FastMCP's schema generator accepts it without warning. Verify against the `dump_index` test path.
+
+## Status (2026-05-27)
+
+Likely resolved. `plugins/hoplite/mcp/src/hoplite/models.py:76-77` records the workaround: `slots=True` was removed from `WriteResult` because "FastMCP's Pydantic schema generator reads the slot member descriptor as a non-serializable default and warns at startup." The note's specific complaint — a default on `path` — does not match current code, where `path: str` carries no default. Confirm no warning fires at server startup (run with `claude --debug mcp` and inspect stderr); if clean, drop the `todo` tag and add `resolved`.

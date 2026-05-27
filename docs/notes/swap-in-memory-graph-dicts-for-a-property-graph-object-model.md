@@ -4,6 +4,8 @@ summary: Hand-rolled adjacency dicts today; explore swapping to an object Graph<
 tags: [note, todo, hoplite, refactor, in-memory, graph]
 created: 2026-05-25
 aliases: []
+priority: low
+effort: high
 ---
 
 # Swap in-memory graph dicts for a property-graph object model

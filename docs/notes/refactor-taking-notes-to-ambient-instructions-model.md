@@ -4,6 +4,8 @@ summary: taking-notes still reads as an imperative runbook (Recording a note has
 tags: [note, todo, skills, taking-notes, claude-code]
 created: 2026-05-26
 aliases: []
+priority: medium
+effort: medium
 ---
 
 # Refactor taking-notes to ambient-instructions model
