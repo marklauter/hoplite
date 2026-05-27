@@ -46,7 +46,7 @@ Use the sections that fit; skip the rest. Experiments may want all four; session
 Every entry carries a `tags` array. Three categories, in order:
 
 1. Type tag — required: `journal`. Distinguishes from notes (`note`), references, decisions, and other artifact types.
-2. Domain tags — what the cycle was about. Query the corpus (`hoplite_match_nodes({"tagged": "<slug>"})` or grep `docs/journal/*.md` frontmatter) to see the active vocabulary. A new domain tag is justified only when no existing slug fits.
+2. Domain tags — what the cycle was about. Query the corpus (`where({"tagged": "<slug>"})` or grep `docs/journal/*.md` frontmatter) to see the active vocabulary. A new domain tag is justified only when no existing slug fits.
 3. Shape tags — optional. Capture the cycle shape: `experiment`, `decision`, `dead-end`, `session-summary`, `milestone`. Used sparingly.
 
 Three to six tags total — enough that the entry surfaces in tag queries, few enough that each earns its place.

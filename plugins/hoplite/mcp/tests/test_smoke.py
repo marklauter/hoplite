@@ -20,10 +20,10 @@ from mcp.client.stdio import stdio_client
 
 EXPECTED_TOOLS = frozenset(
     {
-        "hoplite_match_nodes",
-        "hoplite_traverse_nodes",
-        "hoplite_reindex",
-        "hoplite_dump_index",
+        "where",
+        "relatives",
+        "refresh",
+        "export",
     },
 )
 
@@ -86,7 +86,7 @@ async def _drive_server(root: Path) -> None:
         ClientSession(read, write) as session,
     ):
         init = await session.initialize()
-        assert init.serverInfo.name == "graph_mcp"
+        assert init.serverInfo.name == "catalog"
 
         tool_list = await session.list_tools()
         names = {t.name for t in tool_list.tools}
@@ -94,7 +94,7 @@ async def _drive_server(root: Path) -> None:
 
         # match_nodes — text search should find alpha when querying for its body terms.
         match_result = await session.call_tool(
-            "hoplite_match_nodes",
+            "where",
             {"predicate": {"text": "alpha"}, "k": 3},
         )
         assert not match_result.isError, match_result.content
@@ -104,7 +104,7 @@ async def _drive_server(root: Path) -> None:
 
         # match_nodes — tag predicate post-filter narrows to the two docs tagged "shared".
         tag_result = await session.call_tool(
-            "hoplite_match_nodes",
+            "where",
             {"predicate": {"text": "document", "tagged": "shared"}, "k": 5},
         )
         assert not tag_result.isError, tag_result.content
@@ -114,7 +114,7 @@ async def _drive_server(root: Path) -> None:
 
         # traverse_nodes — from alpha at depth 1 reaches beta via the wikilink edge.
         traverse_result = await session.call_tool(
-            "hoplite_traverse_nodes",
+            "relatives",
             {"from_": "notes/alpha.md", "depth": 1},
         )
         assert not traverse_result.isError, traverse_result.content
@@ -127,7 +127,7 @@ async def _drive_server(root: Path) -> None:
         # .hoplite/ sits at the cwd level, alongside docs/, not inside it.
         dump_destination = root / ".hoplite" / "index.sqlite"
         dump_result = await session.call_tool(
-            "hoplite_dump_index",
+            "export",
             {"path": str(dump_destination)},
         )
         assert not dump_result.isError, dump_result.content

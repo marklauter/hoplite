@@ -56,20 +56,20 @@ Linux distributions vary — `python3` resolves out of the box on most. If your 
 
 Three agent-facing skills compose with the knowledge graph:
 
-- `graph-reference` — query the graph. Loads the tool reference and edge vocabulary only; use this when you want to search, traverse, reindex, or dump without loading the authoring workflow.
+- `research` — query the graph. Loads the tool reference and edge vocabulary only; use this when you want to search, traverse, reindex, or dump without loading the authoring workflow.
 - `taking-notes` — author atomic notes under `docs/notes/`, each capturing the current state of one idea.
 - `journaling` — author dated, append-only entries under `docs/journal/`.
 
-The `graph-reference` skill is a thin wrapper over `components/hoplite/mcp-reference.md`. The authoring skills (`taking-notes`, `journaling`) inject that same reference alongside `shape/artifact-structure.md`, `shape/frontmatter.md`, and `prose/writing-prose.md` — covering structure, frontmatter, query surface, and prose virtues. One canonical source per component; multiple invocation paths.
+The `research` skill is a thin wrapper over `components/hoplite/mcp-reference.md`. The authoring skills (`taking-notes`, `journaling`) inject that same reference alongside `shape/artifact-structure.md`, `shape/frontmatter.md`, and `prose/writing-prose.md` — covering structure, frontmatter, query surface, and prose virtues. One canonical source per component; multiple invocation paths.
 
 ### MCP tools
 
-Four tools register under the `plugin:hoplite:graph_mcp` server:
+Four tools register under the `plugin:hoplite:catalog` server:
 
-- `hoplite_match_nodes(predicate, k=5)` — search. BM25 over title, summary, and body; optional tag-expression post-filter (`notes & mcp`, `(plan | journal) & !draft`).
-- `hoplite_traverse_nodes(from_, predicate=None, depth=1)` — breadth-first walk from a starting document. Filters by edge kind, direction, similarity confidence, and tag predicate on reached nodes.
-- `hoplite_reindex()` — rebuild the in-memory graph from the current corpus. Call after writing or editing `.md` files.
-- `hoplite_dump_index(path=None)` — snapshot the in-memory graph to a SQLite file. Default destination is `.hoplite/<ISO-timestamp>.index.sqlite`.
+- `where(predicate, k=5)` — search. BM25 over title, summary, and body; optional tag-expression post-filter (`notes & mcp`, `(plan | journal) & !draft`).
+- `relatives(from_, predicate=None, depth=1)` — breadth-first walk from a starting document. Filters by edge kind, direction, similarity confidence, and tag predicate on reached nodes.
+- `refresh()` — rebuild the in-memory graph from the current corpus. Call after writing or editing `.md` files.
+- `export(path=None)` — snapshot the in-memory graph to a SQLite file. Default destination is `.hoplite/<ISO-timestamp>.index.sqlite`.
 
 ### Hooks
 
@@ -98,9 +98,9 @@ Four tools register under the `plugin:hoplite:graph_mcp` server:
    /reload-plugins
    ```
 
-3. Ask the agent to query the graph. The agent calls `hoplite_match_nodes({"text": "coffee"})` and gets back hits with summary and tags. Following the wikilink resolves through `hoplite_traverse_nodes(from_="notes/coffee.md")` — the unwritten `notes/brewing-methods.md` appears as a ghost node, queryable as an open loop.
+3. Ask the agent to query the graph. The agent calls `where({"text": "coffee"})` and gets back hits with summary and tags. Following the wikilink resolves through `relatives(from_="notes/coffee.md")` — the unwritten `notes/brewing-methods.md` appears as a ghost node, queryable as an open loop.
 
-4. (Optional) Dump the index for SQL exploration. Call `hoplite_dump_index()` — the tool writes `.hoplite/<timestamp>.index.sqlite`. Open it:
+4. (Optional) Dump the index for SQL exploration. Call `export()` — the tool writes `.hoplite/<timestamp>.index.sqlite`. Open it:
 
    ```bash
    sqlite3 .hoplite/<timestamp>.index.sqlite
@@ -144,7 +144,7 @@ If the MCP server times out on first install on Windows, the most common cause i
 Layout:
 
 - `plugins/hoplite/mcp/` — the MCP server (Python). `src/hoplite/` holds the package; `tests/` holds the unit and smoke tests.
-- `plugins/hoplite/skills/` — `graph-reference`, `taking-notes`, and `journaling`, each with a `SKILL.md`.
+- `plugins/hoplite/skills/` — `research`, `taking-notes`, and `journaling`, each with a `SKILL.md`.
 - `plugins/hoplite/components/shape/` — `artifact-structure.md` (document composition + template) and `frontmatter.md` (the YAML contract).
 - `plugins/hoplite/components/hoplite/` — `mcp-reference.md` (the MCP tools, edges, vocabulary).
 - `plugins/hoplite/components/prose/` — `writing-prose.md` (title/summary/body virtues, composition, grammar, validation).

@@ -1,4 +1,4 @@
-"""FastMCP wiring for `graph_mcp`.
+"""FastMCP wiring for `catalog`.
 
 Exposes the four-tool agent-facing surface defined in docs/hoplite/tool-api.md.
 Tool bodies live in `hoplite.tools`; the corpus root is set at module import
@@ -14,13 +14,13 @@ from mcp.types import ToolAnnotations
 
 from hoplite import tools
 
-mcp = FastMCP("graph_mcp")
+mcp = FastMCP("catalog")
 
 tools.set_root(Path.cwd())
 
 
 mcp.tool(
-    name="hoplite_match_nodes",
+    name="where",
     annotations=ToolAnnotations(
         title="Search the hoplite knowledge graph",
         readOnlyHint=True,
@@ -31,7 +31,7 @@ mcp.tool(
 )(tools.match_nodes)
 
 mcp.tool(
-    name="hoplite_traverse_nodes",
+    name="relatives",
     annotations=ToolAnnotations(
         title="Walk hoplite's wikilink and related-edge graph",
         readOnlyHint=True,
@@ -42,7 +42,7 @@ mcp.tool(
 )(tools.traverse_nodes)
 
 mcp.tool(
-    name="hoplite_reindex",
+    name="refresh",
     annotations=ToolAnnotations(
         title="Rebuild the hoplite in-memory graph",
         readOnlyHint=False,
@@ -53,7 +53,7 @@ mcp.tool(
 )(tools.reindex)
 
 mcp.tool(
-    name="hoplite_dump_index",
+    name="export",
     annotations=ToolAnnotations(
         title="Dump the hoplite graph to a SQLite snapshot",
         readOnlyHint=False,

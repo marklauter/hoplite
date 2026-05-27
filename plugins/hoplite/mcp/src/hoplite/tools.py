@@ -1,7 +1,7 @@
 """Tool handlers for the four-tool Hoplite MCP surface.
 
 Bodies delegate to a module-level ``Graph`` singleton initialized lazily on
-first call (or eagerly via the server lifespan). ``hoplite_reindex`` resets
+first call (or eagerly via the server lifespan). ``refresh`` resets
 the singleton so the next call rebuilds from the corpus.
 """
 

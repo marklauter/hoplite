@@ -44,7 +44,7 @@ Exclude from notes:
 Every note carries a `tags` array in its frontmatter. Three categories of tags compose, applied in order:
 
 1. **Type tag — required: `note`.** Every note authored by this skill includes `note` as a tag. Distinguishes from journal entries (`journal`), references, decisions, and other artifact types that may share the corpus.
-2. **Domain tags — what the note is about.** Pick from the existing vocabulary when possible — query the corpus (`hoplite_match_nodes({"tagged": "<slug>"})` or grep `docs/notes/*.md` frontmatter) to see what's in use. Examples in active use: `hoplite`, `mcp`, `python`, `claude-code`, `skills`, `bash`, `architecture`, `design`. Add a new domain tag only when no existing slug fits.
+2. **Domain tags — what the note is about.** Pick from the existing vocabulary when possible — query the corpus (`where({"tagged": "<slug>"})` or grep `docs/notes/*.md` frontmatter) to see what's in use. Examples in active use: `hoplite`, `mcp`, `python`, `claude-code`, `skills`, `bash`, `architecture`, `design`. Add a new domain tag only when no existing slug fits.
 3. **Status or shape tags — optional.** Capture intent or maturity when it shapes how the note reads: `bug`, `todo`, `decision`, `observation`, `superseded`, `open-question`. Use sparingly; only when the reader benefits from the framing.
 
 Aim for three to six tags total — enough that the note surfaces in tag queries, few enough that each tag earns its place. Slugs are kebab-case lowercase (`graph-db`, not `Graph DB`).

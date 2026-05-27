@@ -17,7 +17,7 @@
     "llm wiki"
   ],
   "mcpServers": {
-    "graph_mcp": {
+    "catalog": {
       "command": "python3",
       "args": ["${CLAUDE_PLUGIN_ROOT}/mcp/launch.py"]
     }

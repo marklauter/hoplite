@@ -8,15 +8,15 @@ aliases: []
 
 ## Overview
 
-Server name: `graph_mcp` (Python module convention `{service}_mcp`; the plugin namespace already carries the `hoplite` product identity, so the server names its capability).
+Server name: `catalog` (the plugin namespace already carries the `hoplite` product identity, so the server names its capability).
 
-Four agent-facing tools, all prefixed `hoplite_` to avoid collision with built-in tools and other MCP servers. Two for query, one for maintenance, one for debug.
+Four agent-facing tools. Two for query, one for maintenance, one for debug. The plugin namespace prefix (`plugin:hoplite:catalog__<tool>`) already scopes the names against built-in tools and other MCP servers, so the tool names themselves stay short.
 
-- Query: `hoplite_match_nodes`, `hoplite_traverse_nodes`
-- Maintenance: `hoplite_reindex`
-- Debug: `hoplite_dump_index`
+- Query: `where`, `relatives`
+- Maintenance: `refresh`
+- Debug: `export`
 
-There is no CRUD surface. Agents write `.md` files directly through their own file tools (`Write`, `Edit`, `Bash`); Hoplite is the read/query/traversal head over the corpus, not its write path. The `taking-notes` and `journaling` skills teach the file shape, the wikilink syntax, and the convention of calling `hoplite_reindex` after a batch of writes.
+There is no CRUD surface. Agents write `.md` files directly through their own file tools (`Write`, `Edit`, `Bash`); Hoplite is the read/query/traversal head over the corpus, not its write path. The `taking-notes` and `journaling` skills teach the file shape, the wikilink syntax, and the convention of calling `refresh` after a batch of writes.
 
 Entities referenced below — `Document`, `Edge`, `Hit`, `TraversalHit`, `WriteResult` — and the rules around frontmatter, wikilink resolution, ghost documents, and edge derivation are documented in [architecture.md](architecture.md).
 
@@ -31,15 +31,15 @@ Each tool's MCP annotation hints:
 
 Per-tool settings:
 
-- `hoplite_match_nodes`, `hoplite_traverse_nodes` — readOnly: true, destructive: false, idempotent: true, openWorld: false. Pure reads over the in-memory graph.
-- `hoplite_reindex` — readOnly: false, destructive: false, idempotent: true, openWorld: false. Rebuilds the in-memory graph; doesn't modify any persistent state (the `.md` files stay untouched). Second call with identical corpus state produces an identical graph.
-- `hoplite_dump_index` — readOnly: false, destructive: true, idempotent: true, openWorld: false. Overwrites the destination SQLite file. Second call to the same path produces an identical file content given identical in-memory state.
+- `where`, `relatives` — readOnly: true, destructive: false, idempotent: true, openWorld: false. Pure reads over the in-memory graph.
+- `refresh` — readOnly: false, destructive: false, idempotent: true, openWorld: false. Rebuilds the in-memory graph; doesn't modify any persistent state (the `.md` files stay untouched). Second call with identical corpus state produces an identical graph.
+- `export` — readOnly: false, destructive: true, idempotent: true, openWorld: false. Overwrites the destination SQLite file. Second call to the same path produces an identical file content given identical in-memory state.
 
 ## Predicates
 
 The two query tools accept a tag predicate that filters which documents appear in results. The predicate is a string with the grammar defined in [architecture.md](architecture.md#tag-predicates).
 
-The wire format wraps the predicate string in a small JSON object so other filter dimensions (e.g., text search for `match_nodes`, edge-type filter for `traverse_nodes`) can ride alongside it:
+The wire format wraps the predicate string in a small JSON object so other filter dimensions (e.g., text search for `where`, edge-type filter for `relatives`) can ride alongside it:
 
 ```json
 {
@@ -54,7 +54,7 @@ When `tagged` is absent or empty, no tag filter applies.
 
 ## Tools
 
-### `hoplite_match_nodes(predicate, k=5) -> [Hit]`
+### `where(predicate, k=5) -> [Hit]`
 
 Returns up to `k` `Hit` records ranked by relevance to the predicate.
 
@@ -69,7 +69,7 @@ When both are present, candidates are first scored by `text` and then filtered b
 
 No pagination day one. The `k` cap is the result bound; the agent picks `k` to match how much it wants to look at. Pagination is on the [roadmap](roadmap.md).
 
-### `hoplite_traverse_nodes(from_, predicate=None, depth=1) -> [TraversalHit]`
+### `relatives(from_, predicate=None, depth=1) -> [TraversalHit]`
 
 Breadth-first walk from a starting document. Returns up to `depth` layers of `TraversalHit` records. The origin is not included. `depth` must be `≥ 1`.
 
@@ -86,7 +86,7 @@ BFS uses a visited-set. Each document appears at most once, tagged with the shor
 
 No pagination. Traversal results are bounded by `depth` (and by the predicate's filters). If the result set is too large, lower `depth` or tighten `tagged`.
 
-### `hoplite_reindex() -> WriteResult`
+### `refresh() -> WriteResult`
 
 Triggers a fresh corpus walk: the walker re-globs `**/*.md`, re-parses frontmatter, rebuilds the in-memory graph, repopulates the FTS5 virtual table, recomputes MinHash signatures, re-emits all edges.
 
@@ -94,9 +94,9 @@ No parameters. The walk runs against the corpus rooted at the server's CWD.
 
 Returns a `WriteResult` with `path` set to the corpus root. The `warnings` list surfaces non-fatal advisories — frontmatter parse failures, unparseable wikilinks, documents missing mandatory fields.
 
-Day one this is the only way to pick up file changes between queries. Agents that write `.md` files call `hoplite_reindex` afterward to make the new content visible. Human edits in Obsidian show up after the next reindex call. See [architecture.md](architecture.md#the-walker) for the walk's two-pass shape.
+Day one this is the only way to pick up file changes between queries. Agents that write `.md` files call `refresh` afterward to make the new content visible. Human edits in Obsidian show up after the next reindex call. See [architecture.md](architecture.md#the-walker) for the walk's two-pass shape.
 
-### `hoplite_dump_index(path=None) -> WriteResult`
+### `export(path=None) -> WriteResult`
 
 Snapshots the in-memory graph state to a SQLite file for SQL-level debugging.
 
@@ -114,4 +114,4 @@ Then `sqlite3 .hoplite/<file>` gives developers a full SQL surface over the deri
 
 Per [architecture.md](architecture.md#error-model), invariant violations throw exceptions (programming errors the caller could have prevented — `None` for a required string, malformed predicate); constraint violations ride along inside successful results as warnings (frontmatter parse failures, unwritable dump destinations).
 
-At the MCP wire boundary, thrown invariant exceptions surface as structured error content with `isError: true`. Constraint warnings ride inside the `warnings` field of `WriteResult` or the analogous shape on `hoplite_reindex` and `hoplite_dump_index` results. JSON-RPC protocol-level errors stay reserved for transport-level failures; tool-execution errors always come back as content the agent can read.
+At the MCP wire boundary, thrown invariant exceptions surface as structured error content with `isError: true`. Constraint warnings ride inside the `warnings` field of `WriteResult` or the analogous shape on `refresh` and `export` results. JSON-RPC protocol-level errors stay reserved for transport-level failures; tool-execution errors always come back as content the agent can read.

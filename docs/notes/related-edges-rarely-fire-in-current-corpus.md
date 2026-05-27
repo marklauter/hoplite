@@ -1,6 +1,6 @@
 ---
 title: Related edges rarely fire in current corpus
-summary: Spot-checks against the spec and journal documents show zero `related` neighbors via `hoplite_traverse_nodes`, despite MinHash running at build time. The connective tissue the `related` edge was meant to provide is largely absent — debugging needed before relying on similarity traversal.
+summary: Spot-checks against the spec and journal documents show zero `related` neighbors via `relatives`, despite MinHash running at build time. The connective tissue the `related` edge was meant to provide is largely absent — debugging needed before relying on similarity traversal.
 tags: [note, hoplite, mcp, graph, related-edges, minhash, todo, bug, high-priority]
 created: 2026-05-26
 aliases: []
@@ -33,4 +33,4 @@ In a 43-document, 82-edge corpus dumped at `2026-05-26T06-48-38.index.sqlite`, t
 
 ## Why this matters
 
-The `related` edge is the load-bearing differentiator for the graph against grep — it surfaces content adjacency without shared keywords or authored wikilinks. If it never fires, `hoplite_traverse_nodes` collapses to wikilink traversal, which a human reader could follow by clicking. See [[mcp-reference-undersells-the-graph-against-grep]] for the related rhetoric problem.
+The `related` edge is the load-bearing differentiator for the graph against grep — it surfaces content adjacency without shared keywords or authored wikilinks. If it never fires, `relatives` collapses to wikilink traversal, which a human reader could follow by clicking. See [[mcp-reference-undersells-the-graph-against-grep]] for the related rhetoric problem.

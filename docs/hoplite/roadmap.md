@@ -12,28 +12,28 @@ The day-one shape in [architecture.md](architecture.md) and [tool-api.md](tool-a
 
 Day one has no batch enrichment beyond MinHash. MinHash signatures and derived `related` edges compute at startup from the corpus content; no out-of-band model calls.
 
-The one feature that wants server-side compute: vector embeddings via local Ollama (`nomic-embed-text` candidate, 768-dim, ~270MB, CPU-fast). With embeddings, `hoplite_match_nodes` can switch from BM25-only to combined BM25 + cosine similarity, and embedding-derived `related` edges supplement MinHash for cases where lexical similarity doesn't catch the connection.
+The one feature that wants server-side compute: vector embeddings via local Ollama (`nomic-embed-text` candidate, 768-dim, ~270MB, CPU-fast). With embeddings, `where` can switch from BM25-only to combined BM25 + cosine similarity, and embedding-derived `related` edges supplement MinHash for cases where lexical similarity doesn't catch the connection.
 
 Embedding compute is heavier than MinHash — 50-500ms per document depending on model and hardware. The walker can't afford this on every reindex at 1000-doc scale. Two trigger models:
 
 - Manual CLI — operator runs an embed pass when they want it. Output cached in `.hoplite/cache.db` keyed by `source_hash`.
-- Lazy on first query — `hoplite_match_nodes` with embedding-similarity scoring computes signatures on demand for any documents whose `source_hash` doesn't have a cached embedding.
+- Lazy on first query — `where` with embedding-similarity scoring computes signatures on demand for any documents whose `source_hash` doesn't have a cached embedding.
 
 Deferred until the BM25-only signal proves insufficient.
 
 ## Server-side enrichment — Sonnet-driven tag suggestions
 
-An opt-in flag on `hoplite_reindex(enrich_tags=True)` spawns a Sonnet sub-agent that reads document bodies and suggests tag additions. The agent supplies tags explicitly day one; this future feature offloads the suggestion-of-tags burden to an LLM pass when the corpus has drifted out of tag coverage.
+An opt-in flag on `refresh(enrich_tags=True)` spawns a Sonnet sub-agent that reads document bodies and suggests tag additions. The agent supplies tags explicitly day one; this future feature offloads the suggestion-of-tags burden to an LLM pass when the corpus has drifted out of tag coverage.
 
 Deferred. The "agent supplies all tags" baseline is the default; enrichment is opt-in.
 
 ## Auto-reindex — file-watcher
 
-Day one, file changes between queries surface only on explicit `hoplite_reindex()` calls.
+Day one, file changes between queries surface only on explicit `refresh()` calls.
 
 Two aspirational upgrades:
 
-- **Per-query stat-check.** Every `hoplite_match_nodes` and `hoplite_traverse_nodes` walks the corpus and `stat()s` every file; mtime or content_hash mismatch triggers refresh of the affected document. ~5ms per 1000 files per query — small. Picks up Obsidian hand-edits transparently without explicit reindex.
+- **Per-query stat-check.** Every `where` and `relatives` walks the corpus and `stat()s` every file; mtime or content_hash mismatch triggers refresh of the affected document. ~5ms per 1000 files per query — small. Picks up Obsidian hand-edits transparently without explicit reindex.
 - **Watchdog file-watcher.** Background thread (Python `watchdog` package) watches the corpus directory; file events trigger immediate refresh. Instant detection; adds one dependency.
 
 Per-query stat-check is the next-most-likely upgrade. Watchdog is the further reach for very-large corpora where per-query stats become noticeable.
@@ -68,7 +68,7 @@ Not a day-one concern; the personal-corpus pattern with one agent at a time is t
 
 ## Collapse match and traverse into a unified query DSL
 
-Day one has two discovery tools: `hoplite_match_nodes` (BM25 over the whole corpus, no starting node) and `hoplite_traverse_nodes` (BFS from a known node, no ranking). Each has a clear use case the agent picks between.
+Day one has two discovery tools: `where` (BM25 over the whole corpus, no starting node) and `relatives` (BFS from a known node, no ranking). Each has a clear use case the agent picks between.
 
 A richer query language — Cypher-style `MATCH ... WHERE ... RETURN` — could collapse both into one tool. The expressive power would let queries combine ranking and traversal in one shot ("find documents similar to this phrase that are also reachable from origin within 2 hops, ranked by relevance").
 
@@ -84,13 +84,13 @@ What you'd lose:
 - Implementation complexity. A query planner that handles ranking + traversal + tag filtering is a larger build than the two simple flows.
 - The tag predicate added to both tools day one already covers most of the gap.
 
-A middle option: keep the two simple primitives, add a third tool `hoplite_query` that takes a Cypher-ish expression for cases that need combined ranking + traversal. Easy cases stay easy; expressive queries get their own tool.
+A middle option: keep the two simple primitives, add a third tool `query` that takes a Cypher-ish expression for cases that need combined ranking + traversal. Easy cases stay easy; expressive queries get their own tool.
 
 Open question — pending a corpus or agentic use case that recurrently wants combined queries.
 
 ## Pagination
 
-Day one, neither discovery tool paginates. `hoplite_match_nodes` returns the top `k` results in one shot; `hoplite_traverse_nodes` returns whatever's bounded by `depth` and the predicate.
+Day one, neither discovery tool paginates. `where` returns the top `k` results in one shot; `relatives` returns whatever's bounded by `depth` and the predicate.
 
 What you'd gain:
 
@@ -99,12 +99,12 @@ What you'd gain:
 
 What you'd lose:
 
-- `hoplite_match_nodes` becomes more complex than the simple "top-k" the agent picks `k` for. The `k` cap is doing real work as a self-limiting design.
-- `hoplite_traverse_nodes` pagination requires either caching the full BFS walk (memory cost) or encoding BFS state in a continuation token (large, awkward).
+- `where` becomes more complex than the simple "top-k" the agent picks `k` for. The `k` cap is doing real work as a self-limiting design.
+- `relatives` pagination requires either caching the full BFS walk (memory cost) or encoding BFS state in a continuation token (large, awkward).
 
 Two possible shapes if it lands:
 
-- Continuation-token pagination on `hoplite_match_nodes` only — its sorted-score result set suits tokens cleanly.
+- Continuation-token pagination on `where` only — its sorted-score result set suits tokens cleanly.
 - Traverse stays unpaginated; bound by `depth` and predicate filtering.
 
 Open question — pending a corpus or use case that recurrently bumps into the day-one caps.

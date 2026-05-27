@@ -53,7 +53,7 @@ class Edge:
 
 @dataclass(frozen=True, slots=True)
 class Hit:
-    """A search result from ``hoplite_match_nodes``."""
+    """A search result from ``where``."""
 
     path: str
     summary: str
@@ -63,7 +63,7 @@ class Hit:
 
 @dataclass(frozen=True, slots=True)
 class TraversalHit:
-    """A result from ``hoplite_traverse_nodes``. One per node reached."""
+    """A result from ``relatives``. One per node reached."""
 
     path: str
     summary: str
@@ -76,7 +76,7 @@ class TraversalHit:
 # member descriptor as a non-serializable default and warns at startup.
 @dataclass(frozen=True)
 class WriteResult:
-    """Returned by ``hoplite_reindex`` and ``hoplite_dump_index``."""
+    """Returned by ``refresh`` and ``export``."""
 
     path: str
     counts: dict[str, int] | None = None

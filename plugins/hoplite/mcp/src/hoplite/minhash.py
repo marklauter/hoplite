@@ -67,7 +67,7 @@ __all__ = [
 
 DEFAULT_K: Final[int] = 128
 DEFAULT_SHINGLE_SIZE: Final[int] = 5
-DEFAULT_THRESHOLD: Final[float] = 0.20
+DEFAULT_THRESHOLD: Final[float] = 0.10
 
 
 _M61: Final[int] = (1 << 61) - 1

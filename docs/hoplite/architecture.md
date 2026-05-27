@@ -10,7 +10,7 @@ aliases: []
 
 Hoplite is an in-memory property graph over a corpus of markdown documents. The `.md` files under `docs/` are the only persistent state. At MCP server startup a two-pass walker rebuilds the graph from frontmatter and body content; everything else — properties, edges, MinHash signatures, the FTS5 text index, alias and casefold lookup tables — is derived and held in RAM.
 
-The agent reads document bodies through its own file tools (`Read`, `Write`, `Edit`, `Bash`). Hoplite serves four query tools — `hoplite_match_nodes`, `hoplite_traverse_nodes`, `hoplite_reindex`, `hoplite_dump_index` — over the in-memory graph. There is no CRUD surface on Hoplite itself; the markdown file on disk is the source of truth, and `hoplite_reindex` picks up whatever's there.
+The agent reads document bodies through its own file tools (`Read`, `Write`, `Edit`, `Bash`). Hoplite serves four query tools — `where`, `relatives`, `refresh`, `export` — over the in-memory graph. There is no CRUD surface on Hoplite itself; the markdown file on disk is the source of truth, and `refresh` picks up whatever's there.
 
 This document covers the system as one piece. Tool signatures and the 4-tool API live in [tool-api.md](tool-api.md); deferred features in [roadmap.md](roadmap.md).
 
@@ -18,7 +18,7 @@ This document covers the system as one piece. Tool signatures and the 4-tool API
 
 A Hoplite corpus is a directory of `.md` files. The MCP server roots itself at the working directory when spawned; every file matching `**/*.md` under that root is a candidate document. Subdirectory structure is presentational — `docs/notes/coffee.md` and `docs/journal/2026-05-25-1430-roast.md` are both documents, identified by their relative paths.
 
-The corpus is fully Obsidian-compatible — same frontmatter shape, same `[[wikilink]]` syntax, same tag convention. Hand-edits in Obsidian and writes by agents are indistinguishable from Hoplite's view; both round-trip through `hoplite_reindex`.
+The corpus is fully Obsidian-compatible — same frontmatter shape, same `[[wikilink]]` syntax, same tag convention. Hand-edits in Obsidian and writes by agents are indistinguishable from Hoplite's view; both round-trip through `refresh`.
 
 ## Frontmatter — the YAML envelope
 
@@ -103,11 +103,11 @@ Examples:
 - `note & hoplite` — documents tagged both.
 - `(note | journal) & !draft` — notes or journal entries, excluding drafts.
 
-Predicates apply as a post-filter on results. For `hoplite_match_nodes`, the predicate narrows the BM25-scored candidate list. For `hoplite_traverse_nodes`, the walk follows edges per the edge predicate; the tag predicate filters which reached documents appear in the result. Non-matching intermediate documents are still traversed through.
+Predicates apply as a post-filter on results. For `where`, the predicate narrows the BM25-scored candidate list. For `relatives`, the walk follows edges per the edge predicate; the tag predicate filters which reached documents appear in the result. Non-matching intermediate documents are still traversed through.
 
 ## The walker
 
-`hoplite_reindex` runs the walker. The graph is rebuilt from scratch on every reindex — no incremental updates day one. At hundreds-to-low-thousands corpus scale, full rebuild is the simplest correct behavior.
+`refresh` runs the walker. The graph is rebuilt from scratch on every reindex — no incremental updates day one. At hundreds-to-low-thousands corpus scale, full rebuild is the simplest correct behavior.
 
 ### Pass 1: identity collection
 
@@ -155,7 +155,7 @@ CREATE VIRTUAL TABLE fts USING fts5(
 
 `path` is `UNINDEXED` because it's never queried as a search term — it rides along as a result column.
 
-`hoplite_match_nodes` runs:
+`where` runs:
 
 ```sql
 SELECT path, summary, bm25(fts) AS score
@@ -192,7 +192,7 @@ Total: ~50s. Scales roughly linearly; 100 docs ≈ 5s, 5000 docs ≈ 5 minutes. 
 
 ## Reindex semantics
 
-`hoplite_reindex()` rebuilds the in-memory graph from the current corpus state. Day one this is the only way to pick up file changes — there's no automatic detection of edits between calls. An agent that writes a file calls `hoplite_reindex` afterward. Hand-edits in Obsidian show up after the next reindex call.
+`refresh()` rebuilds the in-memory graph from the current corpus state. Day one this is the only way to pick up file changes — there's no automatic detection of edits between calls. An agent that writes a file calls `refresh` afterward. Hand-edits in Obsidian show up after the next reindex call.
 
 The server initializes the graph at startup by running the walk implicitly — same code path as a reindex call. No init tool, no init-mode gate; the graph is ready to serve as soon as the walk finishes.
 
@@ -200,7 +200,7 @@ Per-query stat-checking is the most-likely future upgrade (see [roadmap.md](road
 
 ## Dump schema
 
-`hoplite_dump_index(path=None)` snapshots the in-memory graph to a SQLite file for SQL-level debugging. Default destination is `.hoplite/<ISO-timestamp>.index.sqlite` relative to the corpus root, with timestamp `YYYY-MM-DDTHH-MM-SS` (colons replaced for Windows). Each dump produces a uniquely-named file; prior snapshots survive on disk.
+`export(path=None)` snapshots the in-memory graph to a SQLite file for SQL-level debugging. Default destination is `.hoplite/<ISO-timestamp>.index.sqlite` relative to the corpus root, with timestamp `YYYY-MM-DDTHH-MM-SS` (colons replaced for Windows). Each dump produces a uniquely-named file; prior snapshots survive on disk.
 
 The schema is a normalized property-graph projection:
 
@@ -279,8 +279,8 @@ Specific failure modes:
 - **Frontmatter parse failures** — the document is skipped from the graph and surfaced as a warning. Fix the YAML and re-run reindex.
 - **Wikilinks to ghosts** — not a failure mode. The ghost materializes; the edge points at it; the unresolved set is queryable as open loops.
 - **Server crash** — the corpus on disk is untouched; the next startup rebuilds the graph from scratch. No recovery, no repair tool.
-- **Dump destination unwritable** — `hoplite_dump_index` validates the path before writing; an unwritable path surfaces as `isError: true`.
-- **Out-of-date graph** — the in-memory graph reflects state as of the last reindex. Files written between calls show up after the next `hoplite_reindex`.
+- **Dump destination unwritable** — `export` validates the path before writing; an unwritable path surfaces as `isError: true`.
+- **Out-of-date graph** — the in-memory graph reflects state as of the last reindex. Files written between calls show up after the next `refresh`.
 
 ## Concurrency
 

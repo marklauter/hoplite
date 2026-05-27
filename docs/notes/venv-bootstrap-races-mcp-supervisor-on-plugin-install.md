@@ -8,7 +8,7 @@ aliases: []
 
 ## Symptom
 
-After `/plugin install hoplite@msl.hoplite` (or any rename or reinstall flow that produces a fresh `${CLAUDE_PLUGIN_DATA}` directory), the MCP supervisor reports `Failed to reconnect to plugin:hoplite:graph_mcp: MCP server connection timed out after 30000ms`. The data directory at `~/.claude/plugins/data/hoplite-msl-hoplite/` exists but is empty — no `venv/`, no `pyproject.toml` snapshot.
+After `/plugin install hoplite@msl.hoplite` (or any rename or reinstall flow that produces a fresh `${CLAUDE_PLUGIN_DATA}` directory), the MCP supervisor reports `Failed to reconnect to plugin:hoplite:catalog: MCP server connection timed out after 30000ms`. The data directory at `~/.claude/plugins/data/hoplite-msl-hoplite/` exists but is empty — no `venv/`, no `pyproject.toml` snapshot.
 
 `/reload-plugins` doesn't help; the supervisor reattempts the launcher and times out again on the same gap.
 

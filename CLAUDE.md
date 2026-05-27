@@ -7,7 +7,7 @@ README covers install. Spec corpus lives at `docs/hoplite/`.
 ## Layout
 
 - `plugins/hoplite/mcp/` — MCP server source (Python, FastMCP, src/tests layout).
-- `plugins/hoplite/skills/{graph-reference,taking-notes,journaling}/` — agent-facing skills. `graph-reference` is a thin wrapper over the MCP tool reference; the two authoring skills inject the components below.
+- `plugins/hoplite/skills/{research,taking-notes,journaling}/` — agent-facing skills. `research` is a thin wrapper over the MCP tool reference; the two authoring skills inject the components below.
 - `plugins/hoplite/components/shape/` — `artifact-structure.md` (document composition + template) and `frontmatter.md` (the YAML contract).
 - `plugins/hoplite/components/hoplite/` — `mcp-reference.md` (the MCP tools, edges, vocabulary).
 - `plugins/hoplite/components/prose/` — `writing-prose.md` (title/summary/body virtues, composition, grammar, validation).

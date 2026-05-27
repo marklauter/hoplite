@@ -5,7 +5,7 @@ Every document in the Hoplite corpus, docs/, opens with a YAML frontmatter block
 Five mandatory fields:
 
 - `title` (string) — short, human-readable name.
-- `summary` (string) — one-line lede. `hoplite_match_nodes` and `hoplite_traverse_nodes` return it so callers can scan candidates without opening the file.
+- `summary` (string) — one-line lede. `where` and `relatives` return it so callers can scan candidates without opening the file.
 - `tags` (list of strings) — tag slugs the document carries. Use kebab-case lowercase (`graph-db`, not `Graph DB` or `graph_db`); the indexer casefolds for lookup, but consistent authoring keeps the corpus tidy. Empty list `tags: []` is fine.
 - `created` (ISO date string, `YYYY-MM-DD`) — creation date. Stays stable across edits.
 - `aliases` (list of strings) — alternate paths that resolve to this document. Empty by default. On rename, add the old path so wikilinks pointing at the old name still resolve.

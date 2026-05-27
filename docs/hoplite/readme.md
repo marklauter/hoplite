@@ -8,7 +8,7 @@ aliases: []
 
 ## What this is
 
-Hoplite is an in-memory knowledge graph over a corpus of markdown documents. The `.md` files under `docs/` are the only persistent state; the graph rebuilds from scratch at MCP server startup. Agents query through four tools — `hoplite_match_nodes`, `hoplite_traverse_nodes`, `hoplite_reindex`, `hoplite_dump_index` — and write document bodies through their own file tools. There is no CRUD surface on Hoplite itself.
+Hoplite is an in-memory knowledge graph over a corpus of markdown documents. The `.md` files under `docs/` are the only persistent state; the graph rebuilds from scratch at MCP server startup. Agents query through four tools — `where`, `relatives`, `refresh`, `export` — and write document bodies through their own file tools. There is no CRUD surface on Hoplite itself.
 
 This folder holds the architectural spec for the runtime. The repo README covers install and usage; the documents here cover the system internals.
 
