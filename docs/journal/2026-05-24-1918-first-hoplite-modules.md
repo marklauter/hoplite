@@ -1,6 +1,6 @@
 ---
 title: First hoplite modules — parser, filter, stubs, MinHash, ids, wikilinks
-summary: Five afternoon hours land the pure-compute pieces: label-expression parser with ruff/pyright gating, candidate-filter wrapper, MCP tool-surface stubs with echo-style fakes, MinHash + jaccard module, ids module with validator and resolver, wikilinks parser. The skeleton hoplite needs before any real graph wiring.
+summary: "Five afternoon hours land the pure-compute pieces: label-expression parser with ruff/pyright gating, candidate-filter wrapper, MCP tool-surface stubs with echo-style fakes, MinHash + jaccard module, ids module with validator and resolver, wikilinks parser. The skeleton hoplite needs before any real graph wiring."
 tags: [journal, hoplite, mcp, python, milestone]
 created: 2026-05-24
 aliases: []
