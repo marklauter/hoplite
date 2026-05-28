@@ -59,7 +59,9 @@ Bodies live in the markdown file on disk. The walker reads bodies during indexin
 
 ### Properties
 
-Every YAML frontmatter field — mandatory (`title`, `summary`, `tags`, `created`), optional (`aliases`), and user-defined (`status`, `priority`, anything) — becomes a property on the owning document. Properties are key-value pairs in EAV form: one row per `(path, key, value)` triple. Array-valued fields like `tags: [hoplite, note]` produce one row per element.
+Title and summary are first-class fields on the document — indexed in FTS, queryable directly via the `fts` virtual table, one row per document by construction. They are *not* properties.
+
+Every other YAML frontmatter field — mandatory remainders (`tags`, `created`), optional (`aliases`), and user-defined (`status`, `priority`, anything) — becomes a property on the owning document. Properties are key-value pairs in EAV form: one row per `(id, key, value)` triple in `document_property`. List-valued fields fan out into multiple rows by the same shape used for edge-side stereotype lists — see [EAV decomposition](#eav-decomposition) for the pattern and how to read it back.
 
 Properties never appear as edge endpoints. Edges connect documents to documents; properties describe what a document is.
 
@@ -72,7 +74,36 @@ Two edge kinds, closed set. Edges connect documents to documents only.
 
 Use cases for richer relations (`cites`, `contradicts`, `requires`, `see-also`) express through `mentions` plus body prose. No aspirational edge types reserved.
 
-Edges are keyed by the `(src, dst, kind)` triple — no synthetic id. `confidence` is first-class on the edge itself: `1.0` for authored edges (`mentions`, `cites`) and the MinHash Jaccard score for inferred `related` edges. Additional edge annotations live in a symmetric edge-property table following the same EAV pattern as node properties; day one no other edge metadata exists, but the table is in place so future annotations slot in without schema change.
+Edges are keyed by the `(src, dst, kind)` triple — no synthetic id. `confidence` is first-class on the edge itself: `1.0` for authored edges (`mentions`, `cites`) and the MinHash Jaccard score for inferred `related` edges. Additional edge annotations live in a symmetric edge-property table following the same EAV pattern as node properties — see [EAV decomposition](#eav-decomposition). Day one no other edge metadata exists, but the table is in place so future annotations (e.g., stereotype labels via `edge.<stereotype>: [...]` frontmatter) slot in without schema change.
+
+## EAV decomposition
+
+List-valued frontmatter fields decompose into multiple EAV rows by the same shape on both sides of the graph. One element becomes one row.
+
+On the document side, list-valued properties land in `document_property`:
+
+- `document.tags: [hoplite, note]` → `(id, 'tags', 'hoplite')`, `(id, 'tags', 'note')`.
+- `document.aliases: [old/path.md]` → `(id, 'aliases', 'old/path.md')`.
+- Any list-valued user-defined key follows the same fan-out.
+
+The element is the value, stored verbatim. No referential constraint — document-side list-properties accept arbitrary kebab-case strings.
+
+On the edge side, stereotype lists land in `edge` plus `edge_property`. `edge.contradicts: [docs/notes/foo.md, docs/notes/bar.md]` materializes one `edge` row per element (src = this document, dst = resolved target, kind = `mentions`), plus one `edge_property` row carrying the stereotype label. Each element must be a document reference — a `docs/...` path or a `ghost/<slug>`. The walker runs each element through the wikilink resolver; a malformed element appends a warning to `WriteResult.warnings` and the element is skipped. A `docs/...` element resolves to a real `document.id`; a `ghost/...` element materializes a ghost document if absent.
+
+So the structural shape is identical — list element fans out into one row — but each side carries its own contract on what an element *means*. Document-side list-properties take opaque slugs; edge-side stereotype lists take document references and pay the resolver cost.
+
+### Materializing back out
+
+Reading a list-property back from the EAV store uses a `json_group_array(... ORDER BY rowid)` sub-select. The `ORDER BY rowid` clause pins insertion order, which under the walker's `executemany` matches frontmatter declaration order. The wrapped-select form is portable — SQLite 3.44+ supports `aggregate(expr ORDER BY ...)` directly, but older builds (including the SQLite version bundled with Python 3.11) require the wrapper:
+
+```sql
+(SELECT json_group_array(value) FROM (
+   SELECT value FROM document_property
+   WHERE id = ? AND key = 'tags' ORDER BY rowid
+))
+```
+
+This is what `Hit.tags` carries when `where` returns hits with their tag set. The same shape works for any other document-side list-property and for stereotype lists on edges (against `edge_property` joined to `edge`).
 
 ## Wikilinks and ghost documents
 

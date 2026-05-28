@@ -1,7 +1,7 @@
 ---
 title: row_factories.py — sqlite3.Row to dataclass mappers
-summary: `row_factories.py` turns `sqlite3.Row` objects into the dataclasses defined in `models.py`. Inputs are explicit; transformations (JSON parsing, summary fallback, edge-list copy) are contained inside the module rather than delegated to SQL writers. Each factory carries a named SQL contract.
-tags: [note, sqlite, design, hoplite, architecture]
+summary: `row_factories.py` turns `sqlite3.Row` objects into the dataclasses defined in `models.py`. Inputs are explicit; transformations (JSON parsing, summary fallback, edge-list copy) are contained inside the module rather than delegated to SQL writers. Each factory carries a named SQL contract that the query writer in `graph_sqlite.py` must satisfy.
+tags: [note, sqlite, design, hoplite, interface]
 created: 2026-05-27
 document.status: design
 ---
@@ -130,22 +130,9 @@ LIMIT ?
 
 **Why summary isn't in `document_property`.** FTS5 already stores the original text of each indexed column (unless declared `contentless`), and `fts` carries one row per document by construction. Duplicating title/summary into `document_property` as `(id, 'summary', <text>)` rows would mean two sources of truth and a schema-uniqueness problem we'd need a partial unique index to fix. The current design sidesteps the whole problem: walker writes `title` and `summary` to FTS only, `document_property` holds every other frontmatter key (`document.tags`, `document.aliases`, `document.status`, `document.priority`, and arbitrary user-defined keys).
 
-**Tags is not architecturally special.** Any list-valued frontmatter field has the same EAV shape: list elements fan out into multiple rows. On the document side, the destination is `document_property` keyed by `(id, key, value)`:
+**Tags is one instance of the EAV list-decomposition pattern.** List-valued frontmatter fields decompose into multiple EAV rows by the same shape on both sides of the graph — the convention is documented in [docs/hoplite/hoplite-architecture.md#eav-decomposition](../hoplite/hoplite-architecture.md#eav-decomposition). The factories here materialize one such list back out via the canonical `json_group_array(... ORDER BY rowid)` sub-select; `Hit.tags` is the first list-property the dataclasses surface by name, but the same SQL shape and the same `parse_tags` helper work for any other document-side list-property and for stereotype lists on edges.
 
-- `document.tags: [hoplite, note]` → `(id, 'tags', 'hoplite')`, `(id, 'tags', 'note')`.
-- `document.collaborators: [alice, bob]` → `(id, 'collaborators', 'alice')`, `(id, 'collaborators', 'bob')`.
-
-The element is the value, stored verbatim. No referential constraint — `tags` and `collaborators` accept arbitrary kebab-case strings.
-
-`edge.<stereotype>: [...]` follows the *same list-decomposition shape* but adds a referential constraint on each element. Each element must be a document reference — a `docs/...` path or a `ghost/<slug>`. The walker validates each element at insert time (same gate the wikilink resolver applies at `graph.py:327-329`); a malformed element appends a warning and the element is skipped, no row written. A valid `docs/...` element resolves to a real `document.id`; a `ghost/...` element materializes a ghost document if absent. Either way, each element becomes one `edge` row pointing at that resolved id, plus one `edge_property` row carrying the stereotype label.
-
-So the list-decomposition pattern is the same in structure on both sides; the contract on what a list element *means* differs. Document-side list-properties take opaque slugs; edge-side stereotype lists take document references and pay the resolver cost.
-
-The `json_group_array(... ORDER BY rowid)` sub-select is the general shape for *materializing* a list-property back out of the EAV store — tags is the first one the `Hit` dataclass surfaces by name. A future query that wants `document.collaborators` composes the same sub-select with a different `key=` literal. A query that wants stereotypes on a node's outbound edges composes the same shape against `edge_property` joined to `edge`, with the labels post-grouped per `(src, dst)` pair.
-
-**Tag order is pinned by `rowid`.** Bare `json_group_array(value)` returns elements in implementation-defined order — SQLite makes no stability guarantee without an inner `ORDER BY`. Today's `graph.py` walker inserts tags in frontmatter declaration order, and `Hit.tags` is a `list[str]` that users may reasonably expect to be ordered. The inner `SELECT value FROM ... ORDER BY rowid` wrapper preserves insertion order, which under the walker's `executemany(INSERT, rows_in_frontmatter_order)` matches frontmatter declaration order. Without the wrapper, parity against `graph.py` would diverge under any operation that reshuffles rowids (re-inserts, VACUUM).
-
-The `ORDER BY rowid` inside an aggregate sub-select is the portable form. SQLite 3.44+ supports `aggregate(expr ORDER BY ...)` directly, but Python 3.11's bundled SQLite version is older; the wrapped-select form works on all SQLite builds we ship against.
+The architecture doc explains why `ORDER BY rowid` is load-bearing (insertion-order preservation, parity against `graph.py`'s walker) and why the wrapped-select form is portable across SQLite versions. Both notes use the same SQL contract; this design note is the projection-side contract, the architecture doc is the source-of-truth for the materialization shape.
 
 ```python
 def row_to_hit(row: sqlite3.Row) -> Hit:
