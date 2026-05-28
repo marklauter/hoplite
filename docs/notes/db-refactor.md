@@ -39,9 +39,7 @@ Work in this order. Each step is shippable on its own — tests pass, parity pre
 
 2. **`migrations.py` — schema lifecycle.** Design lives at [[docs/notes/migrations-py-design.md]]. **Done 2026-05-27** — landed with 7 passing tests covering the four-quadrant race matrix (error-text match × schema-present), partial-schema detection, and schema-constant integrity.
 
-3. **Row factories.**
-   - A small `row_factories.py` module: `_row_to_document`, `_row_to_edge`, `_row_to_hit`, `_row_to_traversal_hit`. Each takes a `sqlite3.Row` and returns the matching dataclass from `models.py`.
-   - Explicit per-field projection (Pattern A from the earlier discussion). When the schema changes, `KeyError` surfaces immediately under test.
+3. **Row factories.** Design lives at [[docs/notes/row-factories-py-design.md]].
 
 4. **`graph_sqlite.py` — new Graph class.**
    - `class Graph` holding a `sqlite3.Connection`. Same external surface as today's `Graph` (the methods `tools.py` and the walker call), but every method runs a SQL query through the connection instead of touching a Python dict.

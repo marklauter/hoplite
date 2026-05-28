@@ -31,7 +31,7 @@ The third and fourth seed stereotypes — `supports` and `supersedes` — surfac
 
 Called out in the parent design and worth restating here:
 
-- Migration. Existing documents carry unprefixed frontmatter (`title:`, `tags:`, etc.). Rewriting to the class-prefixed form (`document.title:`, `document.tags:`) is a corpus-wide change tracked separately, in its own design session.
+- Migration. Existing documents carry unprefixed frontmatter for property keys (`tags:`, `aliases:`, etc.). Rewriting to the class-prefixed form (`document.tags:`, `edge.<stereotype>:`) is a corpus-wide change tracked separately, in its own design session. `title:` and `summary:` stay bare on both sides of the migration — they're first-class document fields, not properties.
 - Edge-level properties beyond stereotype (e.g., `edge.tags:`). The flat-and-nested frontmatter shape addresses stereotype edges cleanly; non-stereotype edge properties have an unsolved addressing problem.
 - Default traversal behavior for stereotyped mentions in `relatives()`. Deferred to the expression-language redesign — see the parent design's open questions.
 

@@ -46,11 +46,11 @@ Two surfaces inject identical rows. The author picks based on whether the assert
 
 ### Frontmatter with class prefix
 
-Every frontmatter key gains a mandatory dot-separated class prefix — `document.` or `edge.` — declaring which side of the property graph the key affects. Uniform across scalars and lists:
+Property keys carry a mandatory dot-separated class prefix — `document.` or `edge.` — declaring which side of the property graph the key affects. `title` and `summary` stay bare: they are first-class fields on a document (FTS-indexed, single-valued by construction), not properties. Everything else that lives in `document_property` or `edge_property` is prefixed:
 
 ```yaml
-document.title: Stereotypes are open-vocab edge properties
-document.summary: A stereotype is an open-vocabulary label...
+title: Stereotypes are open-vocab edge properties
+summary: A stereotype is an open-vocabulary label...
 document.tags: [note, hoplite, edges, stereotypes]
 document.created: 2026-05-27
 edge.contradicts: [docs/notes/foo.md, docs/notes/bar.md]
