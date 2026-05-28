@@ -63,10 +63,10 @@ Verification — reading the named file, function, or commit — often surfaces 
 
 Sweep mode finds action-shaped notes that lack the `todo` tag. Tag them and triage them.
 
-!`cat ${CLAUDE_PLUGIN_ROOT}/components/shape/artifact-structure.md`
-!`cat ${CLAUDE_PLUGIN_ROOT}/components/shape/frontmatter.md`
-!`cat ${CLAUDE_PLUGIN_ROOT}/components/hoplite/mcp-reference.md`
-!`cat ${CLAUDE_PLUGIN_ROOT}/components/prose/writing-prose.md`
+{{components/shape/artifact-structure.md}}
+{{components/shape/frontmatter.md}}
+{{components/hoplite/mcp-reference.md}}
+{{components/prose/writing-prose.md}}
 
 ## Voice
 

@@ -5,4 +5,4 @@ description: Use for lexical matching, ranked FTS, and traversal over the graph 
 
 # Research
 
-!`cat ${CLAUDE_PLUGIN_ROOT}/components/hoplite/mcp-reference.md`
+{{components/hoplite/mcp-reference.md}}

@@ -51,10 +51,10 @@ Every entry carries a `tags` array. Three categories, in order:
 
 Three to six tags total — enough that the entry surfaces in tag queries, few enough that each earns its place.
 
-!`cat ${CLAUDE_PLUGIN_ROOT}/components/shape/artifact-structure.md`
-!`cat ${CLAUDE_PLUGIN_ROOT}/components/shape/frontmatter.md`
-!`cat ${CLAUDE_PLUGIN_ROOT}/components/hoplite/mcp-reference.md`
-!`cat ${CLAUDE_PLUGIN_ROOT}/components/prose/writing-prose.md`
+{{components/shape/artifact-structure.md}}
+{{components/shape/frontmatter.md}}
+{{components/hoplite/mcp-reference.md}}
+{{components/prose/writing-prose.md}}
 
 ## Voice
 

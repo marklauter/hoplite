@@ -55,10 +55,10 @@ Notes are saved at `docs/notes/<slug>.md` where `<slug>` is a lowercase slug of 
 
 ## Shape and editorial guidance
 
-!`cat ${CLAUDE_PLUGIN_ROOT}/components/shape/artifact-structure.md`
-!`cat ${CLAUDE_PLUGIN_ROOT}/components/shape/frontmatter.md`
-!`cat ${CLAUDE_PLUGIN_ROOT}/components/hoplite/mcp-reference.md`
-!`cat ${CLAUDE_PLUGIN_ROOT}/components/prose/writing-prose.md`
+{{components/shape/artifact-structure.md}}
+{{components/shape/frontmatter.md}}
+{{components/hoplite/mcp-reference.md}}
+{{components/prose/writing-prose.md}}
 
 ## Rhetorical context
 
