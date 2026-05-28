@@ -1,6 +1,6 @@
 ---
 title: Hoplite DB refactor — file-based SQLite execution plan
-summary: Numbered plan to move Hoplite from in-memory dicts plus `:memory:` FTS to a persistent file-based SQLite store with WAL, shared across MCP processes. The old `graph.py` stays in tree as the reference implementation; new code lands in `graph_sqlite.py` alongside.
+summary: Numbered plan to add a persistent file-based SQLite store with WAL, shared across MCP processes, as a peer to the existing in-memory implementation. Both implementations sit behind a `Graph` Protocol; today's in-memory `Graph` is renamed `InMemoryGraph`, the new SQL-backed implementation is `SqliteGraph` in `graph_sqlite.py`.
 tags: [note, todo, sqlite, hoplite, architecture]
 created: 2026-05-27
 document.priority: high
@@ -10,7 +10,7 @@ document.status: in-progress
 
 # Hoplite DB refactor — file-based SQLite execution plan
 
-Numbered plan to move Hoplite from in-memory dicts plus `:memory:` FTS to a persistent file-based SQLite store with WAL, shared across MCP processes. The old `graph.py` stays in tree as the reference implementation; new code lands in `graph_sqlite.py` alongside.
+Numbered plan to add a persistent file-based SQLite store with WAL, shared across MCP processes, as a peer to the existing in-memory implementation. Both implementations sit behind a `Graph` Protocol; today's in-memory `Graph` is renamed `InMemoryGraph`, the new SQL-backed implementation is `SqliteGraph` in `graph_sqlite.py`.
 
 See [[docs/notes/reify-in-memory-graph-as-file-based-sqlite.md]] for the *why* and the trigger that fired this work. This note is the *how*.
 
@@ -27,7 +27,8 @@ These are settled. Revisit only with cause.
 - **Refresh semantics.** Day-one stays *truncate and rebuild*, same as today. Reconcile (added/changed/removed via `content_hash` + mtime) is future work — held aside, mentioned at the bottom.
 - **PRAGMAs.** WAL is persistent per-database; foreign-key enforcement, sync mode, temp store, and mmap size are per-connection and must be set on every open. See section below.
 - **Tests use `:memory:`.** Not temp directories. Fixtures bootstrap a `:memory:` connection with the same schema, populate via the walker, exercise the DAO. Faster, more deterministic, no filesystem cleanup.
-- **`graph.py` stays.** New code in `graph_sqlite.py`. The old in-memory implementation is the reference for parity checks throughout the refactor. Deprecation is a separate decision after parity is confirmed.
+- **`Graph` is a Protocol; both implementations are permanent peers.** `Graph` becomes a `typing.Protocol` (in `graph.py`) with four methods: `search`, `traverse`, `refresh`, `export`. Today's `Graph` class is renamed `InMemoryGraph` (same file). The new SQL-backed class is `SqliteGraph` in `graph_sqlite.py`. Both impls stay in tree indefinitely — there is no cutover that deletes one. `InMemoryGraph` has no declared runtime role yet (TBD); the Protocol exists so `tools.py` depends on the interface, not on a concrete class, and the two impls can sit side-by-side.
+- **`tools.py` depends on the Protocol.** Handlers construct whichever concrete `Graph` the bootstrap wired up and call its methods through the Protocol surface. Search/traverse logic that today lives in `tools.py` (BFS loop, `_neighbors`, FTS query) moves onto `InMemoryGraph` so the in-memory impl satisfies the Protocol on its own; the bodies in `tools.py` shrink to predicate parsing plus a single `graph.search(...)` / `graph.traverse(...)` call.
 - **Module naming.** Python module names cannot contain `.` (it's the package separator). `graph_sqlite.py` is the correct file name — imported as `hoplite.graph_sqlite`.
 - **No `hoplite init` step.** `refresh` is the init step — same path users already invoke. Adding a separate init command duplicates code and gives users a second thing to remember.
 
@@ -41,43 +42,23 @@ Work in this order. Each step is shippable on its own — tests pass, parity pre
 
 3. **Row factories.** Design lives at [[docs/notes/row-factories-py-design.md]]. **Done 2026-05-28** — landed with 14 passing tests covering the projection contracts (path-not-id on edges, JSON-array tag parse with insertion order, null-summary fallback), the two compose-on-base invariants (`row_to_document_with_id`, `parse_tags`), the load-bearing mutability copy on `via_edges`, and the explicit miswritten-alias gap pin.
 
-4. **`graph_sqlite.py` — new Graph class.**
-   - `class Graph` holding a `sqlite3.Connection`. Same external surface as today's `Graph` (the methods `tools.py` and the walker call), but every method runs a SQL query through the connection instead of touching a Python dict.
-   - Methods to port, in order:
-     - `resolve_wikilink(target)` — lookup against `document.path`, alias property rows, casefolded lookup. SQL: `SELECT id, path FROM document WHERE path = ? OR path = ? COLLATE NOCASE` plus a property-row lookup for aliases.
-     - `out_edges_for(doc_id, kind)`, `in_edges_for(doc_id, kind)` — covered by the indexes we just added.
-     - `properties_for(doc_id)` — group rows from `document_property` into the `dict[str, list[str]]` shape.
-     - `fts_search(text, limit)` — `SELECT d.path, p.value AS summary, bm25(fts) FROM fts JOIN document d ON d.id = fts.rowid LEFT JOIN document_property p ON p.id = d.id AND p.key = 'summary' WHERE fts MATCH ? ORDER BY bm25 LIMIT ?`.
-   - Each method gets a unit test against a populated `:memory:` DB; the test asserts the same output `graph.py` would produce for the same input.
+4. **`graph_sqlite.py` — `SqliteGraph` class + `Graph` Protocol + `InMemoryGraph` rename.** Design lives at [[docs/notes/graph-sqlite-py-design.md]]. Three deliverables in one step: (a) define `Graph` Protocol in `graph.py`, (b) rename today's `Graph` class to `InMemoryGraph` and move `search`/`traverse` logic onto it (from `tools.py`) so it satisfies the Protocol, (c) implement `SqliteGraph` in `graph_sqlite.py`. The parity check at step 9 is the load-bearing test that both impls honor the Protocol contract identically — see [Protocol contracts](graph-sqlite-py-design.md#protocol-contracts).
 
-5. **Walker against the DB.**
-   - `walk(corpus_root, conn)` in `graph_sqlite.py`. Same two-pass shape as today's walker but writes to SQL inside one transaction. Wraps the whole walk in `BEGIN IMMEDIATE` so concurrent processes block cleanly.
-   - Day-one truncate semantics: `DELETE FROM fts; DELETE FROM edge_property; DELETE FROM edge; DELETE FROM document_property; DELETE FROM document;` at the top of `walk`, then re-insert. Order matters because of FK cascade.
-   - The `path_to_id` map we already build during the dump becomes the live map during the walk — same code, different consumer.
-   - Aggregate pass for `related` edges runs against the populated `document` table; pairwise loop reads MinHash blobs from rows.
+5. **Walker against the DB.** Design lives at [[docs/notes/walker-py-design.md]].
 
-6. **Tool surface rewrite.**
-   - `where` — runs the FTS query above through the connection, applies the tag predicate via SQL `WHERE EXISTS (SELECT 1 FROM document_property WHERE id = d.id AND key = 'tags' AND value = ?)` clauses. The expression parser can stay in Python; emit it as composed SQL.
-   - `relatives` — recursive walk. Either a CTE (`WITH RECURSIVE`) or a Python loop that issues per-depth `SELECT * FROM edge WHERE src IN (...) AND kind IN (...)` queries. Start with the Python loop; CTE is an optimization if the loop is slow at scale.
-   - `refresh` — calls the new walker against the live connection. Returns the same `WriteResult` shape.
-   - `export` — becomes `conn.backup(target_conn)` or `VACUUM INTO 'path'`. Both produce a byte-for-byte copy of the live DB. Drop the per-table `_write_*` helpers entirely; the new `export` is two lines.
+6. **Tool surface rewrite.** Design lives at [[docs/notes/tools-py-design.md]].
 
-7. **Server bootstrap — do nothing.**
-   - `server.py` constructs one `FileDatabase(<corpus_root>/.hoplite/hoplite.schema.001.sqlite)`, registers the four tool handlers closing over it, and returns. No DB connection, no file creation, no walk.
-   - Tool handlers call `with db.open_ro() as conn:` or `with db.open_rw() as conn:`. The `Database` instance is the only state the server holds; the actual `sqlite3.Connection` objects live and die inside each handler call.
-   - First `refresh()` call opens an rw connection, runs `migrations.apply(conn)` (creates schema if missing), walks. Subsequent `refresh()` calls follow the same path — file already there, migration is a no-op, walk truncates and repopulates. Concurrent refreshes serialize on `BEGIN IMMEDIATE`.
-   - First `where`/`relatives`/`export` call before any `refresh` fails with the "no index — call `refresh` first" error. Same shape every subsequent call uses if the file goes missing.
-   - Concurrent query tool calls don't block each other under WAL; each gets its own ro connection and sees the last committed snapshot.
+7. **Server bootstrap — do nothing.** Design lives at [[docs/notes/server-py-design.md]].
 
 8. **Tests migrate to `:memory:`.**
-   - Existing `tests/` exercises against temp corpora and an in-memory `Graph`. Port fixtures one file at a time: open a `:memory:` connection, run the walker against a small in-memory corpus, exercise the DAO/tools.
-   - The 178 existing tests are the parity oracle. Both `graph.py` and `graph_sqlite.py` should pass them. When both pass, parity is proven.
+   - Existing `tests/` exercises against temp corpora and the current `Graph` class. Port fixtures one file at a time: open a `:memory:` connection, run the walker against a small in-memory corpus, exercise the tool handlers (which now delegate to whichever `Graph` Protocol impl the bootstrap wires up).
+   - The 178 existing tests are the parity oracle. Both `InMemoryGraph` and `SqliteGraph` should pass them. Parameterize the relevant test files over both impls so every Protocol-level assertion runs twice. When both pass, the Protocol contract holds.
 
 9. **Parity check on the real corpus.**
-   - Run `where` and `relatives` against the existing 68-doc corpus with both implementations; diff results. Any divergence is a bug to fix before declaring done.
+   - Run `search` and `traverse` against the existing 68-doc corpus with both implementations; assert identical results per the [Protocol contracts](graph-sqlite-py-design.md#protocol-contracts) table. Any divergence is a Protocol bug to fix in whichever impl drifted. This check stays in the test suite as a regression guard, not just a one-time gate.
 
-10. **Cutover.**
-   - Switch `server.py` to import from `graph_sqlite.py`. `graph.py` becomes dead reference code, deleted in a follow-up commit once we trust the new path in real use.
+10. **Wire the default impl in `server.py`.**
+   - `server.py` constructs `FileDatabase(<path>)` and `SqliteGraph(db, corpus_root)` for the current bootstrap (see [[docs/notes/server-py-design.md]]). `InMemoryGraph` stays in tree as a permanent peer — no deletion. A future selection mechanism (env var, config flag, per-condition default) can swap the construction line without touching any other module. Document the construction site as the single swap point.
 
 ## PRAGMA reference
 

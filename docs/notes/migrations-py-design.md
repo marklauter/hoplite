@@ -32,7 +32,7 @@ The canonical DDL lives at `plugins/hoplite/mcp/src/hoplite/schema.sql`. `migrat
 SCHEMA: Final = (Path(__file__).parent / "schema.sql").read_text(encoding="utf-8")
 ```
 
-This duplicates the load that `graph.py` already does (also reading from the same file). Both modules holding their own copy is fine — they read from the same source, so any drift window is bounded by process lifetime (a file edit between the two `import` events would diverge them, but no production path triggers that). Graph.py is on a deprecation track; once it's removed in step 10, `migrations.py` becomes the only owner.
+This duplicates the load that `graph.py` already does (also reading from the same file). Both modules holding their own copy is fine — they read from the same source, so any drift window is bounded by process lifetime (a file edit between the two `import` events would diverge them, but no production path triggers that). `graph.py` and `migrations.py` are peers: each holds its own copy of `SCHEMA` for its own use (`InMemoryGraph`'s `:memory:` setup vs. `SqliteGraph`'s file-backed apply). Both stay.
 
 The alternative was lazy loading inside `apply` itself — read `schema.sql` only when first called. Rejected because a packaging error that omits `schema.sql` should fail loudly at import time, not silently survive until the first refresh.
 
