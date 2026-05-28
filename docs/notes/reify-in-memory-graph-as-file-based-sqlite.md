@@ -3,9 +3,9 @@ title: Reify the in-memory graph as a file-based SQLite database
 summary: The in-memory graph model has stabilized across several iterations; revisit persistent file-based SQLite so cold-start cost stops scaling with corpus size.
 tags: [note, todo, sqlite, graph]
 created: 2026-05-27
-document.priority: low
+document.priority: high
 document.effort: high
-document.status: open
+document.status: in-progress
 ---
 
 # Reify the in-memory graph as a file-based SQLite database
@@ -45,6 +45,8 @@ Worth doing when any of these arrive:
 - MinHash gives way to a heavier embedding step that pushes warmup well past one minute.
 
 Until then, the in-memory model is fine. This note exists so the option is visible when the trigger fires.
+
+Trigger fired 2026-05-27 on a different axis than the ones listed above — the user is running many Claude Code windows against the same corpus and wants the graph shared across processes with no per-window cold start. WAL mode plus persistent file storage gives many-readers-one-writer concurrency for free. Execution plan lives at [[docs/notes/db-refactor.md]].
 
 ## Open questions
 
