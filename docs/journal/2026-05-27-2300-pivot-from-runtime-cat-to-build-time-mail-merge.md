@@ -47,3 +47,20 @@ Cost accepted: `plugins/hoplite/skills/*/SKILL.md` becomes generated artifact ra
 ## Next
 
 Implement `build_skills.py` at the repo root, build out `templates/skills/` and `templates/components/`, regenerate the shipped skill files, and update CLAUDE.md to retire the `${CLAUDE_PLUGIN_ROOT}/components/...` convention. Append outcomes to this entry as the work lands.
+
+## Outcome
+
+Landed as planned, with three corrections during the work.
+
+- Marker syntax settled on `{{<rel-path-from-templates>}}` (Mustache-style) rather than `((...))`. `{{...}}` is the universal templating idiom and reads as a hole at a glance; `((...))` reads as a parenthetical.
+- The build's scope broadened to skills *and* one hook. `templates/` is the source tree for everything the build owns; `templates/build/manifest.txt` enumerates the `src -> dst` pairs and `templates/build/build.py` runs the merge.
+- The hook stopped reading any disk component. `check-frontmatter.py`'s old fence-extraction logic — pulling the YAML example out of `components/shape/frontmatter.md` at hook-invocation time — got replaced with a `{{components/shape/frontmatter.md}}` marker inside a Python triple-quoted string. The build inlines the entire markdown verbatim and the advisory prints the whole component, no fence parsing.
+
+Manifest entries (five files):
+
+- 4 × `templates/skills/<name>/SKILL.md` → `plugins/hoplite/skills/<name>/SKILL.md`
+- `templates/hooks/check-frontmatter.py` → `plugins/hoplite/hooks/check-frontmatter.py`
+
+`plugins/hoplite/components/` is deleted. `plugins/hoplite/hooks/bootstrap-venv.py` and `plugins/hoplite/hooks/hooks.json` stay as committed source. CLAUDE.md updated to retire the `${CLAUDE_PLUGIN_ROOT}/components/...` rule and document the build flow.
+
+Cycle closed.

@@ -1,26 +1,29 @@
 # CLAUDE.md
 
-Claude Code marketplace `msl.hoplite` shipping one plugin, `hoplite`, at `plugins/hoplite/`. The plugin bundles the Hoplite MCP server (knowledge graph over markdown) with two agent-facing skills (`taking-notes`, `journaling`) that author into the corpus and inject the hoplite tool reference from `components/hoplite/`.
+Claude Code marketplace `msl.hoplite` shipping one plugin, `hoplite`, at `plugins/hoplite/`. The plugin bundles the Hoplite MCP server (knowledge graph over markdown) with four agent-facing skills (`research`, `taking-notes`, `journaling`, `todo`). Skill bodies and one hook are mail-merged at build time from `templates/` so the shipped plugin contains no runtime cross-tree reads.
 
 README covers install. Spec corpus lives at `docs/hoplite/`.
 
 ## Layout
 
-- `plugins/hoplite/mcp/` — MCP server source (Python, FastMCP, src/tests layout).
-- `plugins/hoplite/skills/{research,taking-notes,journaling}/` — agent-facing skills. `research` is a thin wrapper over the MCP tool reference; the two authoring skills inject the components below.
-- `plugins/hoplite/components/shape/` — `artifact-structure.md` (document composition + template) and `frontmatter.md` (the YAML contract).
-- `plugins/hoplite/components/hoplite/` — `mcp-reference.md` (the MCP tools, edges, vocabulary).
-- `plugins/hoplite/components/prose/` — `writing-prose.md` (title/summary/body virtues, composition, grammar, validation).
-- `plugins/hoplite/hooks/` — `SessionStart` bootstrap (`bootstrap-venv.py`) and `PostToolUse` frontmatter validator (`check-frontmatter.py`).
+- `plugins/hoplite/mcp/` — MCP server source (Python, FastMCP, src/tests layout). Committed source, not built.
+- `plugins/hoplite/skills/{research,taking-notes,journaling,todo}/SKILL.md` — **generated** by the build from `templates/skills/`. Do not edit by hand.
+- `plugins/hoplite/hooks/check-frontmatter.py` — **generated** by the build from `templates/hooks/check-frontmatter.py`. Do not edit by hand.
+- `plugins/hoplite/hooks/bootstrap-venv.py`, `plugins/hoplite/hooks/hooks.json` — committed source, not built.
+- `templates/skills/<name>/SKILL.md` — skill source with `{{components/<path>}}` markers.
+- `templates/components/{shape,prose,hoplite}/` — leaf content inlined into skills and hooks.
+- `templates/hooks/check-frontmatter.py` — hook source carrying a `{{components/shape/frontmatter.md}}` marker inside a Python string constant.
+- `templates/build/manifest.txt` — `src -> dst` list of files the build owns.
+- `templates/build/build.py` — the mail-merge script. Run from repo root: `python templates/build/build.py`.
 - `docs/hoplite/` — spec corpus. Architecture, tool API, roadmap.
 - `docs/notes/` and `docs/journal/` — the agent's own corpus. Notes from the design history live here as historical record; agents are free to add new ones.
 
 ## Conventions
 
+- Skill bodies inject components at build time via `{{components/<area>/<file>.md}}` markers. The marker sits on its own line; the build replaces it with the literal file content. Composition is one level deep — components must not contain markers.
 - Components start at H2; the consuming skill owns the H1.
-- Cross-reference a section in a cat-injected component with a markdown anchor link to its H2, not a filename. Read the component first to learn the exact heading; the GitHub-style anchor is the heading lowercased with spaces hyphenated and punctuation dropped — e.g., `## Artifact structure` → `[Artifact structure](#artifact-structure)`. Skill bodies and component bodies live in the same rendered document once cat-injected, so the anchor resolves.
-- Component paths in skill bodies are anchored on `${CLAUDE_PLUGIN_ROOT}/components/...`.
-- Components contain no cat injections and no `${CLAUDE_PLUGIN_ROOT}` references in their bodies. Cat invocations only live in skill SKILL.md files; components are leaf content. This means the consuming skill's injection is a bare `!`cat <path>`` — no sed pipe needed to expand placeholders, and no compound-command permission gate to negotiate. Composition stays one level deep: skill cats component; component cats nothing.
+- Cross-reference a section in an injected component with a markdown anchor link to its H2, not a filename. The GitHub-style anchor is the heading lowercased with spaces hyphenated and punctuation dropped — e.g., `## Artifact structure` → `[Artifact structure](#artifact-structure)`. Skill bodies and component bodies render into the same document after merge, so the anchor resolves.
+- Editing skills or the templated hook means editing the file under `templates/` and re-running `python templates/build/build.py`. The shipped `plugins/hoplite/skills/` and `plugins/hoplite/hooks/check-frontmatter.py` are build outputs.
 - The bootstrapped venv at `${CLAUDE_PLUGIN_DATA}/venv/` is editable-pinned to `plugins/hoplite/mcp/src/`, so server-side Python changes take effect on the next process spawn.
 
 ## Python idioms
