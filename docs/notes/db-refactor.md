@@ -37,7 +37,7 @@ Work in this order. Each step is shippable on its own — tests pass, parity pre
 
 1. **`db.py` — `Database` interface + `FileDatabase` impl.** Design lives at [[docs/notes/db-py-design.md]]. **Done 2026-05-27** — landed with 10 passing tests covering pragmas, URI handling, parent-dir auto-create, both domain errors, and the `write_transaction` commit/rollback/busy-translation paths.
 
-2. **`migrations.py` — schema lifecycle.** Design lives at [[docs/notes/migrations-py-design.md]].
+2. **`migrations.py` — schema lifecycle.** Design lives at [[docs/notes/migrations-py-design.md]]. **Done 2026-05-27** — landed with 7 passing tests covering the four-quadrant race matrix (error-text match × schema-present), partial-schema detection, and schema-constant integrity.
 
 3. **Row factories.**
    - A small `row_factories.py` module: `_row_to_document`, `_row_to_edge`, `_row_to_hit`, `_row_to_traversal_hit`. Each takes a `sqlite3.Row` and returns the matching dataclass from `models.py`.
