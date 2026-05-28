@@ -50,6 +50,7 @@ def set_root(cwd: Path) -> None:
 Each handler resolves the singleton, constructs a per-call `Graph`, and delegates. The bodies become ~5–10 lines each. The handler type annotations use the `Graph` Protocol, not the concrete `SqliteGraph` class — so the construction line is the only place the concrete impl is named.
 
 ```python
+from hoplite import parser
 from hoplite.graph import Graph              # the Protocol
 from hoplite.graph_sqlite import SqliteGraph  # the day-one default impl
 
@@ -63,8 +64,11 @@ def match_nodes(predicate: MatchPredicate, k: int = 5) -> list[Hit]:
     _validate_match_predicate(predicate, k)
     db = _require_database()
     graph = _build_graph(db)
+    text = (predicate.text or "").strip() or None
+    tag_expr = (predicate.tagged or "").strip()
+    tag_ast = parser.parse_predicate(tag_expr) if tag_expr else None
     try:
-        return graph.search(predicate=predicate, limit=k)
+        return graph.search(text=text, tag_ast=tag_ast, limit=k)
     except IndexNotFoundError as e:
         raise ValueError(str(e)) from e
 
@@ -79,8 +83,17 @@ def traverse_nodes(
     db = _require_database()
     graph = _build_graph(db)
     pred = predicate or TraversePredicate()
+    tag_expr = (pred.tagged or "").strip()
+    tag_ast = parser.parse_predicate(tag_expr) if tag_expr else None
     try:
-        return graph.traverse(from_=from_, predicate=pred, depth=depth)
+        return graph.traverse(
+            from_=from_,
+            edge_types=set(pred.edge_types or []),
+            direction=pred.direction,
+            top_k_related=pred.top_k_related,
+            tag_ast=tag_ast,
+            depth=depth,
+        )
     except IndexNotFoundError as e:
         raise ValueError(str(e)) from e
 
@@ -115,7 +128,7 @@ def _default_export_path() -> Path:
     return _hoplite_state() / f"{stamp}.index.sqlite"
 ```
 
-Note the predicate-parsing move: `MatchPredicate` is passed to `graph.search` whole, not split into `text` + parsed tag AST. The Protocol's `search(predicate: MatchPredicate, limit: int)` shape keeps the parser at the *graph impl* boundary — each impl parses the tag expression itself if it needs to. Either `InMemoryGraph` and `SqliteGraph` share a `_parse_tag_expr` helper in `hoplite.filtering`, or each parses inline; the Protocol contract is "accepts the `MatchPredicate`," not "accepts a parsed AST." (This is a small reversal from an earlier draft of this note that had `tools.py` parse the AST.)
+The Pydantic `MatchPredicate` / `TraversePredicate` models never cross the `Graph` Protocol seam. `tools.py` is the parsing boundary: it strips `text` / `tagged` fields, calls `parser.parse_predicate` to produce a `TagExpression` AST (a callable on a tag set), and dispatches scalars to the Protocol. The Protocol stays Pydantic-free, which keeps `graph.py` and `graph_sqlite.py` free of any upward dependency on `tools.py` — no import cycle.
 
 What moves out of `tools.py`:
 - `_escape_fts5_query` → into `graph_sqlite.py` (or a small `fts.py` helper). Today's `tools.py` is the only caller; the escape logic belongs next to the query that uses it. `InMemoryGraph` has its own FTS-escape path (the existing `:memory:` FTS connection) and doesn't share this helper.
@@ -127,6 +140,7 @@ What stays:
 - Pydantic model definitions (`MatchPredicate`, `TraversePredicate`).
 - `set_root`, `_corpus`, `_hoplite_state` (used by `_default_export_path`).
 - Validation that raises `ValueError` for bad input (`k < 1`, `depth < 1`, empty predicates).
+- `parser.parse_predicate(tag_expr)` calls — the tag-expression-string-to-AST parse runs here, at the handler boundary, so the Protocol stays Pydantic-free and import-cycle-free.
 - The `_build_graph(db) -> Graph` construction site — the single point that names the concrete impl. Future runtime-selection logic (env var, settings flag, per-condition default) lands here.
 
 ## Error translation

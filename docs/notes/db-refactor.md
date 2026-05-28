@@ -42,7 +42,7 @@ Work in this order. Each step is shippable on its own — tests pass, parity pre
 
 3. **Row factories.** Design lives at [[docs/notes/row-factories-py-design.md]]. **Done 2026-05-28** — landed with 14 passing tests covering the projection contracts (path-not-id on edges, JSON-array tag parse with insertion order, null-summary fallback), the two compose-on-base invariants (`row_to_document_with_id`, `parse_tags`), the load-bearing mutability copy on `via_edges`, and the explicit miswritten-alias gap pin.
 
-4. **`graph_sqlite.py` — `SqliteGraph` class + `Graph` Protocol + `InMemoryGraph` rename.** Design lives at [[docs/notes/graph-sqlite-py-design.md]]. Three deliverables in one step: (a) define `Graph` Protocol in `graph.py`, (b) rename today's `Graph` class to `InMemoryGraph` and move `search`/`traverse` logic onto it (from `tools.py`) so it satisfies the Protocol, (c) implement `SqliteGraph` in `graph_sqlite.py`. The parity check at step 9 is the load-bearing test that both impls honor the Protocol contract identically — see [Protocol contracts](graph-sqlite-py-design.md#protocol-contracts).
+4. **`Graph` Protocol + `InMemoryGraph` rename + `SqliteGraph` implementation.** Three sibling design notes: [[docs/notes/graph-py-design.md]] (Protocol shape + `InMemoryGraph` changes), [[docs/notes/graph-sqlite-py-design.md]] (SQL-backed impl + the authoritative Protocol contracts table). Three deliverables: (a) define `Graph` Protocol in `graph.py`, (b) rename today's `Graph` class to `InMemoryGraph` and move `search`/`traverse` logic onto it (from `tools.py`) so it satisfies the Protocol, (c) implement `SqliteGraph` in `graph_sqlite.py`. The parity check at step 9 is the load-bearing test that both impls honor the Protocol contract identically — see [[docs/notes/graph-sqlite-py-design.md#protocol-contracts]].
 
 5. **Walker against the DB.** Design lives at [[docs/notes/walker-py-design.md]].
 
@@ -55,7 +55,7 @@ Work in this order. Each step is shippable on its own — tests pass, parity pre
    - The 178 existing tests are the parity oracle. Both `InMemoryGraph` and `SqliteGraph` should pass them. Parameterize the relevant test files over both impls so every Protocol-level assertion runs twice. When both pass, the Protocol contract holds.
 
 9. **Parity check on the real corpus.**
-   - Run `search` and `traverse` against the existing 68-doc corpus with both implementations; assert identical results per the [Protocol contracts](graph-sqlite-py-design.md#protocol-contracts) table. Any divergence is a Protocol bug to fix in whichever impl drifted. This check stays in the test suite as a regression guard, not just a one-time gate.
+   - Run `search` and `traverse` against the existing 68-doc corpus with both implementations; assert identical results per the contracts table at [[docs/notes/graph-sqlite-py-design.md#protocol-contracts]]. Any divergence is a Protocol bug to fix in whichever impl drifted. This check stays in the test suite as a regression guard, not just a one-time gate.
 
 10. **Wire the default impl in `server.py`.**
    - `server.py` constructs `FileDatabase(<path>)` and `SqliteGraph(db, corpus_root)` for the current bootstrap (see [[docs/notes/server-py-design.md]]). `InMemoryGraph` stays in tree as a permanent peer — no deletion. A future selection mechanism (env var, config flag, per-condition default) can swap the construction line without touching any other module. Document the construction site as the single swap point.

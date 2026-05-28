@@ -139,12 +139,12 @@ def row_to_hit(row: sqlite3.Row) -> Hit:
     return Hit(
         path=row["path"],
         summary=row["summary"] or "",
-        tags=parse_tags(row["tags"]),
+        tags=sorted(parse_tags(row["tags"])),
         score=row["score"],
     )
 ```
 
-`summary` may be `None` for documents whose FTS row was indexed without a frontmatter summary; fall back to empty string. Ghosts and URL nodes never reach this code path — they have no FTS row, so the `JOIN fts` filters them out before the factory runs. `tags` parses from a JSON-array string — see the list-property section below.
+`summary` may be `None` for documents whose FTS row was indexed without a frontmatter summary; fall back to empty string. Ghosts and URL nodes never reach this code path — they have no FTS row, so the `JOIN fts` filters them out before the factory runs. `tags` parses from a JSON-array string (see the list-property section below) and is sorted ascending before construction — see [Tag sort lives here](#tag-sort-lives-here).
 
 ### `row_to_traversal_hit`
 
@@ -157,13 +157,21 @@ def row_to_traversal_hit(row: sqlite3.Row, via_edges: list[Edge]) -> TraversalHi
     return TraversalHit(
         path=row["path"],
         summary=row["summary"] or "",
-        tags=parse_tags(row["tags"]),
+        tags=sorted(parse_tags(row["tags"])),
         distance=row["distance"],
         via_edges=list(via_edges),
     )
 ```
 
 **The `list(via_edges)` copy is load-bearing.** `TraversalHit` is `frozen=True, slots=True`, but freezing applies to the attribute *bindings*, not to the mutable lists held on them. If the caller passes a per-row buffer that gets cleared and refilled across iterations, every `TraversalHit` would end up pointing at the same final list. The shallow copy isolates the dataclass from caller-side mutation. `tags` is accidentally safe because `parse_tags` always returns a fresh `list`; `via_edges` is the asymmetric case that needs explicit handling.
+
+## Tag sort lives here
+
+The `sorted(parse_tags(row["tags"]))` call inside `row_to_hit` and `row_to_traversal_hit` is the canonical sort site for tag lists on result dataclasses. Pinned at the factory layer for one reason: there are two `Graph` implementations (`InMemoryGraph` and `SqliteGraph` — see [[docs/notes/graph-py-design.md]] and [[docs/notes/graph-sqlite-py-design.md]]), and a contract that says "each impl sorts tags before returning" can be silently violated by either. Sorting inside the factory keeps the sort in one place; the SQL-side impl gets it for free through `row_to_hit`/`row_to_traversal_hit`, and the in-memory side mirrors the same `sorted(...)` call at the corresponding construction site.
+
+Two-stage shape: SQL preserves insertion order via `ORDER BY rowid` (load-bearing for the underlying JSON-array contract and for walker parity), and the factory sorts the parsed list before constructing the dataclass. The insertion-order claim and the sorted-output claim coexist — the JSON-array column is insertion-ordered, the `Hit.tags` / `TraversalHit.tags` lists are ascending-sorted.
+
+`parse_tags` itself does not sort. It stays as the generic "JSON-array-of-strings to `list[str]`" parser — sortedness is a property of how the *factories* compose `parse_tags` with `sorted`, not of the parser. A future list-property that doesn't want sorting (e.g., `via_edges` if it were ever a JSON list) can call `parse_tags` directly without inheriting the sort.
 
 ## List-property representation (tags is the first example)
 
@@ -219,7 +227,7 @@ def row_to_hit(row: sqlite3.Row) -> Hit:
     return Hit(
         path=row["path"],
         summary=row["summary"] or "",
-        tags=parse_tags(row["tags"]),
+        tags=sorted(parse_tags(row["tags"])),
         score=row["score"],
     )
 
@@ -228,7 +236,7 @@ def row_to_traversal_hit(row: sqlite3.Row, via_edges: list[Edge]) -> TraversalHi
     return TraversalHit(
         path=row["path"],
         summary=row["summary"] or "",
-        tags=parse_tags(row["tags"]),
+        tags=sorted(parse_tags(row["tags"])),
         distance=row["distance"],
         via_edges=list(via_edges),
     )
@@ -262,7 +270,7 @@ Each test bullet below assumes these helpers are available; "insert one document
 5. `test_row_to_edge_projects_path_columns_not_id` — populate `document` with two rows; populate `edge` with one row using integer ids; SELECT with the `src_path`/`dst_path` join; assert the `Edge.src`/`dst` are path strings.
 6. `test_row_to_edge_raises_indexerror_on_missing_join` — same data, but SELECT without the join (returning `src` as the integer column); assert the factory raises `IndexError`. Guards against the missing-alias case.
 7. `test_row_to_edge_does_not_guard_miswritten_alias` — explicit negative test documenting the known gap: SELECT writes `SELECT e.src AS src_path, ...` so the integer is aliased to the expected column name. The factory constructs `Edge(src=<int>, ...)` without raising. The test asserts `isinstance(edge.src, int)` to make the gap visible — a future reader who tightens this with `isinstance` checks would see this test fail and reconsider the broader contract.
-8. `test_row_to_hit_parses_tags_in_insertion_order` — insert document_property tag rows in the explicit order `[('hoplite',), ('note',)]`; SELECT with the wrapped `json_group_array(... ORDER BY rowid)` form; assert `Hit.tags == ['hoplite', 'note']` (list equality, not set). Pins the ordering contract.
+8. `test_row_to_hit_returns_tags_sorted_ascending` — insert document_property tag rows in the explicit order `[('note',), ('hoplite',)]`; SELECT with the wrapped `json_group_array(... ORDER BY rowid)` form; assert `Hit.tags == ['hoplite', 'note']` (list equality, not set). Pins both halves of the contract: SQL preserves insertion order in the JSON column, and the factory sorts before constructing the dataclass. Same shape for `row_to_traversal_hit`.
 9. `test_row_to_hit_handles_empty_tags` — document with no tag property rows; `json_group_array` returns `'[]'`; assert `Hit.tags == []`.
 10. `test_row_to_hit_handles_null_summary` — document indexed in FTS with NULL/empty summary; assert `Hit.summary == ''`. Ghosts can't trigger this path (no FTS row to JOIN against); the test exercises the real-FTS-row-with-empty-summary case.
 11. `test_parse_tags_coerces_non_string_elements` — `parse_tags('[1, 2, 3]')` returns `['1', '2', '3']`. Documents the contract that the `str(item)` coercion is intentional, not accidental.
@@ -270,7 +278,7 @@ Each test bullet below assumes these helpers are available; "insert one document
 13. `test_row_to_traversal_hit_copies_via_edges` — caller passes a `list[Edge]`; assert `traversal_hit.via_edges is not the_input_list` (identity check). Then mutate the caller's list (e.g., `.clear()`); assert `traversal_hit.via_edges` is unchanged. Pins the copy-on-construction contract; future "optimizations" that drop the copy fail this test.
 14. `test_row_to_traversal_hit_preserves_edge_order` — caller passes a `list[Edge]` of length 3 in a known order; assert the order on `TraversalHit.via_edges` matches.
 
-Tests #5, #6, and #7 are the load-bearing trio for the edge-projection contract — happy path, missing-alias guard, and the explicit miswritten-alias gap. Test #8 pins the tag-ordering contract. Tests #11 and #12 pin the `parse_tags` contract. Test #13 pins the mutability fix.
+Tests #5, #6, and #7 are the load-bearing trio for the edge-projection contract — happy path, missing-alias guard, and the explicit miswritten-alias gap. Test #8 pins the tag-sort contract (factory sorts; SQL preserves insertion order in the column). Tests #11 and #12 pin the `parse_tags` contract. Test #13 pins the mutability fix.
 
 
 **Scope of these tests.** The `:memory:` tests prove the projections work against a freshly-applied schema. They do **not** prove parity with today's `graph.py` — the same Document constructed via `graph.py`'s walker may carry different field values than the same Document materialized via the factory chain. Parity is step 9's job, not step 3's. Don't read green tests here as "row_factories.py produces the right domain objects for the real corpus."

@@ -19,8 +19,22 @@ Sibling design notes: [[docs/notes/reify-in-memory-graph-as-file-based-sqlite.md
 ```python
 # hoplite/graph.py
 class Graph(Protocol):
-    def search(self, predicate: MatchPredicate, limit: int) -> list[Hit]: ...
-    def traverse(self, from_: str, predicate: TraversePredicate, depth: int) -> list[TraversalHit]: ...
+    def search(
+        self,
+        text: str | None,
+        tag_ast: TagExpression | None,
+        limit: int,
+    ) -> list[Hit]: ...
+    def traverse(
+        self,
+        from_: str,
+        *,
+        edge_types: set[str],
+        direction: Literal["out", "in", "both"],
+        top_k_related: int | None,
+        tag_ast: TagExpression | None,
+        depth: int,
+    ) -> list[TraversalHit]: ...
     def refresh(self) -> WriteResult: ...
     def export(self, path: Path) -> WriteResult: ...
 
@@ -30,6 +44,8 @@ class InMemoryGraph:
     # search/traverse logic moves here from tools.py so it satisfies the Protocol.
     ...
 ```
+
+The Protocol takes split scalars, not the Pydantic `MatchPredicate` / `TraversePredicate` from `tools.py`. The Pydantic models are tool-boundary input types — they exist for FastMCP wire-schema validation and don't belong on internal interfaces. Predicate parsing (`parser.parse_predicate`) runs at the `tools.py` boundary; the parsed `TagExpression` AST (a callable on a tag set, from `hoplite.filtering`) crosses the seam as a primitive. This avoids the `graph_sqlite.py → tools.py → graph_sqlite.py` import cycle that would otherwise form.
 
 ```python
 # hoplite/graph_sqlite.py
@@ -59,9 +75,9 @@ Each public method follows the same shape: open a connection (ro for read-only o
 
 These are the Protocol contract. `InMemoryGraph` and `SqliteGraph` must agree on inputs, outputs, ordering, and edge-case semantics. Where the SQL-backed implementation does something specific (per-call connection open, FTS-then-filter), it's a SqliteGraph-internal detail — the Protocol caller sees only the contracted return shape.
 
-### `search(predicate, limit) -> list[Hit]`
+### `search(text, tag_ast, limit) -> list[Hit]`
 
-The `where` tool's implementation. `predicate` is the parsed `MatchPredicate` from `tools.py`, carrying the BM25 text query and an optional parsed tag-expression AST. Returns up to `limit` documents ranked by BM25, filtered by the optional tag predicate.
+The `where` tool's implementation. `text` is the BM25 text query (or `None` for tag-only search); `tag_ast` is the parsed tag predicate AST (callable on a tag set) or `None`. Returns up to `limit` documents ranked by BM25, filtered by the optional tag predicate.
 
 Path: open ro connection; run the FTS query from row_to_hit's SQL contract; iterate results through `row_to_hit`; apply the tag predicate as a Python post-filter against each candidate's tags; return the survivors up to `limit`.
 
@@ -72,9 +88,9 @@ The tag predicate is applied in Python, not pushed into SQL. Reasons:
 
 **No over-fetch.** When a tag predicate is present, the SQL fetches the *full* FTS-matched set (no `LIMIT` push-down), the Python evaluator filters it, and the result is truncated to `limit`. Over-fetching with `limit * N` would be a real behavior change relative to `InMemoryGraph`, which today considers every FTS match before filtering — Protocol parity wins over "fewer rows materialized." If profiling shows the full-fetch dominates on large corpora, the optimization is to push the predicate into SQL, not to over-fetch.
 
-### `traverse(from_, predicate, depth) -> list[TraversalHit]`
+### `traverse(from_, *, edge_types, direction, top_k_related, tag_ast, depth) -> list[TraversalHit]`
 
-The `relatives` tool's implementation. `predicate` is the `TraversePredicate` from `tools.py` (carries `edge_types`, `direction`, `top_k_related`, and a parsed `tagged` AST). Breadth-first walk from `from_` through edges matching the predicate, returning one `TraversalHit` per node reached at distance 1..depth (excluding the origin).
+The `relatives` tool's implementation. `edge_types` is the set of edge kinds to follow (empty set = follow all); `direction` selects `out`/`in`/`both`; `top_k_related` caps the number of `related` edges followed per node by descending confidence (or `None` for no cap); `tag_ast` is a parsed tag predicate (or `None`) used to post-filter reached nodes. Breadth-first walk from `from_`, returning one `TraversalHit` per node reached at distance 1..depth (excluding the origin).
 
 Path: open ro connection; resolve `from_` to a `document.id` via the wikilink resolver helper; run a BFS loop in Python, issuing one SELECT against the edge table per depth level; track visited node ids to avoid cycles; remember the full path of via-edges from origin to each reached node (not just the last hop); project the final document set through `row_to_traversal_hit` with each node's accumulated path.
 
@@ -157,7 +173,7 @@ These are the conventions both `InMemoryGraph` and `SqliteGraph` must follow ide
 
 | Contract | Behavior | Why |
 |---|---|---|
-| **Tag list ordering on `Hit` and `TraversalHit`** | Sorted ascending (`sorted(tags)`). | `tools.py:traverse_nodes` and `match_nodes` today emit `sorted(node_tags)`. `row_factories.row_to_hit`/`row_to_traversal_hit` parse JSON-array text via `parse_tags`, which preserves insertion order — `SqliteGraph` must sort the result after parsing (or change the row_factories contract to sort; see [[docs/notes/row-factories-py-design.md]] for follow-up). |
+| **Tag list ordering on `Hit` and `TraversalHit`** | Sorted ascending. | Owned by `row_factories.row_to_hit` / `row_to_traversal_hit` — they wrap `parse_tags(...)` in `sorted(...)` before constructing the dataclass. `SqliteGraph` inherits the sort for free; `InMemoryGraph` mirrors the same `sorted(...)` at its `Hit` / `TraversalHit` construction sites (see [[docs/notes/graph-py-design.md#protocol-contracts-checklist]]). Pinned by `test_row_to_hit_returns_tags_sorted_ascending` in [[docs/notes/row-factories-py-design.md]]. |
 | **`traverse` output order** | Ascending `(distance, path)`. | Matches `tools.py:traverse_nodes` today (`hits.sort(key=lambda h: (h.distance, h.path))`). BFS visitation order would diverge. |
 | **`related`-edge tie-break in `_neighbors`** | Sort by `(confidence desc, target_path asc)`; truncate to `top_k_related`. | Matches `tools.py:_neighbors` today. Without the lexicographic tie-break, equal-confidence neighbors come out in arbitrary order, surfacing as parity diffs. |
 | **`search` over-fetch policy** | Full FTS-matched set considered before tag filter; truncate to `limit` at the end. | Matches `InMemoryGraph`. No over-fetch shortcut. |
@@ -182,12 +198,12 @@ Alternative pure-SQL compilation (`WHERE EXISTS (SELECT 1 FROM document_property
 ```python
 import sqlite3
 from pathlib import Path
+from typing import Literal
 
 from hoplite import migrations, row_factories, walker
 from hoplite.db import Database, write_transaction
 from hoplite.filtering import TagExpression  # parsed predicate AST; callable on a tag set
 from hoplite.models import Hit, TraversalHit, WriteResult
-from hoplite.tools import MatchPredicate, TraversePredicate
 
 
 class SqliteGraph:
@@ -195,28 +211,46 @@ class SqliteGraph:
         self._db = db
         self._corpus_root = corpus_root
 
-    def search(self, predicate: MatchPredicate, limit: int) -> list[Hit]:
+    def search(
+        self,
+        text: str | None,
+        tag_ast: TagExpression | None,
+        limit: int,
+    ) -> list[Hit]:
         with self._db.open_ro() as conn:
-            text = (predicate.text or "").strip() or None
-            tag_expr = self._parsed_tag_expr(predicate)
             candidates = self._fts_candidates(conn, text)  # full FTS-matched set; see "No over-fetch"
-            if tag_expr is None:
+            if tag_ast is None:
                 return candidates[:limit]
             tags_by_path = self._tags_for_paths(conn, [hit.path for hit in candidates])
             survivors = [
                 hit for hit in candidates
-                if tag_expr(frozenset(tags_by_path.get(hit.path, ())))
+                if tag_ast(frozenset(tags_by_path.get(hit.path, ())))
             ]
             return survivors[:limit]
 
     def traverse(
-        self, from_: str, predicate: TraversePredicate, depth: int
+        self,
+        from_: str,
+        *,
+        edge_types: set[str],
+        direction: Literal["out", "in", "both"],
+        top_k_related: int | None,
+        tag_ast: TagExpression | None,
+        depth: int,
     ) -> list[TraversalHit]:
         with self._db.open_ro() as conn:
             origin_id = self._resolve_wikilink(conn, from_)
             if origin_id is None:
                 raise ValueError(f"unknown starting document: {from_!r}")
-            return self._bfs(conn, origin_id, predicate, depth)
+            return self._bfs(
+                conn,
+                origin_id,
+                edge_types=edge_types,
+                direction=direction,
+                top_k_related=top_k_related,
+                tag_ast=tag_ast,
+                depth=depth,
+            )
 
     def refresh(self) -> WriteResult:
         with self._db.open_rw() as conn:
@@ -236,9 +270,10 @@ class SqliteGraph:
         return WriteResult(path=str(path.resolve()), counts=counts)
 
     # ... private helpers: _resolve_wikilink, _out_edges_for, _in_edges_for,
-    # _properties_for, _fts_candidates, _tags_for_paths, _bfs, _count_rows,
-    # _parsed_tag_expr
+    # _properties_for, _fts_candidates, _tags_for_paths, _bfs, _count_rows
 ```
+
+No `hoplite.tools` import. The Protocol takes primitive types only — `str`, `int`, `set[str]`, `Literal`, `TagExpression` (from `hoplite.filtering`, which has no upward dependency on `tools.py`). Implementation modules stay clean of the FastMCP/Pydantic layer.
 
 The class is small. Public methods are 5–10 lines each; private helpers are the SQL contracts compiled to Python.
 
@@ -293,7 +328,7 @@ Step 9 will:
 
 Each row of the [Protocol contracts](#protocol-contracts) table is a parity assertion. Discrepancies to anticipate, based on today's code:
 
-- **Tag sort order on `Hit`/`TraversalHit`** — `tools.py` emits `sorted(node_tags)`; row_factories preserves insertion order. `SqliteGraph` must sort after parsing.
+- **Tag sort order on `Hit`/`TraversalHit`** — `row_factories.row_to_hit` / `row_to_traversal_hit` sort ascending; `InMemoryGraph` mirrors at its construction sites. Divergence here means one impl skipped the sort.
 - **`traverse` output order** — `(distance, path)` ascending, not BFS visitation order.
 - **`_neighbors` tie-break on `related`** — `(confidence desc, target_path asc)`, not just confidence.
 - **Origin unresolved** — `ValueError`, not empty list.

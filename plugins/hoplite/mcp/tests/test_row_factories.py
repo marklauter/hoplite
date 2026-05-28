@@ -172,10 +172,12 @@ def test_row_to_edge_does_not_guard_miswritten_alias(conn: sqlite3.Connection) -
     assert isinstance(edge.dst, int)
 
 
-def test_row_to_hit_parses_tags_in_insertion_order(conn: sqlite3.Connection) -> None:
+def test_row_to_hit_returns_tags_sorted_ascending(conn: sqlite3.Connection) -> None:
     _populate_document(conn, id=1, path="a.md")
-    _populate_property(conn, id=1, key="tags", value="hoplite")
+    # Insert in reverse-alphabetical order so the assertion meaningfully
+    # exercises the sort rather than coincidentally matching insertion order.
     _populate_property(conn, id=1, key="tags", value="note")
+    _populate_property(conn, id=1, key="tags", value="hoplite")
     _populate_fts(conn, rowid=1, path="a.md", title="A", summary="sum", body="body")
     row = conn.execute(_HIT_QUERY).fetchone()
     hit = row_to_hit(row)
@@ -230,3 +232,12 @@ def test_row_to_traversal_hit_preserves_edge_order(conn: sqlite3.Connection) -> 
     e3 = Edge(src="a.md", dst="d.md", kind="related", confidence=0.5)
     hit = row_to_traversal_hit(row, [e1, e2, e3])
     assert hit.via_edges == [e1, e2, e3]
+
+
+def test_row_to_traversal_hit_returns_tags_sorted_ascending(conn: sqlite3.Connection) -> None:
+    _populate_document(conn, id=1, path="a.md")
+    row = conn.execute(
+        "SELECT path, 'sum' AS summary, '[\"note\", \"hoplite\"]' AS tags, 1 AS distance FROM document WHERE id = 1"
+    ).fetchone()
+    hit = row_to_traversal_hit(row, [])
+    assert hit.tags == ["hoplite", "note"]

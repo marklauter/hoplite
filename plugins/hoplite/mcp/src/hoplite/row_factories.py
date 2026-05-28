@@ -30,7 +30,7 @@ def row_to_hit(row: sqlite3.Row) -> Hit:
     return Hit(
         path=row["path"],
         summary=row["summary"] or "",
-        tags=parse_tags(row["tags"]),
+        tags=sorted(parse_tags(row["tags"])),
         score=row["score"],
     )
 
@@ -39,7 +39,7 @@ def row_to_traversal_hit(row: sqlite3.Row, via_edges: list[Edge]) -> TraversalHi
     return TraversalHit(
         path=row["path"],
         summary=row["summary"] or "",
-        tags=parse_tags(row["tags"]),
+        tags=sorted(parse_tags(row["tags"])),
         distance=row["distance"],
         via_edges=list(via_edges),
     )
