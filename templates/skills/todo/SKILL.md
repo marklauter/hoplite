@@ -67,7 +67,6 @@ Sweep mode finds action-shaped notes that lack the `todo` tag. Tag them and tria
 {{components/shape/frontmatter.md}}
 {{components/hoplite/mcp-reference.md}}
 {{components/prose/writing-prose.md}}
-
 ## Voice
 
 Same voice as the underlying note — declarative, present-tense, terse. Reasoning lives in the body; frontmatter records the triager's call. A `## Resolution` section closes a todo by naming where the change landed — file path, function, or commit, concrete enough that a reader can verify without re-walking the conversation.

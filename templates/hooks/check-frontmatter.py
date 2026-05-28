@@ -15,9 +15,9 @@ catches the structural issues that are cheap to detect:
 
 Wrong types, typos in keys, malformed YAML — left to the indexer.
 
-The canonical example shown in the advisory is read at hook-invocation time from
-``components/shape/frontmatter.md`` (the same fragment the writing skills inject),
-so the advisory and the skill teach exactly the same shape.
+The canonical guidance shown in the advisory is inlined at build time from
+``templates/components/shape/frontmatter.md`` so the hook and the writing skills
+teach exactly the same shape.
 """
 
 import json
@@ -27,44 +27,17 @@ from pathlib import Path
 WATCHED_TOOLS = {"Write", "Edit", "MultiEdit"}
 REQUIRED_FIELDS = {"title", "summary", "tags", "created"}
 
-# Hook lives at <plugin_root>/hooks/check-frontmatter.py;
-# component lives at <plugin_root>/components/shape/frontmatter.md.
-_PLUGIN_ROOT = Path(__file__).resolve().parent.parent
-_COMPONENT_PATH = _PLUGIN_ROOT / "components" / "shape" / "frontmatter.md"
+_FRONTMATTER_GUIDANCE = """\
+{{components/shape/frontmatter.md}}
+"""
 
 ADVISORY_TEMPLATE = """\
 [frontmatter-check] {path} — {issue}.
 
-Hoplite skips documents with malformed frontmatter at reindex. The canonical shape
-(from components/shape/frontmatter.md):
+Hoplite skips documents with malformed frontmatter at reindex. Canonical shape:
 
-{example}
+{guidance}
 """
-
-_FALLBACK_EXAMPLE = (
-    "(canonical shape not found — see components/shape/frontmatter.md)"
-)
-
-
-def _canonical_example() -> str:
-    """Extract the first ```yaml ... ``` fence from the frontmatter component."""
-    try:
-        text = _COMPONENT_PATH.read_text(encoding="utf-8")
-    except OSError:
-        return _FALLBACK_EXAMPLE
-
-    in_fence = False
-    lines: list[str] = []
-    for line in text.splitlines():
-        stripped = line.strip()
-        if not in_fence and stripped == "```yaml":
-            in_fence = True
-            continue
-        if in_fence:
-            if stripped == "```":
-                return "\n".join(lines) if lines else _FALLBACK_EXAMPLE
-            lines.append(line)
-    return _FALLBACK_EXAMPLE
 
 
 def _frontmatter_issue(path: Path) -> str | None:
@@ -89,7 +62,6 @@ def _frontmatter_issue(path: Path) -> str | None:
     if closing_idx is None:
         return "missing closing --- fence"
 
-    # Collect top-level keys (no leading whitespace, has a colon, not a comment).
     keys: set[str] = set()
     for line in lines[1:closing_idx]:
         if not line or line[0].isspace():
@@ -138,7 +110,7 @@ def main() -> int:
         ADVISORY_TEMPLATE.format(
             path=file_path,
             issue=issue,
-            example=_canonical_example(),
+            guidance=_FRONTMATTER_GUIDANCE,
         ),
     )
     return 2

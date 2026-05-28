@@ -53,13 +53,10 @@ Aim for three to six tags total — enough that the note surfaces in tag queries
 
 Notes are saved at `docs/notes/<slug>.md` where `<slug>` is a lowercase slug of the H1 title. Glob the target path first to learn whether the note exists. For a new note, use Write. For an existing note, use Edit to extend the body — adding content needs no approval. Removing content, or replacing the file wholesale, requires user approval. After saving, confirm with a minimal acknowledgment — for example, `note saved: <slug>.md`. No recital or recap.
 
-## Shape and editorial guidance
-
 {{components/shape/artifact-structure.md}}
 {{components/shape/frontmatter.md}}
 {{components/hoplite/mcp-reference.md}}
 {{components/prose/writing-prose.md}}
-
 ## Rhetorical context
 
 - Writer: contributor

@@ -55,7 +55,6 @@ Three to six tags total — enough that the entry surfaces in tag queries, few e
 {{components/shape/frontmatter.md}}
 {{components/hoplite/mcp-reference.md}}
 {{components/prose/writing-prose.md}}
-
 ## Voice
 
 Write for future self — the author later, a future agent, or a teammate reconstructing the design path. Names, paths, numbers, dates appear in full; phrases like "the thing we discussed earlier" rely on context the reader doesn't carry.
