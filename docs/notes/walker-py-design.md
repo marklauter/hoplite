@@ -65,11 +65,11 @@ Glob `*.md` recursively under `corpus_root`. For each file:
 8. Insert into `document`:
 
 ```sql
-INSERT INTO document (id, path, path_casefold, resolved, content_hash, minhash)
-VALUES (?, ?, ?, 1, ?, NULL)
+INSERT INTO document (id, path, resolved, content_hash, minhash)
+VALUES (?, ?, 1, ?, NULL)
 ```
 
-The `id` is assigned in iteration order starting at 1; the walker holds a `path_to_id: dict[str, int]` map for use in pass 2 and the aggregate pass.
+The `id` is assigned in iteration order starting at 1; the walker holds a `path_to_id: dict[str, int]` map for use in pass 2 and the aggregate pass. Paths are casefolded before insert.
 
 9. Insert frontmatter into `document_property`. **`title` and `summary` are skipped — they're FTS-only fields, not properties** (see [[docs/notes/row-factories-py-design.md]] "Why summary isn't in document_property"). Every other key fans out per the EAV decomposition pattern in [docs/hoplite/hoplite-architecture.md#eav-decomposition](../hoplite/hoplite-architecture.md#eav-decomposition):
    - Scalar value → one row `(id, key, str(value))`.
@@ -136,32 +136,9 @@ The `UNIQUE (src, dst)` constraint on `edge` enforces single-edge-per-pair regar
 
 Cost: O(N²) — pairwise comparisons. ~100ms for 1000 docs (128-int Jaccard is cheap). Past 10⁵ docs, LSH bucketing is the optimization to reach for; out of scope for this module.
 
-## Schema dependency — `path_casefold` column
+## Path normalization
 
-`SqliteGraph._resolve_wikilink` requires a `path_casefold` column on `document` for Unicode-correct case-insensitive matching (see [[docs/notes/graph-sqlite-py-design.md]] "_resolve_wikilink"). The walker is the only writer; this is where the column gets populated.
-
-**Schema change needed in `schema.sql` before this walker can land:**
-
-```sql
-CREATE TABLE document (
-  id INTEGER PRIMARY KEY,
-  path TEXT NOT NULL UNIQUE,
-  path_casefold TEXT NOT NULL,
-  resolved INTEGER NOT NULL,
-  content_hash TEXT,
-  minhash BLOB
-);
-CREATE INDEX idx_document_path ON document(path);
-CREATE INDEX idx_document_path_casefold ON document(path_casefold);
-```
-
-Add the column and the index in the same step-5 implementation pass that lands `walker.py`. Since `graph_sqlite.py` (step 4) hasn't been implemented yet, and `migrations.py` only applies the schema if `document` is missing, there's no in-place migration concern — fresh DB files will have the new shape.
-
-The walker's `INSERT INTO document` writes `canonical.casefold()` into `path_casefold` for real documents. Ghost and URL nodes write `bare.casefold()` and `url.casefold()` respectively (any string is acceptable; the casefold form is only meaningful for path-shaped values, but the NOT NULL constraint requires *something*).
-
-Why a column instead of a custom collation:
-- SQLite's `COLLATE NOCASE` is ASCII-only; Python's `str.casefold()` is Unicode-aware. Custom collations defeat index usage unless the index uses the same collation, which means re-declaring the schema with `COLLATE PYCASEFOLD` on the path column and registering the collation on every connection open.
-- A casefold column with an ordinary index is simpler, costs ~50 bytes per document, and lets queries hit the index directly.
+Paths are casefolded before insert — `canonical = canonical.casefold()` once, then used for the `path_to_id` map and every downstream insert (`document.path`, edge endpoints, ghost/URL bare identifiers). The `SqliteGraph._resolve_wikilink` casefold step then queries `WHERE path = ?` with a casefolded input against the same column. No separate column, no custom collation.
 
 ## Frontmatter classification — the canonical rule
 
@@ -202,7 +179,7 @@ Each test passes a small dict of `docs/<path>.md → frontmatter+body` strings, 
 
 Test bullets:
 
-1. `test_walk_populates_document_row` — one well-formed doc; assert one row in `document` with the expected `path`, `path_casefold`, `resolved=1`, non-null `content_hash`, non-null `minhash`.
+1. `test_walk_populates_document_row` — one well-formed doc (e.g., source file `Docs/Notes/Foo.md`); assert one row in `document` with `path = "docs/notes/foo.md"` (casefolded canonical), `resolved=1`, non-null `content_hash`, non-null `minhash`. Pins the walker's casefold-on-store contract.
 2. `test_walk_skips_title_and_summary_from_property` — well-formed doc with `title: Foo` and `summary: Bar`; assert `document_property` contains no rows with `key='title'` or `key='summary'`.
 3. `test_walk_populates_fts_with_title_and_summary` — same doc; assert `fts` carries the title and summary text.
 4. `test_walk_casefolds_tag_values` — doc with `tags: [Hoplite, NOTE]`; assert `document_property` rows have `value='hoplite'` and `value='note'`.
@@ -229,7 +206,7 @@ Test bullets:
 
 ### Known gaps — accepted, documented, not yet fixed
 
-- **`path_casefold` requires the schema change.** Land it in `schema.sql` in the same PR as `walker.py`. `migrations.py` requires no edits — fresh DB files get the new shape; pre-existing DB files would need a manual rebuild (delete `.hoplite/<file>` and refresh), but no such files exist yet because step 4 hasn't shipped.
+- **Casefold-on-store is the walker's contract.** Paths land in `document.path` already casefolded; the resolver casefolds inputs and matches against the same column. No schema field, no migration.
 - **No reconcile semantics.** Every walk is truncate-and-rebuild. At corpus sizes past 5k documents this becomes noticeably slow on each refresh (minutes); reconcile is the next perf lever per [[docs/notes/db-refactor.md]] "Held for future."
 - **`edge.<stereotype>` frontmatter is ignored or warned.** The stereotype-edge design ([[docs/notes/stereotypes-are-open-vocab-edge-properties.md]]) isn't implemented day-one. Recommend warning so the implementation agent surfaces this as a known unimplemented feature.
 

@@ -92,14 +92,33 @@ The tag predicate is applied in Python, not pushed into SQL. Reasons:
 
 The `relatives` tool's implementation. `edge_types` is the set of edge kinds to follow (empty set = follow all); `direction` selects `out`/`in`/`both`; `top_k_related` caps the number of `related` edges followed per node by descending confidence (or `None` for no cap); `tag_ast` is a parsed tag predicate (or `None`) used to post-filter reached nodes. Breadth-first walk from `from_`, returning one `TraversalHit` per node reached at distance 1..depth (excluding the origin).
 
-Path: open ro connection; resolve `from_` to a `document.id` via the wikilink resolver helper; run a BFS loop in Python, issuing one SELECT against the edge table per depth level; track visited node ids to avoid cycles; remember the full path of via-edges from origin to each reached node (not just the last hop); project the final document set through `row_to_traversal_hit` with each node's accumulated path.
+Path: open ro connection; resolve `from_` to a `document.id` via the wikilink resolver helper; run a BFS loop in Python, issuing one SELECT against the edge table per depth level; track visited node ids to avoid cycles; remember the full path of via-edges from origin to each reached node (not just the last hop); then for each visited node, run a per-node projection SELECT and feed it through `row_to_traversal_hit` together with the accumulated edge path.
+
+The projection SELECT shape, fed to the landed `row_to_traversal_hit(row, via_edges)` factory:
+
+```sql
+SELECT d.path,
+       fts.summary,
+       (SELECT json_group_array(value) FROM (
+          SELECT value FROM document_property
+          WHERE id = d.id AND key = 'tags' ORDER BY rowid
+        )) AS tags,
+       ? AS distance
+FROM document d
+LEFT JOIN fts ON fts.rowid = d.id
+WHERE d.id = ?
+```
+
+The first `?` is the BFS-computed distance, bound as a literal column value so the row carries it where `row_to_traversal_hit` expects (`row["distance"]`). The second `?` is the visited node id. `LEFT JOIN fts` because traverse can reach nodes that don't have FTS rows (the contract about ghost/URL inclusion is up to the walker, but the join doesn't fail when fts is absent — the `summary` comes back NULL and `row_to_traversal_hit` falls back to `""`).
+
+This per-node projection is the *only* way distance enters a row. There is no schema column for it, no helper that materializes tags separately from this SELECT, and no Python-side bypass of `row_to_traversal_hit`. The factory is the single projection point; everything else feeds into it.
 
 Recursive CTE was considered and rejected for day-one:
 - The Python loop is easier to read and debug, and the depth values we ship (1–3 typical) don't justify the CTE complexity.
 - The CTE form requires materializing the full reachable set before any limit applies; the Python loop matches `InMemoryGraph`'s shape, which simplifies the parity oracle.
 - If profiling at corpus sizes past 10k documents shows the Python loop dominates, swap to a CTE in one place without changing the public API.
 
-`top_k_related` is enforced at each visited node — when traversing `related` edges out of a node, rank by `(confidence desc, target_path asc)` and follow only the top K. The lexicographic tie-break on target path is required for Protocol parity with `InMemoryGraph` (see `tools.py:_neighbors` today). Pin this in the SQL `ORDER BY confidence DESC, dst_doc.path ASC LIMIT ?`. The `idx_edge_kind_src` covering index should be ordered `(kind, src, confidence DESC)` so the ranking is sort-free; if it isn't, the ORDER BY pays a small sort cost but correctness is unaffected.
+`top_k_related` is enforced at each visited node — when traversing `related` edges, rank by `(confidence desc, target_path asc)` and follow only the top K. The lexicographic tie-break on target path is required for Protocol parity with `InMemoryGraph` (see `tools.py:_neighbors` today). The ranking happens in Python after the edge SELECT, not in SQL, because the "target" column depends on direction: for outbound edges `target = dst`; for inbound edges `target = src`. The SQL fetches candidate edges via `_out_edges_for` / `_in_edges_for` projected through `row_to_edge`; Python then computes the per-edge target, sorts by `(-edge.confidence, target_path)`, and truncates to `top_k_related`. The `idx_edge_kind_src` / `idx_edge_kind_dst` indexes cover the retrieval; the sort is a small in-memory cost over a per-node candidate set.
 
 ### `refresh() -> WriteResult`
 
@@ -138,14 +157,12 @@ Resolution chain (matches today's behavior in `InMemoryGraph.resolve_wikilink`):
 2. Run steps 3–5 against the stripped target.
 3. Exact path match: `SELECT id FROM document WHERE path = ?`.
 4. Alias match: `SELECT id FROM document WHERE id IN (SELECT id FROM document_property WHERE key = 'aliases' AND value = ?)`.
-5. Casefold path match: `SELECT id FROM document WHERE path_casefold = ?` where the input is `target.casefold()`.
+5. Casefold path match: `SELECT id FROM document WHERE path = ?` where the input is `target.casefold()`. The walker stores paths in casefold form, so the same `path` column serves both exact and casefold lookups.
 6. If steps 3–5 all miss and the target doesn't end in `.md`, append `.md` and rerun steps 3–5 against the new target.
 
 The `.md` retry wraps the whole chain, not just the casefold step — appending `.md` and trying only casefold would skip the exact-path and alias matches against the `.md`-suffixed form. `InMemoryGraph` does the wrapping retry; the SQL impl must match.
 
-**Schema dependency.** This requires a `path_casefold` column on `document` plus an index — added in step 5's walker (since the walker is the only writer). Step 4 can be implemented optimistically (the column exists per the schema spec) and tested against a fixture that populates `path_casefold` directly; step 5 wires the walker to write it.
-
-SQLite's built-in `COLLATE NOCASE` is ASCII-only and doesn't match Python's `str.casefold()` for non-ASCII text. We've established that Hoplite paths are ASCII in practice, but the casefold column gives us Unicode-correct matching without a custom collation that defeats indexing. The cost is one TEXT column per document; ~50 bytes per doc at corpus sizes that fit in megabytes.
+No schema change needed: the walker casefolds paths before insert, so the existing `path` column is the casefold lookup column. `idx_document_path` covers it.
 
 ### `_out_edges_for(conn, doc_id, kinds) -> list[Edge]`
 
@@ -165,7 +182,7 @@ SELECT key, value FROM document_property WHERE id = ? ORDER BY rowid
 
 Python-side group: `result[key].append(value)`. Insertion order preserved by the `ORDER BY rowid` clause (same convention as the EAV materialization rule in [docs/hoplite/hoplite-architecture.md#eav-decomposition](../hoplite/hoplite-architecture.md#eav-decomposition)).
 
-Used by `traverse()` to build each `TraversalHit`'s tag list. `search()`'s tag-filter path uses `_tags_for_paths` instead — a batched fetch keyed by `path` so one query covers every candidate, not one query per candidate. Two helpers, one call site each.
+Not used by `search()` or `traverse()` in the projection path — both go through `row_to_hit` / `row_to_traversal_hit`, which read tags via inline `json_group_array(...)` in their projection SELECTs. `_properties_for` exists as a parity helper for integration tests that want to assert SqliteGraph's stored property shape matches InMemoryGraph's in-memory dict, and as a building block for any future operation that needs a full per-doc property dict. If no consumer ever materializes, drop it. `search()`'s tag-filter post-pass uses the batched `_tags_for_paths` instead — one query covers every candidate keyed by path.
 
 ## Protocol contracts
 
@@ -298,7 +315,7 @@ Specific test bullets:
 1. `test_resolve_wikilink_exact_path` — populate one document at `docs/notes/foo.md`; resolve `docs/notes/foo.md`; assert returns its id.
 2. `test_resolve_wikilink_strips_anchor_and_alias` — same document; resolve `docs/notes/foo.md#section|label`; assert returns same id.
 3. `test_resolve_wikilink_alias` — document with `(id=1, key='aliases', value='old/path.md')`; resolve `old/path.md`; assert returns 1.
-4. `test_resolve_wikilink_casefold` — document at `docs/notes/foo.md` with `path_casefold='docs/notes/foo.md'`; resolve `DOCS/NOTES/FOO.MD`; assert returns the id.
+4. `test_resolve_wikilink_casefold` — document at `docs/notes/foo.md` (stored canonical, already in casefold form); resolve `DOCS/NOTES/FOO.MD`; assert the resolver casefolds the input and matches against `path`, returning the id.
 5. `test_resolve_wikilink_md_retry` — document at `docs/notes/foo.md`; resolve `docs/notes/foo` (no extension); assert resolver retries with `.md` and returns the id.
 6. `test_resolve_wikilink_returns_none_on_miss` — empty corpus; resolve any target; assert None.
 7. `test_out_edges_filters_by_kind` — populate three edges of different kinds from one src; query with `kinds={'mentions'}`; assert only mentions returned.
@@ -348,7 +365,7 @@ If `InMemoryGraph` drifts (e.g., a future change to `tools.py:_neighbors` tie-br
 
 ### Known gaps — accepted, documented, not yet fixed
 
-- **`path_casefold` column is schema work that lands in step 5.** This module assumes the column exists; tests populate it directly. If step 5's walker doesn't write it, `_resolve_wikilink` falls back to the alias and exact-path paths only.
+- **Casefold resolution depends on the walker storing casefolded paths.** Walker owns the contract; this design assumes it.
 - **`refresh()` is a stub until step 5** — the walker function lives elsewhere. Tests for `refresh()` ship with the walker, not here.
 - **`search`/`traverse` logic must move from `tools.py` onto `InMemoryGraph` for the Protocol to hold.** Today the BFS loop, `_neighbors`, FTS query, and `_escape_fts5_query` all live in `tools.py` and reach into `InMemoryGraph`'s public dicts. Step 4's deliverable is *both* `SqliteGraph` *and* an `InMemoryGraph` that satisfies the Protocol on its own. See [[docs/notes/tools-py-design.md]] for the corresponding `tools.py` shrink.
 
