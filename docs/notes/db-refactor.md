@@ -35,12 +35,9 @@ These are settled. Revisit only with cause.
 
 Work in this order. Each step is shippable on its own — tests pass, parity preserved against `graph.py`.
 
-1. **`db.py` — `Database` interface + `FileDatabase` impl.** Design lives at [[docs/notes/db-py-design.md]].
+1. **`db.py` — `Database` interface + `FileDatabase` impl.** Design lives at [[docs/notes/db-py-design.md]]. **Done 2026-05-27** — landed with 10 passing tests covering pragmas, URI handling, parent-dir auto-create, both domain errors, and the `write_transaction` commit/rollback/busy-translation paths.
 
-2. **`migrations.py` — schema lifecycle.**
-   - `apply(conn: sqlite3.Connection) -> None`. Checks `sqlite_master` for the `document` table. If absent, runs `executescript(SCHEMA)` inside `BEGIN IMMEDIATE` so concurrent first-refreshes serialize cleanly. If present, no-op.
-   - No version detection day-one beyond "table exists yes/no." The filename carries the schema version; cross-version migration is future work that lives here when it lands.
-   - Unit tests against `:memory:`: applying twice is idempotent; applying to a fresh connection creates every expected table and index (introspect `sqlite_master`).
+2. **`migrations.py` — schema lifecycle.** Design lives at [[docs/notes/migrations-py-design.md]].
 
 3. **Row factories.**
    - A small `row_factories.py` module: `_row_to_document`, `_row_to_edge`, `_row_to_hit`, `_row_to_traversal_hit`. Each takes a `sqlite3.Row` and returns the matching dataclass from `models.py`.
