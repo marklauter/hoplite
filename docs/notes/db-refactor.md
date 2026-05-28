@@ -78,8 +78,9 @@ Work in this order. Each step is shippable on its own — tests pass, parity pre
    - `export` — becomes `conn.backup(target_conn)` or `VACUUM INTO 'path'`. Both produce a byte-for-byte copy of the live DB. Drop the per-table `_write_*` helpers entirely; the new `export` is two lines.
 
 7. **Server bootstrap — do nothing.**
-   - `server.py` registers the four tool handlers and returns. No DB connection, no file creation, no walk. The DB path (`<corpus_root>/.hoplite/hoplite.schema.001.sqlite`) is computed once and held as a string; tools open their own connections inside `with db.open_ro(path)` / `with db.open_rw(path)` blocks on every call.
-   - First `refresh()` call opens an rw connection, creates schema if missing, walks. Subsequent `refresh()` calls follow the same path — file already there, schema check is a no-op, walk truncates and repopulates. Concurrent refreshes serialize on `BEGIN IMMEDIATE`.
+   - `server.py` constructs one `FileDatabase(<corpus_root>/.hoplite/hoplite.schema.001.sqlite)`, registers the four tool handlers closing over it, and returns. No DB connection, no file creation, no walk.
+   - Tool handlers call `with db.open_ro() as conn:` or `with db.open_rw() as conn:`. The `Database` instance is the only state the server holds; the actual `sqlite3.Connection` objects live and die inside each handler call.
+   - First `refresh()` call opens an rw connection, runs `migrations.apply(conn)` (creates schema if missing), walks. Subsequent `refresh()` calls follow the same path — file already there, migration is a no-op, walk truncates and repopulates. Concurrent refreshes serialize on `BEGIN IMMEDIATE`.
    - First `where`/`relatives`/`export` call before any `refresh` fails with the "no index — call `refresh` first" error. Same shape every subsequent call uses if the file goes missing.
    - Concurrent query tool calls don't block each other under WAL; each gets its own ro connection and sees the last committed snapshot.
 
