@@ -22,3 +22,7 @@ README covers install. Spec corpus lives at `docs/hoplite/`.
 - Component paths in skill bodies are anchored on `${CLAUDE_PLUGIN_ROOT}/components/...`.
 - Components contain no cat injections and no `${CLAUDE_PLUGIN_ROOT}` references in their bodies. Cat invocations only live in skill SKILL.md files; components are leaf content. This means the consuming skill's injection is a bare `!`cat <path>`` — no sed pipe needed to expand placeholders, and no compound-command permission gate to negotiate. Composition stays one level deep: skill cats component; component cats nothing.
 - The bootstrapped venv at `${CLAUDE_PLUGIN_DATA}/venv/` is editable-pinned to `plugins/hoplite/mcp/src/`, so server-side Python changes take effect on the next process spawn.
+
+## Python idioms
+
+- Use protocol style interfaces.

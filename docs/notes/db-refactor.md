@@ -35,17 +35,7 @@ These are settled. Revisit only with cause.
 
 Work in this order. Each step is shippable on its own — tests pass, parity preserved against `graph.py`.
 
-1. **`db.py` — `Database` interface + `FileDatabase` impl.**
-   - `Database` is a `typing.Protocol` (or `ABC`) with two methods, both context managers that yield a fresh connection per call:
-     - `open_rw(self) -> ContextManager[sqlite3.Connection]` — write path. Used only by `refresh`.
-     - `open_ro(self) -> ContextManager[sqlite3.Connection]` — read path. Used by every query tool.
-   - Neither method knows anything about the schema; that's `migrations.py`'s job.
-   - `FileDatabase(path: Path)` is the day-one implementation. `open_rw` creates-if-missing, applies rw PRAGMAs, sets `row_factory = sqlite3.Row`, yields, closes. `open_ro` opens with `file:<path>?mode=ro&immutable=0` URI (errors cleanly if the file doesn't exist), applies ro PRAGMAs, yields, closes.
-   - Caller shape: `with db.open_ro() as conn: rows = conn.execute(...).fetchall()`. Connection lifetime equals the `with`-block lifetime; no caching, no sharing.
-   - PRAGMA order on rw: `journal_mode = WAL` (no-op if already WAL — idempotent and cheap, no separate flag needed), `foreign_keys = ON`, `synchronous = NORMAL`, `temp_store = MEMORY`, `mmap_size = 268435456` (256 MiB).
-   - ro pragmas: `foreign_keys = ON`, `temp_store = MEMORY`, `mmap_size = 268435456`. (FK enforcement is harmless on a read-only connection but keeps `EXPLAIN QUERY PLAN` honest.)
-   - The interface is the seam: a future `PooledDatabase` slots in by satisfying `Database` with no changes to tool handlers or `refresh`.
-   - Unit tests against `:memory:` for `FileDatabase.open_rw`: pragmas set, two sequential `with` blocks produce independent connections, both see the same data after the first commits. `open_ro` tests need a real temp file (URI semantics aren't available on `:memory:`) — one acceptable exception to the "tests use `:memory:`" rule.
+1. **`db.py` — `Database` interface + `FileDatabase` impl.** Design lives at [[docs/notes/db-py-design.md]].
 
 2. **`migrations.py` — schema lifecycle.**
    - `apply(conn: sqlite3.Connection) -> None`. Checks `sqlite_master` for the `document` table. If absent, runs `executescript(SCHEMA)` inside `BEGIN IMMEDIATE` so concurrent first-refreshes serialize cleanly. If present, no-op.
