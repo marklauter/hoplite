@@ -29,14 +29,16 @@ Two fields are mandatory; a document missing either is skipped at reindex with a
 
 - `title` (bare string) — short human-readable name.
 - `summary` (bare string) — one-line lede.
-- `document.created` (ISO `YYYY-MM-DD`) — creation date, stable across edits.
 
-Two optional fields, both lists under the same rule — include the key only when it carries at least one element, and omit it otherwise; an empty list is valid for neither:
+The mandatory set is exactly the node's first-class FTS fields; nothing in the property bag is required. Optional fields:
 
+- `document.created` — creation timestamp. Optional at the frontmatter layer; `created` is a reserved word defined and validated in the document-graph design (the frontmatter doc states the contract here, not the reserved-word semantics).
 - `document.tags` (list) — identity slugs, kebab-case lowercase, casefolded for lookup. A document may carry none. Tags remain the identity mechanism when present (see below); a specific artifact type — a journal entry, say — can still require its own type tag through its skill rather than through this contract.
 - `document.aliases` (list) — alternate paths that resolve to this document, added on rename so old wikilinks keep resolving.
 
-There is deliberately no `updated` field. Modification time drifts from reality after git checkouts and file copies, and a hand-maintained date lies the moment someone forgets to bump it. Git history is the authoritative modification record; frontmatter records only `created`, which never changes.
+`document.tags` and `document.aliases`, being lists, follow the omit-when-empty rule: include the key only when it carries at least one element, and omit it otherwise; an empty list is valid for neither.
+
+There is deliberately no `updated` field. Modification time drifts from reality after git checkouts and file copies, and a hand-maintained date lies the moment someone forgets to bump it. Git history is the authoritative modification record; `document.created`, when supplied, is the stable authored creation timestamp.
 
 ## Two independent spelling axes
 

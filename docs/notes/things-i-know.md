@@ -37,3 +37,4 @@ asserstions on the code base
 - created
 - extracted from walker which lived in graph.py
 - unreviewed
+- frontmatter is an expression of the spec - the spec should be defined elsewhere

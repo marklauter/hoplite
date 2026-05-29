@@ -37,9 +37,10 @@ __all__ = [
 # (Obsidian on Windows writes CRLF).
 FRONTMATTER_RE: Final = re.compile(r"\A---\r?\n(.*?)\r?\n---\r?\n?", re.DOTALL)
 
-# Mandatory keys in authored form: title/summary bare, created document.-prefixed.
-# tags and aliases are optional, and omit-when-empty when included.
-MANDATORY_FIELDS: Final = ("title", "summary", "document.created")
+# Mandatory keys: title and summary, both bare first-class FTS fields. Everything in
+# the property bag — document.created, tags, aliases, and any document.<key> — is
+# optional; tags and aliases are omit-when-empty when included.
+MANDATORY_FIELDS: Final = ("title", "summary")
 # Optional list fields that follow the omit-when-empty rule (non-empty or absent).
 _OPTIONAL_LISTS: Final = ("document.tags", "document.aliases")
 
