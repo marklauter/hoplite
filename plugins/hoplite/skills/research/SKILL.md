@@ -46,8 +46,8 @@ Two edge kinds materialize. Edges connect documents to documents only — tag me
 ### Vocabulary
 
 - Document — a node in the graph. Identified by its path: `docs/<sub>/<name>.md` for real markdown documents on disk, `ghost/<slug>` for intentional open loops, `https://...` (or `http://`) for URL-keyed nodes auto-indexed from inline markdown links. The same path appears in `Hit.path` and `TraversalHit.path` — for `docs/...` paths the agent can `Read` directly; for URL paths the agent has the URL itself to `WebFetch` or pass on.
-- Tag — a free-form annotation authored in a document's frontmatter `tags:` list. Tags are properties on documents, not separate nodes. Stored casefolded for case-insensitive matching. Query with `tagged: <expression>`.
-- Property — a key-value pair from a document's frontmatter. Every YAML field (mandatory or user-defined) becomes one or more property rows on the owning document.
+- Tag — a free-form annotation authored in a document's frontmatter `document.tags` list. Tags are properties on documents, not separate nodes. Matched case-insensitively. Query with `tagged: <expression>`.
+- Property — a key-value pair from a document's frontmatter. Each `document.<key>` becomes one or more node-property rows on the owning document. `title` and `summary` are bare, first-class FTS fields rather than properties; `edge.<stereotype>` keys author edges, not properties.
 - Ghost document — a wikilink target without a backing file (`resolved = false`). Authored as `[[ghost/<slug>]]` for intentional open loops. First-class node in `relatives` results, so the corpus's unwritten cross-references stay visible. Walker injects a synthetic `ghost` tag so `where({"tagged": "ghost"})` enumerates them; URL nodes get a synthetic `url` tag the same way.
 - Hit — a search result from `where`. Fields: `path`, `summary`, `tags`, `score`.
 - TraversalHit — a result from `relatives`. Fields: `path`, `summary`, `tags`, `distance`, `via_edges`.

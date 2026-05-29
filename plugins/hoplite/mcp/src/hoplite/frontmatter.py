@@ -1,27 +1,18 @@
 """Frontmatter parsing for the Hoplite corpus.
 
-Splits the leading YAML frontmatter block, validates the mandatory fields, and
-classifies keys per the class-prefix contract (see
-``templates/components/shape/frontmatter.md``):
+The authoring contract — the class-prefix rules (``document.`` / ``edge.``), the
+bare ``title`` / ``summary`` fields, the mandatory set, and the dotted-or-nested
+forms — is defined canonically in ``templates/components/shape/frontmatter.md``.
+This module implements that contract; it does not restate it.
 
-- ``title`` / ``summary`` — bare first-class fields, FTS-indexed, not properties.
-- ``document.<key>`` — node properties; the prefix is stripped on store and
-  ``tags`` values are casefolded.
-- ``edge.<stereotype>`` — edge stereotypes (lists of target paths), consumed by
-  the walker to emit ``mentions`` edges plus ``edge_property`` rows.
-
-Both the flat dotted form and the nested mapping form are accepted and normalized
-to the same dotted keys::
-
-    # flat
-    document.tags: [note]
-    edge.blocked_by: [docs/notes/foo.md]
-
-    # nested (equivalent)
-    document:
-      tags: [note]
-    edge:
-      blocked_by: [docs/notes/foo.md]
+``parse`` splits the leading YAML block, normalizes nested ``document:`` /
+``edge:`` mappings to dotted keys, and validates. Two failure classes: a missing
+mandatory field or a non-list ``document.tags`` / ``document.aliases`` drops the
+document (warn, return ``None``); a null list element or a non-list
+``edge.<stereotype>`` is dropped while the document is kept (warn, continue). The
+projectors over the normalized ``meta`` are pure — ``fts_fields`` (bare
+title/summary), ``to_properties`` (``document.<key>`` → EAV rows, ``tags``
+casefolded), and ``edge_stereotypes`` (``edge.<key>`` → target-path lists).
 """
 
 from __future__ import annotations
@@ -63,8 +54,10 @@ def parse(
 
     ``meta`` is normalized: nested ``document:`` / ``edge:`` mappings are flattened
     into dotted keys, so callers always see ``document.<key>`` / ``edge.<key>``
-    regardless of the authored shape. Validates the mandatory fields and that
-    ``document.tags`` (and ``document.aliases`` when present) are lists.
+    regardless of the authored shape. Missing mandatory fields or a non-list
+    ``document.tags`` / ``document.aliases`` return ``(None, "")`` — the document
+    drops out. Softer issues warn but keep the document: null list elements are
+    dropped, and a non-list ``edge.<stereotype>`` is ignored.
     """
     match = FRONTMATTER_RE.match(text)
     if match is None:
@@ -94,6 +87,21 @@ def parse(
     if "document.aliases" in meta and not isinstance(meta["document.aliases"], list):
         warnings.append(f"{canonical}: document.aliases must be a list")
         return None, ""
+
+    # Soft sanitization — warn but keep the document. A malformed annotation
+    # shouldn't cost the whole file the way a missing mandatory field does.
+    # Drop null list elements (a dangling `-` parses as None and carries no value).
+    for key, value in meta.items():
+        if isinstance(value, list) and None in value:
+            kept = [item for item in value if item is not None]
+            warnings.append(f"{canonical}: {key}: dropped {len(value) - len(kept)} empty list element(s)")
+            meta[key] = kept
+    # An edge.<stereotype> must be a list of target paths. Warn and drop a
+    # non-list rather than silently swallowing the author's intended edge.
+    for key in [k for k in meta if k.startswith(_EDGE_PREFIX)]:
+        if not isinstance(meta[key], list):
+            warnings.append(f"{canonical}: {key}: edge stereotype must be a list of paths; ignored")
+            del meta[key]
     return meta, body
 
 
@@ -159,9 +167,9 @@ def to_properties(meta: dict[str, Any]) -> dict[str, list[str]]:
 def edge_stereotypes(meta: dict[str, Any]) -> dict[str, list[str]]:
     """Extract ``edge.<stereotype>: [paths]`` entries as ``{stereotype: [paths]}``.
 
-    The walker turns each path into a ``mentions`` edge plus an ``edge_property``
-    stereotype row. Non-list edge values are ignored — the stereotype contract is
-    a list of target paths.
+    Each path becomes a ``mentions`` edge plus an ``edge_property`` stereotype row.
+    ``parse`` already warns on and drops non-list ``edge.*`` values, so the list
+    guard here is defensive — by contract every value reaching this point is a list.
     """
     result: dict[str, list[str]] = {}
     for key, value in meta.items():

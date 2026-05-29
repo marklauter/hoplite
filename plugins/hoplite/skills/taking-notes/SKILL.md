@@ -57,7 +57,7 @@ Notes are saved at `docs/notes/<slug>.md` where `<slug>` is a lowercase slug of 
 
 An artifact covers exactly one topic. It is composed of YAML frontmatter and a markdown body.
 
-See [Frontmatter — the YAML envelope at the top of every document](#frontmatter--the-yaml-envelope-at-the-top-of-every-document).
+See [Frontmatter](#frontmatter).
 
 Template:
 
@@ -65,8 +65,9 @@ Template:
 ---
 title: <title>
 summary: <one-line summary>
-tags: [<tag>, ...]
-created: YYYY-MM-DD
+document:
+  tags: [<tag>, ...]
+  created: YYYY-MM-DD
 ---
 
 # <one-line title>
@@ -84,7 +85,9 @@ created: YYYY-MM-DD
 
 Every document in the Hoplite corpus, docs/, opens with a YAML frontmatter block. Hoplite indexes documents through this block; a document with missing or malformed frontmatter generates a warning at reindex (in `WriteResult.warnings`) and stays out of the graph until you fix it.
 
-Keys carry a class prefix that declares which side of the property graph they affect: `document.` for node properties, `edge.` for edge stereotypes. `title` and `summary` are the exception — they are first-class, FTS-indexed fields, not properties, so they stay **bare**.
+Every key beyond `title` and `summary` creates one of two things. A **node property** is a fact stored on the document's own graph node — a key with one or more values (`tags`, `created`, `status`). An **edge stereotype** is a labeled link from this document to another — a typed `mentions` edge carrying a name like `blocked_by` or `supports`.
+
+`document` and `edge` are namespaces — they declare which of the two a key creates: `document.` for node properties, `edge.` for edge stereotypes. `title` and `summary` are the exception — they are first-class, FTS-indexed fields, not properties, so they stay **bare**.
 
 Four mandatory fields:
 
@@ -99,14 +102,30 @@ Optional fields:
 
 Beyond the mandatory fields, any `document.<key>` becomes a node property and any `edge.<stereotype>: [paths]` becomes a stereotyped `mentions` edge — Hoplite accepts and stores them. Examples: `document.status: draft`, `document.priority: high`, `document.due: 2026-06-01`, `edge.blocked_by: [docs/notes/foo.md]`. External tools like Obsidian or Dataview read them too. Only `title` and `summary` are bare; everything else is prefixed.
 
-### Dotted or nested — same shape
+### Namespace spelling and list spelling
 
-The class prefix can be written two ways, and Hoplite normalizes both to the same dotted keys before indexing:
+A key carries spelling freedom on two independent axes — the namespace on the left, the list value on the right.
 
-- **Dotted** — `document.tags: [...]`. The prefix is part of the key.
-- **Nested** — a `document:` mapping with the keys indented under it. Easier to read when a document carries several properties.
+The **namespace** (`document`, `edge`) can be written two ways, and Hoplite normalizes both to the same key before indexing:
 
-A file can mix the two — a nested `document:` block alongside dotted `edge.<stereotype>` lines, for instance. `title` and `summary` stay bare in both forms. The mandatory-field, list-type, and class-prefix rules above apply to the normalized keys regardless of how they were authored, so the corpus uses nested for `document` properties by convention while the rules read in dotted terms.
+- **Dotted** — `document.tags: [...]`. The namespace is part of the key.
+- **Nested** — a `document:` mapping with its keys indented underneath. Reads cleaner when a document carries several properties.
+
+YAML treats these as different structures — `document.tags` is one key with a dot in its name; the nested form is a mapping under `document`. Hoplite's parser flattens the mapping to the dotted key, so the two are equivalent by Hoplite's rule, not YAML's. Neither is preferred. A file can mix them — a nested `document:` block alongside dotted `edge.<stereotype>` lines. `title` and `summary` stay bare in both forms.
+
+A **list value** accepts any valid YAML sequence — flow or block are identical here, because YAML itself parses them to the same list:
+
+```yaml
+document.tags: [note, design]
+```
+
+```yaml
+document.tags:
+  - note
+  - design
+```
+
+`document.tags`, `document.aliases`, and every `edge.<stereotype>` must be sequences. Any other `document.<key>` may be a bare scalar — `document.status: draft` stores as a single-value property, the same as `document.status: [draft]`.
 
 ### Tags classify; properties carry state
 
@@ -166,8 +185,8 @@ Two edge kinds materialize. Edges connect documents to documents only — tag me
 ### Vocabulary
 
 - Document — a node in the graph. Identified by its path: `docs/<sub>/<name>.md` for real markdown documents on disk, `ghost/<slug>` for intentional open loops, `https://...` (or `http://`) for URL-keyed nodes auto-indexed from inline markdown links. The same path appears in `Hit.path` and `TraversalHit.path` — for `docs/...` paths the agent can `Read` directly; for URL paths the agent has the URL itself to `WebFetch` or pass on.
-- Tag — a free-form annotation authored in a document's frontmatter `tags:` list. Tags are properties on documents, not separate nodes. Stored casefolded for case-insensitive matching. Query with `tagged: <expression>`.
-- Property — a key-value pair from a document's frontmatter. Every YAML field (mandatory or user-defined) becomes one or more property rows on the owning document.
+- Tag — a free-form annotation authored in a document's frontmatter `document.tags` list. Tags are properties on documents, not separate nodes. Matched case-insensitively. Query with `tagged: <expression>`.
+- Property — a key-value pair from a document's frontmatter. Each `document.<key>` becomes one or more node-property rows on the owning document. `title` and `summary` are bare, first-class FTS fields rather than properties; `edge.<stereotype>` keys author edges, not properties.
 - Ghost document — a wikilink target without a backing file (`resolved = false`). Authored as `[[ghost/<slug>]]` for intentional open loops. First-class node in `relatives` results, so the corpus's unwritten cross-references stay visible. Walker injects a synthetic `ghost` tag so `where({"tagged": "ghost"})` enumerates them; URL nodes get a synthetic `url` tag the same way.
 - Hit — a search result from `where`. Fields: `path`, `summary`, `tags`, `score`.
 - TraversalHit — a result from `relatives`. Fields: `path`, `summary`, `tags`, `distance`, `via_edges`.

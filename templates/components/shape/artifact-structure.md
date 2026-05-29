@@ -2,7 +2,7 @@
 
 An artifact covers exactly one topic. It is composed of YAML frontmatter and a markdown body.
 
-See [Frontmatter — the YAML envelope at the top of every document](#frontmatter--the-yaml-envelope-at-the-top-of-every-document).
+See [Frontmatter](#frontmatter).
 
 Template:
 
@@ -10,8 +10,9 @@ Template:
 ---
 title: <title>
 summary: <one-line summary>
-tags: [<tag>, ...]
-created: YYYY-MM-DD
+document:
+  tags: [<tag>, ...]
+  created: YYYY-MM-DD
 ---
 
 # <one-line title>
