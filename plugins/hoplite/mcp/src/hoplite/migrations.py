@@ -4,7 +4,7 @@ from typing import Final
 
 SCHEMA: Final = (Path(__file__).parent / "schema.sql").read_text(encoding="utf-8")
 
-_EXPECTED_TABLES: Final = ("document", "document_property", "edge", "edge_property", "fts")
+_EXPECTED_TABLES: Final = ("node", "node_property", "edge_kind", "edge", "edge_property", "fts")
 
 
 def apply(conn: sqlite3.Connection) -> None:
