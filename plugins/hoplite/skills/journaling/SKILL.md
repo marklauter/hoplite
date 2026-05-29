@@ -87,16 +87,18 @@ Every key beyond `title` and `summary` creates one of two things. A **node prope
 
 `document` and `edge` are namespaces — they declare which of the two a key creates: `document.` for node properties, `edge.` for edge stereotypes. `title` and `summary` are the exception — they are first-class, FTS-indexed fields, not properties, so they stay **bare**.
 
-Three mandatory fields:
+Two mandatory fields:
 
 - `title` (string, bare) — short, human-readable name.
 - `summary` (string, bare) — one-line lede. `where` and `relatives` return it so callers can scan candidates without opening the file.
-- `document.created` (ISO date string, `YYYY-MM-DD`) — creation date. Stays stable across edits.
 
-Two optional list fields, both omit-when-empty — include the key only when it carries at least one element, otherwise leave it out:
+Optional fields:
 
+- `document.created` (ISO date string, `YYYY-MM-DD`) — creation date. Stays stable across edits when present.
 - `document.tags` (list of strings) — tag slugs the document carries. Use kebab-case lowercase (`graph-db`, not `Graph DB` or `graph_db`); the indexer casefolds for lookup. A document may carry no tags.
 - `document.aliases` (list of strings) — alternate paths that resolve to this document; add on rename so wikilinks pointing at the old name still resolve.
+
+`document.tags` and `document.aliases` are lists and follow the omit-when-empty rule: include the key only when it carries at least one element, otherwise leave it out.
 
 Beyond the mandatory fields, any `document.<key>` becomes a node property and any `edge.<stereotype>: [paths]` becomes a stereotyped `mentions` edge — Hoplite accepts and stores them. Examples: `document.status: draft`, `document.priority: high`, `document.due: 2026-06-01`, `edge.blocked_by: [docs/notes/foo.md]`. External tools like Obsidian or Dataview read them too. Only `title` and `summary` are bare; everything else is prefixed.
 

@@ -62,7 +62,7 @@ Bodies live in the markdown file on disk. The walker reads bodies during indexin
 
 Title and summary are first-class fields on the document — indexed in FTS, queryable directly via the `fts` virtual table, one row per document by construction. They are *not* properties.
 
-Every other YAML frontmatter field — mandatory remainders (`tags`, `created`), optional (`aliases`), and user-defined (`status`, `priority`, anything) — becomes a property on the owning document. Properties are key-value pairs in EAV form: one row per `(id, key, value)` triple in `document_property`. List-valued fields fan out into multiple rows by the same shape used for edge-side stereotype lists — see [EAV decomposition](#eav-decomposition) for the pattern and how to read it back.
+Every other YAML frontmatter field — optional ones (`tags`, `created`, `aliases`) and user-defined (`status`, `priority`, anything) — becomes a property on the owning document. Properties are key-value pairs in EAV form: one row per `(id, key, value)` triple in `document_property`. List-valued fields fan out into multiple rows by the same shape used for edge-side stereotype lists — see [EAV decomposition](#eav-decomposition) for the pattern and how to read it back.
 
 Properties never appear as edge endpoints. Edges connect documents to documents; properties describe what a document is.
 
@@ -167,7 +167,7 @@ Predicates apply as a post-filter on results. For `where`, the predicate narrows
 Glob `**/*.md` under the corpus root. For each file:
 
 1. Read the YAML frontmatter block.
-2. Parse the four mandatory fields plus any optional or user-defined fields. Skip and warn on missing or unparseable frontmatter.
+2. Parse the two mandatory fields (`title`, `summary`) plus any optional or user-defined fields. Skip and warn on missing or unparseable frontmatter.
 3. Register the document under its repo-relative `docs/...` path; register each alias; populate the casefold index for both canonical path and aliases.
 
 After pass 1, every real document is known and every alias resolves. The lookup table is complete before any wikilink is parsed — required because pass 2's wikilink resolution depends on knowing every canonical and alias up front.

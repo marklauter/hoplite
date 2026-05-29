@@ -75,7 +75,7 @@ Glob `*.md` recursively under `corpus_root`. For each file:
 2. Skip if `canonical` contains `/.hoplite/` or starts with `.hoplite/`.
 3. Read as UTF-8; on `OSError`/`UnicodeDecodeError`, warn and continue.
 4. Parse YAML frontmatter. Missing/unterminated → warn, skip.
-5. Validate mandatory fields. After the class-prefix migration these are `title` and `summary` (bare, first-class) plus `document.tags` and `document.created` (prefixed properties). Missing → warn, skip. **Note:** today's `graph.py` checks bare `tags`/`created`; the prefixed corpus requires this updated check, so the two must land together.
+5. Validate mandatory fields — `title` and `summary` only (bare, first-class). `document.created`, `document.tags`, and `document.aliases` are optional properties. Missing `title`/`summary` → warn, skip. **Note:** today's `graph.py` checks bare `tags`/`created` as mandatory; the prefixed corpus and the reduced mandatory set both require this updated check, so they must land together.
 6. Validate `document.tags` is a list and `document.aliases` (if present) is a list. Otherwise → warn, skip.
 7. Compute `content_hash = sha256(body).hexdigest()`.
 8. Insert into `node`:
