@@ -11,12 +11,12 @@ catches the structural issues that are cheap to detect:
 
 - Missing opening ``---`` fence.
 - Missing closing ``---`` fence.
-- Any of the four mandatory keys (title, summary, document.tags, document.created) absent.
-  ``title`` and ``summary`` are bare first-class fields; ``document.tags`` and
-  ``document.created`` carry the ``document.`` class prefix like every other property.
-  Both the flat dotted form (``document.tags``) and the nested mapping form
-  (``document:`` then an indented ``tags:``) are recognized — the scanner flattens
-  nested ``document:`` / ``edge:`` blocks to dotted keys, mirroring the indexer.
+- Any of the three mandatory keys (title, summary, document.created) absent.
+  ``title`` and ``summary`` are bare first-class fields; ``document.created``
+  carries the ``document.`` class prefix like every other property. ``document.tags``
+  is optional. Both the flat dotted form (``document.created``) and the nested mapping
+  form (``document:`` then an indented ``created:``) are recognized — the scanner
+  flattens nested ``document:`` / ``edge:`` blocks to dotted keys, mirroring the indexer.
 
 Wrong types, typos in keys, malformed YAML — left to the indexer.
 
@@ -30,7 +30,7 @@ import sys
 from pathlib import Path
 
 WATCHED_TOOLS = {"Write", "Edit", "MultiEdit"}
-REQUIRED_FIELDS = {"title", "summary", "document.tags", "document.created"}
+REQUIRED_FIELDS = {"title", "summary", "document.created"}
 # Top-level keys whose indented mapping expands into dotted keys (the nested form).
 NESTED_CLASSES = {"document", "edge"}
 
@@ -43,16 +43,16 @@ Every key beyond `title` and `summary` creates one of two things. A **node prope
 
 `document` and `edge` are namespaces — they declare which of the two a key creates: `document.` for node properties, `edge.` for edge stereotypes. `title` and `summary` are the exception — they are first-class, FTS-indexed fields, not properties, so they stay **bare**.
 
-Four mandatory fields:
+Three mandatory fields:
 
 - `title` (string, bare) — short, human-readable name.
 - `summary` (string, bare) — one-line lede. `where` and `relatives` return it so callers can scan candidates without opening the file.
-- `document.tags` (list of strings) — tag slugs the document carries. Use kebab-case lowercase (`graph-db`, not `Graph DB` or `graph_db`); the indexer casefolds for lookup, but consistent authoring keeps the corpus tidy. Empty list `document.tags: []` is fine.
 - `document.created` (ISO date string, `YYYY-MM-DD`) — creation date. Stays stable across edits.
 
-Optional fields:
+Two optional list fields, both omit-when-empty — include the key only when it carries at least one element, otherwise leave it out:
 
-- `document.aliases` (list of strings) — alternate paths that resolve to this document. Omit the key when there are no aliases; add it on rename so wikilinks pointing at the old name still resolve.
+- `document.tags` (list of strings) — tag slugs the document carries. Use kebab-case lowercase (`graph-db`, not `Graph DB` or `graph_db`); the indexer casefolds for lookup. A document may carry no tags.
+- `document.aliases` (list of strings) — alternate paths that resolve to this document; add on rename so wikilinks pointing at the old name still resolve.
 
 Beyond the mandatory fields, any `document.<key>` becomes a node property and any `edge.<stereotype>: [paths]` becomes a stereotyped `mentions` edge — Hoplite accepts and stores them. Examples: `document.status: draft`, `document.priority: high`, `document.due: 2026-06-01`, `edge.blocked_by: [docs/notes/foo.md]`. External tools like Obsidian or Dataview read them too. Only `title` and `summary` are bare; everything else is prefixed.
 

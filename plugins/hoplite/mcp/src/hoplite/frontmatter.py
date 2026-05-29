@@ -1,9 +1,11 @@
 """Frontmatter parsing for the Hoplite corpus.
 
-The authoring contract — the class-prefix rules (``document.`` / ``edge.``), the
-bare ``title`` / ``summary`` fields, the mandatory set, and the dotted-or-nested
-forms — is defined canonically in ``templates/components/shape/frontmatter.md``.
-This module implements that contract; it does not restate it.
+The contract — the class-prefix rules (``document.`` / ``edge.``), the bare
+``title`` / ``summary`` fields, the mandatory set, and the dotted-or-nested
+forms — is designed in ``docs/hoplite/hoplite-frontmatter.md`` (the source of
+truth); ``templates/components/shape/frontmatter.md`` is the sparse operational
+handbook derived from it. This module implements the contract; it does not
+restate it.
 
 ``parse`` splits the leading YAML block, normalizes nested ``document:`` /
 ``edge:`` mappings to dotted keys, and validates. Two failure classes: a missing
@@ -35,9 +37,11 @@ __all__ = [
 # (Obsidian on Windows writes CRLF).
 FRONTMATTER_RE: Final = re.compile(r"\A---\r?\n(.*?)\r?\n---\r?\n?", re.DOTALL)
 
-# Mandatory keys in authored form: title/summary bare, tags/created document.-prefixed.
-# aliases is optional.
-MANDATORY_FIELDS: Final = ("title", "summary", "document.tags", "document.created")
+# Mandatory keys in authored form: title/summary bare, created document.-prefixed.
+# tags and aliases are optional, and omit-when-empty when included.
+MANDATORY_FIELDS: Final = ("title", "summary", "document.created")
+# Optional list fields that follow the omit-when-empty rule (non-empty or absent).
+_OPTIONAL_LISTS: Final = ("document.tags", "document.aliases")
 
 _DOCUMENT_PREFIX: Final = "document."
 _EDGE_PREFIX: Final = "edge."
@@ -54,10 +58,12 @@ def parse(
 
     ``meta`` is normalized: nested ``document:`` / ``edge:`` mappings are flattened
     into dotted keys, so callers always see ``document.<key>`` / ``edge.<key>``
-    regardless of the authored shape. Missing mandatory fields or a non-list
-    ``document.tags`` / ``document.aliases`` return ``(None, "")`` — the document
-    drops out. Softer issues warn but keep the document: null list elements are
-    dropped, and a non-list ``edge.<stereotype>`` is ignored.
+    regardless of the authored shape. Missing mandatory fields (title, summary,
+    ``document.created``) or a present-but-non-list ``document.tags`` /
+    ``document.aliases`` return ``(None, "")`` — the document drops out. Softer
+    issues warn but keep the document: null list elements are dropped, an empty
+    ``document.tags`` / ``document.aliases`` is flagged (omit it instead), and a
+    non-list ``edge.<stereotype>`` is ignored.
     """
     match = FRONTMATTER_RE.match(text)
     if match is None:
@@ -81,12 +87,12 @@ def parse(
     if missing:
         warnings.append(f"{canonical}: missing mandatory fields: {missing}")
         return None, ""
-    if not isinstance(meta["document.tags"], list):
-        warnings.append(f"{canonical}: document.tags must be a list")
-        return None, ""
-    if "document.aliases" in meta and not isinstance(meta["document.aliases"], list):
-        warnings.append(f"{canonical}: document.aliases must be a list")
-        return None, ""
+    # tags and aliases are optional, but a present non-list value is malformed
+    # enough to drop the document — its identity or links can't be read.
+    for field in _OPTIONAL_LISTS:
+        if field in meta and not isinstance(meta[field], list):
+            warnings.append(f"{canonical}: {field} must be a list")
+            return None, ""
 
     # Soft sanitization — warn but keep the document. A malformed annotation
     # shouldn't cost the whole file the way a missing mandatory field does.
@@ -96,6 +102,10 @@ def parse(
             kept = [item for item in value if item is not None]
             warnings.append(f"{canonical}: {key}: dropped {len(value) - len(kept)} empty list element(s)")
             meta[key] = kept
+    # tags and aliases are omit-when-empty: an empty list is noise, not content.
+    for field in _OPTIONAL_LISTS:
+        if field in meta and isinstance(meta[field], list) and not meta[field]:
+            warnings.append(f"{canonical}: {field} is empty; omit the key instead")
     # An edge.<stereotype> must be a list of target paths. Warn and drop a
     # non-list rather than silently swallowing the author's intended edge.
     for key in [k for k in meta if k.startswith(_EDGE_PREFIX)]:

@@ -11,12 +11,12 @@ catches the structural issues that are cheap to detect:
 
 - Missing opening ``---`` fence.
 - Missing closing ``---`` fence.
-- Any of the four mandatory keys (title, summary, document.tags, document.created) absent.
-  ``title`` and ``summary`` are bare first-class fields; ``document.tags`` and
-  ``document.created`` carry the ``document.`` class prefix like every other property.
-  Both the flat dotted form (``document.tags``) and the nested mapping form
-  (``document:`` then an indented ``tags:``) are recognized — the scanner flattens
-  nested ``document:`` / ``edge:`` blocks to dotted keys, mirroring the indexer.
+- Any of the three mandatory keys (title, summary, document.created) absent.
+  ``title`` and ``summary`` are bare first-class fields; ``document.created``
+  carries the ``document.`` class prefix like every other property. ``document.tags``
+  is optional. Both the flat dotted form (``document.created``) and the nested mapping
+  form (``document:`` then an indented ``created:``) are recognized — the scanner
+  flattens nested ``document:`` / ``edge:`` blocks to dotted keys, mirroring the indexer.
 
 Wrong types, typos in keys, malformed YAML — left to the indexer.
 
@@ -30,7 +30,7 @@ import sys
 from pathlib import Path
 
 WATCHED_TOOLS = {"Write", "Edit", "MultiEdit"}
-REQUIRED_FIELDS = {"title", "summary", "document.tags", "document.created"}
+REQUIRED_FIELDS = {"title", "summary", "document.created"}
 # Top-level keys whose indented mapping expands into dotted keys (the nested form).
 NESTED_CLASSES = {"document", "edge"}
 
