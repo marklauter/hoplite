@@ -78,7 +78,7 @@ edge:
 
 ## Canonical seed vocabulary
 
-[Inference] The v1 canonical set, documented in `plugins/hoplite/components/hoplite/mcp-reference.md` next to the edge-kind enumeration:
+[Inference] The v1 canonical set, documented in `templates/components/hoplite/mcp-reference.md` next to the edge-kind enumeration:
 
 - `supports` — endorses a claim or framing.
 - `contradicts` — argues against a claim or framing. See [[docs/notes/add-contradicts-as-an-authored-edge-kind.md]].
