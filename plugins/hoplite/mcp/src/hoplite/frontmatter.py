@@ -59,9 +59,9 @@ def parse(
 
     ``meta`` is normalized: nested ``document:`` / ``edge:`` mappings are flattened
     into dotted keys, so callers always see ``document.<key>`` / ``edge.<key>``
-    regardless of the authored shape. Missing mandatory fields (title, summary,
-    ``document.created``) or a present-but-non-list ``document.tags`` /
-    ``document.aliases`` return ``(None, "")`` — the document drops out. Softer
+    regardless of the authored shape. Missing mandatory fields (title, summary)
+    or a present-but-non-list ``document.tags`` / ``document.aliases`` return
+    ``(None, "")`` — the document drops out. Softer
     issues warn but keep the document: null list elements are dropped, an empty
     ``document.tags`` / ``document.aliases`` is flagged (omit it instead), and a
     non-list ``edge.<stereotype>`` is ignored.
