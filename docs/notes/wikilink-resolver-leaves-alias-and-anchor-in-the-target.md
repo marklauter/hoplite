@@ -1,11 +1,12 @@
 ---
 title: Wikilink resolver leaves alias and anchor in the target
 summary: Anchor and alias syntax survive wikilink capture and resolution, producing ghost paths like `hoplite/roadmap|roadmap.md` for documents that already exist.
-tags: [note, todo, hoplite, mcp, wikilinks, bug]
-created: 2026-05-27
-document.priority: medium
-document.effort: low
-document.status: closed
+document:
+  tags: [note, todo, hoplite, mcp, wikilinks, bug]
+  created: 2026-05-27
+  priority: medium
+  effort: low
+  status: closed
 ---
 
 # Wikilink resolver leaves alias and anchor in the target
@@ -27,7 +28,7 @@ Each corresponds to an authored link of the form `[[target#anchor|alias]]` or `[
 
 `wikilinks.extract` at `plugins/hoplite/mcp/src/hoplite/wikilinks.py:42` matches `\[\[([^\]]+)\]\]` and only strips surrounding whitespace from the capture. Anchor (`#section`) and alias (`|display text`) syntax pass through verbatim.
 
-`InMemoryGraph.resolve_wikilink` at `plugins/hoplite/mcp/src/hoplite/graph.py:136` walks four lookup steps — direct path, declared alias, casefolded path, `.md`-appended retry — and skips the alias/anchor split. The raw string `hoplite/roadmap|roadmap.md` misses every step and materializes a ghost with that exact path.
+`Graph.resolve_wikilink` in `plugins/hoplite/mcp/src/hoplite/graph.py` walks four lookup steps — direct path, declared alias, casefolded path, `.md`-appended retry — and skips the alias/anchor split. The raw string `hoplite/roadmap|roadmap.md` misses every step and materializes a ghost with that exact path. (After the SQLite refactor the casefold step folds into `node.uri COLLATE NOCASE`; the alias/anchor-split bug this note describes is independent of that.)
 
 ## Fix shape
 

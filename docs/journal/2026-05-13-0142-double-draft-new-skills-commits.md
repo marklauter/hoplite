@@ -1,9 +1,9 @@
 ---
 title: Double "draft new skills" commits at 01:42
 summary: Two commits 9 seconds apart with the same message — first the doc-skills draft, then a fast amend with small frontmatter fixes the first pass missed. Same author, same session, no agent context switch.
-tags: [journal, skills, git, observation]
-created: 2026-05-13
-aliases: []
+document:
+  tags: [journal, skills, git, observation]
+  created: 2026-05-13
 ---
 
 # Double "draft new skills" commits at 01:42

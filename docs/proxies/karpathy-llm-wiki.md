@@ -1,8 +1,9 @@
 ---
 title: Karpathy's LLM wiki — reference links
 summary: External gist by Andrej Karpathy proposing ingest, query, and lint workflows over a personal LLM-curated knowledge wiki. Holds the raw and human-facing URLs for downstream reference.
-tags: [note, reference, llm, knowledge-management]
-created: 2026-05-27
+document:
+  tags: [note, reference, llm, knowledge-management]
+  created: 2026-05-27
 ---
 
 # Karpathy's LLM wiki — reference links

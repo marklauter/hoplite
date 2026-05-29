@@ -1,9 +1,9 @@
 ---
 title: Wiki skills with GitHub-hosted link rules
 summary: writing-wiki and reviewing-wiki land as a pair; both locate the sibling source project before writing and converge on the same citation pattern; GitHub-hosted wiki link rules get encoded so the agent stops emitting Obsidian-style links into wikis that render through GitHub.
-tags: [journal, skills, wiki, github, milestone]
-created: 2026-05-16
-aliases: []
+document:
+  tags: [journal, skills, wiki, github, milestone]
+  created: 2026-05-16
 ---
 
 # Wiki skills with GitHub-hosted link rules

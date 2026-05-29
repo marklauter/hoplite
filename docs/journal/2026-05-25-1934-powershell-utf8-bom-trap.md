@@ -1,9 +1,9 @@
 ---
 title: PowerShell UTF-8 BOM trap
 summary: Windows PowerShell 5.1's Out-File with -Encoding utf8 writes a byte-order mark; YAML parser sees the BOM as content and the frontmatter fails to parse. Sweep pass strips BOMs from notes rewritten through PowerShell.
-tags: [journal, hoplite, windows, powershell, encoding, bug-fix]
-created: 2026-05-25
-aliases: []
+document:
+  tags: [journal, hoplite, windows, powershell, encoding, bug-fix]
+  created: 2026-05-25
 ---
 
 # PowerShell UTF-8 BOM trap

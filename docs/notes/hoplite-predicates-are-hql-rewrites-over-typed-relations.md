@@ -1,12 +1,12 @@
 ---
 title: Hoplite predicates are HQL rewrites over typed relations
 summary: Proposed predicate language for `where` and `relatives` — HQL (Hoplite Query Language), a rewrite calculus inherited from Zanzibar PDL via Kingo. Generalizes relations to cover frontmatter properties as value-parameterized relations, treats edges as relations too. Bare relation references at query time read as that relation's userset.
-tags: [note, hoplite, mcp, design, architecture, hql, todo]
-created: 2026-05-27
-aliases: []
-document.priority: high
-document.effort: high
-document.status: open
+document:
+  tags: [note, hoplite, mcp, design, architecture, hql, todo]
+  created: 2026-05-27
+  priority: high
+  effort: high
+  status: open
 ---
 
 # Hoplite predicates are HQL rewrites over typed relations

@@ -1,9 +1,9 @@
 ---
 title: Audit-mode shipped before the existing tests ran
 summary: Audit-mode for reviewer scripts landed after a focused smoke test, but six tests in report-finding_test.sh and summarize_test.sh failed against the new --force-removed and verdict-copy behavior; a second agent caught the miss. The writing-loop discipline gained an explicit "run the existing test suite" step.
-tags: [journal, skills, testing, audit-mode, dead-end]
-created: 2026-05-16
-aliases: []
+document:
+  tags: [journal, skills, testing, audit-mode, dead-end]
+  created: 2026-05-16
 ---
 
 # Audit-mode shipped before the existing tests ran

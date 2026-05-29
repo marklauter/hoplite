@@ -1,9 +1,9 @@
 ---
 title: Tag model evolution — edges then virtual nodes then properties
 summary: Three acts on what tags are in the graph. Act one — tags as edges from documents to tag-things. Act two — tags as first-class virtual nodes with their own identity and outbound edges. Act three — tags as property values on documents, no separate entity. Each step solved the prior step's problem and surfaced the next.
-tags: [journal, hoplite, tags, ontology, decision]
-created: 2026-05-25
-aliases: []
+document:
+  tags: [journal, hoplite, tags, ontology, decision]
+  created: 2026-05-25
 ---
 
 # Tag model evolution — edges then virtual nodes then properties

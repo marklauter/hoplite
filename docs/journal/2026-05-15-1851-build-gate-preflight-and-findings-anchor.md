@@ -1,9 +1,9 @@
 ---
 title: Build-gate preflight and .findings anchored at the repo root
 summary: Build-gate gains a preflight check that verifies the workspace at CWD before running anything; .findings/ moves out of skill-local directories to the git repo root so verdicts have a stable home regardless of where the agent invokes from.
-tags: [journal, skills, build-gate, findings, milestone]
-created: 2026-05-15
-aliases: []
+document:
+  tags: [journal, skills, build-gate, findings, milestone]
+  created: 2026-05-15
 ---
 
 # Build-gate preflight and .findings anchored at the repo root

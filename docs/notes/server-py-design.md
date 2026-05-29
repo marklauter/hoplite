@@ -1,9 +1,10 @@
 ---
 title: server.py — MCP wiring with zero startup work
 summary: `server.py` constructs the FastMCP app, calls `tools.set_root(Path.cwd())` to compute the DB path and stash a `FileDatabase` singleton, and registers the four tool handlers. No connection opens, no schema applies, no walk runs at import. First `refresh()` call is the bootstrap; queries before refresh return an actionable error.
-tags: [note, sqlite, design, hoplite, mcp]
-created: 2026-05-28
-document.status: design
+document:
+  tags: [note, sqlite, design, hoplite, mcp]
+  created: 2026-05-28
+  status: design
 ---
 
 # server.py — MCP wiring with zero startup work
@@ -18,7 +19,7 @@ Today's `server.py` calls `tools.set_root(Path.cwd())` at import time, which ass
 
 The new shape preserves the same import-time `set_root` call. The difference is what `set_root` does now: it computes the DB path and constructs a `FileDatabase`. **No connection opens.** No file is created. No walk runs. The MCP server is ready to serve requests in milliseconds.
 
-The `FileDatabase` + `SqliteGraph` chain is one of two valid `Graph` Protocol satisfiers; `InMemoryGraph` is the other peer (see [[docs/notes/graph-sqlite-py-design.md]] "Position in the Graph protocol"). `server.py` itself does not name either concrete class — it constructs the `FileDatabase` and lets `tools._build_graph` pick the impl. There is no runtime selection mechanism today; `InMemoryGraph`'s runtime role is TBD. If a future selection knob (env var, settings flag) lands, it lands in `tools._build_graph`, not here.
+`server.py` constructs only the `FileDatabase`; `tools._build_graph` builds the per-call `Graph(db, corpus_root)` (see [[docs/notes/graph-py-design.md]] and [[docs/notes/tools-py-design.md]]). There is one `Graph` implementation — SQLite-backed — so there is nothing to select; `server.py` names neither a connection type beyond `FileDatabase` nor the graph class.
 
 Concrete consequences:
 

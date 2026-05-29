@@ -1,9 +1,9 @@
 ---
 title: Tags classify, properties carry state
 summary: A tag answers "what is this document?" — its type, classification, shape. A property answers "what state is this document in?" — fields that change as the lifecycle progresses. State-as-tag (resolved, closed, draft tags) conflates identity and state and churns the wrong axis when lifecycle moves.
-tags: [note, hoplite, frontmatter, design, principle]
-created: 2026-05-27
-aliases: []
+document:
+  tags: [note, hoplite, frontmatter, design, principle]
+  created: 2026-05-27
 ---
 
 # Tags classify, properties carry state

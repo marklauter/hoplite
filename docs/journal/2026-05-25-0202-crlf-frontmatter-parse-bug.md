@@ -1,9 +1,9 @@
 ---
 title: CRLF frontmatter parse bug
 summary: Windows-style line endings on a markdown file's opening `---` fence threw off the YAML frontmatter parser; documents with CRLF terminators silently fell out of the graph; normalize on read.
-tags: [journal, hoplite, frontmatter, windows, bug-fix]
-created: 2026-05-25
-aliases: []
+document:
+  tags: [journal, hoplite, frontmatter, windows, bug-fix]
+  created: 2026-05-25
 ---
 
 # CRLF frontmatter parse bug

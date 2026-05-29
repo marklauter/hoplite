@@ -1,8 +1,9 @@
 ---
 title: Hoplite roadmap
 summary: Features deferred past day one — embeddings, Sonnet tag enrichment, file-watcher reindex, MinHash LSH, persistent MinHash cache, multi-writer, pagination, unified query DSL, columnar projection.
-tags: [hoplite, mcp, roadmap, spec]
-created: 2026-05-25
+document:
+  tags: [hoplite, mcp, roadmap, spec]
+  created: 2026-05-25
 ---
 
 # Hoplite roadmap

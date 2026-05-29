@@ -1,8 +1,9 @@
 ---
 title: Wikilinks arc — full convention, external refs, schema mirror
 summary: One session, one arc — wikilinks went from a broken regex with garbage ghosts to a strict two-prefix convention with full repo-relative paths, validated targets, and explicit open loops. External references gained a `cites` edge kind from inline markdown links plus a `docs/proxies/` convention for durable refs. The dump schema collapsed to mirror the in-memory shape one-to-one. Each step landed cleanly because the previous one cleared the question it raised.
-tags: [journal, hoplite, wikilinks, decision, session-summary]
-created: 2026-05-27
+document:
+  tags: [journal, hoplite, wikilinks, decision, session-summary]
+  created: 2026-05-27
 ---
 
 # Wikilinks arc — full convention, external refs, schema mirror

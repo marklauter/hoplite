@@ -1,14 +1,15 @@
 ---
 title: migrations.py — schema lifecycle
-summary: `migrations.py` owns the schema-apply path. `apply(conn)` checks `sqlite_master` for the `document` table; if absent, runs the full schema script. Idempotent, race-tolerant, no in-place migrations day-one — schema versioning is carried in the filename, not in the database header.
-tags: [note, sqlite, design, hoplite, architecture]
-created: 2026-05-27
-document.status: design
+summary: `migrations.py` owns the schema-apply path. `apply(conn)` checks `sqlite_master` for the expected tables; if absent, runs the full schema script. Idempotent, race-tolerant, no in-place migrations day-one — schema versioning is carried in the filename, not in the database header.
+document:
+  tags: [note, sqlite, design, hoplite, architecture]
+  created: 2026-05-27
+  status: design
 ---
 
 # migrations.py — schema lifecycle
 
-`migrations.py` owns the schema-apply path. `apply(conn)` checks `sqlite_master` for the `document` table; if absent, runs the full schema script. Idempotent, race-tolerant, no in-place migrations day-one — schema versioning is carried in the filename, not in the database header.
+`migrations.py` owns the schema-apply path. `apply(conn)` checks `sqlite_master` for the expected tables; if any are absent, runs the full schema script. Idempotent, race-tolerant, no in-place migrations day-one — schema versioning is carried in the filename, not in the database header.
 
 Sibling design notes: [[docs/notes/reify-in-memory-graph-as-file-based-sqlite.md]] for the rationale and trigger; [[docs/notes/db-refactor.md]] for the broader refactor plan; [[docs/notes/db-py-design.md]] for the `Database` interface this collaborates with. This note covers `migrations.py` alone.
 
@@ -22,7 +23,7 @@ def apply(conn: sqlite3.Connection) -> None: ...
 SCHEMA: Final[str]  # full DDL, loaded from schema.sql at module import
 ```
 
-`apply` is the only entry point callers use. `SCHEMA` is exposed because the dump path in `graph.py` (during the transition period before cutover) and any future debug tooling may want the canonical DDL string. After cutover, `SCHEMA` can be made module-private if no consumer remains.
+`apply` is the only entry point callers use. `SCHEMA` is exposed because future debug tooling may want the canonical DDL string (e.g. a test that applies the schema to a `:memory:` connection directly). It can be made module-private if no consumer remains.
 
 ## Schema source
 
@@ -32,7 +33,7 @@ The canonical DDL lives at `plugins/hoplite/mcp/src/hoplite/schema.sql`. `migrat
 SCHEMA: Final = (Path(__file__).parent / "schema.sql").read_text(encoding="utf-8")
 ```
 
-This duplicates the load that `graph.py` already does (also reading from the same file). Both modules holding their own copy is fine — they read from the same source, so any drift window is bounded by process lifetime (a file edit between the two `import` events would diverge them, but no production path triggers that). `graph.py` and `migrations.py` are peers: each holds its own copy of `SCHEMA` for its own use (`InMemoryGraph`'s `:memory:` setup vs. `SqliteGraph`'s file-backed apply). Both stay.
+`migrations.py` is the single owner of `SCHEMA` now. The old `graph.py` loaded its own copy for the in-memory `:memory:` FTS setup and the dump path; that in-memory graph is retired, so there is no second loader. `Graph.refresh` calls `migrations.apply(conn)`; it does not need its own `SCHEMA` constant.
 
 The alternative was lazy loading inside `apply` itself — read `schema.sql` only when first called. Rejected because a packaging error that omits `schema.sql` should fail loudly at import time, not silently survive until the first refresh.
 
@@ -41,7 +42,7 @@ The alternative was lazy loading inside `apply` itself — read `schema.sql` onl
 The presence check verifies **every** expected table exists, not just one:
 
 ```python
-_EXPECTED_TABLES: Final = ("document", "document_property", "edge", "edge_property", "fts")
+_EXPECTED_TABLES: Final = ("node", "node_property", "edge_kind", "edge", "edge_property", "fts")
 
 def _schema_present(conn: sqlite3.Connection) -> bool:
     placeholders = ",".join("?" * len(_EXPECTED_TABLES))
@@ -53,7 +54,7 @@ def _schema_present(conn: sqlite3.Connection) -> bool:
     return row[0] == len(_EXPECTED_TABLES)
 ```
 
-A single-table marker (e.g., just `document`) would lie about partial-corruption states. If `executescript` crashed after creating `document` but before later tables, the marker would say "present" forever — every subsequent `apply` would no-op on a half-built schema. The multi-table check requires *all* declared tables to exist before treating the schema as applied; a half-built state is correctly seen as "not present" and triggers re-execution, which then surfaces an "already exists" error on the partial tables and aborts loudly.
+A single-table marker (e.g., just `node`) would lie about partial-corruption states. If `executescript` crashed after creating `node` but before later tables, the marker would say "present" forever — every subsequent `apply` would no-op on a half-built schema. The multi-table check requires *all* declared tables to exist before treating the schema as applied; a half-built state is correctly seen as "not present" and triggers re-execution, which then surfaces an "already exists" error on the partial tables and aborts loudly.
 
 We do **not** use `CREATE TABLE IF NOT EXISTS` in the schema script. The argument isn't about partial-corruption detection (the multi-table check handles that). The argument is about silent races: `IF NOT EXISTS` turns the "two processes both try to bootstrap" case into a no-op for the loser, with no error signal. The explicit catchable `OperationalError("table … already exists")` lets us prove via re-check that the desired state was reached before swallowing — `IF NOT EXISTS` gives us no error to verify against.
 
@@ -117,7 +118,7 @@ from typing import Final
 
 SCHEMA: Final = (Path(__file__).parent / "schema.sql").read_text(encoding="utf-8")
 
-_EXPECTED_TABLES: Final = ("document", "document_property", "edge", "edge_property", "fts")
+_EXPECTED_TABLES: Final = ("node", "node_property", "edge_kind", "edge", "edge_property", "fts")
 
 
 def apply(conn: sqlite3.Connection) -> None:
@@ -150,26 +151,18 @@ def _schema_present(conn: sqlite3.Connection) -> bool:
     )
     row = conn.execute(sql, _EXPECTED_TABLES).fetchone()
     return row[0] == len(_EXPECTED_TABLES)
-            raise
-
-
-def _schema_present(conn: sqlite3.Connection) -> bool:
-    row = conn.execute(
-        "SELECT name FROM sqlite_master WHERE type='table' AND name='document'"
-    ).fetchone()
-    return row is not None
 ```
 
 ## Tests
 
 All tests use `:memory:` connections constructed directly — `migrations.py` doesn't need `FileDatabase` to exercise. Full annotations, `pytest.raises(Exc, match=...)` for error cases.
 
-1. `test_apply_creates_all_expected_tables` — fresh `:memory:` connection; call `apply`; introspect `sqlite_master` for every table in `_EXPECTED_TABLES` and every index (`idx_document_path`, `idx_document_property_key_value`, `idx_edge_kind_src`, `idx_edge_kind_dst`, `idx_edge_property_key_value`). The test imports `_EXPECTED_TABLES` from the module to keep the list in one place.
+1. `test_apply_creates_all_expected_tables` — fresh `:memory:` connection; call `apply`; introspect `sqlite_master` for every table in `_EXPECTED_TABLES` and every named index (`idx_node_property_key_value`, `idx_edge_kind_src`, `idx_edge_kind_dst`, `idx_edge_property_key_value`). The `node.uri` and `edge_kind.kind` uniqueness is enforced by `UNIQUE` constraints (auto-indexed), not by named `CREATE INDEX` statements, so they don't appear in this list. The test imports `_EXPECTED_TABLES` from the module to keep the list in one place.
 2. `test_apply_is_idempotent` — call `apply` twice; second call returns without raising; table list unchanged between calls.
-3. `test_apply_raises_on_partial_schema` — pre-create only `document` (without the rest); call `apply`. The function sees the schema as not-present (multi-table check fails), tries `executescript`, fails with `OperationalError("table document already exists")`, the race-recovery re-checks, schema is still not present (other tables missing), error propagates. Asserts partial corruption surfaces loudly.
-4. `test_apply_race_recovery_succeeds_when_schema_present` — monkeypatch `executescript` to raise `OperationalError("table document already exists")`, but pre-create every table in `_EXPECTED_TABLES` so `_schema_present` returns True after the raise. Assert `apply` returns normally.
+3. `test_apply_raises_on_partial_schema` — pre-create only `node` (without the rest); call `apply`. The function sees the schema as not-present (multi-table check fails), tries `executescript`, fails with `OperationalError("table node already exists")`, the race-recovery re-checks, schema is still not present (other tables missing), error propagates. Asserts partial corruption surfaces loudly.
+4. `test_apply_race_recovery_succeeds_when_schema_present` — monkeypatch `executescript` to raise `OperationalError("table node already exists")`, but pre-create every table in `_EXPECTED_TABLES` so `_schema_present` returns True after the raise. Assert `apply` returns normally.
 5. `test_apply_race_recovery_reraises_when_schema_absent` — same monkeypatch shape, but the schema is not present. Assert the original `OperationalError` propagates.
-6. `test_apply_does_not_swallow_non_already_exists_errors` — monkeypatch `executescript` to raise `OperationalError("disk I/O error")` *after* creating `document` (so `_schema_present` could lie if the marker were single-table — but with the multi-table check it correctly returns False). Even if `_schema_present` returned True, the error-text filter would reject this one. Assert the original `OperationalError` propagates.
+6. `test_apply_does_not_swallow_non_already_exists_errors` — monkeypatch `executescript` to raise `OperationalError("disk I/O error")` *after* creating `node` (so `_schema_present` could lie if the marker were single-table — but with the multi-table check it correctly returns False). Even if `_schema_present` returned True, the error-text filter would reject this one. Assert the original `OperationalError` propagates.
 7. `test_schema_constant_matches_file` — assert `SCHEMA` equals the contents of `schema.sql` on disk. Catches the case where someone hard-codes the constant in the module and forgets to load.
 
 Tests #3 through #6 are the load-bearing tests for the race-recovery logic — they cover the four-quadrant matrix of `(error text matches | doesn't) × (schema present | absent)` and verify only the "matches AND present" cell swallows.

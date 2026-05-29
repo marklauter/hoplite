@@ -1,9 +1,9 @@
 ---
 title: Venv bootstrap race on plugin install
 summary: SessionStart hook bootstraps a venv and pip-installs the MCP server; launch.py dispatches to it; subprocess.run replaces os.execv; poll-with-timeout defends against the MCP supervisor starting before the venv exists; venv tears down on pip failure so a half-installed state cannot wedge a session.
-tags: [journal, hoplite, mcp, bootstrap, venv, plugin, milestone]
-created: 2026-05-25
-aliases: []
+document:
+  tags: [journal, hoplite, mcp, bootstrap, venv, plugin, milestone]
+  created: 2026-05-25
 ---
 
 # Venv bootstrap race on plugin install

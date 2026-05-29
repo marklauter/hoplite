@@ -1,12 +1,12 @@
 ---
 title: Configurable corpus vaults replace single-root indexing
 summary: tools.set_root binds the index to one corpus root under cwd. Cross-repo knowledge graphs need a configurable collection of corpus vaults indexed into one catalog, with global vocabulary so BM25 IDF spans the union and per-vault tagging stays addressable.
-tags: [note, hoplite, mcp, corpus, config, design, todo]
-created: 2026-05-27
-aliases: []
-document.priority: medium
-document.effort: high
-document.status: open
+document:
+  tags: [note, hoplite, mcp, corpus, config, design, todo]
+  created: 2026-05-27
+  priority: medium
+  effort: high
+  status: open
 ---
 
 # Configurable corpus vaults replace single-root indexing

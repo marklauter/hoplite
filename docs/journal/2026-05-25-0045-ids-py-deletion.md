@@ -1,9 +1,9 @@
 ---
 title: ids.py deletion — 91 lines retired in one commit
 summary: The ids module — path-as-id validator, wikilink resolver, slugify_text — built the previous afternoon and committed at 19:15. Deleted at 00:45 the next morning when identity collapsed from three-tier (ULID + filename + integer-PK) to single-tier (path). 128 lines of tests retired alongside.
-tags: [journal, hoplite, refactor, identity, dead-end]
-created: 2026-05-25
-aliases: []
+document:
+  tags: [journal, hoplite, refactor, identity, dead-end]
+  created: 2026-05-25
 ---
 
 # ids.py deletion — 91 lines retired in one commit

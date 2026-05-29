@@ -1,9 +1,10 @@
 ---
 title: db.py — Database interface and FileDatabase implementation
 summary: `db.py` exposes a `Database` protocol with `open_rw` and `open_ro` methods that yield fresh `sqlite3.Connection` instances per call. `FileDatabase` is the day-one implementation; the interface is the seam for a future pool.
-tags: [note, sqlite, design, hoplite, architecture]
-created: 2026-05-27
-document.status: design
+document:
+  tags: [note, sqlite, design, hoplite, architecture]
+  created: 2026-05-27
+  status: design
 ---
 
 # db.py — Database interface and FileDatabase implementation
@@ -39,7 +40,7 @@ Caller shape:
 
 ```python
 with db.open_ro() as conn:
-    rows = conn.execute("SELECT path FROM document").fetchall()
+    rows = conn.execute("SELECT uri FROM node").fetchall()
 ```
 
 Connection lifetime equals the `with` block. No caching, no sharing, no thread-safety concerns. Two overlapping tool calls get independent connections that don't block each other under WAL.
@@ -137,7 +138,7 @@ Caller shape:
 ```python
 with db.open_rw() as conn:
     with write_transaction(conn):
-        conn.execute("DELETE FROM document")
+        conn.execute("DELETE FROM node")
         # ... walker bulk inserts ...
 ```
 

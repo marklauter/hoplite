@@ -12,15 +12,12 @@ See docs/hoplite/hoplite-architecture.md for the full architectural shape.
 from __future__ import annotations
 
 import hashlib
-import re
 import sqlite3
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Final, cast
 
-import yaml
-
-from hoplite import minhash, urls, wikilinks
+from hoplite import frontmatter, minhash, urls, wikilinks
 from hoplite.models import Document, Edge, WriteResult
 
 __all__ = [
@@ -54,11 +51,7 @@ def _empty_edge_props() -> dict[tuple[str, str, str], dict[str, list[str]]]:
     return {}
 
 
-# Frontmatter regex — matches `---\n...\n---\n` at the start of the file.
-# `\r?\n` covers both LF and CRLF line endings (Obsidian on Windows writes CRLF).
-_FRONTMATTER_RE: Final = re.compile(r"\A---\r?\n(.*?)\r?\n---\r?\n?", re.DOTALL)
-
-_REQUIRED_FIELDS: Final = ("title", "summary", "tags", "created")
+# Frontmatter parsing moved to hoplite.frontmatter (split, normalize, validate).
 
 
 # Single source of DDL for both the dump and the in-memory `:memory:` connection.
@@ -285,19 +278,16 @@ def walk(corpus_root: Path) -> Graph:
         except (OSError, UnicodeDecodeError) as exc:
             graph.warnings.append(f"{canonical}: read failed: {exc}")
             continue
-        meta, body = _parse_frontmatter(canonical, text, graph.warnings)
+        meta, body = frontmatter.parse(canonical, text, graph.warnings)
         if meta is None:
             continue
 
-        tags_value = meta["tags"]
-        aliases_value = meta.get("aliases", [])
-        if not isinstance(tags_value, list) or not isinstance(aliases_value, list):
-            graph.warnings.append(f"{canonical}: tags and aliases must be lists")
-            continue
+        # frontmatter.parse already validated document.tags / document.aliases as lists.
+        aliases_value = meta.get("document.aliases", [])
 
-        # Populate document_properties from the full frontmatter dict — every key,
-        # scalar or list, becomes one or more (key, value) entries.
-        graph.document_properties[canonical] = _frontmatter_to_props(meta)
+        # Node properties: document.* keys with the prefix stripped, tags casefolded;
+        # title/summary (FTS-only) and edge.* (stereotypes) are excluded.
+        graph.document_properties[canonical] = frontmatter.to_properties(meta)
 
         alias_strs = tuple(str(a) for a in cast(list[object], aliases_value))
 
@@ -317,7 +307,7 @@ def walk(corpus_root: Path) -> Graph:
         parsed.append((canonical, meta, body))
 
     # Pass 2: body load (already loaded above), edges, FTS, MinHash.
-    for canonical, _meta, body in parsed:
+    for canonical, meta, body in parsed:
         doc = graph.documents[canonical]
         # Wikilink mentions edges — dedupe per resolved target.
         seen_targets: set[str] = set()
@@ -359,10 +349,9 @@ def walk(corpus_root: Path) -> Graph:
         sig = minhash.signature(body)
         sig_bytes = minhash.to_bytes(sig)
         graph.documents[canonical] = _with_minhash(doc, sig_bytes)
-        # FTS5 row — title and summary from properties, body raw for tokenization.
-        props = graph.document_properties.get(canonical, {})
-        title = (props.get("title") or [""])[0]
-        summary = (props.get("summary") or [""])[0]
+        # FTS5 row — title/summary are bare first-class fields (not properties),
+        # read straight from the frontmatter; body raw for tokenization.
+        title, summary = frontmatter.fts_fields(meta)
         assert graph.fts is not None
         graph.fts.execute(
             "INSERT INTO fts (path, title, summary, body) VALUES (?, ?, ?, ?)",
@@ -382,60 +371,6 @@ def _setup_fts(graph: Graph) -> None:
     conn = sqlite3.connect(":memory:")
     conn.executescript(SCHEMA)
     graph.fts = conn
-
-
-def _frontmatter_to_props(meta: dict[str, Any]) -> dict[str, list[str]]:
-    """Project a parsed frontmatter dict into the EAV property shape.
-
-    Scalars become single-element lists. Lists become multi-element lists with
-    each element stringified. Empty lists produce no entry. Tag values get
-    casefolded so predicate lookups match case-insensitively.
-    """
-    props: dict[str, list[str]] = {}
-    for key, value in meta.items():
-        if isinstance(value, list):
-            items = cast(list[object], value)
-            if not items:
-                continue
-            if key == "tags":
-                props[key] = [str(item).casefold() for item in items]
-            else:
-                props[key] = [str(item) for item in items]
-        elif value is None:
-            continue
-        else:
-            props[key] = [str(value)]
-    return props
-
-
-def _parse_frontmatter(
-    canonical: str,
-    text: str,
-    warnings: list[str],
-) -> tuple[dict[str, Any] | None, str]:
-    """Split frontmatter from body and parse it; return (meta, body) or (None, "")."""
-    match = _FRONTMATTER_RE.match(text)
-    if match is None:
-        warnings.append(f"{canonical}: missing or unterminated frontmatter")
-        return None, ""
-    yaml_block = match.group(1)
-    body = text[match.end() :]
-    try:
-        raw_meta = yaml.safe_load(yaml_block)
-    except yaml.YAMLError as exc:
-        warnings.append(f"{canonical}: yaml parse error: {exc}")
-        return None, ""
-    if raw_meta is None:
-        raw_meta = {}
-    if not isinstance(raw_meta, dict):
-        warnings.append(f"{canonical}: frontmatter is not a mapping")
-        return None, ""
-    meta: dict[str, Any] = {str(k): v for k, v in cast(dict[object, object], raw_meta).items()}
-    missing = [f for f in _REQUIRED_FIELDS if f not in meta]
-    if missing:
-        warnings.append(f"{canonical}: missing mandatory fields: {missing}")
-        return None, ""
-    return meta, body
 
 
 def _with_minhash(doc: Document, sig_bytes: bytes) -> Document:

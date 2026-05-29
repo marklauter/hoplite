@@ -1,12 +1,12 @@
 ---
 title: Not-related stereotype subtracts from inferred related
 summary: not-related is the first structural-negative stereotype on the mentions edge — it labels a wikilink (or frontmatter edge entry) where the author declines an inferred similarity. The existing mention-skip logic gives it suppression behavior for free.
-tags: [note, hoplite, edges, stereotypes, not-related, design, todo]
-created: 2026-05-27
-aliases: []
-document.priority: low
-document.effort: medium
-document.status: open
+document:
+  tags: [note, hoplite, edges, stereotypes, not-related, design, todo]
+  created: 2026-05-27
+  priority: low
+  effort: medium
+  status: open
 ---
 
 # Not-related stereotype subtracts from inferred related

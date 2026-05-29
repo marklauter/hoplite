@@ -1,12 +1,12 @@
 ---
 title: Contradicts stereotype marks authored disagreement
 summary: contradicts is one of the v1 canonical stereotypes on the mentions edge — it labels a wikilink (or frontmatter edge entry) where the author argues against the target document. The negative-rhetorical signal grep cannot surface.
-tags: [note, hoplite, edges, stereotypes, contradicts, design, todo]
-created: 2026-05-27
-aliases: []
-document.priority: low
-document.effort: medium
-document.status: open
+document:
+  tags: [note, hoplite, edges, stereotypes, contradicts, design, todo]
+  created: 2026-05-27
+  priority: low
+  effort: medium
+  status: open
 ---
 
 # Contradicts stereotype marks authored disagreement

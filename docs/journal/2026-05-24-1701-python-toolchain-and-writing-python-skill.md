@@ -1,9 +1,9 @@
 ---
 title: Python toolchain and the writing-python skill
 summary: After spec wraps in the morning, the afternoon stands up the Python side — writing-python skill, writing-code component, ruff + pyright gate, src/tests layout for the MCP package. Tooling discipline locks in before any real code lands.
-tags: [journal, hoplite, mcp, python, tooling, milestone]
-created: 2026-05-24
-aliases: []
+document:
+  tags: [journal, hoplite, mcp, python, tooling, milestone]
+  created: 2026-05-24
 ---
 
 # Python toolchain and the writing-python skill

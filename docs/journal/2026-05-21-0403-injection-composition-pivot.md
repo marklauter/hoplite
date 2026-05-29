@@ -1,9 +1,9 @@
 ---
 title: Injection composition — the !`cat` pivot
 summary: SKILL.md learns it can inject other markdown files via `!`cat <path>`` at load time; editorial-principles becomes a component injected by writing-prose, taking-notes, and journaling; foundation/downstream coupling stops being convention and becomes mechanism.
-tags: [journal, skills, composition, injection, decision, milestone]
-created: 2026-05-21
-aliases: []
+document:
+  tags: [journal, skills, composition, injection, decision, milestone]
+  created: 2026-05-21
 ---
 
 # Injection composition — the !`cat` pivot

@@ -1,8 +1,9 @@
 ---
 title: Hoplite spec index
 summary: Entry point to the Hoplite spec corpus — architecture, tool API, roadmap, and the authoring components consuming skills pull from.
-tags: [hoplite, mcp, spec, index]
-created: 2026-05-25
+document:
+  tags: [hoplite, mcp, spec, index]
+  created: 2026-05-25
 ---
 
 # Hoplite spec index

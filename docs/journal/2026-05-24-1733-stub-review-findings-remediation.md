@@ -1,9 +1,9 @@
 ---
 title: Stub-review findings remediation
 summary: Echo-style stubs for the hoplite MCP tool surface went through a real review pass at 17:33 — 21 minutes after the stubs landed at 17:12. The review surfaced shape and contract issues that would have ridden through to the real implementations untouched if the stubs had been treated as throwaway.
-tags: [journal, hoplite, mcp, review, decision]
-created: 2026-05-24
-aliases: []
+document:
+  tags: [journal, hoplite, mcp, review, decision]
+  created: 2026-05-24
 ---
 
 # Stub-review findings remediation

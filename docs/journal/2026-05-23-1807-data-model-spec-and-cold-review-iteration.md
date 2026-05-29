@@ -1,9 +1,9 @@
 ---
 title: Data-model spec drafting and cold-review iteration
 summary: Draft the MCP graph runtime data-model spec; three cold-review passes tighten the sidecar shape, the envelope semantics, and the apply_framing scope; spec restructures into docs/mcp/ with a contracts/implementation split.
-tags: [journal, mcp, data-model, spec, cold-review, milestone]
-created: 2026-05-23
-aliases: []
+document:
+  tags: [journal, mcp, data-model, spec, cold-review, milestone]
+  created: 2026-05-23
 ---
 
 # Data-model spec drafting and cold-review iteration

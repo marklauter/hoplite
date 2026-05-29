@@ -1,9 +1,9 @@
 ---
 title: Traverse tests, version bump to 1.0.0, README rewrite
 summary: Focused unit tests for tools.traverse_nodes land; self-loop and mid-graph cycle coverage close gaps in the BFS path; armory and hoplite both bump 0.1.0 → 1.0.0; README rewrites around hoplite as agentic note-taking and knowledge graph.
-tags: [journal, hoplite, tests, release, readme, milestone]
-created: 2026-05-25
-aliases: []
+document:
+  tags: [journal, hoplite, tests, release, readme, milestone]
+  created: 2026-05-25
 ---
 
 # Traverse tests, version bump to 1.0.0, README rewrite

@@ -1,8 +1,9 @@
 ---
 title: Hoplite architecture
 summary: The Hoplite system as it is — corpus, graph, walker, FTS5, MinHash, dump schema, error model. One document covering the day-one shape end to end.
-tags: [hoplite, mcp, architecture, spec]
-created: 2026-05-25
+document:
+  tags: [hoplite, mcp, architecture, spec]
+  created: 2026-05-25
 ---
 
 # Hoplite architecture
@@ -193,19 +194,7 @@ Pairwise scan is O(N²) but cheap at scale — 128-int Jaccard comparisons run i
 
 ## Text search — FTS5 and BM25
 
-Hoplite holds an in-memory `:memory:` SQLite database with one FTS5 virtual table for BM25 scoring:
-
-```sql
-CREATE VIRTUAL TABLE fts USING fts5(
-    path UNINDEXED,
-    title,
-    summary,
-    body,
-    tokenize = 'porter unicode61'
-);
-```
-
-`path` is `UNINDEXED` because it's never queried as a search term — it rides along as a result column.
+Hoplite's `fts` FTS5 virtual table is scored by BM25. Its definition — the indexed columns, the `UNINDEXED` locator that ties a hit back to its node, and the tokenizer — lives in [`schema.sql`](../../plugins/hoplite/mcp/src/hoplite/schema.sql), not duplicated here.
 
 `where` runs:
 
@@ -256,62 +245,7 @@ Per-query stat-checking is the most-likely future upgrade (see [[docs/hoplite/ho
 
 The schema mirrors the in-memory `Graph` shape one-to-one. The whole point of the export is to see exactly what's in memory; the dump adds no indirection the runtime doesn't already carry.
 
-```sql
-CREATE TABLE document (
-  id INTEGER PRIMARY KEY,
-  path TEXT NOT NULL UNIQUE,
-  resolved INTEGER NOT NULL,
-  content_hash TEXT,
-  minhash BLOB
-);
-CREATE INDEX idx_document_path ON document(path);
-
-CREATE TABLE document_property (
-  id INTEGER NOT NULL REFERENCES document(id),
-  key TEXT NOT NULL,
-  value TEXT NOT NULL,
-  PRIMARY KEY (id, key, value)
-);
-CREATE INDEX idx_document_property_key_value ON document_property(key, value);
-
-CREATE TABLE edge (
-  id INTEGER PRIMARY KEY,
-  src INTEGER NOT NULL REFERENCES document(id),
-  dst INTEGER NOT NULL REFERENCES document(id),
-  kind TEXT NOT NULL,
-  confidence REAL NOT NULL,
-  UNIQUE (src, dst)
-);
-CREATE INDEX idx_edge_kind_src ON edge(kind, src, dst, confidence);
-CREATE INDEX idx_edge_kind_dst ON edge(kind, dst, src, confidence);
-
-CREATE TABLE edge_property (
-  id INTEGER NOT NULL REFERENCES edge(id),
-  key TEXT NOT NULL,
-  value TEXT NOT NULL,
-  PRIMARY KEY (id, key, value)
-);
-CREATE INDEX idx_edge_property_key_value ON edge_property(key, value);
-
-CREATE VIRTUAL TABLE fts USING fts5(
-  path UNINDEXED,
-  title,
-  summary,
-  body,
-  tokenize = 'porter unicode61'
-);
-```
-
-Notes:
-
-- `document.id` is an `INTEGER PRIMARY KEY` (rowid alias) assigned by the dump writer in iteration order; `document.path` is the natural key, kept UNIQUE with an explicit `idx_document_path` so wikilink-style lookups stay fast. Every other persisted table — `document_property`, `edge`, `edge_property` — joins back through `document.id`, so relational traversal is integer-keyed throughout the dump. Runtime `Graph.documents`, `Graph.document_properties`, `Graph.out_edges`, and `Graph.edge_properties` still key on path strings; the path → id translation happens only at dump time, threaded through the writers via a single `path_to_id` map built when `document` rows are emitted.
-- `edge.id` is also an `INTEGER PRIMARY KEY` (rowid alias). `(src, dst)` is `UNIQUE` rather than part of a composite key — at most one edge connects a given ordered pair, even across kinds. The walker enforces this implicitly: `mentions` targets resolved docs or ghosts, `cites` targets URL nodes (disjoint target domains), and `related` skips pairs already mentioned, so collisions never arise in practice. The constraint codifies that invariant. Edge traversal is kind-first: `idx_edge_kind_src` covers `WHERE kind = ? AND src = ?` (outbound), `idx_edge_kind_dst` covers `WHERE kind = ? AND dst = ?` (inbound). Both include `confidence` as the trailing column, so ranking queries — top-N `related` from a node, ordered by Jaccard — are covered without touching the table heap.
-- `document.resolved` flags ghost/URL/real. Ghosts (`path` starting with `ghost/`) have `resolved = 0`, `content_hash` and `minhash` `NULL`, and a synthetic `tags: ['ghost']` row in `document_property`. URL nodes (`path` starting with `http://`/`https://`) have the same shape but with `tags: ['url']`.
-- The dump is a byte-for-byte mirror of in-memory state. The dump's `fts` table replays `path`, `title`, `summary`, and `body` straight from the in-memory FTS5 connection — so a snapshot reflects exactly what the running server is matching against, with no shape drift between live and dumped indexes. FTS joins back to `document` via the `path` column (UNINDEXED but stored, so `SELECT path FROM fts WHERE fts MATCH ...` works directly).
-- `document_property` holds every frontmatter field — `title`, `summary`, `created`, `tags`, `aliases`, and any user-defined keys. Array fields produce one row per element. SQLite type-affinity preserves authored type — `priority: 5` stores `5` as integer even though the column is declared TEXT.
-- Inverted lookups ("which paths have `key='tags' AND value='hoplite'`?") run against `idx_document_property_key_value`. The forward direction (start from a known path) uses the PRIMARY KEY. Same rows, different B-tree orderings.
-- Edges carry topology plus `confidence` directly. The score is load-bearing for `relatives` ranking, so it sits on the edge row rather than detouring through `edge_property`. Anything beyond confidence rides in `edge_property` keyed on the same `(src, dst, kind)` triple.
-- A polymorphic-node `node(id, kind)` table is *not* present. The path prefix (`docs/`, `ghost/`, `http://`, `https://`) is the kind discriminator at both layers; specialization tables can be added the day a node kind earns columns of its own.
+The DDL is **not** reproduced here — [`schema.sql`](../../plugins/hoplite/mcp/src/hoplite/schema.sql) is the single source of truth, and its own comments carry the per-table and per-index rationale (the EAV property shape, the `WITHOUT ROWID` property tables, the asymmetric edge traversal indexes, `COLLATE NOCASE` identity). Keeping the explanation next to the DDL it describes is what stops the two from drifting apart — pasting the schema into prose here is exactly how this section once came to document a `document` table the schema had already renamed to `node`.
 
 The dump operation opens the destination, drops any prior tables (so the file is fully overwritten), runs the DDL above, bulk-inserts from the in-memory dicts, and returns a `WriteResult` with the absolute output path and row counts per entity.
 

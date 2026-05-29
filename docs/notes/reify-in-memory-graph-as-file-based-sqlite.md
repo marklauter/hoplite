@@ -1,11 +1,12 @@
 ---
 title: Reify the in-memory graph as a file-based SQLite database
 summary: The in-memory graph model has stabilized across several iterations; revisit persistent file-based SQLite so cold-start cost stops scaling with corpus size.
-tags: [note, todo, sqlite, graph]
-created: 2026-05-27
-document.priority: high
-document.effort: high
-document.status: in-progress
+document:
+  tags: [note, todo, sqlite, graph]
+  created: 2026-05-27
+  priority: high
+  effort: high
+  status: in-progress
 ---
 
 # Reify the in-memory graph as a file-based SQLite database
@@ -48,8 +49,10 @@ Until then, the in-memory model is fine. This note exists so the option is visib
 
 Trigger fired 2026-05-27 on a different axis than the ones listed above — the user is running many Claude Code windows against the same corpus and wants the graph shared across processes with no per-window cold start. WAL mode plus persistent file storage gives many-readers-one-writer concurrency for free. Execution plan lives at [[docs/notes/db-refactor.md]].
 
-## Open questions
+## Resolved
 
-- Reuse the existing dump SQLite schema, or design fresh now that storage is authoritative rather than debug?
-- Stat-and-hash divergence check on every query, or an explicit reindex with file-watcher detection?
-- Does this compose with [[docs/notes/swap-in-memory-graph-dicts-for-a-property-graph-object-model.md]], or do those two directions sit on different axes (runtime shape vs durability)?
+The trigger fired and the work is underway; the execution plan is [[docs/notes/db-refactor.md]]. The open questions resolved as:
+
+- **Schema designed fresh, not reused from the dump.** Storage is authoritative now, so the schema was reworked into `node`/`node_property`/`edge` (interned `edge_kind`)/`edge_property`/`fts`, with `COLLATE NOCASE` doing case-insensitive matching. See `plugins/hoplite/mcp/src/hoplite/schema.sql`.
+- **Explicit `refresh`, not stat-and-hash on every query.** Day-one is truncate-and-rebuild on a manual `refresh`; divergence-based reconcile is deferred (db-refactor "Held for future").
+- **The in-memory graph is retired, not kept as a peer.** SQLite is the only implementation; there is no Protocol and no two-impl split. [[docs/notes/swap-in-memory-graph-dicts-for-a-property-graph-object-model.md]] is superseded — its property-graph object model is realized directly in the SQLite schema rather than as an in-memory shape.

@@ -1,14 +1,14 @@
 ---
 title: Stereotypes are open-vocab edge properties
-summary: A stereotype is an open-vocabulary label attached to an edge (or document property), stored EAV-style in edge_property parallel to how tags work in document_property. Two authoring surfaces — inline wikilink and class-prefixed frontmatter — materialize identical storage; authors pick by whether the assertion is rhetorical-in-context or categorical.
-tags: [note, hoplite, edges, stereotypes, design, todo]
-created: 2026-05-27
-aliases: []
+summary: A stereotype is an open-vocabulary label attached to an edge (or node property), stored EAV-style in edge_property parallel to how tags work in node_property. Two authoring surfaces — inline wikilink and class-prefixed frontmatter — materialize identical storage; authors pick by whether the assertion is rhetorical-in-context or categorical.
+document:
+  tags: [note, hoplite, edges, stereotypes, design, todo]
+  created: 2026-05-27
 ---
 
 # Stereotypes are open-vocab edge properties
 
-A stereotype is an open-vocabulary label attached to an edge (or document property), stored EAV-style in `edge_property` parallel to how tags work in `document_property`. Two authoring surfaces — inline wikilink and class-prefixed frontmatter — materialize identical storage; authors pick by whether the assertion is rhetorical-in-context or categorical.
+A stereotype is an open-vocabulary label attached to an edge (or node property), stored EAV-style in `edge_property` parallel to how tags work in `node_property`. Two authoring surfaces — inline wikilink and class-prefixed frontmatter — materialize identical storage; authors pick by whether the assertion is rhetorical-in-context or categorical.
 
 ## Why this abstraction
 
@@ -26,9 +26,9 @@ A stereotype is an open-vocabulary label attached to an edge (or document proper
 
 [Observation] `Edge.confidence` is already a first-class column (shipped earlier this cycle — see [[docs/journal/2026-05-27-1845-related-edges-land-and-rank-replaces-threshold.md]]). `mentions` and `cites` carry `1.0`; `related` carries its similarity score.
 
-[Inference] Stereotypes do not extend the `Edge` schema. They live as `edge_property` rows with the shape `(src, dst, kind, "stereotype", <value>)`. Same EAV layout as document tags, which sit in `document_property` as `(path, "tags", <value>)`.
+[Inference] Stereotypes do not extend the `edge` schema. They live as `edge_property` rows with the shape `(edge_id, "stereotype", <value>)`, where `edge_id` is the integer `edge.id` of the labeled edge. Same EAV layout as node tags, which sit in `node_property` as `(node_id, "tags", <value>)`.
 
-[Inference] The primary key on `Edge` stays `(src, dst, kind)`. Multiple stereotype rows per edge are allowed and expected — an author saying `[[supports:B]]` in one paragraph and `[[questions:B]]` in another produces one edge plus two stereotype property rows.
+[Inference] The `edge` table has an integer `id` primary key and `UNIQUE (src, dst)` — at most one edge per ordered pair, regardless of kind. Since stereotypes label the single `mentions` edge between a pair, multiple stereotype rows per edge are allowed and expected: an author saying `[[supports:B]]` in one paragraph and `[[questions:B]]` in another produces one `mentions` edge plus two `edge_property` rows keyed by that edge's `id`.
 
 ## Authoring surfaces
 
@@ -42,17 +42,18 @@ Two surfaces inject identical rows. The author picks based on whether the assert
 - `[[supports:docs/notes/foo.md|short reason]]` — endorsement; pipe-alias still works as the human-readable label.
 - `[[not-related:ghost/some-slug]]` — assertion against an unwritten document; composes with ghost targets.
 
-[Inference] The resolver change is localized to the warning gate at `plugins/hoplite/mcp/src/hoplite/graph.py:327-329`, which currently accepts `docs/` or `ghost/` prefixes. Extending it to recognize `<stereotype>:<path>` shapes and dispatch into the stereotype-emit branch is a single parser change.
+[Inference] The change is localized to the wikilink-validation gate in the walker's pass 2 (see [[docs/notes/walker-py-design.md]] "Wikilink mentions edges"), which accepts `docs/` or `ghost/` prefixes. Extending it to recognize `<stereotype>:<path>` shapes and dispatch into the stereotype-emit branch — materialize the `mentions` edge, then add the `edge_property` row — is a localized parser change.
 
 ### Frontmatter with class prefix
 
-Property keys carry a mandatory dot-separated class prefix — `document.` or `edge.` — declaring which side of the property graph the key affects. `title` and `summary` stay bare: they are first-class fields on a document (FTS-indexed, single-valued by construction), not properties. Everything else that lives in `document_property` or `edge_property` is prefixed:
+Property keys carry a mandatory dot-separated class prefix — `document.` or `edge.` — declaring which side of the property graph the key affects. `title` and `summary` stay bare: they are first-class fields on a node (FTS-indexed, single-valued by construction), not properties. Everything else that lives in `node_property` or `edge_property` is prefixed:
 
 ```yaml
 title: Stereotypes are open-vocab edge properties
 summary: A stereotype is an open-vocabulary label...
-document.tags: [note, hoplite, edges, stereotypes]
-document.created: 2026-05-27
+document:
+  tags: [note, hoplite, edges, stereotypes]
+  created: 2026-05-27
 edge.contradicts: [docs/notes/foo.md, docs/notes/bar.md]
 edge.supports: [docs/notes/baz.md]
 edge.not-related: [docs/notes/qux.md]
@@ -94,7 +95,7 @@ edge:
 
 ## Mention-skip implications
 
-[Inference] Today's `_emit_related_edges` skip-set at `plugins/hoplite/mcp/src/hoplite/graph.py` already excludes any `(src, dst)` pair connected by a `mentions` edge from the inferred-related pass. The logic does not inspect stereotypes — every `mentions` edge counts.
+[Inference] The related-edge aggregate pass already excludes any `(src, dst)` pair connected by a `mentions` edge from the inferred-related pass (the mentions skip-set — see [[docs/notes/walker-py-design.md]] "Aggregate pass: related edges"). The logic does not inspect stereotypes — every `mentions` edge counts.
 
 [Inference] `not-related` therefore gets its suppression behavior for free under this model. An author writing `[[not-related:B]]` materializes a `mentions` edge with `stereotype = not-related`, and the existing skip-set logic excludes the pair from the inferred related pass. No code change needed for the suppression mechanism.
 
@@ -108,7 +109,7 @@ edge:
 
 Two adjacent design problems sit outside the v1 stereotype proposal:
 
-- Migration. Every existing document carries unprefixed frontmatter (`title:`, `summary:`, `tags:`, `created:`). Adopting the class-prefixed shape is a breaking format change requiring a corpus-wide rewrite pass. Tracked for a separate session.
+- Migration. **Done 2026-05-29** — the corpus-wide property-key rewrite landed: `tags`/`created`/`aliases` → `document.tags`/`document.created`/`document.aliases` across every `.md` under `docs/`, with `title`/`summary` left bare. The frontmatter hook and the canonical `frontmatter.md` component were flipped to the prefixed contract in the same pass. What remains for this stereotype epic is only the `edge.<stereotype>` *emit path* (parser + walker writing the `edge_property` rows), not the property-key rename.
 - Edge-level properties beyond stereotype. A frontmatter shape like `edge.tags: [important]` runs into an addressing problem — which edge gets the tags? The flat `edge.<key>: [values]` form maps cleanly when `<values>` are target paths (the stereotype case), and breaks down when `<values>` are property values for an already-existing edge. Defer until a concrete use case forces the design.
 
 ## Open questions

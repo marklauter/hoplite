@@ -1,9 +1,9 @@
 ---
 title: MCP runtime thesis and the hello-world server
 summary: MCP hello-world server lands in the skills plugin; the runtime-thesis note captures the reframe — MCP is the runtime for a knowledge-graph-backed content layer, not just write-path transport for bash replacement.
-tags: [journal, mcp, thesis, architecture, milestone]
-created: 2026-05-21
-aliases: []
+document:
+  tags: [journal, mcp, thesis, architecture, milestone]
+  created: 2026-05-21
 ---
 
 # MCP runtime thesis and the hello-world server

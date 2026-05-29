@@ -1,9 +1,9 @@
 ---
 title: SQLite-hybrid wins; file-based dropped; paths-as-ids; hoplite naming
 summary: SQLite-hybrid lands as a peer implementation to the file-based design, then displaces it as the day-one target; storage restructures so docs/ holds content and .hoplite/ holds the index; paths become the natural-key identity; the package renames hoplite_mcp; label expressions land on match and traverse.
-tags: [journal, hoplite, mcp, sqlite, architecture, milestone]
-created: 2026-05-24
-aliases: []
+document:
+  tags: [journal, hoplite, mcp, sqlite, architecture, milestone]
+  created: 2026-05-24
 ---
 
 # SQLite-hybrid wins; file-based dropped; paths-as-ids; hoplite naming

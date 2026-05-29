@@ -1,12 +1,12 @@
 ---
 title: Refactor taking-notes to ambient-instructions model
 summary: taking-notes still reads as an imperative runbook (Recording a note has four steps...) that loads as marching orders; rework it the way journaling was reworked — declarative description that loads as reference.
-tags: [note, todo, skills, taking-notes, claude-code]
-created: 2026-05-26
-aliases: []
-document.priority: medium
-document.effort: medium
-document.status: open
+document:
+  tags: [note, todo, skills, taking-notes, claude-code]
+  created: 2026-05-26
+  priority: medium
+  effort: medium
+  status: open
 ---
 
 # Refactor taking-notes to ambient-instructions model

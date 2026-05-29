@@ -11,7 +11,12 @@ catches the structural issues that are cheap to detect:
 
 - Missing opening ``---`` fence.
 - Missing closing ``---`` fence.
-- Any of the four mandatory keys (title, summary, tags, created) absent.
+- Any of the four mandatory keys (title, summary, document.tags, document.created) absent.
+  ``title`` and ``summary`` are bare first-class fields; ``document.tags`` and
+  ``document.created`` carry the ``document.`` class prefix like every other property.
+  Both the flat dotted form (``document.tags``) and the nested mapping form
+  (``document:`` then an indented ``tags:``) are recognized — the scanner flattens
+  nested ``document:`` / ``edge:`` blocks to dotted keys, mirroring the indexer.
 
 Wrong types, typos in keys, malformed YAML — left to the indexer.
 
@@ -25,7 +30,9 @@ import sys
 from pathlib import Path
 
 WATCHED_TOOLS = {"Write", "Edit", "MultiEdit"}
-REQUIRED_FIELDS = {"title", "summary", "tags", "created"}
+REQUIRED_FIELDS = {"title", "summary", "document.tags", "document.created"}
+# Top-level keys whose indented mapping expands into dotted keys (the nested form).
+NESTED_CLASSES = {"document", "edge"}
 
 _FRONTMATTER_GUIDANCE = """\
 {{components/shape/frontmatter.md}}
@@ -63,14 +70,28 @@ def _frontmatter_issue(path: Path) -> str | None:
         return "missing closing --- fence"
 
     keys: set[str] = set()
+    nested_class: str | None = None  # set while inside a `document:`/`edge:` block
     for line in lines[1:closing_idx]:
-        if not line or line[0].isspace():
+        if not line or line.lstrip().startswith("#"):
             continue
-        if line.lstrip().startswith("#"):
-            continue
+        indented = line[0].isspace()
         if ":" not in line:
+            if not indented:
+                nested_class = None  # a non-mapping top-level line closes any block
             continue
-        keys.add(line.split(":", 1)[0].strip())
+        key = line.split(":", 1)[0].strip()
+        if indented:
+            if nested_class is not None:
+                keys.add(f"{nested_class}.{key}")
+            continue
+        # Top-level line. An empty value after `class:` opens a nested block;
+        # anything else is a flat key and closes any open block.
+        value = line.split(":", 1)[1].strip()
+        if not value and key in NESTED_CLASSES:
+            nested_class = key
+        else:
+            nested_class = None
+            keys.add(key)
 
     missing = sorted(REQUIRED_FIELDS - keys)
     if missing:
