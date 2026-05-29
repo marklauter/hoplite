@@ -1,4 +1,6 @@
 import sqlite3
+import subprocess
+import sys
 from pathlib import Path
 from typing import cast
 
@@ -82,6 +84,69 @@ def test_open_ro_uri_form_works(tmp_path: Path) -> None:
     with db.open_ro() as conn:
         row = conn.execute("SELECT x FROM t").fetchone()
         assert row[0] == 42
+
+
+_CRASH_WRITER = """
+import os, sys
+from pathlib import Path
+from hoplite.db import FileDatabase
+
+db = FileDatabase(Path(sys.argv[1]))
+cm = db.open_rw()            # hold the cm so GC can't run the generator's close
+conn = cm.__enter__()
+conn.execute("CREATE TABLE IF NOT EXISTS t (x INTEGER)")
+conn.execute(f"INSERT INTO t VALUES ({int(sys.argv[2])})")
+os._exit(0)                  # die without a clean close: leaves an orphaned WAL
+"""
+
+
+def _crash_write(dbpath: Path, value: int) -> None:
+    """Write a committed row, then hard-exit before checkpoint.
+
+    Autocommit lands the row in the -wal; ``os._exit`` skips the clean close
+    (and its checkpoint), leaving an orphaned WAL the next opener must recover.
+    """
+    result = subprocess.run(
+        [sys.executable, "-c", _CRASH_WRITER, str(dbpath), str(value)],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, result.stderr
+
+
+@pytest.mark.parametrize("delete_shm", [False, True])
+def test_open_ro_recovers_orphaned_wal(tmp_path: Path, delete_shm: bool) -> None:
+    """A genuinely read-only connection recovers a crash-orphaned WAL.
+
+    The query path opens ``mode=ro`` against a live WAL database. If a writer
+    crashes mid-refresh, committed frames sit in the -wal that the main db file
+    has never seen. ``mode=ro`` restricts writes to the *database*, not to the
+    WAL-recovery sidecar files, so recovery still works as long as the directory
+    is writable (it always is — the writer owns ``.hoplite/``). Verified both
+    with the -shm present and deleted, the latter forcing shm recreation.
+    """
+    path = tmp_path / "idx.sqlite"
+    _crash_write(path, 4242)
+
+    # The row lives ONLY in the WAL: reading the main file alone can't see it.
+    # immutable=1 tells SQLite to ignore the WAL and read the base file as-is.
+    main_only = sqlite3.connect(f"{path.as_uri()}?immutable=1", uri=True)
+    try:
+        with pytest.raises(sqlite3.OperationalError, match="no such table"):
+            main_only.execute("SELECT x FROM t").fetchall()
+    finally:
+        main_only.close()
+
+    if delete_shm:
+        (tmp_path / "idx.sqlite-shm").unlink()
+
+    db = FileDatabase(path)
+    with db.open_ro() as conn:
+        # The connection is genuinely read-only...
+        with pytest.raises(sqlite3.OperationalError, match="readonly"):
+            conn.execute("INSERT INTO t VALUES (1)")
+        # ...yet it replayed the orphaned WAL.
+        assert conn.execute("SELECT x FROM t").fetchone()[0] == 4242
 
 
 def test_open_rw_independent_connections_see_committed_data(tmp_path: Path) -> None:

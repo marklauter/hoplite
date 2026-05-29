@@ -99,11 +99,16 @@ class FileDatabase:
         # the new snapshot), but a file-swap refresh would strand a pooled
         # connection on the old inode, so revisit when that decision lands.
         #
-        # immutable=0 is the default, stated for intent: a refresh mutates this
-        # file, so we cannot tell SQLite it never changes. Consequence: a WAL
-        # database opened read-only still requires the process to open the -shm
-        # wal-index, so a genuinely read-only filesystem would fail to open here.
-        uri = f"{self._path.as_uri()}?mode=ro&immutable=0"
+        # mode=ro only, and deliberately NO immutable flag. immutable=1 would
+        # tell SQLite the file never changes and skip WAL recovery — but a
+        # refresh mutates this file, and we rely on recovery of an orphaned WAL
+        # (verified to work here even with -shm deleted). immutable defaults to
+        # 0, so omitting it is the correct state; spelling out immutable=0 is a
+        # no-op that only reads as if it did something.
+        # Consequence of plain mode=ro on a WAL database: the process must still
+        # be able to open the -shm wal-index, so a genuinely read-only
+        # filesystem would fail to open here.
+        uri = f"{self._path.as_uri()}?mode=ro"
         try:
             conn = sqlite3.connect(uri, isolation_level=None, timeout=5.0, uri=True)
         except sqlite3.OperationalError as e:
