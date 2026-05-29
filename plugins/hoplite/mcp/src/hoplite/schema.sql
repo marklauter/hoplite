@@ -15,11 +15,16 @@ CREATE TABLE document_property (
 );
 CREATE INDEX idx_document_property_key_value ON document_property(key, value);
 
+CREATE TABLE edge_kind (
+  id INTEGER PRIMARY KEY,
+  kind TEXT NOT NULL UNIQUE
+);
+
 CREATE TABLE edge (
   id INTEGER PRIMARY KEY,
   src INTEGER NOT NULL REFERENCES document(id),
   dst INTEGER NOT NULL REFERENCES document(id),
-  kind TEXT NOT NULL,
+  kind INTEGER NOT NULL REFERENCES edge_kind(id),
   confidence REAL NOT NULL,
   UNIQUE (src, dst)
 );
