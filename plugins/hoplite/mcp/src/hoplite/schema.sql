@@ -1,19 +1,19 @@
-CREATE TABLE document (
+CREATE TABLE node (
   id INTEGER PRIMARY KEY,
-  path TEXT NOT NULL UNIQUE,
+  uri TEXT NOT NULL UNIQUE,
   resolved INTEGER NOT NULL,
   content_hash TEXT,
   minhash BLOB
 );
-CREATE INDEX idx_document_path ON document(path);
+CREATE INDEX idx_node_uri ON node(uri);
 
-CREATE TABLE document_property (
-  id INTEGER NOT NULL REFERENCES document(id),
+CREATE TABLE node_property (
+  id INTEGER NOT NULL REFERENCES node(id),
   key TEXT NOT NULL,
   value TEXT NOT NULL,
   PRIMARY KEY (id, key, value)
 );
-CREATE INDEX idx_document_property_key_value ON document_property(key, value);
+CREATE INDEX idx_node_property_key_value ON node_property(key, value);
 
 CREATE TABLE edge_kind (
   id INTEGER PRIMARY KEY,
@@ -22,8 +22,8 @@ CREATE TABLE edge_kind (
 
 CREATE TABLE edge (
   id INTEGER PRIMARY KEY,
-  src INTEGER NOT NULL REFERENCES document(id),
-  dst INTEGER NOT NULL REFERENCES document(id),
+  src INTEGER NOT NULL REFERENCES node(id),
+  dst INTEGER NOT NULL REFERENCES node(id),
   kind INTEGER NOT NULL REFERENCES edge_kind(id),
   confidence REAL NOT NULL,
   UNIQUE (src, dst)
@@ -40,7 +40,7 @@ CREATE TABLE edge_property (
 CREATE INDEX idx_edge_property_key_value ON edge_property(key, value);
 
 CREATE VIRTUAL TABLE fts USING fts5(
-  path UNINDEXED,
+  uri UNINDEXED,
   title,
   summary,
   body,
