@@ -90,6 +90,15 @@ class FileDatabase:
 
     @contextmanager
     def open_ro(self) -> Generator[sqlite3.Connection, None, None]:
+        # TODO(pooling): reads connect-read-close, so every request discards the
+        # SQLite page cache and tears down the mmap mapping; the 256MB mmap_size
+        # and page cache only pay off across a connection's lifetime. A warm,
+        # long-lived RO connection (a pool of one is enough — WAL allows many
+        # concurrent readers) would keep both hot across requests. Gated on the
+        # refresh strategy: safe if refresh is in-place (WAL hands the next read
+        # the new snapshot), but a file-swap refresh would strand a pooled
+        # connection on the old inode, so revisit when that decision lands.
+        #
         # immutable=0 is the default, stated for intent: a refresh mutates this
         # file, so we cannot tell SQLite it never changes. Consequence: a WAL
         # database opened read-only still requires the process to open the -shm
