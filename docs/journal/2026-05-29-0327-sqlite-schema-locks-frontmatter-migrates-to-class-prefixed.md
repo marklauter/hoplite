@@ -45,22 +45,6 @@ Rebased the whole design-note cluster onto this: deleted the dead Protocol note 
 
 [Observation] Dotted and nested YAML are not natively identical — `yaml.safe_load` gives `{"document.tags": …}` for the flat form and `{"document": {"tags": …}}` for the nested form. Plain YAML has no dotted-path semantics; `frontmatter._normalize` flattens the nested mapping to dotted keys at the application level. Verified flat and nested produce identical properties and stereotypes. pyright and ruff clean.
 
-## Edge indexes settled by access pattern
-
-[Decision] The edge indexes are asymmetric, one purpose per leading column, because seeking by kind-alone and by node-alone need different leading columns — no single index serves both. `idx_edge_kind_src (kind, src, dst, confidence)` stays kind-leading: it covers global "all edges of kind K" enumeration (the related-edge pass needs every `mentions` pair) and forward kind-filtered traversal. `idx_edge_dst (dst, kind, src, confidence)` leads with `dst` — the reverse/"backtrack" index, a covering seek for both any-kind (`dst` alone) and kind-filtered (`dst, kind`) reverse walks. Forward any-kind rides the `UNIQUE(src, dst)` auto-index. The recursive-CTE traversal depends on these: each hop is an indexed seek, and the `id` rowid rides every index for free, so a walk reads the edge_property join key without a heap touch.
-
-[Observation] Verified, not assumed. `EXPLAIN QUERY PLAN` reports all five access patterns — forward any-kind, forward kind-filtered, reverse any-kind, reverse kind-filtered, global by-kind — as `SEARCH` (seek), none as `SCAN`. Four are `COVERING`.
-
-[Dead end] First reordered both indexes to anchor-leading (`src`-first and `dst`-first) for symmetry. That broke `WHERE kind = ?` enumeration to a full `SCAN edge`, because anchor-leading drops the kind-alone seek. Reverted the forward index to kind-leading. The asymmetry is the design; the symmetric pair was the regression.
-
-## Docs point to schema, never repeat it
-
-[Observation] [[docs/hoplite/hoplite-architecture.md]] had drifted to describe a `document` table the schema renamed to `node` — because it pasted the DDL inline, a second copy that silently fell out of sync with the source.
-
-[Decision] Documentation references driftable content by file, never reproduces it. Replaced both inline DDL blocks in the architecture spec — the dump schema and the FTS table — with a markdown link to [`schema.sql`](../../plugins/hoplite/mcp/src/hoplite/schema.sql), the single source of truth, whose own comments now carry the per-table and per-index rationale. The explanation lives next to the thing it explains, so the two cannot drift apart.
-
-[Deferral] The spec's deeper staleness — the in-memory framing, the `where`/`relatives`/`export`-as-debug tool model, `document`/`path` vocabulary in prose — is a separate rewrite, held until the store and tools layers exist. Rewriting the conceptual model now would document a design that does not exist yet — the same drift trap one level up.
-
 ## Next
 
 - Step 5: `walker.py`, consuming `frontmatter.py` and writing the locked schema.
