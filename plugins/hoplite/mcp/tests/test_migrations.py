@@ -14,7 +14,7 @@ from hoplite.migrations import (  # pyright: ignore[reportPrivateUsage]
 _EXPECTED_INDEXES = (
     "idx_node_property_key_value",
     "idx_edge_kind_src",
-    "idx_edge_kind_dst",
+    "idx_edge_dst",
     "idx_edge_property_key_value",
 )
 

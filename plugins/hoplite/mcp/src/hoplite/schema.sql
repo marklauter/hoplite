@@ -62,11 +62,26 @@ CREATE TABLE edge (
   confidence REAL NOT NULL,
   UNIQUE (src, dst)
 );
--- Traversal indexes: walk edges of a given kind outward from a src, or inward
--- to a dst. Each leads with kind then the anchor node; the trailing columns let
--- a walk read its neighbors and confidence straight from the index.
+-- Edge indexes, asymmetric by design — the two directions have different
+-- access patterns, so they lead with different columns:
+--
+--   idx_edge_kind_src — kind-leading. Serves global "all edges of kind K"
+--     enumeration (e.g. every `mentions` edge, unanchored) AND forward
+--     kind-filtered traversal (seek kind+src), both as covering seeks.
+--     Forward any-kind traversal (src alone) doesn't use this index — the
+--     UNIQUE(src,dst) auto-index gives it a clean src seek, just non-covering
+--     so kind/confidence cost a row lookup per edge.
+--
+--   idx_edge_dst — anchor-leading on dst. Serves reverse / "backtrack"
+--     traversal both any-kind (seek dst) and kind-filtered (seek dst+kind) as
+--     covering seeks. Reverse needs no kind-leading index of its own: global
+--     by-kind enumeration is direction-agnostic, already covered above.
+--
+-- Trailing neighbor + confidence make each index covering for a walk. Seeking
+-- by kind-alone and by dst-alone need different leading columns; that is why
+-- this is two purpose-built indexes, not one symmetric pair.
 CREATE INDEX idx_edge_kind_src ON edge(kind, src, dst, confidence);
-CREATE INDEX idx_edge_kind_dst ON edge(kind, dst, src, confidence);
+CREATE INDEX idx_edge_dst ON edge(dst, kind, src, confidence);
 
 -- Typed key/value attributes hung on an edge — the same shape as node_property,
 -- but qualifying a relationship rather than a node.
