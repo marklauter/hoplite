@@ -32,13 +32,13 @@ CREATE TABLE node (
 -- metadata (tags, status, and the like). This is the data the property-graph
 -- filter searches when answering "which nodes have this property?".
 CREATE TABLE node_property (
-  id INTEGER NOT NULL REFERENCES node(id),
+  nodeid INTEGER NOT NULL REFERENCES node(id),
   key TEXT NOT NULL COLLATE NOCASE,
   value TEXT NOT NULL,
-  PRIMARY KEY (id, key, value)
+  PRIMARY KEY (nodeid, key, value)
 ) WITHOUT ROWID;
 -- Property-graph filter: find nodes BY property (WHERE key = ? [AND value = ?]).
--- The PRIMARY KEY index leads with id, so it only answers "what are node X's
+-- The PRIMARY KEY index leads with nodeid, so it only answers "what are node X's
 -- properties?"; this index leads with key to answer the reverse — "which nodes
 -- have this property?" — the lookup behind tag/property filtering.
 CREATE INDEX idx_node_property_key_value ON node_property(key, value);
@@ -86,13 +86,13 @@ CREATE INDEX idx_edge_dst ON edge(dst, kind, src, confidence);
 -- Typed key/value attributes hung on an edge — the same shape as node_property,
 -- but qualifying a relationship rather than a node.
 CREATE TABLE edge_property (
-  id INTEGER NOT NULL REFERENCES edge(id),
+  edgeid INTEGER NOT NULL REFERENCES edge(id),
   key TEXT NOT NULL COLLATE NOCASE,
   value TEXT NOT NULL,
-  PRIMARY KEY (id, key, value)
+  PRIMARY KEY (edgeid, key, value)
 ) WITHOUT ROWID;
 -- Property-graph filter: find edges BY property (WHERE key = ? [AND value = ?]).
--- The PRIMARY KEY index leads with id, so it only answers "what are edge X's
+-- The PRIMARY KEY index leads with edgeid, so it only answers "what are edge X's
 -- properties?"; this index leads with key to answer the reverse — "which edges
 -- have this property?" — the lookup behind property filtering over edges.
 CREATE INDEX idx_edge_property_key_value ON edge_property(key, value);
