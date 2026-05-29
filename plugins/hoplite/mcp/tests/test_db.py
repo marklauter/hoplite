@@ -58,7 +58,9 @@ def test_open_ro_applies_pragmas(tmp_path: Path) -> None:
     with db.open_rw() as conn:
         conn.execute("CREATE TABLE t (x INTEGER)")
     with db.open_ro() as conn:
-        assert _pragma(conn, "foreign_keys") == 1
+        # foreign_keys is deliberately NOT set on read-only connections: it's a
+        # write-time check, meaningless when the connection can't write. Default 0.
+        assert _pragma(conn, "foreign_keys") == 0
         assert _pragma(conn, "temp_store") == 2
         assert _pragma(conn, "mmap_size") == 268435456
 
@@ -155,3 +157,100 @@ def test_write_transaction_propagates_non_busy_operational_error(tmp_path: Path)
             write_transaction(cast(sqlite3.Connection, proxy)),
         ):
             pass
+
+
+def test_open_rw_writer_fails_fast(tmp_path: Path) -> None:
+    """Writers set busy_timeout=0 so BEGIN IMMEDIATE raises at once during a refresh."""
+    db = FileDatabase(tmp_path / "idx.sqlite")
+    with db.open_rw() as conn:
+        assert _pragma(conn, "busy_timeout") == 0
+
+
+class _BusySnapshotError(sqlite3.OperationalError):
+    @property
+    def sqlite_errorcode(self) -> int:  # type: ignore[override]
+        return 517  # SQLITE_BUSY_SNAPSHOT = SQLITE_BUSY | (1 << 9)
+
+
+def test_write_transaction_translates_extended_busy_code(tmp_path: Path) -> None:
+    """The & 0xFF mask must catch extended busy codes, not just the primary one."""
+    db = FileDatabase(tmp_path / "idx.sqlite")
+    with db.open_rw() as conn:
+        proxy = _BeginFailingConn(conn, _BusySnapshotError("snapshot is busy"))
+        with (
+            pytest.raises(GraphRefreshInProgressError, match="being refreshed"),
+            write_transaction(cast(sqlite3.Connection, proxy)),
+        ):
+            pass
+
+
+class _RollbackFailingConn:
+    """Forwards everything except ROLLBACK, which raises (e.g. no active txn)."""
+
+    def __init__(self, real: sqlite3.Connection) -> None:
+        self._real = real
+
+    def execute(self, sql: str, params: tuple[object, ...] = ()) -> sqlite3.Cursor:
+        if sql == "ROLLBACK":
+            raise sqlite3.OperationalError("cannot rollback - no transaction is active")
+        return self._real.execute(sql, params)
+
+
+def test_write_transaction_rollback_failure_does_not_mask_original(tmp_path: Path) -> None:
+    """A failing ROLLBACK must not bury the exception that caused the rollback."""
+    db = FileDatabase(tmp_path / "idx.sqlite")
+    with db.open_rw() as conn:
+        conn.execute("CREATE TABLE t (x INTEGER)")
+        proxy = _RollbackFailingConn(conn)
+        with (
+            pytest.raises(RuntimeError, match="boom"),
+            write_transaction(cast(sqlite3.Connection, proxy)),
+        ):
+            raise RuntimeError("boom")
+
+
+class _FakeCursor:
+    def __init__(self, row: tuple[object, ...]) -> None:
+        self._row = row
+
+    def fetchone(self) -> tuple[object, ...]:
+        return self._row
+
+
+class _NonWalConn:
+    """Wraps a real connection but reports a non-WAL mode on journal_mode read-back."""
+
+    def __init__(self, real: sqlite3.Connection) -> None:
+        self._real = real
+
+    def execute(self, sql: str, params: tuple[object, ...] = ()) -> object:
+        if sql == "PRAGMA journal_mode":
+            return _FakeCursor(("delete",))
+        return self._real.execute(sql, params)
+
+    @property
+    def row_factory(self) -> object:
+        return self._real.row_factory
+
+    @row_factory.setter
+    def row_factory(self, value: object) -> None:
+        self._real.row_factory = value  # type: ignore[assignment]
+
+    def close(self) -> None:
+        self._real.close()
+
+
+def test_open_rw_raises_when_wal_not_enabled(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """WAL is verified, not assumed: a silent fallback to another journal mode raises."""
+    db = FileDatabase(tmp_path / "idx.sqlite")
+    real_connect = sqlite3.connect
+
+    def fake_connect(*args: object, **kwargs: object) -> object:
+        return _NonWalConn(real_connect(*args, **kwargs))  # type: ignore[arg-type]
+
+    monkeypatch.setattr(sqlite3, "connect", fake_connect)
+    with pytest.raises(RuntimeError, match="WAL journal mode required"), db.open_rw():
+        pass

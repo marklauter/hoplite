@@ -12,8 +12,7 @@ from hoplite.migrations import (  # pyright: ignore[reportPrivateUsage]
 )
 
 _EXPECTED_INDEXES = (
-    "idx_document_path",
-    "idx_document_property_key_value",
+    "idx_node_property_key_value",
     "idx_edge_kind_src",
     "idx_edge_kind_dst",
     "idx_edge_property_key_value",
@@ -63,7 +62,7 @@ def test_apply_is_idempotent() -> None:
 
 def test_apply_raises_on_partial_schema() -> None:
     conn = sqlite3.connect(":memory:")
-    conn.execute("CREATE TABLE document (id INTEGER PRIMARY KEY)")
+    conn.execute("CREATE TABLE node (id INTEGER PRIMARY KEY)")
     with pytest.raises(sqlite3.OperationalError, match="already exists"):
         apply(conn)
 
@@ -74,14 +73,14 @@ def test_apply_race_recovery_succeeds_when_schema_present() -> None:
         conn.execute(f"CREATE TABLE {name} (x INTEGER)")
     # Drop one so _schema_present returns False before executescript runs,
     # then re-create it so post-error _schema_present returns True.
-    conn.execute("DROP TABLE document")
+    conn.execute("DROP TABLE node")
     proxy = _ExecScriptRaisingConn(
-        conn, sqlite3.OperationalError("table document already exists")
+        conn, sqlite3.OperationalError("table node already exists")
     )
 
     def fake_executescript(_sql: str) -> sqlite3.Cursor:
-        conn.execute("CREATE TABLE document (x INTEGER)")
-        raise sqlite3.OperationalError("table document already exists")
+        conn.execute("CREATE TABLE node (x INTEGER)")
+        raise sqlite3.OperationalError("table node already exists")
 
     proxy.executescript = fake_executescript  # type: ignore[assignment]
     apply(cast(sqlite3.Connection, proxy))
@@ -90,7 +89,7 @@ def test_apply_race_recovery_succeeds_when_schema_present() -> None:
 def test_apply_race_recovery_reraises_when_schema_absent() -> None:
     conn = sqlite3.connect(":memory:")
     proxy = _ExecScriptRaisingConn(
-        conn, sqlite3.OperationalError("table document already exists")
+        conn, sqlite3.OperationalError("table node already exists")
     )
     with pytest.raises(sqlite3.OperationalError, match="already exists"):
         apply(cast(sqlite3.Connection, proxy))
@@ -100,11 +99,11 @@ def test_apply_does_not_swallow_non_already_exists_errors() -> None:
     conn = sqlite3.connect(":memory:")
     for name in _EXPECTED_TABLES:
         conn.execute(f"CREATE TABLE {name} (x INTEGER)")
-    conn.execute("DROP TABLE document")
+    conn.execute("DROP TABLE node")
     proxy = _ExecScriptRaisingConn(conn, sqlite3.OperationalError("disk I/O error"))
 
     def fake_executescript(_sql: str) -> sqlite3.Cursor:
-        conn.execute("CREATE TABLE document (x INTEGER)")
+        conn.execute("CREATE TABLE node (x INTEGER)")
         raise sqlite3.OperationalError("disk I/O error")
 
     proxy.executescript = fake_executescript  # type: ignore[assignment]
@@ -115,3 +114,21 @@ def test_apply_does_not_swallow_non_already_exists_errors() -> None:
 def test_schema_constant_matches_file() -> None:
     on_disk = (Path(migrations.__file__).parent / "schema.sql").read_text(encoding="utf-8")
     assert on_disk == SCHEMA
+
+
+def test_node_uri_is_case_insensitive_unique() -> None:
+    conn = sqlite3.connect(":memory:")
+    apply(conn)
+    conn.execute("INSERT INTO node (uri, resolved) VALUES ('Foo.md', 1)")
+    # COLLATE NOCASE makes uri identity case-insensitive, so this collides.
+    with pytest.raises(sqlite3.IntegrityError):
+        conn.execute("INSERT INTO node (uri, resolved) VALUES ('FOO.MD', 1)")
+
+
+def test_property_tables_are_without_rowid() -> None:
+    conn = sqlite3.connect(":memory:")
+    apply(conn)
+    # WITHOUT ROWID tables expose no implicit rowid column.
+    for table in ("node_property", "edge_property"):
+        with pytest.raises(sqlite3.OperationalError, match="no such column"):
+            conn.execute(f"SELECT rowid FROM {table}")
