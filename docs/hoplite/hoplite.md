@@ -34,11 +34,11 @@ The agent wastes turns and context exploring blind alleys, corrupts future turns
      - re-derive — re-solves a solved problem; wasted work, usually the same answer
      - contradict — lands on a different answer and breaks consistency; two conflicting decisions now drift apart
 
-## The solution - mapping the corpus; declare, describe, and discover
+## The solution - mapping the corpus; declare, describe, discover, and read relationships
 
 Mapping content via explicit, semantic, and emergent relationships and meta descriptions exposes new affordances for the agent that allow progressive disclosure, reduce token burn-rate and unwanted bias, maximize the smart-zone, and lead to better agent output. The agent can identify and consume only the content it needs.
 
-### Declare and describe - applying structure
+### Declare and describe - applying explicit structure
 
 1. Declare and describe content — author the explicit relationships and descriptions; structure that escapes the glob-grep-read loop.
    - declare a relationship — point one document at another
@@ -57,7 +57,7 @@ Mapping content via explicit, semantic, and emergent relationships and meta desc
 
 Find surfaces prior art by topic. Walk reaches the decision's rationale before the agent repeats it.
 
-### Discover - inferring latent signal
+### Discover - inferring latent structure
 
 The corpus holds undiscovered relationships — implicit kinship that emerges from shared features — topics, tags, citations, commits, authors, proximity of time and space. A declared relationship is asserted and treated as fact. A latent signal is implied — present only as a pattern, recovered by inference.
 
@@ -79,6 +79,6 @@ Every inferred relationship is graded by the improbability of the coincidence �
 
 The tradeoff — latent signal buys recall at the cost of precision: it finds the connection the author missed, and sometimes one that isn't there; the threshold is the knob.
 
-## The substrate (the graph)
+### Read - navigating mapped relationships
 
-## Use cases
+<introduce emergent affordances>
