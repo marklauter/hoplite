@@ -1,16 +1,16 @@
 ---
-title: Hoplite - Map your corpus; discover latent signal
+title: Hoplite — Map your corpus; discover latent signals; protect context
 summary: Hoplite is a knowledge graph over a markdown corpus, built for agents under bounded context. It maps the structure an author declares and the latent signal an engine discovers, so the agent reads only the subset that matters instead of grepping and reading blind.
 document:
   tags: [hoplite, overview, spec]
   created: 2026-05-30
 ---
 
-# Hoplite - Map your corpus; discover latent signals; protect context
+# Hoplite — Map your corpus; discover latent signals; protect context
 
-An agent works under bounded context — it must act on a corpus larger than it can read. The filesystem gives it a directory tree and a glob-grep-read loop: containment and literal strings, never what a document means or connects to. Hoplite maps the corpus into a graph the agent navigates and reads selectively, spending its context on the subset that matters.
+An agent works under bounded context. It must act on a corpus larger than it can read. The filesystem gives the agent a directory tree, the tools a glob-grep-read loop: containment and literal strings, but never what a document means or connects to. Recovering those relationships by reading costs tokens the agent can't spare. Hoplite maps the corpus into a durable graph the agent navigates and reads selectively, spending its context on the subset that matters.
 
-## The problem - glob-grep-read loop is the wrong tool for the job
+## The problem — glob-grep-read loop is the wrong tool for the job
 
 The agent wastes turns and context exploring blind alleys, corrupts future turns, and fails to find critical information. All lead to the agent making decisions biased by the wrong input, or rehashing decisions that were one semantic search away. Failures compound.
 
@@ -21,24 +21,24 @@ The agent wastes turns and context exploring blind alleys, corrupts future turns
 2. Reading blind is costly — when search comes up wrong, the agent falls back to reading, and reading unranked and unfiltered costs twice.
    - reading unrelated files burns tokens for nothing
    - reading unrelated files injects bias into every future turn
-3. The tree is the wrong tool for an ontology — and a directory gives each file one home, though the idea belongs in many.
+3. The tree is the wrong tool for an ontology — a directory gives each file one home, though the idea belongs in many.
    - directory hierarchy doesn't match real-world relationships between concepts
    - a concept that matters in many places is filed in one folder; hierarchy forces a single home
-4. Connection is invisible — deeper still, even what the tree does hold, it can't connect.
+4. Connection is invisible — even what the tree holds, it can't connect from glob-grep alone.
    - relationships between documents are invisible — the links you drew, the kinship of shared tags, the similarity no one wrote down; the filesystem shows containment, never connection
    - a document shows what it points to, never who points back; the filesystem has no inbound view
-   - references to not-yet-written documents vanish — the backlog of intended work is invisible — no ghosts
+   - references to not-yet-written documents vanish — the backlog of intended work goes invisible, with no ghost to mark it
 5. The corpus's memory goes unused — so the corpus repeats itself, the agent rewriting and rehashing what's already locked in.
    - the same idea gets rewritten across several notes; the agent reads redundant copies or never sees they converge
    - bounded context hides prior art — the agent can't find the decision already made
      - re-derive — re-solves a solved problem; wasted work, usually the same answer
      - contradict — lands on a different answer and breaks consistency; two conflicting decisions now drift apart
 
-## The solution - mapping the corpus; declare, describe, discover, and read relationships
+## The solution — mapping the corpus; declare, describe, discover, and read relationships
 
-Mapping content via explicit, semantic, and emergent relationships and meta descriptions exposes new affordances for the agent that allow progressive disclosure, reduce token burn-rate and unwanted bias, maximize the smart-zone, and lead to better agent output. The agent can identify and consume only the content it needs.
+Mapping the corpus — its explicit, semantic, and emergent relationships, and the meta descriptions on each document — gives the agent new affordances. The agent reads progressively, pulling only what bears on the task. The result is less wasted context, less bias from stray input, and the agent kept in its smart-zone.
 
-### Declare and describe - applying explicit structure
+### Declare and describe — applying explicit structure
 
 Explicit structure is asserted, not derived — the author supplies what the bytes can't yield: a relationship that lives only in the link, a title that isn't the filename, a summary the document doesn't contain.
 
@@ -46,19 +46,19 @@ Explicit structure is asserted, not derived — the author supplies what the byt
    - a `[[wikilink]]` declares an explicit relationship — the edge grep can't see
    - a markdown link declares too — a reference to a URL is an edge to content outside the corpus, not only doc-to-doc; the corpus's reach doesn't stop at its own files
    - declared once, it reads both ways — the backlink (inbound edge), who points here, is free structure
-   - direction follows the stereotype — the arrow always has a tail and a head, so the backlink is always there; but whether the relationship is symmetric is the stereotype's call — `supersedes` runs one way, a `related` or `not-related` tie reads both
+   - direction follows the stereotype: the arrow always has a tail and a head, so the backlink is always there, but whether the tie is symmetric is the stereotype's call — `supersedes` runs one way, a `related` or `not-related` tie reads both
    - a ghost link declares an open loop — aspirational, not-yet-written content made explicit rather than lost
 2. Describe a document or an edge — annotate the structure.
    - a title and summary are asserted, not extracted — a filename is not a title, and a document carries no summary of itself; the author supplies both
    - the summary is the lede — the asserted gist an agent reads to decide whether to open the document or follow the edge
-   - properties classify and qualify a document — tags, status — and crosscut the folder it's filed in
-   - a stereotype on a link says what kind of relationship it is — cites, supports, supersedes, contradicts
+   - properties classify and qualify a document (tags, status) and crosscut the folder it's filed in
+   - a stereotype on a link says what kind of relationship it is: cites, supports, supersedes, contradicts
    - describe an edge once and the stereotype rides it — inline next to the claim it makes, or in frontmatter as a document-level fact; same structure either way, the author picks rhetorical-in-context vs. categorical
    - the vocabulary is open — tags and stereotypes aren't a fixed menu; the author coins a label and it earns canonical status by use, the way tags already do
 
-### Discover - inferring latent, emergent structure
+### Discover — inferring latent, emergent structure
 
-The corpus holds undiscovered relationships — implicit kinship that emerges from shared features — topics, tags, citations, commits, authors, proximity of time and space. A declared relationship is asserted and treated as fact. A latent signal is implied — present only as a pattern, recovered by inference.
+The corpus holds undiscovered relationships — implicit kinship that emerges from shared features: topics, tags, citations, commits, authors, proximity of time and space. A declared relationship is asserted and treated as fact. A latent signal is implied — present only as a pattern, recovered by inference.
 
 Every inferred relationship is graded by the improbability of the coincidence — a rare shared feature, or a narrow shared window. Two documents sharing a common word carry zero signal; two sharing a rare term carry a strong signal. That's why latent signal can be ranked.
 
@@ -66,11 +66,11 @@ Every inferred relationship is graded by the improbability of the coincidence �
    - topical kinship — two documents about the same thing with no link between them; similarity surfaces the relationship the author missed, and at the high-similarity extreme the same signal gathers a set of near-duplicates into one neighborhood instead of leaving them as N strangers
    - classification kinship — documents sharing a tag relate by kind even when their topics diverge
    - arcs — documents created close in time tend to share the intent of whatever was underway; the design arc (genesis → build → refactor) is one shape, every activity traces its own; never declared, it falls out of time
-2. From how documents connect — beyond the words, signal read off the links themselves, not the values; the more selective the shared connector, the stronger the tie, and a hub couples weakly.
+2. From how documents connect — beyond the words, signal read off the links themselves. The more selective the shared connector, the stronger the tie, and a hub couples weakly.
    - co-citation — two documents pointed to by the same third
    - bibliographic coupling — two documents that point to the same third
    - shared citation — two documents that cite the same external source
-   - hubs — not a pairwise tie but a node's centrality: a document many point to is central to the corpus; as a shared connector it's the hub that couples weakly above
+   - hubs — a node's centrality, not a pairwise tie: a document many point to is central to the corpus, and as a shared connector it couples weakly
 3. From how documents changed — beyond the corpus itself, git history relates what content can't.
    - change coupling — documents changed in the same commit, often a stronger signal than content
    - co-modification — edited in the same session
@@ -78,14 +78,14 @@ Every inferred relationship is graded by the improbability of the coincidence �
 
 The tradeoff — latent signal buys recall at the cost of precision: it finds the connection the author missed, and sometimes one that isn't there; the threshold is the knob.
 
-And provenance ranks above score — every discovered tie is graded, but a declared edge carries full confidence and outranks any discovered one for the same pair. The author's word beats the engine's guess, so the reader establishes trust per edge by where it came from.
+And provenance ranks above score: every discovered tie is graded, but a declared edge carries full confidence and outranks any discovered one for the same pair. The author's word beats the engine's guess, so the reader establishes trust per edge by where it came from.
 
-### Read - navigating mapped relationships
+### Read — navigating mapped relationships
 
-Affordances emerge from the mapped structure - ways for the agent to filter, project, and read a subset of the corpus that the glob-grep-read loop can never offer. Survey the vocabulary, filter by meaning, walk relationships, project and read the results.
+Affordances emerge from the mapped structure: survey the vocabulary, filter by meaning, walk relationships, project and read the results.
 
 1. Survey — retrieve the schema vocabulary, properties and stereotypes, before composing a predicate over the corpus.
 2. Filter — narrow the corpus to the subset a Boolean predicate admits (`note & mcp & !draft`): semantic search matches by meaning, not literal string or path; properties crosscut folders, so filtering by one gathers a concept wherever it lives.
 3. Walk — traverse declared and discovered edges from a node to gather a neighborhood the tree can't show: a relationship declared once reads both ways (inbound and outbound edges); ghosts keep open loops enumerable.
-4. Project — organize the resultset: sort it by score or distance, shape what each hit returns (the lede and tags, never the body), and cap the hops and result set size. Hoplite hands back a projection, not a document — so the agent judges relevance from the summary authored in [Describe](#declare-and-describe---applying-explicit-structure) before spending a token to open the file.
-5. Read — Hoplite handsoff the projection; the agent uses judgement to choose documents to read.
+4. Project — organize the resultset: sort it by score or distance, shape what each hit returns (the lede and tags, never the body), and cap the hops and result set size. Hoplite hands back a projection, not a document — so the agent judges relevance from the summary authored in [Describe](#declare-and-describe--applying-explicit-structure) before spending a token to open the file.
+5. Read — the built-in Read tool. Hoplite ends at the projection; the agent crosses to full content only for the hits that survive.
