@@ -82,18 +82,11 @@ And provenance ranks above score — every discovered tie is graded, but a decla
 
 ### Read - navigating mapped relationships
 
-Affordances emerge from the mapped structure - ways for the agent to select, project, and read a subset of the corpus that the glob-grep-read loop can never offer. Survey the vocabulary, select by meaning, walk explicity and inferred relationships, project and read the results.
+Affordances emerge from the mapped structure - ways for the agent to select, project, and read a subset of the corpus that the glob-grep-read loop can never offer. Survey the vocabulary, select by meaning and walk ranked relationships, project and read the results.
 
-1. Survey — learn what you can ask before you ask it.
-   - the vocabulary is queryable — the tags, stereotypes, and properties in actual use across the corpus, so the agent filters by terms that exist instead of guessing at them
-   - this is the agent interrogating the map's schema — what the authors grew — not the engine inferring latent structure; asking what's askable is a different act from discovering the links no one declared
-2. Find — locate what matters by meaning, not by string or path.
-   - semantic search matches documents by topic, not literal text
-   - ranked hits carry summaries, so the agent judges from the lede what to read or follow next
-   - document properties crosscut folders — find by one to gather a concept wherever it lives
-3. Walk — follow the relationships a directory tree can't hold.
-   - walk follows declared links and discovered similarity to gather a neighborhood the directory can't show
-   - a relationship declared once travels both ways — what a document points to, and who points back
-   - ghosts make the unwritten enumerable, so open loops stay visible
-
-<introduce emergent affordances>
+1. Survey — retrieve the schema vocabulary, properties and stereotypes, before composing a predicate over the corpus.
+2. Select — match a subset of the graph; one operation, two intents.
+   - find — locate by meaning: semantic search matches by topic, not literal string or path; properties crosscut folders, so finding by one gathers a concept wherever it lives
+   - walk — traverse from a node: follow declared and discovered edges to gather a neighborhood the tree can't show; a relationship declared once reads both ways — what points out, and who points back; ghosts keep open loops enumerable
+3. Project — organize the resultset: sort it by score or distance, shape what each hit returns (the lede and tags, never the body), and cap how many. Hoplite hands back a projection, not a document — so the summary authored in Describe returns here, and the agent judges relevance before spending a token to open the file.
+4. Read — the built-in Read tool. Hoplite ends at the projection; the agent crosses to full content only for the hits that survive.
