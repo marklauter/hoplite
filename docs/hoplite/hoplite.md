@@ -1,6 +1,6 @@
 ---
 title: Hoplite - Map your corpus; discover latent signal
-summary: Hoplite turns a markdown corpus into a graph an agent searches by topic and walks by relationship — surfacing the declared, described, and latent signal a directory tree can't express.
+summary: <summary goes here when document is finished>
 document:
   tags: [hoplite, overview, spec]
   created: 2026-05-30
@@ -10,9 +10,7 @@ document:
 
 <introduction>
 
-## The problem
-
-The glob-grep-read loop is the wrong tool for the job.
+## The problem - glob-grep-read loop is the wrong tool for the job
 
 The agent wastes turns and context exploring blind alleys, corrupts future turns, and fails to find critical information. All lead to the agent making decisions biased by the wrong input, or rehashing decisions that were one semantic search away. Failures compound.
 
@@ -36,9 +34,11 @@ The agent wastes turns and context exploring blind alleys, corrupts future turns
      - re-derive — re-solves a solved problem; wasted work, usually the same answer
      - contradict — lands on a different answer and breaks consistency; two conflicting decisions now drift apart
 
-## The solution
+## The solution - mapping the corpus; declare, describe, and discover
 
-Mapping content via explicit, semtantic, and emergent relationships and meta descriptions exposes new affordances for the agent that allow progressive disclosure, reduce token burn-rate and unwanted bias, maximize the smart-zone, and lead to better agent output. The agent can identify and consume only the content it needs.
+Mapping content via explicit, semantic, and emergent relationships and meta descriptions exposes new affordances for the agent that allow progressive disclosure, reduce token burn-rate and unwanted bias, maximize the smart-zone, and lead to better agent output. The agent can identify and consume only the content it needs.
+
+### Declare and describe - applying structure
 
 1. Declare and describe content — author the explicit relationships and descriptions; structure that escapes the glob-grep-read loop.
    - declare a relationship — point one document at another
@@ -57,34 +57,27 @@ Mapping content via explicit, semtantic, and emergent relationships and meta des
 
 Find surfaces prior art by topic. Walk reaches the decision's rationale before the agent repeats it.
 
-## Latent signal
+### Discover - inferring latent signal
 
-The corpus holds more connections than anyone wrote into it.
+The corpus holds undiscovered relationships — implicit kinship that emerges from shared features — topics, tags, citations, commits, authors, proximity of time and space. A declared relationship is asserted and treated as fact. A latent signal is implied — present only as a pattern, recovered by inference.
 
-Latent signal is the relationship no author declared — kinship that falls out of what was written rather than what was linked. The explicit is what grep, FTS, and a reading agent harvest; the rest is latent, and the graph alone surfaces it. That's why it's often the most valuable signal in the corpus.
+Every inferred relationship is graded by the improbability of the coincidence — a rare shared feature, or a narrow shared window. Two documents sharing a common word carry zero signal; two sharing a rare term carry a strong signal. That's why latent signal can be ranked.
 
-- signal no one authored as a relationship, yet real and useful — the connection you never wrote down
-- it emerges from what you did write: the dates, the tags, the words — not from links you drew
-- graded by rarity — strength is the rarity of the shared feature, not the fact of sharing; two documents sharing a common word carry almost nothing, two sharing a rare term carry a lot; that's why latent signal can be ranked, and why it can be wrong
-- arcs — documents created close in time tend to share the intent of whatever was underway; the design arc (genesis → build → refactor) is one shape, every activity traces its own; never declared, it falls out of time
-- topical kinship — two documents about the same thing with no link between them; similarity surfaces the relationship the author missed
-- classification kinship — documents sharing a tag relate by kind even when their topics diverge
-- structural kinship — signal read off the links themselves, not the values
-  - co-citation — two documents pointed to by the same third
-  - bibliographic coupling — two documents that point to the same third
-  - shared citation — two documents that cite the same external source
-  - hubs — a document many point to is central to the corpus, not to one peer
-- provenance — git history relates what content can't
-  - change coupling — documents changed in the same commit, often a stronger signal than content
-  - co-modification — edited in the same session
-  - same author
-- the tradeoff — latent signal buys recall at the cost of precision: it finds the connection the author missed, and sometimes one that isn't there; the threshold is the knob
+1. From what you wrote — the signal already latent in your own content and metadata.
+   - topical kinship — two documents about the same thing with no link between them; similarity surfaces the relationship the author missed
+   - classification kinship — documents sharing a tag relate by kind even when their topics diverge
+   - arcs — documents created close in time tend to share the intent of whatever was underway; the design arc (genesis → build → refactor) is one shape, every activity traces its own; never declared, it falls out of time
+2. From how documents connect — beyond the words, signal read off the links themselves, not the values; the more selective the shared connector, the stronger the tie, and a hub couples weakly.
+   - co-citation — two documents pointed to by the same third
+   - bibliographic coupling — two documents that point to the same third
+   - shared citation — two documents that cite the same external source
+   - hubs — not a pairwise tie but a node's centrality: a document many point to is central to the corpus; as a shared connector it's the hub that couples weakly above
+3. From how documents changed — beyond the corpus itself, git history relates what content can't.
+   - change coupling — documents changed in the same commit, often a stronger signal than content
+   - co-modification — edited in the same session
+   - same author
 
-## Map and discover
-
-## Read
-
-## Write
+The tradeoff — latent signal buys recall at the cost of precision: it finds the connection the author missed, and sometimes one that isn't there; the threshold is the knob.
 
 ## The substrate (the graph)
 
