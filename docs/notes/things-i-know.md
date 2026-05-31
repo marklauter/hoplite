@@ -47,6 +47,7 @@ asserstions on the code base
 - created
 - unreviewd
 
+Authored vs emergent
 authored link graph via [[wikilinks]]
 semantic graph - good
 
@@ -132,3 +133,17 @@ Declared · Described · Discovered
   ▎ The graph is a substrate of primitives. Processes compose over it. Design the primitives; let the 
   ▎ processes fall out. A use case doesn't earn a feature — it tests whether the primitives were 
   ▎ sufficient.
+
+
+  progressive disclosure — the agent selects only the content it needs, cutting token waste and the bias from unrelated content. the mechanisms beneath it:
+
+- semantic search (BM25 via FTS) matches documents by topic, not literal text
+- ranked hits carry summaries, so the agent judges from the lede what to read or follow next
+- walk follows declared links and discovered similarity to gather a neighborhood the directory can't show
+- predicate scoping narrows to a classification instead of a folder
+- discovery surfaces latent signal — relationships nobody authored
+- discovered similarity clusters near-duplicates into one neighborhood instead of N strangers
+- directed edges walk both ways — `direction: in` reveals who references this document
+- ghost nodes make the unwritten enumerable, so open loops stay visible
+- find surfaces prior art by topic; walk reaches the decision's rationale before the agent repeats it
+- tags crosscut folders — find by classification gathers a concept wherever it lives
