@@ -82,11 +82,10 @@ And provenance ranks above score — every discovered tie is graded, but a decla
 
 ### Read - navigating mapped relationships
 
-Affordances emerge from the mapped structure - ways for the agent to select, project, and read a subset of the corpus that the glob-grep-read loop can never offer. Survey the vocabulary, select by meaning and walk ranked relationships, project and read the results.
+Affordances emerge from the mapped structure - ways for the agent to filter, project, and read a subset of the corpus that the glob-grep-read loop can never offer. Survey the vocabulary, filter by meaning, walk relationships, project and read the results.
 
 1. Survey — retrieve the schema vocabulary, properties and stereotypes, before composing a predicate over the corpus.
-2. Select — match a subset of the graph; one operation, two intents.
-   - find — locate by meaning: semantic search matches by topic, not literal string or path; properties crosscut folders, so finding by one gathers a concept wherever it lives
-   - walk — traverse from a node: follow declared and discovered edges to gather a neighborhood the tree can't show; a relationship declared once reads both ways — what points out, and who points back; ghosts keep open loops enumerable
-3. Project — organize the resultset: sort it by score or distance, shape what each hit returns (the lede and tags, never the body), and cap how many. Hoplite hands back a projection, not a document — so the summary authored in Describe returns here, and the agent judges relevance before spending a token to open the file.
-4. Read — the built-in Read tool. Hoplite ends at the projection; the agent crosses to full content only for the hits that survive.
+2. Filter — narrow the corpus to the subset a Boolean predicate admits (`note & mcp & !draft`): semantic search matches by meaning, not literal string or path; properties crosscut folders, so filtering by one gathers a concept wherever it lives.
+3. Walk — traverse declared and discovered edges from a node to gather a neighborhood the tree can't show: a relationship declared once reads both ways (inbound and outbound edges); ghosts keep open loops enumerable.
+4. Project — organize the resultset: sort it by score or distance, shape what each hit returns (the lede and tags, never the body), and cap the hops and result set size. Hoplite hands back a projection, not a document — so the agent judges relevance from the summary authored in [Describe](#declare-and-describe---applying-explicit-structure) before spending a token to open the file.
+5. Read — the built-in Read tool. Hoplite ends at the projection; the agent crosses to full content only for the hits that survive.
