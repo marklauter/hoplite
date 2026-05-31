@@ -79,8 +79,8 @@ Breadth-first walk from a starting document. Returns up to `depth` layers of `Tr
 
 Predicate fields (all optional):
 
-- `edge_types` (list of strings) — only follow edges of these kinds. Default: all kinds (`mentions`, `related`).
-- `top_k_related` (positive integer or unset) — cap the number of `related` edges followed from each node, keeping the K strongest by confidence. `mentions` and `cites` are always followed (authored = full confidence). Default: no cap.
+- `edge_types` (list of strings) — only follow edges of these kinds: `declared`, `discovered`. Default: both. Filtering by relationship *meaning* (only citations, only refutations) is a stereotype filter, not a kind filter; a stereotype predicate is a planned addition that lands with stereotype wiring.
+- `top_k_discovered` (positive integer or unset) — cap the number of `discovered` edges followed from each node, keeping the K strongest by confidence. `declared` edges are always followed (asserted = full confidence). Default: no cap.
 - `direction` (`"out" | "in" | "both"`) — which edge direction to follow. Default: `"out"`.
 - `tagged` (string) — a tag predicate that filters which reached documents appear in the result. Applied as post-filter: the walk traverses through non-matching intermediate documents; the result includes only documents matching the expression.
 

@@ -68,14 +68,14 @@ Properties never appear as edge endpoints. Edges connect documents to documents;
 
 ### Edges
 
-Two edge kinds, closed set. Edges connect documents to documents only.
+Two edge kinds, closed set — by provenance, not meaning. Edges connect documents to documents only.
 
-- `mentions` — document → document. Materialized from `[[wikilink]]` references in body text. The walker emits one edge per `(source, target)` pair regardless of how many wikilinks point at the target; the graph records relationships, not occurrences.
-- `related` — document ↔ document, symmetric. Materialized from pairwise MinHash similarity above a configured threshold. Both directions emitted as two edge rows. Carries a `confidence` field holding the Jaccard score.
+- `declared` — the author asserted the edge by writing a `[[wikilink]]` in body text. One edge per `(source, target)` pair regardless of how many wikilinks point at the target; the graph records relationships, not occurrences. `confidence` is `1.0`.
+- `discovered` — the engine inferred the edge from a shared or proximate feature (MinHash similarity, co-citation, temporal proximity, and the rest). Symmetric similarity emits both directions as two rows. `confidence` holds the graded inference strength.
 
-Use cases for richer relations (`cites`, `contradicts`, `requires`, `see-also`) express through `mentions` plus body prose. No aspirational edge types reserved.
+A relationship's meaning (`cites`, `contradicts`, `requires`, `see-also`) is an open-vocabulary stereotype on a declared edge, stored in `edge_property` — never a new kind. The destination's nature (document, ghost, URL) is a fact about the node, not the edge.
 
-Edges are keyed by the `(src, dst, kind)` triple — no synthetic id. `confidence` is first-class on the edge itself: `1.0` for authored edges (`mentions`, `cites`) and the MinHash Jaccard score for inferred `related` edges. Additional edge annotations live in a symmetric edge-property table following the same EAV pattern as node properties — see [EAV decomposition](#eav-decomposition). Day one no other edge metadata exists, but the table is in place so future annotations (e.g., stereotype labels via `edge.<stereotype>: [...]` frontmatter) slot in without schema change.
+Edges carry a synthetic integer `id` and are unique per ordered pair — `UNIQUE(src, dst)`, across both kinds. `confidence` is first-class on the edge: `1.0` for `declared`, the inference score for `discovered`. The two-pass build inserts declared first; a declared edge wins the slot over a discovered collision. Edge annotations — stereotype labels via `edge.<stereotype>: [...]` frontmatter — live in the `edge_property` table, the same EAV pattern as node properties (see [EAV decomposition](#eav-decomposition)).
 
 ## EAV decomposition
 
@@ -89,7 +89,7 @@ On the document side, list-valued properties land in `document_property`:
 
 The element is the value, stored verbatim. No referential constraint — document-side list-properties accept arbitrary kebab-case strings.
 
-On the edge side, stereotype lists land in `edge` plus `edge_property`. `edge.contradicts: [docs/notes/foo.md, docs/notes/bar.md]` materializes one `edge` row per element (src = this document, dst = resolved target, kind = `mentions`), plus one `edge_property` row carrying the stereotype label. Each element must be a document reference — a `docs/...` path or a `ghost/<slug>`. The walker runs each element through the wikilink resolver; a malformed element appends a warning to `WriteResult.warnings` and the element is skipped. A `docs/...` element resolves to a real `document.id`; a `ghost/...` element materializes a ghost document if absent.
+On the edge side, stereotype lists land in `edge` plus `edge_property`. `edge.contradicts: [docs/notes/foo.md, docs/notes/bar.md]` materializes one `edge` row per element (src = this document, dst = resolved target, kind = `declared`), plus one `edge_property` row carrying the stereotype label. Each element must be a document reference — a `docs/...` path or a `ghost/<slug>`. The walker runs each element through the wikilink resolver; a malformed element appends a warning to `WriteResult.warnings` and the element is skipped. A `docs/...` element resolves to a real `document.id`; a `ghost/...` element materializes a ghost document if absent.
 
 So the structural shape is identical — list element fans out into one row — but each side carries its own contract on what an element *means*. Document-side list-properties take opaque slugs; edge-side stereotype lists take document references and pay the resolver cost.
 
@@ -111,7 +111,7 @@ This is what `Hit.tags` carries when `where` returns hits with their tag set. Th
 Body text uses Obsidian's wikilink syntax: `[[target]]`. Two shapes are valid:
 
 - `[[docs/<path>.md]]` — a real cross-reference. The target is the full repo-relative path including the `docs/` root and the `.md` extension. `where` and `relatives` return that same path in their `path` field, so a downstream agent can `Read` the file directly without rebasing. An alias declared in some document's `aliases` list resolves too. Resolution is case-insensitive ordinal — `[[Docs/Notes/Foo.MD]]` and `[[docs/notes/foo.md]]` reach the same target.
-- `[[ghost/<slug>]]` — an intentional open loop. The author knows the document doesn't exist; the `ghost/` prefix declares the intent. Ghost documents are first-class graph entities with `resolved = false`, no body, no properties. Inbound `mentions` edges point at the ghost as if it were real.
+- `[[ghost/<slug>]]` — an intentional open loop. The author knows the document doesn't exist; the `ghost/` prefix declares the intent. Ghost documents are first-class graph entities with `resolved = false`, no body, no properties. Inbound `declared` edges point at the ghost as if it were real.
 
 Anything else is malformed. The reindex pass validates every extracted target and appends a warning to `WriteResult.warnings` if a wikilink starts with neither `docs/` nor `ghost/` — the link is skipped rather than silently producing a garbage-shaped ghost. Sample wikilinks in prose live inside backticks (` ` ` ` or ``` ` ``` ` ``` `) so the extractor masks them; this convention is described in the prose component.
 
@@ -123,15 +123,15 @@ Wikilinks are never silently dropped except for malformed targets. A `docs/`-sha
 
 ## External references
 
-Inline markdown links `[text](https://...)` are first-class graph signal alongside wikilinks. The walker's pass 2 matches every body-text occurrence of the pattern where the URL begins with `http://` or `https://`, registers the URL as a graph node keyed by the verbatim URL string, and emits a `cites` edge from the source document to that node. Multiple links from one document to the same URL collapse to one edge.
+Inline markdown links `[text](https://...)` are first-class graph signal alongside wikilinks. The walker's pass 2 matches every body-text occurrence of the pattern where the URL begins with `http://` or `https://`, registers the URL as a graph node keyed by the verbatim URL string, and emits a `declared` edge from the source document to that URL node. Multiple links from one document to the same URL collapse to one edge.
 
-URL nodes carry `resolved = false`, no frontmatter, no body, no FTS row — they're terminal. Discoverable through `relatives(predicate={"edge_types": ["cites"]})` from a containing document, never through `where` text search. The URL itself is the path, so a caller that gets a `cites` edge can `WebFetch` the URL or include it in another document's prose verbatim.
+URL nodes carry `resolved = false`, no frontmatter, no body, no FTS row — they're terminal. Discoverable by walking a document's `declared` edges and keeping the destinations that carry the synthetic `url` tag, never through `where` text search. The URL itself is the path, so a caller that reaches a URL node can `WebFetch` the URL or include it in another document's prose verbatim.
 
 No canonicalization. `https://example.com/`, `https://example.com`, and `http://example.com` are three distinct nodes — author authority. Same convention as wikilinks: matched-pair `[text](url)` markdown links inside backticks or fenced blocks are masked and skipped, so sample URLs in prose don't pollute the graph.
 
 The walker injects a synthetic `url` tag on every URL node and a synthetic `ghost` tag on every ghost node. Real documents author their own tags through frontmatter; unresolved nodes have no frontmatter, so the walker tags them by category. `where({"tagged": "url"})` enumerates every external URL the corpus cites; `where({"tagged": "ghost"})` enumerates every intentional open loop. Tag-only queries skip the FTS-resolved-only restriction — the no-text branch surfaces ghosts and URLs alongside real documents.
 
-For durable external references that earn metadata (tags, summary, "why this matters") or are reused across multiple documents, the convention is a proxy note at `docs/proxies/<slug>.md` carrying the URL via a markdown link plus context in the body. Other documents wikilink the proxy; the proxy emits the `cites` edge to the URL. Backlinks (`relatives` with `direction="in"`) over the proxy then show every doc that referenced the resource.
+For durable external references that earn metadata (tags, summary, "why this matters") or are reused across multiple documents, the convention is a proxy note at `docs/proxies/<slug>.md` carrying the URL via a markdown link plus context in the body. Other documents wikilink the proxy; the proxy emits the `declared` edge to the URL. Backlinks (`relatives` with `direction="in"`) over the proxy then show every doc that referenced the resource.
 
 ## Tag predicates
 
@@ -178,17 +178,17 @@ For each registered document:
 
 1. Read the body (everything after the closing `---` fence).
 2. Compute the sha256 content hash; store on the document.
-3. Parse `[[wikilink]]` references. Reject any target that doesn't start with `docs/` or `ghost/` — append a warning, skip the link. For valid targets, resolve via the casefold → alias → canonical-path chain. Resolved `docs/...` targets get a `mentions` edge to the real document; unresolved `docs/...` targets and all `ghost/...` targets materialize a ghost keyed at the authored path and get a `mentions` edge to it. Multiple wikilinks from one document to the same target collapse to a single edge.
+3. Parse `[[wikilink]]` references. Reject any target that doesn't start with `docs/` or `ghost/` — append a warning, skip the link. For valid targets, resolve via the casefold → alias → canonical-path chain. Resolved `docs/...` targets get a `declared` edge to the real document; unresolved `docs/...` targets and all `ghost/...` targets materialize a ghost keyed at the authored path and get a `declared` edge to it. Multiple wikilinks from one document to the same target collapse to a single edge.
 4. Materialize node properties from the frontmatter — one row per scalar field, one row per array element for `tags` and `aliases` and any other multi-value key.
 5. Compute the MinHash signature of the body. Store on the document.
 6. Insert into the in-memory FTS5 table: `(path, title, summary, body)`.
 
-### Aggregate pass: `related` edges
+### Aggregate pass: `discovered` edges
 
 After pass 2, run pairwise MinHash similarity:
 
 1. For every pair of resolved documents `(d1, d2)` where `d1 < d2` (path-ordered to avoid double-counting), compute Jaccard similarity from the two MinHash signatures.
-2. If similarity exceeds the configured threshold (default `0.20`), emit two `related` edges — `(d1, d2)` and `(d2, d1)` — each carrying `confidence = <score>` as an edge property.
+2. If similarity exceeds the configured threshold (default `0.20`), emit two `discovered` edges — `(d1, d2)` and `(d2, d1)` — each carrying `confidence = <score>`.
 
 Pairwise scan is O(N²) but cheap at scale — 128-int Jaccard comparisons run in ~100ms for 1000 documents. LSH bucketing is the optimization to reach for past 10⁵ documents; see [[docs/hoplite/hoplite-roadmap.md]].
 
@@ -218,7 +218,7 @@ Configuration knobs:
 
 - `minhash_signature_size` (default 128)
 - `minhash_shingle_size` (default 5) — word n-gram width
-- `minhash_threshold` (default 0.20) — minimum Jaccard for `related` edge materialization
+- `minhash_threshold` (default 0.20) — minimum Jaccard for `discovered` edge materialization
 
 Signatures live as `bytes` on the `Document` dataclass. Never persisted; recomputed at every startup. Cold-start cost is ~50ms per document, dominating walker time at 1000-doc corpora (~50s total).
 
@@ -227,7 +227,7 @@ Cold-start budget at 1000 documents (~5KB average body):
 - Walk + body load: ~150ms (read ~5MB from SSD)
 - FTS5 populate: ~500ms (C-backed tokenization)
 - MinHash compute: ~50s (dominant cost)
-- Pairwise MinHash for `related`: ~100ms
+- Pairwise MinHash for `discovered` edges: ~100ms
 
 Total: ~50s. Scales roughly linearly; 100 docs ≈ 5s, 5000 docs ≈ 5 minutes. The cost is decision-reversible — if corpora grow past tolerable startup time, a persistent `.hoplite/cache.db` for MinHash signatures returns without changing the rest of the architecture.
 

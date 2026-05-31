@@ -14,9 +14,9 @@ The day-one shape in [[docs/hoplite/hoplite-architecture.md]] and [[docs/hoplite
 
 ## Server-side enrichment — embeddings
 
-Day one has no batch enrichment beyond MinHash. MinHash signatures and derived `related` edges compute at startup from the corpus content; no out-of-band model calls.
+Day one has no batch enrichment beyond MinHash. MinHash signatures and derived `discovered` edges compute at startup from the corpus content; no out-of-band model calls.
 
-The one feature that wants server-side compute: vector embeddings via local Ollama (`nomic-embed-text` candidate, 768-dim, ~270MB, CPU-fast). With embeddings, `where` can switch from BM25-only to combined BM25 + cosine similarity, and embedding-derived `related` edges supplement MinHash for cases where lexical similarity doesn't catch the connection.
+The one feature that wants server-side compute: vector embeddings via local Ollama (`nomic-embed-text` candidate, 768-dim, ~270MB, CPU-fast). With embeddings, `where` can switch from BM25-only to combined BM25 + cosine similarity, and embedding-derived `discovered` edges supplement MinHash for cases where lexical similarity doesn't catch the connection.
 
 Embedding compute is heavier than MinHash — 50-500ms per document depending on model and hardware. The walker can't afford this on every reindex at 1000-doc scale. Two trigger models:
 
@@ -52,7 +52,7 @@ This is decision-reversible — adding the cache later doesn't change the rest o
 
 ## MinHash LSH bucketing
 
-Day-one pairwise MinHash for `:related` edges is O(N²). At 1000 docs this is ~100ms (cheap); at 10⁵+ docs it becomes minutes.
+Day-one pairwise MinHash for `discovered` edges is O(N²). At 1000 docs this is ~100ms (cheap); at 10⁵+ docs it becomes minutes.
 
 Mitigation: LSH (Locality-Sensitive Hashing) buckets signatures by sub-signature chunks, narrowing the comparison set so each document compares only against documents in matching buckets. Standard MinHash + LSH refinement; ~50 lines of additional code.
 

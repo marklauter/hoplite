@@ -11,8 +11,9 @@
 --     it is, every insert pays a check the builder doesn't need for data it
 --     constructs consistently itself. Decide deliberately whether to turn it on.
 --
--- Two-pass edge build: hard edges (mentions/wikilinks) are inserted first and
--- always win; semantic edges follow and collide out against UNIQUE(src, dst).
+-- Two-pass edge build: declared edges (authored, e.g. wikilinks) are inserted
+-- first and always win; discovered edges (inferred) follow and collide out
+-- against UNIQUE(src, dst).
 -- That precedence is enforced by the schema, not by loader comparison logic.
 
 -- A node is the graph's vertex: one row per addressable byte resource (in
@@ -43,17 +44,17 @@ CREATE TABLE node_property (
 -- have this property?" — the lookup behind tag/property filtering.
 CREATE INDEX idx_node_property_key_value ON node_property(key, value);
 
--- The interned vocabulary of relationship types (e.g. wikilink, related).
--- Normalized out so each edge stores a small integer kind instead of repeating
--- the kind string on every row.
+-- The interned vocabulary of edge kinds — two, by provenance: declared
+-- (authored) and discovered (inferred). Normalized out so each edge stores a
+-- small integer kind instead of repeating the kind string on every row.
 CREATE TABLE edge_kind (
   id INTEGER PRIMARY KEY,
   kind TEXT NOT NULL UNIQUE COLLATE NOCASE
 );
 
--- A directed relationship between two nodes — the graph's edges (wikilinks,
--- related-neighborhoods). kind names the relationship; confidence weights it;
--- UNIQUE(src, dst) allows at most one edge per ordered pair of nodes.
+-- A directed relationship between two nodes — the graph's edges (declared
+-- wikilinks, discovered neighborhoods). kind names the provenance; confidence
+-- weights it; UNIQUE(src, dst) allows at most one edge per ordered pair of nodes.
 CREATE TABLE edge (
   id INTEGER PRIMARY KEY,
   src INTEGER NOT NULL REFERENCES node(id),
@@ -66,7 +67,7 @@ CREATE TABLE edge (
 -- access patterns, so they lead with different columns:
 --
 --   idx_edge_kind_src — kind-leading. Serves global "all edges of kind K"
---     enumeration (e.g. every `mentions` edge, unanchored) AND forward
+--     enumeration (e.g. every `declared` edge, unanchored) AND forward
 --     kind-filtered traversal (seek kind+src), both as covering seeks.
 --     Forward any-kind traversal (src alone) doesn't use this index — the
 --     UNIQUE(src,dst) auto-index gives it a clean src seek, just non-covering

@@ -32,15 +32,16 @@ Three node variants, distinguished by whether the uri resolves to a real resourc
 
 ## Edges
 
-An edge is directed from `src` to `dst` and carries a `kind` and a `confidence`. Kinds are a closed enum of three structural roles:
+An edge is directed from `src` to `dst` and carries a `kind` and a `confidence`. Kind is a closed enum of two, and the two are *provenance* — who asserted the edge, not what it means:
 
-- `mentions` — document → document, materialized from a `[[wikilink]]` in body text. One edge per ordered pair, however many wikilinks point the same way.
-- `cites` — document → URL node, from an inline `[text](https://…)` link.
-- `related` — document ↔ document, symmetric, inferred from content similarity (MinHash Jaccard) above a threshold. Emitted as two directed rows.
+- `declared` — the author asserted it, by writing a `[[wikilink]]` in body text. `confidence` is `1.0`.
+- `discovered` — the engine inferred it from a shared or proximate feature (content similarity, co-citation, temporal proximity, and the rest). `confidence` is the graded strength of the inference.
 
-`confidence` is first-class on the edge: `1.0` for authored edges (`mentions`, `cites`), the similarity score for inferred `related`. At most one edge connects a given ordered pair — `UNIQUE(src, dst)`, across all kinds — and the two-pass build inserts authored edges before inferred ones, so a hard edge always wins the slot over a `related` collision.
+Two things that look like kinds are not. A relationship's *meaning* — citation, refutation, endorsement — is an open-vocabulary stereotype on the edge, stored in `edge_property`, never a new kind (see [[docs/notes/stereotypes-are-open-vocab-edge-properties.md]]); a bare edge with no stereotype is simply a link. And the destination's *nature* — document, ghost, or URL — is a fact about the node, not the edge: a markdown link to an external site is a `declared` edge whose `dst` is a URL node, stereotyped `cites` only when the author means citation.
 
-The kind enum is closed and stays closed. Richer relationships are expressed as stereotypes on a `mentions` edge, not as new kinds.
+At most one edge connects a given ordered pair — `UNIQUE(src, dst)`, across both kinds. The two-pass build inserts `declared` edges first and `discovered` second, so a declared edge wins the slot over a discovered collision — declared beats discovered.
+
+The enum is closed and stays closed; provenance is binary. Richer relationships are stereotypes, never kinds.
 
 ## Properties
 
@@ -52,7 +53,7 @@ Tags classify; properties carry state. A tag answers "what is this?" — immutab
 
 ## Edge stereotypes
 
-A stereotype is an open-vocabulary label on a `mentions` edge — `supports`, `contradicts`, `supersedes`, `not-related` — stored as an edge property, classifying what kind of mention the edge is without extending the closed kind enum. A new stereotype is a vocabulary-and-parser change, never a schema migration, the same way tags work; the parser does not reject unknown values. The full model, the authoring surfaces, and the seed vocabulary are in [[docs/notes/stereotypes-are-open-vocab-edge-properties.md]].
+A stereotype is an open-vocabulary label on a `declared` edge — `supports`, `contradicts`, `supersedes`, `not-related` — stored as an edge property, classifying what kind of link the edge is without extending the closed kind enum. A new stereotype is a vocabulary-and-parser change, never a schema migration, the same way tags work; the parser does not reject unknown values. The full model, the authoring surfaces, and the seed vocabulary are in [[docs/notes/stereotypes-are-open-vocab-edge-properties.md]].
 
 ## Reserved words
 
@@ -67,7 +68,7 @@ The set is open and grows as keys earn defined semantics. Each reserved word nam
 The model is authored and read through surfaces that map onto it:
 
 - Frontmatter — node properties (`document.<key>`) and edge stereotypes (`edge.<stereotype>: [paths]`). The contract is [[docs/hoplite/hoplite-frontmatter.md]].
-- Inline wikilinks — `[[docs/<path>.md]]` materializes a `mentions` edge, `[[ghost/<slug>]]` an open loop, and `[text](https://…)` a `cites` edge. The stereotyped form `[[stereotype:path]]` is designed but not yet wired.
+- Inline wikilinks — `[[docs/<path>.md]]` materializes a `declared` edge, `[[ghost/<slug>]]` an open loop, and `[text](https://…)` a `declared` edge to a URL node. The stereotyped form `[[stereotype:path]]` is designed but not yet wired.
 - Queries — `where` (ranked FTS plus property filter) and `relatives` (edge traversal) read the graph back.
 
 ## Storage

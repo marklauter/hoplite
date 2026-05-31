@@ -47,7 +47,7 @@ Tags: `todo` plus the underlying note's domain tags. Status is a property, not a
 
 ## Epics
 
-A todo tagged `epic` decomposes into child todos. The epic's body wikilinks each child; `mentions` edges materialize the hierarchy. `where({"tagged": "todo & epic"})` enumerates epics; `relatives({from_: <epic>, edge_types: ["mentions"], tagged: "todo"})` walks the children.
+A todo tagged `epic` decomposes into child todos. The epic's body wikilinks each child; `declared` edges materialize the hierarchy. `where({"tagged": "todo & epic"})` enumerates epics; `relatives({from_: <epic>, edge_types: ["declared"], tagged: "todo"})` walks the children.
 
 The epic's own `document.status` reflects the rollup of its children — `open` while any child stays `open` or `deferred`, `closed` once every child is `closed` or `declined`. The triager sets the rollup explicitly until a computed-property pass automates it.
 
@@ -95,7 +95,7 @@ document:
 
 Every document in the Hoplite corpus, docs/, opens with a YAML frontmatter block. Hoplite indexes documents through this block; a document with missing or malformed frontmatter generates a warning at reindex (in `WriteResult.warnings`) and stays out of the graph until you fix it.
 
-Every key beyond `title` and `summary` creates one of two things. A **node property** is a fact stored on the document's own graph node — a key with one or more values (`tags`, `created`, `status`). An **edge stereotype** is a labeled link from this document to another — a typed `mentions` edge carrying a name like `blocked_by` or `supports`.
+Every key beyond `title` and `summary` creates one of two things. A **node property** is a fact stored on the document's own graph node — a key with one or more values (`tags`, `created`, `status`). An **edge stereotype** is a labeled link from this document to another — a typed `declared` edge carrying a name like `blocked_by` or `supports`.
 
 `document` and `edge` are namespaces — they declare which of the two a key creates: `document.` for node properties, `edge.` for edge stereotypes. `title` and `summary` are the exception — they are first-class, FTS-indexed fields, not properties, so they stay **bare**.
 
@@ -112,7 +112,7 @@ Optional fields:
 
 `document.tags` and `document.aliases` are lists and follow the omit-when-empty rule: include the key only when it carries at least one element, otherwise leave it out.
 
-Beyond the mandatory fields, any `document.<key>` becomes a node property and any `edge.<stereotype>: [paths]` becomes a stereotyped `mentions` edge — Hoplite accepts and stores them. Examples: `document.status: draft`, `document.priority: high`, `document.due: 2026-06-01`, `edge.blocked_by: [docs/notes/foo.md]`. External tools like Obsidian or Dataview read them too. Only `title` and `summary` are bare; everything else is prefixed.
+Beyond the mandatory fields, any `document.<key>` becomes a node property and any `edge.<stereotype>: [paths]` becomes a stereotyped `declared` edge — Hoplite accepts and stores them. Examples: `document.status: draft`, `document.priority: high`, `document.due: 2026-06-01`, `edge.blocked_by: [docs/notes/foo.md]`. External tools like Obsidian or Dataview read them too. Only `title` and `summary` are bare; everything else is prefixed.
 
 ### Namespace spelling and list spelling
 
@@ -177,22 +177,23 @@ edge.supports: [docs/notes/sqlite-hybrid.md]
 
 Hoplite is a knowledge graph over the markdown corpus at `docs/`. Each `.md` file is a document; YAML frontmatter at the top of each file feeds the index. Hoplite builds the graph in memory at MCP server startup.
 
-Hoplite is the index; your built-in `Read`, `Write`, `Edit`, and `Bash rm` tools are the content surface. `Grep` and `Glob` are the literal surface — substrings in lines and filename patterns. Hoplite is the semantic surface: documents ranked by topical relevance (BM25 FTS over body and summary), filtered by predicate expressions, and reachable through authored `[[wikilink]]` paths (`mentions` edges) or inferred topical adjacency (`related` edges from MinHash similarity).
+Hoplite is the index; your built-in `Read`, `Write`, `Edit`, and `Bash rm` tools are the content surface. `Grep` and `Glob` are the literal surface — substrings in lines and filename patterns. Hoplite is the semantic surface: documents ranked by topical relevance (BM25 FTS over body and summary), filtered by predicate expressions, and reachable through authored `[[wikilink]]` paths (`declared` edges) or inferred adjacency (`discovered` edges from similarity and other shared-feature signals).
 
 ### Tools
 
 - `where(predicate, k=5)` — rank documents by topical relevance, tag expression, or both. `text` runs BM25 over an FTS index of body and summary, so a query for `caching strategy` surfaces documents *about* caching rather than only lines containing the literal token. `tagged` filters by boolean tag expression: `note`, `note & mcp`, `(note | journal) & !draft`. At least one of `text`/`tagged` required. Returns up to `k` `Hit` records (path, summary, tags, score) ranked by score.
-- `relatives(from_, predicate=None, depth=1)` — breadth-first walk from a starting document through authored `mentions` edges and inferred `related` edges. Surfaces neighborhoods the corpus author may or may not have explicitly linked: a `related` edge can connect two topically-adjacent documents with no wikilink between them. Returns `TraversalHit` records (path, summary, tags, distance, via_edges) for nodes at distance 1 through `depth`. Predicate fields (all optional): `edge_types` (`mentions`, `cites`, `related`), `top_k_related` (cap on the number of `related` neighbors followed per node, ranked by confidence — set to narrow the walk to each node's strongest similarities; omit to widen the walk and judge adjacency from the per-edge `confidence` in `via_edges`. `mentions` and `cites` are always followed.), `direction` (`out`/`in`/`both`), `tagged` (tag expression filter on reached documents).
+- `relatives(from_, predicate=None, depth=1)` — breadth-first walk from a starting document through authored `declared` edges and inferred `discovered` edges. Surfaces neighborhoods the corpus author may or may not have explicitly linked: a `discovered` edge can connect two topically-adjacent documents with no wikilink between them. Returns `TraversalHit` records (path, summary, tags, distance, via_edges) for nodes at distance 1 through `depth`. Predicate fields (all optional): `edge_types` (`declared`, `discovered`), `top_k_discovered` (cap on the number of `discovered` neighbors followed per node, ranked by confidence — set to narrow the walk to each node's strongest signals; omit to widen the walk and judge adjacency from the per-edge `confidence` in `via_edges`. `declared` edges are always followed.), `direction` (`out`/`in`/`both`), `tagged` (tag expression filter on reached documents).
 - `refresh()` — rebuild the in-memory graph from the current state of the corpus. Call after writes so subsequent queries see the changes. Returns a `WriteResult` (`path` = corpus root, `warnings`).
 - `export(path=None)` — debug. Snapshots the in-memory graph to a SQLite file (default `.hoplite/<ISO-timestamp>.index.sqlite` — each dump is uniquely named so prior snapshots survive). Then you can `Bash sqlite3 .hoplite/<file>` for arbitrary SQL exploration. Returns a `WriteResult` (`path` = snapshot file, `counts` with `documents`/`ghosts`/`edges`, `warnings`).
 
 ### Edges
 
-Two edge kinds materialize. Edges connect documents to documents only — tag membership is a property, not an edge.
+Two edge kinds materialize, by provenance — who asserted the edge, not what it means. Edges connect documents to documents only; tag membership is a property, not an edge.
 
-- `mentions` — document → document. One per `(source, target)` pair from `[[wikilink]]` occurrences in body text. Multiple wikilinks from one document to the same target collapse to a single edge. A `[[docs/<path>.md]]` target that lacks a backing file or a `[[ghost/<slug>]]` target creates a ghost document.
-- `cites` — document → URL. One per `(source, url)` pair from inline `[text](https://...)` markdown links in body text. The dst node is keyed by the verbatim URL (no canonicalization); call `relatives(predicate={"edge_types": ["cites"]})` to list every external reference from a document.
-- `related` — document ↔ document, symmetric. Emitted by MinHash similarity above threshold. Carries a `confidence` property holding the Jaccard score.
+- `declared` — the author asserted it by writing a `[[wikilink]]` in body text. One per `(source, target)` pair, however many wikilinks point the same way; `confidence` is `1.0`. A `[[docs/<path>.md]]` target lacking a backing file, or a `[[ghost/<slug>]]` target, creates a ghost document. An inline `[text](https://...)` markdown link declares an edge whose `dst` is a URL node.
+- `discovered` — the engine inferred it from a shared feature: content similarity (MinHash), co-citation, temporal proximity, and the rest. Symmetric where the signal is. `confidence` holds the graded strength.
+
+What a declared edge *means* — a citation, a refutation, an endorsement — is an open-vocabulary stereotype stored as an edge property, never a kind; a bare edge with no stereotype is just a link. To enumerate a document's external references, walk its `declared` edges and keep the destinations carrying the synthetic `url` tag.
 
 ### Vocabulary
 
@@ -203,7 +204,7 @@ Two edge kinds materialize. Edges connect documents to documents only — tag me
 - Hit — a search result from `where`. Fields: `path`, `summary`, `tags`, `score`.
 - TraversalHit — a result from `relatives`. Fields: `path`, `summary`, `tags`, `distance`, `via_edges`.
 - WriteResult — returned by `refresh` and `export`. Fields: `path`, `counts` (optional), `warnings` (optional). The reindex's `warnings` list surfaces malformed wikilink targets (anything not starting with `docs/` or `ghost/`) so you can fix them.
-- Wikilink — an in-body cross-reference between documents; materializes a `mentions` edge. Two valid shapes: `[[docs/<path>.md]]` for real refs and `[[ghost/<slug>]]` for intentional open loops.
+- Wikilink — an in-body cross-reference between documents; materializes a `declared` edge. Two valid shapes: `[[docs/<path>.md]]` for real refs and `[[ghost/<slug>]]` for intentional open loops.
 
 ## Titles
 
@@ -231,7 +232,7 @@ One to three sentences.
 - Markdown links — `[text](path)` with text that names the target.
 - Wikilinks — `[[docs/notes/coffee.md]]` for cross-artifact references. The target is the *full* repo-relative path including the `docs/` root and the `.md` extension. Query results return that same full path, so an agent can read the file without hunting it down. `[[docs/journal/2026-05-25-1430-roast.md]]` reaches a journal entry; an alias declared in a document's frontmatter resolves too.
 - Open loops — an intentional reference to a not-yet-written document. Authored as `[[ghost/<slug>]]` — the `ghost/` prefix declares the intent explicitly, distinct from a malformed link. Ghost documents store under that path and surface in `relatives` results as the backlog of mentioned-but-unwritten work. When the file lands on disk, rewrite the link to its real `docs/...` path.
-- External references — inline markdown `[text](https://...)` for casual citations. The walker indexes every such link as a URL-keyed graph node, connected by a `cites` edge — the link renders clickable in any markdown viewer and gets backlink-discoverable for free. For durable references that earn metadata (tags, summary, "why this matters") or are cited from multiple docs, write a proxy note at `docs/proxies/<slug>.md` carrying the URL plus context; wikilink the proxy from elsewhere.
+- External references — inline markdown `[text](https://...)` for casual citations. The walker indexes every such link as a URL-keyed graph node, connected by a `declared` edge to that URL node — the link renders clickable in any markdown viewer and gets backlink-discoverable for free. For durable references that earn metadata (tags, summary, "why this matters") or are cited from multiple docs, write a proxy note at `docs/proxies/<slug>.md` carrying the URL plus context; wikilink the proxy from elsewhere.
 - Sample wikilinks always wear backticks — illustrative `[[X]]`, `[[docs/notes/example.md]]`, or any wikilink-shaped string demonstrating syntax sits inside backticks or a fenced block. Bare `[[X]]` in prose materializes a ghost; the resolver treats backticked spans as code and skips them. Same rule applies to sample markdown URLs.
 - Skip bold and tables — they add noise to the markdown, making it hard to read; except in worked examples that demonstrate what to remove.
 

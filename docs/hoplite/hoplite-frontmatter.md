@@ -15,7 +15,7 @@ Every document in the corpus opens with a YAML frontmatter block, and every key 
 Hoplite is a property graph — nodes (documents) carry properties, and edges connect documents. Frontmatter is the authoring surface for both. Every key beyond `title` and `summary` creates exactly one of two things:
 
 - A node property — a fact stored on the document's own node: a key with one or more values (`status`, `priority`, `tags`).
-- An edge stereotype — a labeled link from this document to another: a typed `mentions` edge carrying a name like `blocked_by` or `supports`.
+- An edge stereotype — a labeled link from this document to another: a typed `declared` edge carrying a name like `blocked_by` or `supports`.
 
 `document` and `edge` are namespaces, and a key's prefix declares which destination it has: `document.<key>` is a node property, `edge.<stereotype>` is an edge. The prefix is mandatory because the destination is not inferable from the key name — `blocked_by` reads equally well as a property or a link, so the namespace resolves the ambiguity at authoring time instead of guessing at parse time.
 
@@ -77,9 +77,9 @@ The inline wikilink form of a stereotype keeps a colon rather than a dot — `[[
 
 A tag answers "what is this document?" — immutable identity: its type, shape, and domain. A property answers "what state is it in?" — mutable lifecycle. State-as-tag conflates the two: a `draft` or `closed` tag churns the identity axis when lifecycle moves, so a closed `todo` would fall out of `where({"tagged": "todo"})`. State lives in `document.status`, `document.priority`, and the like; the tag set stays fixed. The full principle, the type/shape/domain taxonomy, and the practical cases are in [[docs/notes/tags-classify-properties-carry-state.md]].
 
-## Edge stereotypes are open-vocab labels on mentions edges
+## Edge stereotypes are open-vocab labels on declared edges
 
-An `edge.<stereotype>: [paths]` entry materializes one `mentions` edge per path plus a stereotype row in `edge_property` — open-vocabulary labels (`supports`, `contradicts`, `supersedes`) classifying what kind of mention an edge is, without extending the closed edge-kind enum. A new stereotype is a doc-and-parser change, never a schema migration, exactly as tags work; the parser does not warn on unknown values, and vocabulary earns canonical status by use. The full model, the inline-versus-frontmatter authoring surfaces, and the seed vocabulary live in [[docs/notes/stereotypes-are-open-vocab-edge-properties.md]].
+An `edge.<stereotype>: [paths]` entry materializes one `declared` edge per path plus a stereotype row in `edge_property` — open-vocabulary labels (`supports`, `contradicts`, `supersedes`) classifying what kind of link an edge is, without extending the closed edge-kind enum. A new stereotype is a doc-and-parser change, never a schema migration, exactly as tags work; the parser does not warn on unknown values, and vocabulary earns canonical status by use. The full model, the inline-versus-frontmatter authoring surfaces, and the seed vocabulary live in [[docs/notes/stereotypes-are-open-vocab-edge-properties.md]].
 
 ## Obsidian and Dataview compatibility
 

@@ -1,6 +1,6 @@
 ---
 name: research
-description: Use for lexical matching, ranked FTS, and traversal over the graph of the repo's markdown corpus — tag filtering, property graph filtering, traversing wikilink/related neighborhoods.
+description: Use for lexical matching, ranked FTS, and traversal over the graph of the repo's markdown corpus — tag filtering, property graph filtering, traversing declared and discovered neighborhoods.
 ---
 
 # Research
@@ -14,7 +14,7 @@ Included:
 - Topical search. "Where do we discuss caching?" — `where({"text": "caching"})` finds documents *about* the topic.
 - Tag filtering. "Show me open todos in the mcp domain." — `where({"tagged": "todo & mcp"})`.
 - Neighborhood exploration. "What sits next to this note?" — `relatives({"from_": "<path>"})`.
-- External-reference inventory. "Where does this doc reach the outside world?" — `relatives` with `edge_types: ["cites"]`.
+- External-reference inventory. "Where does this doc reach the outside world?" — `relatives({from_: <path>, edge_types: ["declared"]})`, then keep the `url`-tagged destinations.
 
 Excluded:
 

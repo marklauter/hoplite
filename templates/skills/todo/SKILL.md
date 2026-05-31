@@ -47,7 +47,7 @@ Tags: `todo` plus the underlying note's domain tags. Status is a property, not a
 
 ## Epics
 
-A todo tagged `epic` decomposes into child todos. The epic's body wikilinks each child; `mentions` edges materialize the hierarchy. `where({"tagged": "todo & epic"})` enumerates epics; `relatives({from_: <epic>, edge_types: ["mentions"], tagged: "todo"})` walks the children.
+A todo tagged `epic` decomposes into child todos. The epic's body wikilinks each child; `declared` edges materialize the hierarchy. `where({"tagged": "todo & epic"})` enumerates epics; `relatives({from_: <epic>, edge_types: ["declared"], tagged: "todo"})` walks the children.
 
 The epic's own `document.status` reflects the rollup of its children — `open` while any child stays `open` or `deferred`, `closed` once every child is `closed` or `declined`. The triager sets the rollup explicitly until a computed-property pass automates it.
 

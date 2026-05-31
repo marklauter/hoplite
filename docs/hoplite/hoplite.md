@@ -43,13 +43,18 @@ Mapping content via explicit, semantic, and emergent relationships and meta desc
 Explicit structure is asserted, not derived — the author supplies what the bytes can't yield: a relationship that lives only in the link, a title that isn't the filename, a summary the document doesn't contain.
 
 1. Declare a relationship — point one document at another.
-   - a `[[wikilink]]` declares an expliclit relationship — the edge grep can't see
+   - a `[[wikilink]]` declares an explicit relationship — the edge grep can't see
+   - a markdown link declares too — a reference to a URL is an edge to content outside the corpus, not only doc-to-doc; the corpus's reach doesn't stop at its own files
    - declared once, it reads both ways — the backlink (inbound edge), who points here, is free structure
+   - direction follows the stereotype — the arrow always has a tail and a head, so the backlink is always there; but whether the relationship is symmetric is the stereotype's call — `supersedes` runs one way, a `related` or `not-related` tie reads both
    - a ghost link declares an open loop — aspirational, not-yet-written content made explicit rather than lost
 2. Describe a document or an edge — annotate the structure.
    - a title and summary are asserted, not extracted — a filename is not a title, and a document carries no summary of itself; the author supplies both
+   - the summary is the lede — the asserted gist an agent reads to decide whether to open the document or follow the edge
    - properties classify and qualify a document — tags, status — and crosscut the folder it's filed in
-   - a stereotype on a link says what kind of relationship it is — supports, supersedes, contradicts
+   - a stereotype on a link says what kind of relationship it is — cites, supports, supersedes, contradicts
+   - describe an edge once and the stereotype rides it — inline next to the claim it makes, or in frontmatter as a document-level fact; same structure either way, the author picks rhetorical-in-context vs. categorical
+   - the vocabulary is open — tags and stereotypes aren't a fixed menu; the author coins a label and it earns canonical status by use, the way tags already do
 
 ### Discover - inferring latent, emergent structure
 
@@ -75,6 +80,9 @@ The tradeoff — latent signal buys recall at the cost of precision: it finds th
 
 ### Read - navigating mapped relationships
 
+1. Survey — learn what you can ask before you ask it.
+   - the vocabulary is queryable — the tags, stereotypes, and properties in actual use across the corpus, so the agent filters by terms that exist instead of guessing at them
+   - this is the agent interrogating the map's schema — what the authors grew — not the engine inferring latent structure; asking what's askable is a different act from discovering the links no one declared
 2. Find — locate what matters by meaning, not by string or path.
    - semantic search matches documents by topic, not literal text
    - ranked hits carry summaries, so the agent judges from the lede what to read or follow next

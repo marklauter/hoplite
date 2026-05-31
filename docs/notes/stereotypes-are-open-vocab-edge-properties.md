@@ -12,19 +12,18 @@ A stereotype is an open-vocabulary label attached to an edge (or node property),
 
 ## Why this abstraction
 
-[Inference] Two design proposals from this session — `contradicts` and `not-related` — each looked like a new edge kind. Both collapse into one mechanism under the stereotype framing. `contradicts` is a stereotype labeling a `mentions` edge that argues against its target. `not-related` is a stereotype labeling a `mentions` edge that declines an inferred similarity. Neither adds to the closed enum of edge kinds; both are open-vocab labels on the existing `mentions` kind.
+[Inference] Two design proposals from this session — `contradicts` and `not-related` — each looked like a new edge kind. Both collapse into one mechanism under the stereotype framing. `contradicts` is a stereotype labeling a `mentions` edge that argues against its target. `not-related` is a stereotype labeling a `mentions` edge that declines an inferred similarity. Neither adds to the closed enum of edge kinds; both are open-vocab labels on a `declared` edge.
 
 [Inference] Once the abstraction lands, new stereotypes are parser-and-doc changes only. No schema migration per new label. Authors extend the vocabulary as use cases emerge, the same way tags work today.
 
 ## Schema
 
-[Observation] Edge kinds stay a closed enum of three structural roles:
+[Observation] Edge kind is a closed enum of two, by provenance:
 
-- `mentions` — authored document → document.
-- `cites` — authored document → URL.
-- `related` — inferred document ↔ document from MinHash similarity above threshold.
+- `declared` — the author asserted the edge: a `[[wikilink]]`, or a markdown link to a URL node.
+- `discovered` — the engine inferred it from a shared feature (similarity, co-citation, proximity).
 
-[Observation] `Edge.confidence` is already a first-class column (shipped earlier this cycle — see [[docs/journal/2026-05-27-1845-related-edges-land-and-rank-replaces-threshold.md]]). `mentions` and `cites` carry `1.0`; `related` carries its similarity score.
+[Observation] `Edge.confidence` is already a first-class column (shipped earlier this cycle — see [[docs/journal/2026-05-27-1845-related-edges-land-and-rank-replaces-threshold.md]]). `declared` carries `1.0`; `discovered` carries its inference score.
 
 [Inference] Stereotypes do not extend the `edge` schema. They live as `edge_property` rows with the shape `(edge_id, "stereotype", <value>)`, where `edge_id` is the integer `edge.id` of the labeled edge. Same EAV layout as node tags, which sit in `node_property` as `(node_id, "tags", <value>)`.
 
@@ -61,7 +60,7 @@ edge.not-related: [docs/notes/qux.md]
 
 [Observation] The dot separator avoids the YAML escape pain a colon would cause (a colon inside a plain scalar key disagrees across parsers and linters). Authors write the dotted form without quoting.
 
-[Inference] Each path in an `edge.<stereotype>: [paths]` list materializes one edge (`src` = this document, `dst` = path, `kind` = `mentions`) plus one stereotype property row in `edge_property`. The inline and frontmatter parsers converge on the same writes.
+[Inference] Each path in an `edge.<stereotype>: [paths]` list materializes one edge (`src` = this document, `dst` = path, `kind` = `declared`) plus one stereotype property row in `edge_property`. The inline and frontmatter parsers converge on the same writes.
 
 The frontmatter parser also accepts the equivalent nested form, which can read better when a document declares many stereotypes under one class:
 
@@ -84,6 +83,7 @@ edge:
 - `contradicts` — argues against a claim or framing. See [[docs/notes/add-contradicts-as-an-authored-edge-kind.md]].
 - `not-related` — declares topical disjointness despite vocabulary overlap. See [[docs/notes/add-not-related-as-a-structural-negative-edge-kind.md]].
 - `supersedes` — replaces a specific claim or section.
+- `cites` — references an external source; the optional reading of a markdown link to a URL node.
 
 [Inference] `writing-prose.md` covers the inline and frontmatter syntax with a one-line pointer to the vocabulary list. The vocabulary lives in one place to prevent drift between the authoring guide and the tool reference.
 
@@ -99,11 +99,11 @@ edge:
 
 [Inference] `not-related` therefore gets its suppression behavior for free under this model. An author writing `[[not-related:B]]` materializes a `mentions` edge with `stereotype = not-related`, and the existing skip-set logic excludes the pair from the inferred related pass. No code change needed for the suppression mechanism.
 
-## Cites stay neutral
+## Markdown links stay neutral
 
-[Inference] Markdown URL links (`[text](https://...)`) produce un-stereotyped `cites` edges. Link text remains free-form for readability; reserving canonical stereotype words as link text would collide with descriptive use.
+[Inference] Markdown URL links (`[text](https://...)`) produce un-stereotyped `declared` edges to URL nodes — citation is a stereotype now, not a kind, and a bare link asserts none. Link text remains free-form for readability; reserving canonical stereotype words as link text would collide with descriptive use.
 
-[Inference] For a stereotyped URL reference, write a proxy note at `docs/proxies/<slug>.md` carrying the URL plus context, then stereotype an inline wikilink to the proxy or list it under `edge.<stereotype>:` in frontmatter. Reuses the existing proxy pattern.
+[Inference] For a stereotyped URL reference (an explicit `cites`, say), write a proxy note at `docs/proxies/<slug>.md` carrying the URL plus context, then stereotype an inline wikilink to the proxy or list it under `edge.<stereotype>:` in frontmatter. Reuses the existing proxy pattern.
 
 ## Out of scope
 
