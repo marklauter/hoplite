@@ -78,6 +78,8 @@ Every inferred relationship is graded by the improbability of the coincidence �
 
 The tradeoff — latent signal buys recall at the cost of precision: it finds the connection the author missed, and sometimes one that isn't there; the threshold is the knob.
 
+And provenance ranks above score — every discovered tie is graded, but a declared edge carries full confidence and outranks any discovered one for the same pair. The author's word beats the engine's guess, so the reader establishes trust per edge by where it came from.
+
 ### Read - navigating mapped relationships
 
 1. Survey — learn what you can ask before you ask it.
