@@ -51,9 +51,6 @@ Mapping content via explicit, semantic, and emergent relationships and meta desc
    - walk follows declared links and discovered similarity to gather a neighborhood the directory can't show
    - a relationship declared once travels both ways — what a document points to, and who points back
    - ghosts make the unwritten enumerable, so open loops stay visible
-4. Discover — surface the signal nobody wrote down.
-   - discovery surfaces latent signal — relationships nobody authored
-   - discovered similarity clusters near-duplicates into one neighborhood instead of N strangers
 
 Find surfaces prior art by topic. Walk reaches the decision's rationale before the agent repeats it.
 
@@ -64,7 +61,7 @@ The corpus holds undiscovered relationships — implicit kinship that emerges fr
 Every inferred relationship is graded by the improbability of the coincidence — a rare shared feature, or a narrow shared window. Two documents sharing a common word carry zero signal; two sharing a rare term carry a strong signal. That's why latent signal can be ranked.
 
 1. From what you wrote — the signal already latent in your own content and metadata.
-   - topical kinship — two documents about the same thing with no link between them; similarity surfaces the relationship the author missed
+   - topical kinship — two documents about the same thing with no link between them; similarity surfaces the relationship the author missed, and at the high-similarity extreme the same signal gathers a set of near-duplicates into one neighborhood instead of leaving them as N strangers
    - classification kinship — documents sharing a tag relate by kind even when their topics diverge
    - arcs — documents created close in time tend to share the intent of whatever was underway; the design arc (genesis → build → refactor) is one shape, every activity traces its own; never declared, it falls out of time
 2. From how documents connect — beyond the words, signal read off the links themselves, not the values; the more selective the shared connector, the stronger the tie, and a hub couples weakly.
@@ -80,5 +77,14 @@ Every inferred relationship is graded by the improbability of the coincidence �
 The tradeoff — latent signal buys recall at the cost of precision: it finds the connection the author missed, and sometimes one that isn't there; the threshold is the knob.
 
 ### Read - navigating mapped relationships
+
+2. Find — locate what matters by meaning, not by string or path.
+   - semantic search matches documents by topic, not literal text
+   - ranked hits carry summaries, so the agent judges from the lede what to read or follow next
+   - document properties crosscut folders — find by one to gather a concept wherever it lives
+3. Walk — follow the relationships a directory tree can't hold.
+   - walk follows declared links and discovered similarity to gather a neighborhood the directory can't show
+   - a relationship declared once travels both ways — what a document points to, and who points back
+   - ghosts make the unwritten enumerable, so open loops stay visible
 
 <introduce emergent affordances>
