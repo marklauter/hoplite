@@ -51,7 +51,7 @@ Explicit structure is asserted, not derived — the author supplies what the byt
    - properties classify and qualify a document — tags, status — and crosscut the folder it's filed in
    - a stereotype on a link says what kind of relationship it is — supports, supersedes, contradicts
 
-### Discover - inferring latent structure
+### Discover - inferring latent, emergent structure
 
 The corpus holds undiscovered relationships — implicit kinship that emerges from shared features — topics, tags, citations, commits, authors, proximity of time and space. A declared relationship is asserted and treated as fact. A latent signal is implied — present only as a pattern, recovered by inference.
 
