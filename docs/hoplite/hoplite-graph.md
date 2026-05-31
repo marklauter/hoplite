@@ -6,7 +6,7 @@ document:
   created: 2026-05-29
 ---
 
-# The document graph is a property graph over an addressable corpus
+# Buliding a knowledge graph over an addressable corpus: order from chaos
 
 Hoplite models a markdown corpus as a property graph: documents are nodes, references between them are edges, and authored metadata hangs off both as properties. This document is the model canon — what the graph *is*. The surfaces that touch it derive from here: frontmatter ([[docs/hoplite/hoplite-frontmatter.md]]) and inline wikilinks are how an author *expresses* the graph; `schema.sql` is how it is *stored*. When a surface and this document disagree, this document wins.
 

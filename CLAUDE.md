@@ -7,8 +7,8 @@ README covers install. Spec corpus lives at `docs/hoplite/`.
 ## Layout
 
 - `plugins/hoplite/mcp/` — MCP server source (Python, FastMCP, src/tests layout). Committed source, not built.
-- `plugins/hoplite/skills/{research,taking-notes,journaling,todo}/SKILL.md` — **generated** by the build from `templates/skills/`. Do not edit by hand.
-- `plugins/hoplite/hooks/check-frontmatter.py` — **generated** by the build from `templates/hooks/check-frontmatter.py`. Do not edit by hand.
+- `plugins/hoplite/skills/{research,taking-notes,journaling,todo}/SKILL.md` — generated from `templates/skills/`.
+- `plugins/hoplite/hooks/check-frontmatter.py` — generated from `templates/hooks/check-frontmatter.py`.
 - `plugins/hoplite/hooks/bootstrap-venv.py`, `plugins/hoplite/hooks/hooks.json` — committed source, not built.
 - `templates/skills/<name>/SKILL.md` — skill source with `{{components/<path>}}` markers.
 - `templates/components/{shape,prose,hoplite}/` — leaf content inlined into skills and hooks.
@@ -22,8 +22,8 @@ README covers install. Spec corpus lives at `docs/hoplite/`.
 
 - Skill bodies inject components at build time via `{{components/<area>/<file>.md}}` markers. The marker sits on its own line; the build replaces it with the literal file content. Composition is one level deep — components must not contain markers.
 - Components start at H2; the consuming skill owns the H1.
-- Cross-reference a section in an injected component with a markdown anchor link to its H2, not a filename. The GitHub-style anchor is the heading lowercased with spaces hyphenated and punctuation dropped — e.g., `## Artifact structure` → `[Artifact structure](#artifact-structure)`. Skill bodies and component bodies render into the same document after merge, so the anchor resolves.
-- Editing skills or the templated hook means editing the file under `templates/` and re-running `python templates/build/build.py`. The shipped `plugins/hoplite/skills/` and `plugins/hoplite/hooks/check-frontmatter.py` are build outputs.
+- Cross-reference a section in an injected component with a markdown anchor link to its H2, not a filename. The GitHub-style anchor is the heading lowercased with spaces hyphenated and punctuation dropped — `## Artifact structure` becomes `[Artifact structure](#artifact-structure)`. Skill bodies and component bodies render into the same document after merge, so the anchor resolves.
+- Edit skills and the templated hook under `templates/`, then re-run `python templates/build/build.py`; never touch the generated outputs.
 - The bootstrapped venv at `${CLAUDE_PLUGIN_DATA}/venv/` is editable-pinned to `plugins/hoplite/mcp/src/`, so server-side Python changes take effect on the next process spawn.
 
 ## Python idioms
