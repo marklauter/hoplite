@@ -82,6 +82,8 @@ And provenance ranks above score — every discovered tie is graded, but a decla
 
 ### Read - navigating mapped relationships
 
+Affordances emerge from the mapped structure - ways for the agent to select, project, and read a subset of the corpus that the glob-grep-read loop can never offer. Survey the vocabulary, select by meaning, walk explicity and inferred relationships, project and read the results.
+
 1. Survey — learn what you can ask before you ask it.
    - the vocabulary is queryable — the tags, stereotypes, and properties in actual use across the corpus, so the agent filters by terms that exist instead of guessing at them
    - this is the agent interrogating the map's schema — what the authors grew — not the engine inferring latent structure; asking what's askable is a different act from discovering the links no one declared
