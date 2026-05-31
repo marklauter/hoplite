@@ -1,14 +1,14 @@
 ---
 title: Hoplite - Map your corpus; discover latent signal
-summary: <summary goes here when document is finished>
+summary: Hoplite is a knowledge graph over a markdown corpus, built for agents under bounded context. It maps the structure an author declares and the latent signal an engine discovers, so the agent reads only the subset that matters instead of grepping and reading blind.
 document:
   tags: [hoplite, overview, spec]
   created: 2026-05-30
 ---
 
-# Hoplite - Map your corpus; discover latent signal
+# Hoplite - Map your corpus; discover latent signals; protect context
 
-<introduction>
+An agent works under bounded context — it must act on a corpus larger than it can read. The filesystem gives it a directory tree and a glob-grep-read loop: containment and literal strings, never what a document means or connects to. Hoplite maps the corpus into a graph the agent navigates and reads selectively, spending its context on the subset that matters.
 
 ## The problem - glob-grep-read loop is the wrong tool for the job
 
@@ -88,4 +88,4 @@ Affordances emerge from the mapped structure - ways for the agent to filter, pro
 2. Filter — narrow the corpus to the subset a Boolean predicate admits (`note & mcp & !draft`): semantic search matches by meaning, not literal string or path; properties crosscut folders, so filtering by one gathers a concept wherever it lives.
 3. Walk — traverse declared and discovered edges from a node to gather a neighborhood the tree can't show: a relationship declared once reads both ways (inbound and outbound edges); ghosts keep open loops enumerable.
 4. Project — organize the resultset: sort it by score or distance, shape what each hit returns (the lede and tags, never the body), and cap the hops and result set size. Hoplite hands back a projection, not a document — so the agent judges relevance from the summary authored in [Describe](#declare-and-describe---applying-explicit-structure) before spending a token to open the file.
-5. Read — the built-in Read tool. Hoplite ends at the projection; the agent crosses to full content only for the hits that survive.
+5. Read — Hoplite handsoff the projection; the agent uses judgement to choose documents to read.
