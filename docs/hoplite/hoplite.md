@@ -40,19 +40,16 @@ Mapping content via explicit, semantic, and emergent relationships and meta desc
 
 ### Declare and describe - applying explicit structure
 
-1. Declare and describe content — author the explicit relationships and descriptions; structure that escapes the glob-grep-read loop.
-   - declare a relationship — point one document at another
-   - describe a document or an edge — properties on a document, a stereotype on a link
-2. Find — locate what matters by meaning, not by string or path.
-   - semantic search matches documents by topic, not literal text
-   - ranked hits carry summaries, so the agent judges from the lede what to read or follow next
-   - document properties crosscut folders — find by one to gather a concept wherever it lives
-3. Walk — follow the relationships a directory tree can't hold.
-   - walk follows declared links and discovered similarity to gather a neighborhood the directory can't show
-   - a relationship declared once travels both ways — what a document points to, and who points back
-   - ghosts make the unwritten enumerable, so open loops stay visible
+Explicit structure is asserted, not derived — the author supplies what the bytes can't yield: a relationship that lives only in the link, a title that isn't the filename, a summary the document doesn't contain.
 
-Find surfaces prior art by topic. Walk reaches the decision's rationale before the agent repeats it.
+1. Declare a relationship — point one document at another.
+   - a `[[wikilink]]` declares an expliclit relationship — the edge grep can't see
+   - declared once, it reads both ways — the backlink (inbound edge), who points here, is free structure
+   - a ghost link declares an open loop — aspirational, not-yet-written content made explicit rather than lost
+2. Describe a document or an edge — annotate the structure.
+   - a title and summary are asserted, not extracted — a filename is not a title, and a document carries no summary of itself; the author supplies both
+   - properties classify and qualify a document — tags, status — and crosscut the folder it's filed in
+   - a stereotype on a link says what kind of relationship it is — supports, supersedes, contradicts
 
 ### Discover - inferring latent structure
 
