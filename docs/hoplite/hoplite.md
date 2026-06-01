@@ -6,7 +6,7 @@ document:
   created: 2026-05-30
 ---
 
-# Hoplite — Map your corpus; discover latent signals; protect context
+# Hoplite — map your corpus; discover latent signals; protect context
 
 An agent works within a fixed context budget. It must act on a corpus larger than it can read. The agent has a limited set of built-in tools: glob, grep, and read. It can discover relationships with these tools, but it burns tokens, relies on error-prone judgement, and injects bias by reading off-task content. 
 
@@ -14,9 +14,9 @@ The default tools operate over surface text, recovering only content channels �
 
 Hoplite augments the default navigation tools through a map over the markdown corpus. Instead of relying on the agent to read, comprehend, and infer relationships on-the-fly, Hoplite applies structure to the markdown and reifies the map as a durable graph with declared and latent relationships. The agent navigates the map and reads selectively, spending its context on the subset that matters.
 
-## The problem — glob-grep-read loop is the wrong tool for accessing a markdown corpus
+## The problem — hidden costs in the glob-grep-read explore loop
 
-The default toolset is simple and gets the job done most of the time. But the simplicity has a cost: exploring with the glob, grep, and read loop wastes turns, tokens, and attention. The agent has to re-derive the same relationships every session. `Explore` agents, in the interest of preserving the context budget, employ a grep excerpt loop that can miss relevant information. After exploring blind alleys, agents make decisions biased by the wrong content, or rehash decisions that were present in missed content. Failures compound.
+The simplicity of the default toolset has a cost: exploring with the glob, grep, and read loop wastes turns, tokens, and attention. The agent has to re-derive the same relationships every session. `Explore` agents, in the interest of preserving the context budget, employ a grep excerpt loop that can miss relevant information. After exploring blind alleys, agents make decisions biased by the wrong content, or rehash decisions that were present in missed content. Failures compound.
 
 1. Search matches the wrong way — an agent must find information that matters before it can use it.
    - grep finds direct text matches with regex, not semantic matches by topic
@@ -40,7 +40,7 @@ The default toolset is simple and gets the job done most of the time. But the si
 
 ## The solution — mapping the corpus; declare, describe, discover, and read relationships
 
-Mapping the corpus — its explicit, semantic, and emergent relationships, and the meta descriptions on each document — gives the agent new affordances. The agent walks the corpus progressively, reading only what bears on the task. The result is less wasted context, less bias from stray input, and the agent kept in its smart-zone.
+Mapping the corpus — its explicit, semantic, and emergent relationships, and the meta descriptions on each document — creates new affordances. The agent walks the corpus progressively, reading only what bears on the task. The result is less wasted context, less bias from stray input, and the agent kept in its smart-zone.
 
 ### Declare and describe — applying explicit structure
 
