@@ -12,19 +12,40 @@ document:
 
 ## Documents
 
-A document is the graph's node — an addressable resource identified by its `uri`, a medium-agnostic, case-insensitive locator. A corpus document's uri is its repo-relative path (`docs/notes/foo.md`); `[[Docs/Foo.md]]` and `[[docs/foo.md]]` reach the same node because the uri collates case-insensitively.
+A document is the graph's node.
 
-Three variants, distinguished by whether the uri resolves to a real resource:
+- `id` — internal integer key (storage only)
+- `uri` — identity; medium-agnostic, case-insensitive locator
+- `resolved` — whether the uri backs a real resource (document) or dangles (ghost, URL)
+- `content_hash` — exact fingerprint, for change detection
+- `minhash` — similarity sketch, for near-duplicate discovery
+- `title` — first-class description attribute
+- `summary` — first-class description attribute
+- properties — open key/value description
 
-- Document — a real `.md` file on disk. `resolved = true`. Carries content fingerprints: an exact hash for change detection and a similarity sketch for near-duplicate discovery.
+### Identity
+
+A document's `uri` is its identity — a medium-agnostic, case-insensitive locator. A corpus document's uri is its repo-relative path (`docs/notes/foo.md`); `[[Docs/Foo.md]]` and `[[docs/foo.md]]` reach the same node because the uri collates case-insensitively.
+
+### Variants
+
+`resolved` marks whether the uri backs a real resource. Three variants follow:
+
+- Document — a real `.md` file on disk. `resolved = true`.
 - Ghost — a wikilink target authored `[[ghost/<slug>]]` as an intentional open loop, awaiting its file. `resolved = false`. A synthetic `ghost` tag enumerates the corpus's open loops.
 - URL — an external `http(s)` reference keyed by the verbatim URL. `resolved = false`, terminal, a synthetic `url` tag.
 
+### Fingerprints
+
+A resolved document carries two fingerprints of its bytes: `content_hash`, an exact hash for change detection, and `minhash`, a similarity sketch for near-duplicate discovery. Ghost and URL nodes are byteless.
+
+### Title and summary
+
+`title` and `summary` are first-class description attributes, asserted by the author. The title names the document beyond its filename; the summary is its lede — the gist a reader scans before opening the file. Every document asserts one of each.
+
 ### Properties
 
-A document carries its description as properties: typed key/value facts in entity-attribute-value form, one row per (document, key, value). They are the authored metadata — `tags`, `status`, `created`, and the open vocabulary beyond. A list-valued attribute fans out one row per element. Values store as text; `tags` casefold for case-insensitive lookup, other values store verbatim.
-
-The key vocabulary is open: any key is accepted and stored as data, save the reserved words below. Keys are interned (see [Vocabulary](#vocabulary)) — a key string is stored once and referenced by integer from every property row that carries it.
+Beyond title and summary, a document carries open-ended description as properties: typed key/value facts in entity-attribute-value form, one row per (document, key, value). The key vocabulary is open — any key is accepted and stored as data, save the reserved words below. A list-valued attribute fans out one row per element, and values store as text. Keys are interned (see [Vocabulary](#vocabulary)) — a key string is stored once and referenced by integer from every property row that carries it.
 
 Tags classify; properties carry state. A tag answers "what is this?" — immutable identity, the document's type and shape and domain. A mutable property answers "what state is it in?" Conflating them — a `draft` or `closed` tag — churns identity when the lifecycle moves. The full principle is in [[docs/notes/tags-classify-properties-carry-state.md]].
 
