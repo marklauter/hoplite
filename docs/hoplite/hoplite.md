@@ -38,7 +38,7 @@ The default toolset is simple and gets the job done most of the time. But the si
 
 ## The solution — mapping the corpus; declare, describe, discover, and read relationships
 
-Mapping the corpus, its explicit, semantic, and emergent relationships, and the meta descriptions on each document, gives the agent new affordances. The agent walks the corpus progressively, reading only what bears on the task. The result is less wasted context, less bias from stray input, and the agent kept in its smart-zone.
+Mapping the corpus — its explicit, semantic, and emergent relationships, and the meta descriptions on each document — gives the agent new affordances. The agent walks the corpus progressively, reading only what bears on the task. The result is less wasted context, less bias from stray input, and the agent kept in its smart-zone.
 
 ### Declare and describe — applying explicit structure
 
@@ -62,25 +62,27 @@ Explicit structure is asserted, not derived — the author supplies what the byt
 
 The corpus holds undiscovered relationships — implicit kinship that emerges from shared features: topics, tags, citations, commits, authors, proximity of time and space. A declared relationship is asserted and treated as fact. A latent signal is implied — present only as a pattern, recovered by inference.
 
-Every inferred relationship is graded by the improbability of the coincidence — a rare shared feature, or a narrow shared window. Two documents sharing a common word carry zero signal; two sharing a rare term carry a strong signal. That's why latent signal can be ranked.
+Every inferred relationship is graded by the improbability of the coincidence — a rare shared feature, or a narrow shared window. Two documents sharing a common word carry zero signal; two sharing a rare term carry a strong signal. That's why relationships derived from latent signals can be ranked.
 
-1. From what you wrote — the signal already latent in your own content and metadata.
+Signals resolve into three channels, each an independent feature space:
+
+1. Content and metadata — lexical and topical similarity, shared classification, temporal proximity.
    - topical kinship — two documents about the same thing with no link between them; similarity surfaces the relationship the author missed, and at the high-similarity extreme the same signal gathers a set of near-duplicates into one neighborhood instead of leaving them as N strangers
    - classification kinship — documents sharing a tag relate by kind even when their topics diverge
    - arcs — documents created close in time tend to share the intent of whatever was underway; the design arc (genesis → build → refactor) is one shape, every activity traces its own; never declared, it falls out of time
-2. From how documents connect — beyond the words, signal read off the links themselves. The more selective the shared connector, the stronger the tie, and a hub couples weakly.
+2. Structure — topology, not content: a rare connector couples strongly, a hub weakly.
    - co-citation — two documents pointed to by the same third
    - bibliographic coupling — two documents that point to the same third
    - shared citation — two documents that cite the same external source
    - hubs — a node's centrality, not a pairwise tie: a document many point to is central to the corpus, and as a shared connector it couples weakly
-3. From how documents changed — beyond the corpus itself, git history relates what content can't.
+3. History — provenance from the commit graph: co-change, co-authorship, shared lineage.
    - change coupling — documents changed in the same commit, often a stronger signal than content
    - co-modification — edited in the same session
    - same author
 
 The tradeoff — latent signal buys recall at the cost of precision: it finds the connection the author missed, and sometimes one that isn't there; the threshold is the knob.
 
-And provenance ranks above score: every discovered tie is graded, but a declared edge carries full confidence and outranks any discovered one for the same pair. The author's word beats the engine's guess, so the reader establishes trust per edge by where it came from.
+Provenance ranks above score: every discovered tie is graded, but a declared edge carries full confidence and outranks any discovered one for the same pair. The author's word beats the engine's guess, so the reader establishes trust per edge by where it came from.
 
 ### Read — navigating mapped relationships
 
