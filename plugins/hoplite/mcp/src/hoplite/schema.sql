@@ -29,20 +29,39 @@ CREATE TABLE node (
   minhash BLOB
 );
 
+-- The interned vocabulary of property keys — the open-ended set of frontmatter
+-- attribute names the corpus uses (tags, status, created, and the like). Unlike
+-- edge_kind, a closed enum of two, this grows as authors coin keys; it is open
+-- vocabulary, bounded only by the count of distinct labels (dozens), never the
+-- count of property rows (thousands). It earns its own table on two grounds:
+--   * Interning — "tags" stops repeating its string on every node that carries
+--     it; node_property stores a small integer keyid instead.
+--   * Survey — this IS the property vocabulary an agent reads to learn what
+--     predicates are composable, recovered as a table scan of a few dozen rows
+--     rather than SELECT DISTINCT over the widest table in the graph.
+-- Edge property keys will intern against this same pattern in a later pass.
+CREATE TABLE property_key (
+  id INTEGER PRIMARY KEY,
+  key TEXT NOT NULL UNIQUE COLLATE NOCASE
+);
+
 -- Typed key/value attributes hung on a node — a resource's frontmatter and
 -- metadata (tags, status, and the like). This is the data the property-graph
--- filter searches when answering "which nodes have this property?".
+-- filter searches when answering "which nodes have this property?". The key is
+-- interned: keyid points at property_key, so the attribute name is stored once
+-- in the vocabulary and referenced by integer here.
 CREATE TABLE node_property (
   nodeid INTEGER NOT NULL REFERENCES node(id),
-  key TEXT NOT NULL COLLATE NOCASE,
+  keyid INTEGER NOT NULL REFERENCES property_key(id),
   value TEXT NOT NULL,
-  PRIMARY KEY (nodeid, key, value)
+  PRIMARY KEY (nodeid, keyid, value)
 ) WITHOUT ROWID;
--- Property-graph filter: find nodes BY property (WHERE key = ? [AND value = ?]).
+-- Property-graph filter: find nodes BY property (WHERE keyid = ? [AND value = ?]).
 -- The PRIMARY KEY index leads with nodeid, so it only answers "what are node X's
--- properties?"; this index leads with key to answer the reverse — "which nodes
--- have this property?" — the lookup behind tag/property filtering.
-CREATE INDEX idx_node_property_key_value ON node_property(key, value);
+-- properties?"; this index leads with keyid to answer the reverse — "which nodes
+-- have this property?" — the lookup behind tag/property filtering. Resolve the
+-- key string to its keyid through property_key first, then seek here.
+CREATE INDEX idx_node_property_key_value ON node_property(keyid, value);
 
 -- The interned vocabulary of edge kinds — two, by provenance: declared
 -- (authored) and discovered (inferred). Normalized out so each edge stores a
@@ -84,19 +103,34 @@ CREATE TABLE edge (
 CREATE INDEX idx_edge_kind_src ON edge(kind, src, dst, confidence);
 CREATE INDEX idx_edge_dst ON edge(dst, kind, src, confidence);
 
+-- The interned vocabulary of edge property keys — the mirror of property_key on
+-- the edge side. Edge keys are a narrower set (chiefly `stereotype`, the label
+-- carrying cites/supports/supersedes/contradicts), but the grounds are the same:
+-- intern the key string out of every row, and give Survey the edge-property
+-- vocabulary as a table to read rather than a SELECT DISTINCT to run. Kept
+-- distinct from property_key so the two vocabularies stay separately surveyable
+-- — "what edge properties exist?" is a different question from "what node
+-- properties exist?".
+CREATE TABLE edge_property_key (
+  id INTEGER PRIMARY KEY,
+  key TEXT NOT NULL UNIQUE COLLATE NOCASE
+);
+
 -- Typed key/value attributes hung on an edge — the same shape as node_property,
--- but qualifying a relationship rather than a node.
+-- but qualifying a relationship rather than a node. The key is interned: keyid
+-- points at edge_property_key, the edge-side counterpart to property_key.
 CREATE TABLE edge_property (
   edgeid INTEGER NOT NULL REFERENCES edge(id),
-  key TEXT NOT NULL COLLATE NOCASE,
+  keyid INTEGER NOT NULL REFERENCES edge_property_key(id),
   value TEXT NOT NULL,
-  PRIMARY KEY (edgeid, key, value)
+  PRIMARY KEY (edgeid, keyid, value)
 ) WITHOUT ROWID;
--- Property-graph filter: find edges BY property (WHERE key = ? [AND value = ?]).
+-- Property-graph filter: find edges BY property (WHERE keyid = ? [AND value = ?]).
 -- The PRIMARY KEY index leads with edgeid, so it only answers "what are edge X's
--- properties?"; this index leads with key to answer the reverse — "which edges
--- have this property?" — the lookup behind property filtering over edges.
-CREATE INDEX idx_edge_property_key_value ON edge_property(key, value);
+-- properties?"; this index leads with keyid to answer the reverse — "which edges
+-- have this property?" — the lookup behind property filtering over edges. Resolve
+-- the key string to its keyid through edge_property_key first, then seek here.
+CREATE INDEX idx_edge_property_key_value ON edge_property(keyid, value);
 
 -- Full-text search over each node's text projection (title, summary, body),
 -- powering ranked lexical search. uri is stored UNINDEXED only to tie a hit

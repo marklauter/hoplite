@@ -49,6 +49,8 @@ Properties decompose entity-attribute-value: one row per (entity, key, value), t
 
 The vocabulary is open — any property key is accepted and stored, with no schema change per new key — except for the reserved words below. Values are stored as text. `tags` values are casefolded for case-insensitive lookup; other values are stored verbatim.
 
+The key vocabulary is interned, and that intern table is the corpus's property namespace made readable — the substrate Survey reads to hand an agent the keys it can filter on before it composes a predicate. Each side keeps its own: node keys in `property_key`, edge keys in `edge_property_key`, so the two vocabularies stay separately surveyable. A key is stored once and referenced by integer from every property row that carries it.
+
 Tags classify; properties carry state. A tag answers "what is this?" — immutable identity, the document's type and shape and domain. A mutable property answers "what state is it in?" Conflating them (a `draft` or `closed` tag) churns identity when lifecycle moves. The full principle is in [[docs/notes/tags-classify-properties-carry-state.md]].
 
 ## Edge stereotypes
@@ -73,7 +75,7 @@ The model is authored and read through surfaces that map onto it:
 
 ## Storage
 
-The graph persists in SQLite. The tables, columns, indexes, and their rationale live in [`schema.sql`](../../plugins/hoplite/mcp/src/hoplite/schema.sql); this document does not restate the DDL. The mapping is direct: nodes to `node`, edges to `edge` (kinds interned in `edge_kind`), properties to `node_property` and `edge_property`, the text projection to `fts`.
+The graph persists in SQLite. The tables, columns, indexes, and their rationale live in [`schema.sql`](../../plugins/hoplite/mcp/src/hoplite/schema.sql); this document does not restate the DDL. The mapping is direct: nodes to `node`, edges to `edge` (kinds interned in `edge_kind`), properties to `node_property` and `edge_property` (their keys interned in `property_key` and `edge_property_key`), the text projection to `fts`.
 
 ## Open questions
 
