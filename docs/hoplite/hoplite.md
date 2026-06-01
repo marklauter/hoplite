@@ -1,6 +1,6 @@
 ---
 title: Hoplite — Map your corpus; discover latent signals; protect context
-summary: Hoplite is a knowledge graph over a markdown corpus, built for agents under context budget. It maps the structure an author declares and the latent signal an engine discovers, so the agent reads only the subset that matters instead of grepping and reading blind.
+summary: Hoplite is a knowledge graph over a markdown corpus, built for agents under a fixed context budget. It maps the structure an author declares and the latent signal an engine discovers, so the agent reads only the subset that matters instead of grepping and reading blind.
 document:
   tags: [hoplite, overview, spec]
   created: 2026-05-30
@@ -8,20 +8,13 @@ document:
 
 # Hoplite — Map your corpus; discover latent signals; protect context
 
-An agent works within context budget. It must act on a corpus larger than it can read. The agent has a limited set of built-in tools: glob, grep, and read. It can discover relationships with these tools, but it burns tokens, relies on error-prone judgement, and injects bias by reading off-task content. 
+An agent works within a fixed context budget. It must act on a corpus larger than it can read. The agent has a limited set of built-in tools: glob, grep, and read. It can discover relationships with these tools, but it burns tokens, relies on error-prone judgement, and injects bias by reading off-task content. 
 
 Hoplite augments the default navigation tools through a map over the markdown corpus. Instead of relying on the agent to read, comprehend, and infer relationships on-the-fly, Hoplite applies structure to the markdown and reifies the map as a durable graph with declared and latent relationships. The agent navigates the map and reads selectively, spending its context on the subset that matters.
 
 ## The problem — glob-grep-read loop is the wrong tool for accessing a markdown corpus
 
-The default toolset is simple and gets the job done most of the time. But the simplicity has a cost: exploring with the glob, grep, and read loop wastes turns, tokens, and attention. The agent has to re-derive the same relationships every session. `Explore` agents, in the interest of preserving the context budget, employ a grep excerpt loop that can miss relevant information.
-
-On the other side of the spectrum sit heavyweight retrieval stacks — embeddings, a vector store, a reranker, a graph server. They answer fast and rank well, but they cost the other way: infrastructure to stand up and keep in sync, external services and compute, and a copy of the living apart from its source. Hoplite collapses the trade-off.
-  ▎ It rebuilds a durable map from the markdown itself — no external service, the corpus stays the
-  ▎ source of truth — yet hands the agent the ranked retrieval and relationship traversal the default
-  ▎ tools can't reach. The power of the heavy end at nearly the cost of the light one.
-
-Agents either read a have to read  exploring blind alleys, corrupts future turns, and fails to find critical information. All lead to the agent making decisions biased by the wrong input, or rehashing decisions that were one semantic search away. Failures compound.
+The default toolset is simple and gets the job done most of the time. But the simplicity has a cost: exploring with the glob, grep, and read loop wastes turns, tokens, and attention. The agent has to re-derive the same relationships every session. `Explore` agents, in the interest of preserving the context budget, employ a grep excerpt loop that can miss relevant information. After exploring blind alleys, agents make decisions biased by the wrong content, or rehash decisions that were present in missed content. Failures compound.
 
 1. Search matches the wrong way — an agent must find information that matters before it can use it.
    - grep finds direct text matches with regex, not semantic matches by topic
@@ -39,13 +32,13 @@ Agents either read a have to read  exploring blind alleys, corrupts future turns
    - references to not-yet-written documents vanish — the backlog of intended work goes invisible, with no ghost to mark it
 5. The corpus's memory goes unused — so the corpus repeats itself, the agent rewriting and rehashing what's already locked in.
    - the same idea gets rewritten across several notes; the agent reads redundant copies or never sees they converge
-   - fixed-size context hides prior art — the agent can't find the decision already made
+   - fixed context budget hides prior art — the agent can't find the decision already made
      - re-derive — re-solves a solved problem; wasted work, usually the same answer
      - contradict — lands on a different answer and breaks consistency; two conflicting decisions now drift apart
 
 ## The solution — mapping the corpus; declare, describe, discover, and read relationships
 
-Mapping the corpus — its explicit, semantic, and emergent relationships, and the meta descriptions on each document — gives the agent new affordances. The agent reads progressively, pulling only what bears on the task. The result is less wasted context, less bias from stray input, and the agent kept in its smart-zone.
+Mapping the corpus, its explicit, semantic, and emergent relationships, and the meta descriptions on each document, gives the agent new affordances. The agent walks the corpus progressively, reading only what bears on the task. The result is less wasted context, less bias from stray input, and the agent kept in its smart-zone.
 
 ### Declare and describe — applying explicit structure
 
