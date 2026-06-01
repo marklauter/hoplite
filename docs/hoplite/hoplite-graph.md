@@ -12,13 +12,14 @@ Hoplite models a markdown corpus as a property graph: documents are nodes, refer
 
 ## The model
 
-The graph has two element types — nodes and edges — and one decoration — properties.
+The graph has two element types — nodes and edges — and the description that hangs off each.
 
 - A node is an addressable resource: a document in the corpus.
 - An edge is a directed relationship from one node to another.
-- A property is a typed key/value fact attached to a node or an edge.
+- A property is a typed key/value fact attached to a node.
+- A stereotype is an open-vocabulary label attached to an edge.
 
-Properties never connect things, and edges never carry identity. A node's tags say what it is; an edge's stereotype says what kind of link it is. That split — structure in nodes and edges, description in properties — is the spine of the model, and it repeats identically on both the node and edge sides.
+Description never connects things, and edges never carry identity. A node's tags say what it is; an edge's stereotype says what kind of link it is. That split — structure in nodes and edges, description hanging off both — is the spine of the model. The description takes a different shape on each side: a node carries an open key/value property vocabulary, an edge carries a set of stereotype labels. The symmetry is that both are described; it is not that they are described identically.
 
 ## Nodes
 
@@ -37,7 +38,7 @@ An edge is directed from `src` to `dst` and carries a `kind` and a `confidence`.
 - `declared` — the author asserted it, by writing a `[[wikilink]]` in body text. `confidence` is `1.0`.
 - `discovered` — the engine inferred it from a shared or proximate feature (content similarity, co-citation, temporal proximity, and the rest). `confidence` is the graded strength of the inference.
 
-Two things that look like kinds are not. A relationship's *meaning* — citation, refutation, endorsement — is an open-vocabulary stereotype on the edge, stored in `edge_property`, never a new kind (see [[docs/notes/stereotypes-are-open-vocab-edge-properties.md]]); a bare edge with no stereotype is simply a link. And the destination's *nature* — document, ghost, or URL — is a fact about the node, not the edge: a markdown link to an external site is a `declared` edge whose `dst` is a URL node, stereotyped `cites` only when the author means citation.
+Two things that look like kinds are not. A relationship's *meaning* — citation, refutation, endorsement — is an open-vocabulary stereotype on the edge, stored in `edge_stereotype`, never a new kind (see [[docs/notes/stereotypes-are-open-vocab-edge-properties.md]]); a bare edge with no stereotype is simply a link. And the destination's *nature* — document, ghost, or URL — is a fact about the node, not the edge: a markdown link to an external site is a `declared` edge whose `dst` is a URL node, stereotyped `cites` only when the author means citation.
 
 At most one edge connects a given ordered pair — `UNIQUE(src, dst)`, across both kinds. The two-pass build inserts `declared` edges first and `discovered` second, so a declared edge wins the slot over a discovered collision — declared beats discovered.
 
@@ -45,17 +46,19 @@ The enum is closed and stays closed; provenance is binary. Richer relationships 
 
 ## Properties
 
-Properties decompose entity-attribute-value: one row per (entity, key, value), the same shape on both sides of the graph. Node properties are authored metadata on a document; edge properties qualify a relationship, including stereotype labels. List-valued attributes fan out one row per element.
+Properties decompose entity-attribute-value: one row per (node, key, value). They are authored metadata on a document — `tags`, `status`, `created`, and the open vocabulary beyond. List-valued attributes fan out one row per element. Properties are a node affordance; an edge's description is its stereotype set (see [Edge stereotypes](#edge-stereotypes)), not a key/value bag.
 
 The vocabulary is open — any property key is accepted and stored, with no schema change per new key — except for the reserved words below. Values are stored as text. `tags` values are casefolded for case-insensitive lookup; other values are stored verbatim.
 
-The key vocabulary is interned, and that intern table is the corpus's property namespace made readable — the substrate Survey reads to hand an agent the keys it can filter on before it composes a predicate. Each side keeps its own: node keys in `property_key`, edge keys in `edge_property_key`, so the two vocabularies stay separately surveyable. A key is stored once and referenced by integer from every property row that carries it.
+The key vocabulary is interned: `property_key` is the corpus's property namespace made readable — the substrate Survey reads to hand an agent the keys it can filter on before it composes a predicate. A key is stored once and referenced by integer from every property row that carries it.
+
+Surveying that vocabulary is the read graph's `match` shape turned on the schema — find and walk, the same two moves. Find reads the keys: a small list from `property_key`. Walk descends a key to its values — the distinct `value` rows under one `keyid`, served by the reverse index. The keys are the nodes of a vocabulary graph, `key → value` the edge, the values the reachable set. Whether a key carries a vocabulary or a free scalar resolves in the walk, never in a declaration: a key that reaches a handful of values is categorical — `tags`, `status`; one that reaches thousands of near-unique values is scalar — a timestamp, a score. Values need no interning of their own, and the schema needs no categorical flag; the `(keyid, value)` index carries the walk, and the agent reads the distinction off its result. The rule that falls out: intern the find namespace, not the walk values — `property_key` interns node keys, `stereotype` interns edge labels, while walk-reached node values stay inline. The edge side has a single description dimension and nothing beneath it, so its survey is the find alone — a direct read of the interned `stereotype` table, the edge-side counterpart to `property_key`, with no walk to follow.
 
 Tags classify; properties carry state. A tag answers "what is this?" — immutable identity, the document's type and shape and domain. A mutable property answers "what state is it in?" Conflating them (a `draft` or `closed` tag) churns identity when lifecycle moves. The full principle is in [[docs/notes/tags-classify-properties-carry-state.md]].
 
 ## Edge stereotypes
 
-A stereotype is an open-vocabulary label on a `declared` edge — `supports`, `contradicts`, `supersedes`, `not-related` — stored as an edge property, classifying what kind of link the edge is without extending the closed kind enum. A new stereotype is a vocabulary-and-parser change, never a schema migration, the same way tags work; the parser does not reject unknown values. The full model, the authoring surfaces, and the seed vocabulary are in [[docs/notes/stereotypes-are-open-vocab-edge-properties.md]].
+A stereotype is an open-vocabulary label on a `declared` edge — `supports`, `contradicts`, `supersedes`, `not-related` — interned in `stereotype` and linked to its edges through `edge_stereotype`, classifying what kind of link the edge is without extending the closed kind enum. It is a label, not a key/value property: an edge's description is a set of stereotypes, not the open key/value vocabulary a node carries, so the labels live in their own interned vocabulary and a junction table rather than an EAV bag. That vocabulary is the edge-side survey namespace — the counterpart to `property_key`. A new stereotype is a vocabulary-and-parser change, never a schema migration, the same way tags work; the parser does not reject unknown values. The full model, the authoring surfaces, and the seed vocabulary are in [[docs/notes/stereotypes-are-open-vocab-edge-properties.md]].
 
 ## Reserved words
 
@@ -75,7 +78,7 @@ The model is authored and read through surfaces that map onto it:
 
 ## Storage
 
-The graph persists in SQLite. The tables, columns, indexes, and their rationale live in [`schema.sql`](../../plugins/hoplite/mcp/src/hoplite/schema.sql); this document does not restate the DDL. The mapping is direct: nodes to `node`, edges to `edge` (kinds interned in `edge_kind`), properties to `node_property` and `edge_property` (their keys interned in `property_key` and `edge_property_key`), the text projection to `fts`.
+The graph persists in SQLite. The tables, columns, indexes, and their rationale live in [`schema.sql`](../../plugins/hoplite/mcp/src/hoplite/schema.sql); this document does not restate the DDL. The mapping is direct: nodes to `node`, edges to `edge` (kinds interned in `edge_kind`), node properties to `node_property` (keys interned in `property_key`), edge stereotypes to `edge_stereotype` (labels interned in `stereotype`), the text projection to `fts`.
 
 ## Open questions
 

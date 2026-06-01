@@ -103,34 +103,35 @@ CREATE TABLE edge (
 CREATE INDEX idx_edge_kind_src ON edge(kind, src, dst, confidence);
 CREATE INDEX idx_edge_dst ON edge(dst, kind, src, confidence);
 
--- The interned vocabulary of edge property keys — the mirror of property_key on
--- the edge side. Edge keys are a narrower set (chiefly `stereotype`, the label
--- carrying cites/supports/supersedes/contradicts), but the grounds are the same:
--- intern the key string out of every row, and give Survey the edge-property
--- vocabulary as a table to read rather than a SELECT DISTINCT to run. Kept
--- distinct from property_key so the two vocabularies stay separately surveyable
--- — "what edge properties exist?" is a different question from "what node
--- properties exist?".
-CREATE TABLE edge_property_key (
+-- The interned vocabulary of edge stereotypes — the open-ended set of labels an
+-- author applies to a declared edge (cites, supports, supersedes, contradicts,
+-- not-related, ...). This is the edge-side counterpart to property_key: the
+-- surveyable namespace an agent reads to learn what link-meanings the corpus
+-- uses before filtering edges by one. Interning here is the same move keys get —
+-- the survey-find namespace is interned on both sides; only walk-reached node
+-- values stay inline. Open vocabulary, the label stored once and referenced by id.
+CREATE TABLE stereotype (
   id INTEGER PRIMARY KEY,
-  key TEXT NOT NULL UNIQUE COLLATE NOCASE
+  label TEXT NOT NULL UNIQUE COLLATE NOCASE
 );
 
--- Typed key/value attributes hung on an edge — the same shape as node_property,
--- but qualifying a relationship rather than a node. The key is interned: keyid
--- points at edge_property_key, the edge-side counterpart to property_key.
-CREATE TABLE edge_property (
+-- An edge's description: the stereotype labels it carries, classifying what kind
+-- of link it is. An edge may carry several (PRIMARY KEY (edgeid, stereotypeid)
+-- holds a set and dedupes within it). Unlike a node, an edge has no open
+-- key/value vocabulary — its only authored description is the stereotype — so
+-- this is a dedicated junction table, not an EAV property bag mirrored off
+-- node_property, and the label interns through `stereotype` rather than
+-- repeating on every row.
+CREATE TABLE edge_stereotype (
   edgeid INTEGER NOT NULL REFERENCES edge(id),
-  keyid INTEGER NOT NULL REFERENCES edge_property_key(id),
-  value TEXT NOT NULL,
-  PRIMARY KEY (edgeid, keyid, value)
+  stereotypeid INTEGER NOT NULL REFERENCES stereotype(id),
+  PRIMARY KEY (edgeid, stereotypeid)
 ) WITHOUT ROWID;
--- Property-graph filter: find edges BY property (WHERE keyid = ? [AND value = ?]).
--- The PRIMARY KEY index leads with edgeid, so it only answers "what are edge X's
--- properties?"; this index leads with keyid to answer the reverse — "which edges
--- have this property?" — the lookup behind property filtering over edges. Resolve
--- the key string to its keyid through edge_property_key first, then seek here.
-CREATE INDEX idx_edge_property_key_value ON edge_property(keyid, value);
+-- Reverse lookup: which edges carry a given stereotype (WHERE stereotypeid = ?).
+-- The PRIMARY KEY leads with edgeid ("what are edge X's stereotypes?"); this
+-- index leads with stereotypeid for the reverse — edges filtered by stereotype.
+-- Surveying the edge vocabulary needs neither index: it is a read of `stereotype`.
+CREATE INDEX idx_edge_stereotype ON edge_stereotype(stereotypeid, edgeid);
 
 -- Full-text search over each node's text projection (title, summary, body),
 -- powering ranked lexical search. uri is stored UNINDEXED only to tie a hit
