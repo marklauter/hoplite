@@ -11,24 +11,14 @@ document:
 
 asserstions on the code base
 
-## schema.sql
+## ready to ship
 
-- schema.sql is higly optimized
-- schema.sql is pure graph storage - no document or domain noise
-- ready to ship
+- schema.sql
+- hoplite.md
+- migrations.py
+- db.py
 
-## migrations.py
-
-- no versioning - but not required for disposable data store
-- idempotent
-- ready to ship
-
-## db.py
-
-- models SQLite's real concurrency correctly
-- deliberate, coherent transaction model
-- Properly decoupled behind a Protocol
-- ready to ship
+## wip
 
 ## graph.py
 

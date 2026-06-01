@@ -2,7 +2,7 @@
 title: Hoplite architecture
 summary: The Hoplite system as it is — corpus, graph, walker, FTS5, MinHash, dump schema, error model. One document covering the day-one shape end to end.
 document:
-  tags: [hoplite, mcp, architecture, spec]
+  tags: [hoplite, architecture, spec]
   created: 2026-05-25
 ---
 

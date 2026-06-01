@@ -163,7 +163,6 @@ Adding a skill: create `plugins/hoplite/skills/<skill-name>/SKILL.md`, then `/pl
 
 ## Reference
 
-- [docs/hoplite/hoplite-spec-index.md](docs/hoplite/hoplite-spec-index.md) — spec index.
 - [docs/hoplite/hoplite-architecture.md](docs/hoplite/hoplite-architecture.md) — corpus, graph, walker, FTS5, MinHash, dump schema, error model.
 - [docs/hoplite/hoplite-tool-api.md](docs/hoplite/hoplite-tool-api.md) — MCP tool signatures and semantics.
 - [docs/hoplite/hoplite-roadmap.md](docs/hoplite/hoplite-roadmap.md) — features deferred past day one.

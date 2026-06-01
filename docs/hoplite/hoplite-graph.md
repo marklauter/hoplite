@@ -1,14 +1,14 @@
 ---
 title: The document graph is a property graph over an addressable corpus
-summary: The model canon for Hoplite — nodes, edges, properties, edge stereotypes, and reserved words. Frontmatter and inline wikilinks express this model and schema.sql stores it; this document defines it. When a surface and this document disagree, this document wins.
+summary: <todo: summary>
 document:
-  tags: [hoplite, graph, design, spec]
+  tags: [hoplite, graph, spec]
   created: 2026-05-29
 ---
 
-# Buliding a knowledge graph over an addressable corpus: order from chaos
+# Building a knowledge graph over an addressable corpus: order from chaos
 
-Hoplite models a markdown corpus as a property graph: documents are nodes, references between them are edges, and authored metadata hangs off both as properties. This document is the model canon — what the graph *is*. The surfaces that touch it derive from here: frontmatter ([[docs/hoplite/hoplite-frontmatter.md]]) and inline wikilinks are how an author *expresses* the graph; `schema.sql` is how it is *stored*. When a surface and this document disagree, this document wins.
+<todo: introduction>
 
 ## The model
 
@@ -82,7 +82,7 @@ The graph persists in SQLite. The tables, columns, indexes, and their rationale 
 
 ## Open questions
 
-- Frontmatter canon overlap. [[docs/hoplite/hoplite-frontmatter.md]] still defines model content — the two-destinations framing and the node-property and edge-stereotype definitions — that this canon now owns. Shrink the frontmatter doc to express-only (how frontmatter writes node properties and edge stereotypes) and defer the model here, preserving any idea this canon does not yet capture and stopping on any genuine contradiction.
+- Frontmatter doc retires into the express layer. [[docs/hoplite/hoplite-frontmatter.md]] still carries model content this canon now owns. Decided: dissolve it into [[docs/hoplite/hoplite-declare-and-describe.md]] as the frontmatter section — express-only, model deferred here — alongside inline wikilinks. Held until the access-pattern docs are authored; the doc stays frozen meanwhile.
 - The reserved-word set is incomplete. Only `created` is named. Enumerate the rest and give each its type and validation rule, the way `created` has one.
 - The implementation trails this canon. The parser, the handbook component, and the frontmatter hook still need to catch up to the model: drop `created` from the mandatory set everywhere it is still listed, and implement reserved-word validation (`created` as an ISO date-time that also accepts a bare ISO date). The model leads; the surfaces derive.
 
