@@ -45,7 +45,12 @@ A resolved document carries two fingerprints of its bytes: `content_hash`, an ex
 
 ### Properties
 
-Beyond title and summary, a document carries open-ended description as properties: typed key/value facts in entity-attribute-value form, one row per (document, key, value). The key vocabulary is open — any key is accepted and stored as data, save the reserved words below. A list-valued attribute fans out one row per element, and values store as text. Keys are interned (see [Vocabulary](#vocabulary)) — a key string is stored once and referenced by integer from every property row that carries it.
+Beyond title and summary, a document carries open-ended description as properties — typed key/value facts in entity-attribute-value form. They are stored across two tables:
+
+- `node_property` — one row per (document, key, value)
+- `property_key` — the interned key vocabulary (see [Vocabulary](#vocabulary))
+
+The key vocabulary is open — any key is accepted and stored as data, save the reserved words below. A list-valued attribute fans out one row per element, and values store as text. A key string is interned once in `property_key` and referenced by integer from every `node_property` row that carries it.
 
 Tags classify; properties carry state. A tag answers "what is this?" — immutable identity, the document's type and shape and domain. A mutable property answers "what state is it in?" Conflating them — a `draft` or `closed` tag — churns identity when the lifecycle moves. The full principle is in [[docs/notes/tags-classify-properties-carry-state.md]].
 
@@ -59,26 +64,51 @@ The set is open and grows as keys earn defined semantics. Each reserved word nam
 
 ## Relationships
 
-A relationship is the graph's edge — directed from `src` to `dst`, carrying a `kind` and a `confidence`. Kind is provenance, a closed enum of two — who asserted the edge:
+A relationship is the graph's edge.
 
-- `declared` — the author asserted it, by writing a `[[wikilink]]` or markdown link in body text or naming it in frontmatter. `confidence` is `1.0`.
-- `discovered` — the engine inferred it from a latent signal: content similarity, co-citation, temporal proximity, and the rest (the channels are in [[docs/hoplite/hoplite.md]]). `confidence` is the graded strength of the inference.
+- `id` — internal integer key (storage only)
+- `src` — source node
+- `dst` — destination node
+- `kind` — provenance: `declared` or `discovered`
+- `confidence` — graded strength of the tie
+- stereotypes — open-vocabulary labels describing the link
 
-A relationship's *meaning* — citation, support, refutation — is a stereotype on the edge (see [Stereotypes](#stereotypes)). The destination's *nature* — document, ghost, or URL — is a fact about the node: a markdown link to an external site is a `declared` edge to a URL node, stereotyped `cites` when the author means citation.
+### Direction
+
+`src` and `dst` are the edge's endpoints — directed, tail to head. The backlink — the inbound view — comes free. Symmetry is the stereotype's property: `supersedes` runs one way, a `related` or `not-related` tie reads both. The destination's nature — document, ghost, or URL — is the node's fact: a markdown link to an external site is a `declared` edge to a URL node.
+
+### Kind
+
+`kind` is provenance, a closed enum of two — who asserted the edge:
+
+- `declared` — the author asserted it, by writing a `[[wikilink]]` or markdown link in body text or naming it in frontmatter.
+- `discovered` — the engine inferred it from a latent signal: content similarity, co-citation, temporal proximity, and the rest (the channels are in [[docs/hoplite/hoplite.md]]).
+
+### Confidence
+
+Confidence follows kind: a `declared` edge is `1.0`, a `discovered` edge carries the graded strength of the inference.
+
+### Uniqueness
 
 At most one edge connects an ordered pair — `UNIQUE(src, dst)`, across both kinds. The two-pass build inserts declared edges first and discovered second; a declared edge wins the slot against a discovered collision.
 
-An edge has a tail and a head, so the backlink — the inbound view — comes free. Symmetry is the stereotype's property: `supersedes` runs one way, a `related` or `not-related` tie reads both.
-
 ### Stereotypes
 
-A stereotype is an open-vocabulary label on a declared edge — `cites`, `supports`, `supersedes`, `contradicts`, `not-related` — classifying what kind of link it is. Description takes a different shape on each side: a document carries an open key/value property vocabulary, an edge carries a label set.
+A relationship's meaning — citation, support, refutation — is a stereotype: an open-vocabulary label on a declared edge — `cites`, `supports`, `supersedes`, `contradicts`, `not-related` — classifying what kind of link it is. An edge's stereotypes are stored across two tables:
 
-A new stereotype extends the vocabulary as data, the way a new tag does; the parser accepts any label. The full model, the authoring surfaces, and the seed vocabulary are in [[docs/notes/stereotypes-are-open-vocab-edge-properties.md]].
+- `edge_stereotype` — the junction, a set of labels per edge
+- `stereotype` — the interned label vocabulary (see [Vocabulary](#vocabulary))
+
+Description takes a different shape on each side: a document carries an open key/value property vocabulary, an edge carries a label set. A new stereotype extends the vocabulary as data, the way a new tag does; the parser accepts any label. The full model, the authoring surfaces, and the seed vocabulary are in [[docs/notes/stereotypes-are-open-vocab-edge-properties.md]].
 
 ## Vocabulary
 
-Two namespaces are interned: `property_key` holds the document-side property keys, `stereotype` holds the edge-side labels. Interning stores each string once and exposes the vocabulary as a readable set. That set is the Survey affordance — what an agent reads to learn which predicates compose before it queries the corpus.
+The find-namespace is interned in two tables, one per side of the graph:
+
+- `property_key` — the document-side property keys
+- `stereotype` — the edge-side labels
+
+Each holds the same `(id, string)` shape: a surrogate id and the interned string, unique and case-insensitive. Interning stores each string once and exposes the vocabulary as a readable set. That set is the Survey affordance — what an agent reads to learn which predicates compose before it queries the corpus.
 
 Survey is the read graph's `match` shape applied to the schema: find and walk.
 
