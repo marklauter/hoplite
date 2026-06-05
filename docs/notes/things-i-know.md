@@ -223,3 +223,22 @@ The graph persists in SQLite. The tables, columns, indexes, and their rationale 
 - [[docs/notes/stereotypes-are-open-vocab-edge-properties.md]] — edge stereotypes in full.
 - [[docs/notes/tags-classify-properties-carry-state.md]] — identity versus state.
 - [[docs/hoplite/hoplite-architecture.md]] — the system around the graph.
+
+
+## document structure
+
+- hoplite
+  - graph - describes structure: nodes, edges, property graph, stereotype graph, vocab, bm25 FTS, minhash ranked edges
+    - discover
+      - building minhash ranked edges
+  - affordances
+    - declare-and-describe (write-side affordances) - describes the complete mutation surface that is exposed through frontmatter and in-line content markers
+      - frontmatter - extends declare and describe??? maybe absorbed into it
+    - navigation (read-side affordances)
+      - read-operations
+        - survey vocabulary - array values, node properties, edge stereotypes
+        - filter - property graph predicates, stereotype predicates
+        - semantic search - FTS
+        - walk - traversing the graph
+        - projection - organizing result sets
+      - tool-api - describes the mcp endpoint signatures
