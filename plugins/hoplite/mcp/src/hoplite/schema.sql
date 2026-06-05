@@ -32,8 +32,8 @@
 create table node (
   id integer primary key,
   uri text not null unique collate nocase,
-  resolved integer not null,
   content_hash text,
+  resolved integer not null,
   minhash blob,
   created text
 );

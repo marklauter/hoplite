@@ -15,18 +15,18 @@ The interned vocabulary is a graph in its own right, addressed in the same uri f
 [Inference] The model carries two graphs, and the read verbs are polymorphic over which one they traverse.
 
 - Corpus graph — nodes joined by edges (`edge`, `edge_stereotype`, `node_tag`). The `walk` read-operation traverses it: node → edges → neighbor nodes.
-- Vocabulary graph — namespaces joined to their values. `node/property_key/tags` is wrong now that tags is a label set; the live example is `node/property_key/status → {draft, final}`, an edge in this graph materialized from `node_property` through the `(keyid, value)` index.
+- Vocabulary graph — namespaces joined to their values. `node/property/tags` is wrong now that tags is a label set; the live example is `node/property/status → {draft, final}`, an edge in this graph materialized from `node_property` through the `(keyid, value)` index.
 
 ## Namespace uris
 
-[Decision] A vocabulary entry is addressed as a uri-style path rooted under its owning entity, the same segmented form as a node uri. The `namespace` view in [`schema.sql`](../../plugins/hoplite/mcp/src/hoplite/schema.sql) projects each interned entry as `node/…` or `edge/…`: `node/tag/note`, `node/property_key/status`, `edge/stereotype/cites`, `edge/kind/declared`. The walk extends a property-key path by one segment: `node/property_key/status` → `node/property_key/status/draft`.
+[Decision] A vocabulary entry is addressed as a uri-style path rooted under its owning entity, the same segmented form as a node uri. The `namespace` view in [`schema.sql`](../../plugins/hoplite/mcp/src/hoplite/schema.sql) projects each interned entry as `node/…` or `edge/…`: `node/tag/note`, `node/property/status`, `edge/stereotype/cites`, `edge/kind/declared`. The walk extends a property-key path by one segment: `node/property/status` → `node/property/status/draft`.
 
 ## The address space
 
 [Inference] Everything addressable sits under one of two entity roots, `node` or `edge`, and the kind of thing is the path. Tools dispatch on the prefix.
 
 - `node/<uri>` — a corpus vertex (`node/docs/myfile.md`); the three variants (document, ghost, url) are the next segment, and a vault segment extends it for the cross-repo case (`node/<vault>/docs/myfile.md`).
-- `node/tag/<label>`, `node/property_key/<key>` — the node-side vocabularies; `node/property_key/<key>/<value>` is the walked value.
+- `node/tag/<label>`, `node/property/<key>` — the node-side vocabularies; `node/property/<key>/<value>` is the walked value.
 - `edge(<src>, <dst>)` — a corpus edge: a binary relation, so it has no atomic path. Its identity is the ordered pair (the `unique (src, dst)` natural key, direction by order); the surrogate `edge.id` regenerates on every rebuild, so it cannot serve as a stable address. `kind`, `confidence`, and stereotypes are attributes of the pair, not part of its identity.
 - `edge/stereotype/<label>`, `edge/kind/<kind>` — the edge-side vocabularies.
 
@@ -40,11 +40,11 @@ The interned vocabulary is a graph in its own right, addressed in the same uri f
 
 ## Terminal asymmetry
 
-[Observation] `node/property_key/<key>` is the only walkable namespace — it has out-edges (its values) in the vocabulary graph. `node/tag/<label>`, `edge/stereotype/<label>`, and `edge/kind/<kind>` are leaves: a label set's label is itself the value, and the kind enum is closed, so there is nothing beneath to walk to. This falls out of the schema — EAV gives key→value depth, while the label-set and enum tables hold a single dimension.
+[Observation] `node/property/<key>` is the only walkable namespace — it has out-edges (its values) in the vocabulary graph. `node/tag/<label>`, `edge/stereotype/<label>`, and `edge/kind/<kind>` are leaves: a label set's label is itself the value, and the kind enum is closed, so there is nothing beneath to walk to. This falls out of the schema — EAV gives key→value depth, while the label-set and enum tables hold a single dimension.
 
 ## Vocabulary uris are also predicate atoms
 
-[Inference] Every vocabulary address doubles as a filter input to the corpus graph. The terminal namespaces are exactly the predicates injected into corpus `match` and `walk`: `edge/stereotype/cites` and `edge/kind/declared` parameterize edge selection; `node/tag/note` parameterizes a tag filter; a walked value like `node/property_key/status/draft` parameterizes a property filter. A vocabulary uri is simultaneously a walk-target in the vocabulary graph and a filter-input to the corpus graph.
+[Inference] Every vocabulary address doubles as a filter input to the corpus graph. The terminal namespaces are exactly the predicates injected into corpus `match` and `walk`: `edge/stereotype/cites` and `edge/kind/declared` parameterize edge selection; `node/tag/note` parameterizes a tag filter; a walked value like `node/property/status/draft` parameterizes a property filter. A vocabulary uri is simultaneously a walk-target in the vocabulary graph and a filter-input to the corpus graph.
 
 ## The pipeline
 
