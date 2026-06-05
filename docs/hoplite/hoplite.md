@@ -34,7 +34,7 @@ The simplicity of the default toolset has a cost: exploring with the glob, grep,
    - references to not-yet-written documents vanish — the backlog of intended work goes invisible, with no ghost to mark it
 5. The corpus's memory goes unused — so the corpus repeats itself, the agent rewriting and rehashing what's already locked in.
    - the same idea gets rewritten across several notes; the agent reads redundant copies or never sees they converge
-   - fixed context budget hides prior art — the agent can't find the decision already made
+   - fixed context budget hides prior art — the decision, settled, remains unread
      - re-derive — re-solves a solved problem; wasted work, usually the same answer
      - contradict — lands on a different answer and breaks consistency; two conflicting decisions now drift apart
 
