@@ -15,41 +15,61 @@
 -- first and always win; discovered edges (inferred) follow and collide out
 -- against UNIQUE(src, dst).
 -- That precedence is enforced by the schema, not by loader comparison logic.
+--
+-- Every defined attribute earns a first-class home: a scalar fact is a column on
+-- node, a label set interns into its own vocabulary plus a junction (tag,
+-- stereotype), and an alternate identity resolves through node_alias. That
+-- leaves node_property purely for open vocabulary — author-coined keys with no
+-- model-defined meaning.
 
 -- A node is the graph's vertex: one row per addressable byte resource (in
 -- Hoplite, a markdown file in the corpus). uri is its medium-agnostic identity;
 -- resolved marks whether the referent actually exists or is a dangling target;
 -- content_hash and minhash are exact and similarity fingerprints of the bytes,
--- for change detection and near-duplicate detection.
+-- for change detection and near-duplicate detection; created is the authored
+-- creation timestamp, a scalar fact and so a column — null when the author omits
+-- it, with git history as the fallback date.
 create table node (
   id integer primary key,
   uri text not null unique collate nocase,
   resolved integer not null,
   content_hash text,
-  minhash blob
+  minhash blob,
+  created text
 );
 
--- The interned vocabulary of property keys — the open-ended set of frontmatter
--- attribute names the corpus uses (tags, status, created, and the like). Unlike
--- edge_kind, a closed enum of two, this grows as authors coin keys; it is open
--- vocabulary, bounded only by the count of distinct labels (dozens), never the
--- count of property rows (thousands). It earns its own table on two grounds:
---   * Interning — "tags" stops repeating its string on every node that carries
+-- Alternate identities: additional uris that resolve to a node, declared by the
+-- author (e.g. on rename, so old wikilinks still reach the file). A resolution
+-- index, not a description — an alias is globally unique and maps to one node, so
+-- it is the PRIMARY KEY; the reverse index answers "what are node X's aliases?".
+-- It differs from node.uri only in that uri is the canonical identity.
+create table node_alias (
+  alias text primary key collate nocase,
+  nodeid integer not null references node(id)
+) without rowid;
+create index idx_node_alias on node_alias(nodeid);
+
+-- The interned vocabulary of open property keys — the author-coined frontmatter
+-- attribute names with no model-defined meaning (status, priority, and the like).
+-- Defined attributes (created, tags, aliases) have their own homes and never
+-- appear here, so this vocabulary is purely open: it grows as authors coin keys,
+-- bounded by the count of distinct labels (dozens) rather than property rows
+-- (thousands). It earns its own table on two grounds:
+--   * Interning — a key stops repeating its string on every node that carries
 --     it; node_property stores a small integer keyid instead.
---   * Survey — this IS the property vocabulary an agent reads to learn what
+--   * Survey — this IS the open property vocabulary an agent reads to learn what
 --     predicates are composable, recovered as a table scan of a few dozen rows
 --     rather than SELECT DISTINCT over the widest table in the graph.
--- Edge property keys will intern against this same pattern in a later pass.
 create table property_key (
   id integer primary key,
   key text not null unique collate nocase
 );
 
--- Typed key/value attributes hung on a node — a resource's frontmatter and
--- metadata (tags, status, and the like). This is the data the property-graph
--- filter searches when answering "which nodes have this property?". The key is
--- interned: keyid points at property_key, so the attribute name is stored once
--- in the vocabulary and referenced by integer here.
+-- Typed key/value attributes hung on a node — the open-vocabulary frontmatter an
+-- author coins (status, priority, and the like). This is the data the
+-- property-graph filter searches when answering "which nodes have this
+-- property?". The key is interned: keyid points at property_key, so the attribute
+-- name is stored once in the vocabulary and referenced by integer here.
 create table node_property (
   nodeid integer not null references node(id),
   keyid integer not null references property_key(id),
@@ -59,9 +79,33 @@ create table node_property (
 -- Property-graph filter: find nodes BY property (WHERE keyid = ? [AND value = ?]).
 -- The PRIMARY KEY index leads with nodeid, so it only answers "what are node X's
 -- properties?"; this index leads with keyid to answer the reverse — "which nodes
--- have this property?" — the lookup behind tag/property filtering. Resolve the
--- key string to its keyid through property_key first, then seek here.
+-- have this property?" — the lookup behind property filtering. Resolve the key
+-- string to its keyid through property_key first, then seek here.
 create index idx_node_property_key_value on node_property(keyid, value);
+
+-- The interned vocabulary of tags — the open-ended set of classification labels a
+-- document carries (note, journal, design, and the synthetic ghost/url the walker
+-- injects). tags is the node-side counterpart to stereotype: a label set, not a
+-- key/value property, so its labels intern here and attach through a junction
+-- rather than living in node_property. Open vocabulary, the label stored once and
+-- referenced by id.
+create table tag (
+  id integer primary key,
+  label text not null unique collate nocase
+);
+
+-- A node's classification: the tag labels it carries. A node may carry several
+-- (PRIMARY KEY (nodeid, tagid) holds a set and dedupes within it). The node-side
+-- mirror of edge_stereotype — an interned label set via a junction.
+create table node_tag (
+  nodeid integer not null references node(id),
+  tagid integer not null references tag(id),
+  primary key (nodeid, tagid)
+) without rowid;
+-- Reverse lookup: which nodes carry a given tag (WHERE tagid = ?) — the lookup
+-- behind the tagged predicate. The PRIMARY KEY leads with nodeid ("node X's
+-- tags?"); this index leads with tagid for the reverse.
+create index idx_node_tag on node_tag(tagid, nodeid);
 
 -- The interned vocabulary of edge kinds — two, by provenance: declared
 -- (authored) and discovered (inferred). Normalized out so each edge stores a
@@ -105,11 +149,9 @@ create index idx_edge_dst on edge(dst, kind, src, confidence);
 
 -- The interned vocabulary of edge stereotypes — the open-ended set of labels an
 -- author applies to a declared edge (cites, supports, supersedes, contradicts,
--- not-related, ...). This is the edge-side counterpart to property_key: the
--- surveyable namespace an agent reads to learn what link-meanings the corpus
--- uses before filtering edges by one. Interning here is the same move keys get —
--- the survey-find namespace is interned on both sides; only walk-reached node
--- values stay inline. Open vocabulary, the label stored once and referenced by id.
+-- not-related, ...). The edge-side counterpart to tag: a label set the agent
+-- surveys to learn what link-meanings the corpus uses before filtering edges by
+-- one. Open vocabulary, the label stored once and referenced by id.
 create table stereotype (
   id integer primary key,
   label text not null unique collate nocase
@@ -119,9 +161,8 @@ create table stereotype (
 -- of link it is. An edge may carry several (PRIMARY KEY (edgeid, stereotypeid)
 -- holds a set and dedupes within it). Unlike a node, an edge has no open
 -- key/value vocabulary — its only authored description is the stereotype — so
--- this is a dedicated junction table, not an EAV property bag mirrored off
--- node_property, and the label interns through `stereotype` rather than
--- repeating on every row.
+-- this is a junction table, the edge-side mirror of node_tag, and the label
+-- interns through `stereotype` rather than repeating on every row.
 create table edge_stereotype (
   edgeid integer not null references edge(id),
   stereotypeid integer not null references stereotype(id),
@@ -130,7 +171,6 @@ create table edge_stereotype (
 -- Reverse lookup: which edges carry a given stereotype (WHERE stereotypeid = ?).
 -- The PRIMARY KEY leads with edgeid ("what are edge X's stereotypes?"); this
 -- index leads with stereotypeid for the reverse — edges filtered by stereotype.
--- Surveying the edge vocabulary needs neither index: it is a read of `stereotype`.
 create index idx_edge_stereotype on edge_stereotype(stereotypeid, edgeid);
 
 -- Full-text search over each node's text projection (title, summary, body),
@@ -145,24 +185,35 @@ create virtual table fts using fts5(
   detail = 'column'
 );
 
--- The surveyable vocabulary as a derived view, not a base table: the union of
--- the three interning namespaces, each entry projected as a uri-style path —
--- `<source>/<value>` (stereotype/cites, property_key/tags, edge_kind/declared) —
--- so a vocabulary entry is addressable in the same segmented form as a node uri.
--- property_key and stereotype are open vocabularies (the keys and edge labels
--- authors coin); edge_kind is the closed two-value provenance enum, folded in so
--- one read returns the whole namespace. No denormalized table to keep in sync —
--- the view runs three index scans over tiny tables on demand and rides the
--- drop-and-recreate rebuild for free. order by 1 groups by source prefix, then value.
+-- The surveyable namespaces as a derived view, not a base table: the union of the
+-- interning vocabularies, each entry projected as a uri-style path rooted under
+-- its owning entity (edge/kind/declared, edge/stereotype/cites,
+-- node/property/status, node/tag/note) — so a namespace is addressable in the
+-- same segmented form as a node uri. tag, property_key, and stereotype are open
+-- vocabularies (the labels and keys authors coin); edge_kind is the closed
+-- two-value provenance enum, folded in so one read returns the whole set. No
+-- denormalized table to keep in sync — the view runs a handful of index scans
+-- over tiny tables on demand and rides the drop-and-recreate rebuild for free.
+-- order by 1 groups by entity, then source, then value; the branches are unioned
+-- in that alphabetical order, so the sort runs over an already-ordered stream.
 create view namespace as
-select 'stereotype/' || label as namespace from stereotype
+select 'edge/kind/' || kind as namespace from edge_kind
 union all
-select 'property_key/' || key from property_key
+select 'edge/stereotype/' || label from stereotype
 union all
-select 'edge_kind/' || kind from edge_kind;
+select 'node/property/' || key from property_key
+union all
+select 'node/tag/' || label from tag
+order by 1;
 
+-- A property key walked to its values: node/property/<key>/<value>, the namespace
+-- path extended one segment — the layer-2 survey move over the open property
+-- vocabulary. Distinct (key, value) pairs, served by idx_node_property_key_value.
+-- A categorical key (status) yields a handful of values; a scalar key yields
+-- thousands, so a caller filters to one key in practice — the survey tool parses
+-- the namespace and seeks WHERE keyid = ?.
 create view property_value as
-select distinct 'property_key/' || pk.key || '/' || np.value as namespace
+select distinct 'node/property/' || pk.key || '/' || np.value as namespace
 from node_property np
-join property_key pk on pk.id = np.keyid;
-  
+join property_key pk on pk.id = np.keyid
+order by 1;
