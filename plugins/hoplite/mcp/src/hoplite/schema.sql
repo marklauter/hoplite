@@ -154,10 +154,15 @@ create virtual table fts using fts5(
 -- one read returns the whole namespace. No denormalized table to keep in sync —
 -- the view runs three index scans over tiny tables on demand and rides the
 -- drop-and-recreate rebuild for free. order by 1 groups by source prefix, then value.
-create view vocabulary as
+create view namespace as
 select 'stereotype/' || label as namespace from stereotype
 union all
 select 'property_key/' || key from property_key
 union all
-select 'edge_kind/' || kind from edge_kind
-order by 1;
+select 'edge_kind/' || kind from edge_kind;
+
+create view property_value as
+select distinct 'property_key/' || pk.key || '/' || np.value as namespace
+from node_property np
+join property_key pk on pk.id = np.keyid;
+  
