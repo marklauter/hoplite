@@ -144,3 +144,20 @@ CREATE VIRTUAL TABLE fts USING fts5(
   tokenize = 'porter unicode61',
   detail = 'column'
 );
+
+-- The surveyable vocabulary as a derived view, not a base table: the union of
+-- the three interning namespaces, each entry projected as a uri-style path —
+-- `<source>/<value>` (stereotype/cites, property_key/tags, edge_kind/declared) —
+-- so a vocabulary entry is addressable in the same segmented form as a node uri.
+-- property_key and stereotype are open vocabularies (the keys and edge labels
+-- authors coin); edge_kind is the closed two-value provenance enum, folded in so
+-- one read returns the whole namespace. No denormalized table to keep in sync —
+-- the view runs three index scans over tiny tables on demand and rides the
+-- drop-and-recreate rebuild for free. ORDER BY 1 groups by source prefix, then value.
+CREATE VIEW vocabulary AS
+SELECT 'stereotype/' || label AS namespace FROM stereotype
+UNION ALL
+SELECT 'property_key/' || key FROM property_key
+UNION ALL
+SELECT 'edge_kind/' || kind FROM edge_kind
+ORDER BY 1;
