@@ -242,3 +242,35 @@ The graph persists in SQLite. The tables, columns, indexes, and their rationale 
         - walk - traversing the graph
         - projection - organizing result sets
       - tool-api - describes the mcp endpoint signatures
+
+open question:
+
+Good — file's unchanged, so I'm reviewing the version we built. Starting the deep pass
+  top-down. Title/summary/intro are still your <todo> placeholders, so I'll skip those and
+  start at the first structure section.
+
+  Documents — review against schema.sql and the now-settled model:
+
+  Accurate and complete against the node table — id, uri, resolved, content_hash, minhash,
+  plus properties (node_property + property_key) and the first-class title/summary. Nothing
+  missing, nothing wrong. The section is in good shape. Three things to weigh:
+
+  1. Reserved words names only created (the carry-over item). Decide it as a decision, not a
+  gap: either enumerate the rest with validation rules, or add one line — "the set is
+  deliberately minimal for day one; created is the only reserved key" — so it reads
+  intentional.
+  2. The bullet list mixes registers — id/uri/resolved/content_hash/minhash are node columns;
+  title/summary live in fts; properties spans two tables. We accepted this (it's the
+  document's attributes, not node's columns) — flagging only because a schema-literal reader
+  will notice. Leave as-is, I think.
+  3. New-model touch: the Identity section describes uri bare (docs/notes/foo.md), which is
+  correct for the stored form. The node/ namespace addressing we just worked out is the
+  addressing-layer projection — it belongs in the note and the affordances/navigation doc, not
+  here. So Documents stays bare-uri. The one optional add: a forward-pointer from Identity
+  noting the uri is addressed as node/<uri> at the query layer. I lean omit — keep the
+  structure doc free of addressing-layer concerns.
+
+  So Documents needs only the reserved-words decision. Which way do you want it — enumerate,
+  or declare-minimal? And once that's settled I'll move to Relationships (where the real items
+  are: the overloaded Direction section, and the two-pass build that's really indexing
+  behavior).

@@ -55,6 +55,7 @@ The agreed outline for the Hoplite spec corpus, treated as an index. Each node i
 
 - [[docs/hoplite/hoplite-architecture.md]] — system internals (walker, FTS, minhash, dump). Placement under the map is deferred; it overlaps `indexing`.
 - [[docs/hoplite/hoplite-roadmap.md]] — features deferred past day one.
+- [[docs/hoplite/hoplite-glossary.md]] — definitions for every Hoplite domain term; cross-cutting reference over the whole map.
 
 ## Conventions
 
