@@ -196,6 +196,9 @@ create virtual table fts using fts5(
 -- over tiny tables on demand and rides the drop-and-recreate rebuild for free.
 -- order by 1 groups by entity, then source, then value; the branches are unioned
 -- in that alphabetical order, so the sort runs over an already-ordered stream.
+-- Surveying one open property key's values — node/property/<key>/<value>, the
+-- path extended a segment — is a parameterized query, not a view: the survey tool
+-- parses the namespace and seeks WHERE keyid = ? on idx_node_property_key_value.
 create view namespace as
 select 'edge/kind/' || kind as namespace from edge_kind
 union all
@@ -204,16 +207,4 @@ union all
 select 'node/property/' || key from property_key
 union all
 select 'node/tag/' || label from tag
-order by 1;
-
--- A property key walked to its values: node/property/<key>/<value>, the namespace
--- path extended one segment — the layer-2 survey move over the open property
--- vocabulary. Distinct (key, value) pairs, served by idx_node_property_key_value.
--- A categorical key (status) yields a handful of values; a scalar key yields
--- thousands, so a caller filters to one key in practice — the survey tool parses
--- the namespace and seeks WHERE keyid = ?.
-create view property_value as
-select distinct 'node/property/' || pk.key || '/' || np.value as namespace
-from node_property np
-join property_key pk on pk.id = np.keyid
 order by 1;
