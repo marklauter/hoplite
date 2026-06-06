@@ -16,27 +16,44 @@
 -- against UNIQUE(src, dst).
 -- That precedence is enforced by the schema, not by loader comparison logic.
 --
--- Every defined attribute earns a first-class home: a scalar fact is a column on
--- node, a label set interns into its own vocabulary plus a junction (tag,
--- stereotype), and an alternate identity resolves through node_alias. That
--- leaves node_property purely for open vocabulary — author-coined keys with no
--- model-defined meaning.
+-- Every defined attribute earns a first-class home: a scalar fact is a column
+-- (on node, or on the document facet for a resolved document), a label set
+-- interns into its own vocabulary plus a junction (tag, stereotype), and an
+-- alternate identity resolves through node_alias. That leaves node_property
+-- purely for open vocabulary — author-coined keys with no model-defined meaning.
 
--- A node is the graph's vertex: one row per addressable byte resource (in
--- Hoplite, a markdown file in the corpus). uri is its medium-agnostic identity;
--- resolved marks whether the referent actually exists or is a dangling target;
--- content_hash and minhash are exact and similarity fingerprints of the bytes,
--- for change detection and near-duplicate detection; created is the authored
--- creation timestamp, a scalar fact and so a column — null when the author omits
--- it, with git history as the fallback date.
+-- A node is the graph's vertex: one row per addressable resource, whatever its
+-- variant (document, ghost, url). id is its identity within the graph; uri is
+-- its external, medium-agnostic identity; resolved marks whether it backs a real
+-- resource or is a dangling target. Everything specific to a resolved document —
+-- title, summary, fingerprints, created — lives in the document facet, not here.
 create table node (
   id integer primary key,
   uri text not null unique collate nocase,
+  resolved integer not null
+);
+
+-- The document facet: the attributes of a resolved document (a real .md file).
+-- One row per resolved node, keyed 1:1 by nodeid — ghost and url nodes have no
+-- row here, so the variant is the presence of this row and "byteless" is its
+-- absence. title and summary are first-class authored description; content_hash
+-- and minhash are byte fingerprints for change detection and near-duplicate
+-- discovery; created is the authored creation timestamp (null when omitted, with
+-- git history as the fallback). fts indexes title/summary/body; this table is
+-- their store.
+create table document (
+  nodeid integer primary key references node(id),
+  title text,
+  summary text,
   content_hash text,
-  resolved integer not null,
   minhash blob,
   created text
 );
+-- Temporal index: order or range documents by creation date — the carrier for
+-- temporal-proximity discovery and date-sorted listings. created is ISO-8601
+-- text, which sorts chronologically, so one index serves both order by and
+-- between/`>` range scans.
+create index idx_document_created on document(created);
 
 -- Alternate identities: additional uris that resolve to a node, declared by the
 -- author (e.g. on rename, so old wikilinks still reach the file). A resolution
