@@ -1,9 +1,8 @@
 ---
 title: Writing-prose foundation refactor
 summary: writing-prose replaces the old writing-documentation skill as the universal prose spine; the downstream rhetorical-context contract crystallizes; reviewing-documentation renames to reviewing-prose; foundation defaults for the ten rhetorical-context slots inline; Register becomes bundled shorthand atop the defaults.
-document:
-  tags: [journal, skills, writing-prose, foundation, milestone]
-  created: 2026-05-18
+tags: [journal, skills, writing-prose, foundation, milestone]
+created: 2026-05-18
 ---
 
 # Writing-prose foundation refactor

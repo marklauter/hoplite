@@ -1,9 +1,8 @@
 ---
 title: Related edges land, and rank replaces the threshold
 summary: Tuned MinHash defaults so related edges emit on the live corpus, promoted confidence to a first-class column on Edge, and replaced the scalar min_confidence predicate with a top_k_related rank cap.
-document:
-  tags: [journal, minhash, related-edges, traversal, decision]
-  created: 2026-05-27
+tags: [journal, minhash, related-edges, traversal, decision]
+created: 2026-05-27
 ---
 
 # Related edges land, and rank replaces the threshold

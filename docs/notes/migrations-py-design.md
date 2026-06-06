@@ -1,9 +1,9 @@
 ---
 title: migrations.py — schema lifecycle
 summary: `migrations.py` owns the schema-apply path. `apply(conn)` checks `sqlite_master` for the expected tables; if absent, runs the full schema script. Idempotent, race-tolerant, no in-place migrations day-one — schema versioning is carried in the filename, not in the database header.
+tags: [note, sqlite, design, hoplite, architecture]
+created: 2026-05-27
 document:
-  tags: [note, sqlite, design, hoplite, architecture]
-  created: 2026-05-27
   status: design
 ---
 

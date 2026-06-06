@@ -1,9 +1,8 @@
 ---
 title: os.execv to subprocess.run
 summary: First-cut launch.py replaced its own process with the venv'd Python via os.execv; the MCP supervisor's child-PID assumptions broke. subprocess.run with launch.py as a parent that waits for the child is the cleaner shape.
-document:
-  tags: [journal, hoplite, mcp, bootstrap, python, decision]
-  created: 2026-05-25
+tags: [journal, hoplite, mcp, bootstrap, python, decision]
+created: 2026-05-25
 ---
 
 # os.execv to subprocess.run

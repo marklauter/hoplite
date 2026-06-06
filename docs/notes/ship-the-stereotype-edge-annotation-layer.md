@@ -1,9 +1,9 @@
 ---
 title: Ship the stereotype edge-annotation layer
 summary: One coordinated work cycle delivering the open-vocab stereotype model on the mentions edge plus the two v1 instances (contradicts, not-related). Three child notes collected here as one shippable unit.
+tags: [note, hoplite, edges, stereotypes, design, todo, epic]
+created: 2026-05-27
 document:
-  tags: [note, hoplite, edges, stereotypes, design, todo, epic]
-  created: 2026-05-27
   priority: medium
   effort: medium
   status: open

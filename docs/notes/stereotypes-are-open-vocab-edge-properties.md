@@ -1,9 +1,8 @@
 ---
 title: Stereotypes are open-vocab edge properties
 summary: A stereotype is an open-vocabulary label attached to an edge (or node property), stored EAV-style in edge_property parallel to how tags work in node_property. Two authoring surfaces — inline wikilink and class-prefixed frontmatter — materialize identical storage; authors pick by whether the assertion is rhetorical-in-context or categorical.
-document:
-  tags: [note, hoplite, edges, stereotypes, design, todo]
-  created: 2026-05-27
+tags: [note, hoplite, edges, stereotypes, design, todo]
+created: 2026-05-27
 ---
 
 # Stereotypes are open-vocab edge properties

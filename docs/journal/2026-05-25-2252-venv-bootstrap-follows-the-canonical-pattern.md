@@ -1,9 +1,8 @@
 ---
 title: Venv bootstrap follows the canonical pattern; the race is upstream's
 summary: Opened the session suspecting our venv-bootstrap layer was over-engineered or wrong. After tracing the design back through git, reading the official plugins reference end-to-end, and ruling out workarounds, the answer is the opposite — we adapted Anthropic's documented npm pattern verbatim, and the first-install race is inherent to that pattern, not our adaptation. Keep the design; document the restart-after-install ritual.
-document:
-  tags: [journal, hoplite, mcp, python, claude-code, decision]
-  created: 2026-05-25
+tags: [journal, hoplite, mcp, python, claude-code, decision]
+created: 2026-05-25
 ---
 
 # Venv bootstrap follows the canonical pattern; the race is upstream's

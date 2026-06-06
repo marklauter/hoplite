@@ -1,9 +1,9 @@
 ---
 title: mcp-reference undersells the graph against grep
 summary: High-priority TODO. The component at plugins/hoplite/components/hoplite/mcp-reference.md reads like an API spec rather than a recommendation, so agents default to Grep/Glob when they should be calling where and relatives. Seven specific gaps and a one-paragraph fix to add at the top.
+tags: [note, todo, hoplite, mcp, design]
+created: 2026-05-26
 document:
-  tags: [note, todo, hoplite, mcp, design]
-  created: 2026-05-26
   priority: low
   effort: low
   status: open

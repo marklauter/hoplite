@@ -1,9 +1,8 @@
 ---
 title: Reviewer family, doc skills, and the multi-pass discipline
 summary: Github-issues, reviewing-code, and doc skills land over two days through stacked editorial passes; the multi-pass rhythm — coherence, copy, signal alignment, citation, test coverage — settles in as the way new skills get authored here.
-document:
-  tags: [journal, skills, reviewing, bash, milestone]
-  created: 2026-05-13
+tags: [journal, skills, reviewing, bash, milestone]
+created: 2026-05-13
 ---
 
 # Reviewer family, doc skills, and the multi-pass discipline

@@ -1,9 +1,8 @@
 ---
 title: Declare and describe — applying explicit structure
 summary: The authoring surface for explicit structure — how an author declares relationships (inline wikilinks) and describes documents and edges (frontmatter properties, summaries, stereotypes). Express-only; the model it expresses lives in the graph canon.
-document:
-  tags: [hoplite, express, spec]
-  created: 2026-05-31
+tags: [hoplite, express, spec]
+created: 2026-05-31
 ---
 
 # Declare and describe — applying explicit structure

@@ -1,9 +1,8 @@
 ---
 title: Initial skill drafts and the fail-fast build
 summary: First skill drafts go in, then several editorial passes optimize them for an LLM audience, and a fail-fast build script lands so scripts surface failures instead of swallowing them.
-document:
-  tags: [journal, skills, bash, milestone]
-  created: 2026-05-10
+tags: [journal, skills, bash, milestone]
+created: 2026-05-10
 ---
 
 # Initial skill drafts and the fail-fast build

@@ -1,9 +1,8 @@
 ---
 title: Dead then redesign — in-memory graph and four query tools
 summary: ULIDs die, identity collapses to path, persistent SQLite drops in favor of in-memory FTS5, retrieval tools (invoke_node, read_node) die, the 11-tool surface collapses to 4 query tools, Hoplite becomes dataview over documents. The in-memory graph + 4-tool surface lands at 01:44; the bug sweep at 02:02 closes the night.
-document:
-  tags: [journal, hoplite, mcp, architecture, decision, milestone]
-  created: 2026-05-25
+tags: [journal, hoplite, mcp, architecture, decision, milestone]
+created: 2026-05-25
 ---
 
 # Dead then redesign — in-memory graph and four query tools

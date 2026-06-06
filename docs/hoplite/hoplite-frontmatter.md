@@ -1,9 +1,8 @@
 ---
 title: Frontmatter is a typed envelope over the property graph
 summary: The design behind the Hoplite frontmatter contract — why keys carry a document./edge. namespace, why title and summary stay bare, how the two spelling axes normalize, how malformed blocks are handled, and the tradeoffs underneath. This note is the source of truth; the shipped frontmatter component is its sparse operational distillation.
-document:
-  tags: [hoplite, frontmatter, spec]
-  created: 2026-05-29
+tags: [hoplite, frontmatter, spec]
+created: 2026-05-29
 ---
 
 # Frontmatter is a typed envelope over the property graph

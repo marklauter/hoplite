@@ -1,9 +1,8 @@
 ---
 title: Kingo PDL — Zanzibar rewrite calculus source
 summary: Mark Lauter's Kingo is a Zanzibar-style ACL engine implementing PDL (policy description language), the rewrite calculus HQL inherits. Holds canonical URLs for the README (PDL syntax and semantics) and the AclReader/AclWriter source (a working userset evaluator and writer).
-document:
-  tags: [note, reference, kingo, pdl, hql, zanzibar, acl]
-  created: 2026-05-27
+tags: [note, reference, kingo, pdl, hql, zanzibar, acl]
+created: 2026-05-27
 ---
 
 # Kingo PDL — Zanzibar rewrite calculus source

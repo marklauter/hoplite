@@ -1,9 +1,9 @@
 ---
 title: walker.py — corpus → SQLite walker
 summary: `walker.py` exposes `walk(conn, corpus_root) -> WriteResult`. It truncates the persisted tables inside the caller's `BEGIN IMMEDIATE` transaction, then runs a two-pass scan over `*.md` files under `corpus_root` to repopulate `node`, `node_property`, `edge` (with interned `edge_kind`), `edge_property`, and `fts`. The walker is the only writer in the system; every schema invariant the queries rely on is enforced here at insert time.
+tags: [note, sqlite, design, hoplite, walker]
+created: 2026-05-28
 document:
-  tags: [note, sqlite, design, hoplite, walker]
-  created: 2026-05-28
   status: design
 ---
 

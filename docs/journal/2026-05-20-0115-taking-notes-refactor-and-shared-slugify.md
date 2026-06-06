@@ -1,9 +1,8 @@
 ---
 title: Taking-notes refactor and the shared slugify
 summary: Taking-notes refactors as a writing-prose downstream; the script set gets reorganized; slugify gets shared across notes and journal so two skills converge on one canonical kebab-case rule.
-document:
-  tags: [journal, skills, taking-notes, slugify, milestone]
-  created: 2026-05-20
+tags: [journal, skills, taking-notes, slugify, milestone]
+created: 2026-05-20
 ---
 
 # Taking-notes refactor and the shared slugify

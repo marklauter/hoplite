@@ -1,9 +1,9 @@
 ---
 title: Venv bootstrap races MCP supervisor on plugin install
 summary: SessionStart hooks don't fire on /plugin install. The MCP launcher polls for the bootstrapped venv and times out before the venv can be built — first install of any hoplite-shaped plugin fails until a session restart or manual bootstrap.
+tags: [note, todo, hoplite, bootstrap, mcp, lifecycle, bug]
+created: 2026-05-25
 document:
-  tags: [note, todo, hoplite, bootstrap, mcp, lifecycle, bug]
-  created: 2026-05-25
   priority: medium
   effort: medium
   status: open

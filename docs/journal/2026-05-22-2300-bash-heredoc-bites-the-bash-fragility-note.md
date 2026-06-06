@@ -1,9 +1,8 @@
 ---
 title: Bash heredoc bites the bash-fragility note
 summary: While composing the runtime-thesis note arguing for replacing bash on the write path, record-note.sh failed on body apostrophes through a heredoc-quoting collision. The note arguing bash needs replacing triggered the exact failure mode that motivates the replacement.
-document:
-  tags: [journal, bash, mcp, dead-end]
-  created: 2026-05-22
+tags: [journal, bash, mcp, dead-end]
+created: 2026-05-22
 ---
 
 # Bash heredoc bites the bash-fragility note

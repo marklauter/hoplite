@@ -1,9 +1,8 @@
 ---
 title: Relatedness is mutual information observed through many channels
 summary: Every channel two documents can be found related through — declared links, classification, content, graph topology, time, provenance, filesystem, and usage — divided first by whether the author declared the relationship or it emerged from the data, and unified by one principle: a signal's strength is the rarity of the shared feature. Hoplite's deliverable signals are a subset of this territory.
-document:
-  tags: [hoplite, signal, design, note]
-  created: 2026-05-31
+tags: [hoplite, signal, design, note]
+created: 2026-05-31
 ---
 
 # Relatedness is mutual information observed through many channels

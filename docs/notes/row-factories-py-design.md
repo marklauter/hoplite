@@ -1,9 +1,9 @@
 ---
 title: row_factories.py — sqlite3.Row to dataclass mappers
 summary: `row_factories.py` turns `sqlite3.Row` objects into the dataclasses in `models.py`. Inputs are explicit; transformations (JSON parsing, summary fallback, edge-list copy) are contained inside the module. Each factory carries a named SQL contract the query writer in `graph.py` must satisfy. The factories read `Document`/`path`-vocabulary column names; the queries project the `node`/`uri` schema onto those names via `AS` aliases.
+tags: [note, sqlite, design, hoplite, interface]
+created: 2026-05-27
 document:
-  tags: [note, sqlite, design, hoplite, interface]
-  created: 2026-05-27
   status: design
 ---
 

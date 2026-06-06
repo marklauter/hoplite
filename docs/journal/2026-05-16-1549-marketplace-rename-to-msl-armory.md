@@ -1,9 +1,8 @@
 ---
 title: Marketplace rename to msl.armory
 summary: The plugin's marketplace identity stabilizes as msl.armory; personal fields scrubbed from the manifest so the package shape matches what gets shipped to other users.
-document:
-  tags: [journal, marketplace, plugin, decision]
-  created: 2026-05-16
+tags: [journal, marketplace, plugin, decision]
+created: 2026-05-16
 ---
 
 # Marketplace rename to msl.armory

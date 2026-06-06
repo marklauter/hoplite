@@ -1,9 +1,8 @@
 ---
 title: A property graph over an addressable corpus
 summary: <todo: summary>
-document:
-  tags: [hoplite, graph, spec]
-  created: 2026-05-29
+tags: [hoplite, graph, spec]
+created: 2026-05-29
 ---
 
 # A property graph over an addressable corpus
@@ -19,9 +18,12 @@ A document is the graph's node.
 - `resolved` — whether the uri backs a real resource (document) or dangles (ghost, URL)
 - `content_hash` — exact fingerprint, for change detection
 - `minhash` — similarity sketch, for near-duplicate discovery
+- `created` — authored creation timestamp
 - `title` — first-class description attribute
 - `summary` — first-class description attribute
+- tags — classification label set
 - properties — open key/value description
+- aliases — alternate identities that resolve to the node
 
 ### Identity
 
@@ -39,28 +41,32 @@ A document's `uri` is its identity — a medium-agnostic, case-insensitive locat
 
 A resolved document carries two fingerprints of its bytes: `content_hash`, an exact hash for change detection, and `minhash`, a similarity sketch for near-duplicate discovery. Ghost and URL nodes are byteless.
 
+### Created
+
+`created` is the authored creation timestamp — a scalar fact, so a column on `node` rather than a property. Optional; when absent, git history is the authoritative date.
+
 ### Title and summary
 
-`title` and `summary` are first-class description attributes, asserted by the author. The title names the document beyond its filename; the summary is its lede — the gist a reader scans before opening the file. Every document asserts one of each.
+`title` and `summary` are first-class description attributes, asserted by the author. The title names the document beyond its filename; the summary is its lede — the gist a reader scans before opening the file. Every document asserts one of each. Their canonical store is the `fts` text projection (title, summary, body), not a `node` column; the model treats them as first-class attributes regardless of where they reify.
+
+### Tags
+
+A document's classification: an open-vocabulary set of labels (`note`, `journal`, `design`). Tags is the node-side counterpart to edge stereotypes — a label set, not a key/value property — so its labels intern in `tag` and attach through the `node_tag` junction. The walker injects synthetic `ghost` and `url` tags, so those node variants enumerate like any other.
+
+Tags classify; properties carry state. A tag answers "what is this?" — immutable identity, the document's type and shape and domain. A mutable property answers "what state is it in?" Conflating them — a `draft` or `closed` tag — churns identity when the lifecycle moves. The full principle is in [[docs/notes/tags-classify-properties-carry-state.md]].
 
 ### Properties
 
-Beyond title and summary, a document carries open-ended description as properties — typed key/value facts in entity-attribute-value form. They are stored across two tables:
+Beyond the attributes above, a document carries open-ended description as properties — typed key/value facts in entity-attribute-value form, stored across two tables:
 
 - `node_property` — one row per (document, key, value)
 - `property_key` — the interned key vocabulary (see [Vocabulary](#vocabulary))
 
-The key vocabulary is open — any key is accepted and stored as data, save the reserved words below. A list-valued attribute fans out one row per element, and values store as text. A key string is interned once in `property_key` and referenced by integer from every `node_property` row that carries it.
+Properties hold open vocabulary only: author-coined keys with no model-defined meaning. A key whose meaning the model fixes earns its own structure instead — a scalar becomes a column (`created`), a classification becomes the tag label set, an alternate identity becomes the alias index — so `node_property` stays purely open. A list-valued attribute fans out one row per element, values store as text, and a key string is interned once in `property_key` and referenced by integer from every row that carries it.
 
-Tags classify; properties carry state. A tag answers "what is this?" — immutable identity, the document's type and shape and domain. A mutable property answers "what state is it in?" Conflating them — a `draft` or `closed` tag — churns identity when the lifecycle moves. The full principle is in [[docs/notes/tags-classify-properties-carry-state.md]].
+### Aliases
 
-### Reserved words
-
-Most keys are open vocabulary. A few are reserved: keys with a defined meaning and validation across the graph, regardless of which surface authors them. A reserved word is specified here, in the model: frontmatter carries the value, this document defines its meaning and validation.
-
-- `created` — a creation timestamp. Prefers a full ISO date-time, and accepts a bare ISO date (`YYYY-MM-DD`) for backward compatibility with the corpus's authored dates. Optional; when absent, git history is the authoritative date.
-
-The set is open and grows as keys earn defined semantics. Each reserved word names its type and validation rule here.
+Alternate uris that resolve to the node, declared by the author — e.g. on rename, so old wikilinks still reach the file. A resolution index (`node_alias`), not a description: an alias is globally unique and maps to one node, differing from `uri` only in that uri is the canonical identity.
 
 ## Relationships
 

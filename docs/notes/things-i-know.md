@@ -1,9 +1,9 @@
 ---
 title: things I know
 summary: assertions on the code base
+tags: [note, hoplite, architecture, refactor]
+created: 2026-05-28
 document:
-  tags: [note, hoplite, architecture, refactor]
-  created: 2026-05-28
   status: design
 ---
 

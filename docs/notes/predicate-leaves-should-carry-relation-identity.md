@@ -1,9 +1,9 @@
 ---
 title: Predicate leaves should carry relation identity
 summary: The tag predicate compiles a Zanzibar-style rewrite expression but strips relation identity at the callsite, leaving the engine able to ask only one question — "value X in tags?" — while node_properties already holds the full property graph.
+tags: [note, todo, hoplite, mcp, design, architecture, open-question]
+created: 2026-05-27
 document:
-  tags: [note, todo, hoplite, mcp, design, architecture, open-question]
-  created: 2026-05-27
   priority: low
   effort: low
   status: open

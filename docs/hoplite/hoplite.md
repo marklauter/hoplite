@@ -1,9 +1,8 @@
 ---
 title: Hoplite — Map your corpus; discover latent signals; protect context
 summary: Hoplite is a knowledge graph over a markdown corpus, built for agents under a fixed context budget. It maps the structure an author declares and the latent signal an engine discovers, so the agent reads only the subset that matters instead of grepping and reading blind.
-document:
-  tags: [hoplite, overview, spec]
-  created: 2026-05-30
+tags: [hoplite, overview, spec]
+created: 2026-05-30
 ---
 
 # Hoplite — map your corpus; discover latent signals; protect context

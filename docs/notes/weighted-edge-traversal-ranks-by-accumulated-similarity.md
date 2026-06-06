@@ -1,9 +1,9 @@
 ---
 title: Weighted-edge traversal ranks by accumulated similarity
 summary: Walking `tuple(related, P)` ranks by the path's product of edge confidences, evaluated best-first. BFS-by-distance fits unweighted edges only. A per-call `rank` strategy (`distance` for BFS, `similarity` for best-first) keeps the choice in the executor, separate from the predicate grammar.
+tags: [note, hoplite, mcp, design, architecture, todo]
+created: 2026-05-27
 document:
-  tags: [note, hoplite, mcp, design, architecture, todo]
-  created: 2026-05-27
   priority: low
   effort: medium
   status: open
