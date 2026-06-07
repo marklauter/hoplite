@@ -1,6 +1,6 @@
 ## Economy
 
-Economy is the spine: the most signal for the least text. Every section below applies it at one scope — Titles, Summaries, and Bodies compress one claim three ways; Composition tightens the sentence and word; Punctuation marks structure with the fewest strokes; Validation is the pass that cuts.
+Economy is the spine: the most signal for the least text. Every section below applies it at one scope.
 
 - Shortest complete version — cut whole sentences and sections, not only words. Length is earned by purpose, not spent to look thorough.
 - Say it once — each point gets one statement and one home.
