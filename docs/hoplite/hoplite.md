@@ -1,11 +1,15 @@
 ---
-title: Hoplite — Map your corpus; discover latent signals; protect context
-summary: Hoplite is a knowledge graph over a markdown corpus, built for agents under a fixed context budget. It maps the structure an author declares and the latent signal an engine discovers, so the agent reads only the subset that matters instead of grepping and reading blind.
+title: Efficient knowledge search, discovery, and retrieval
+summary: Reading is an expensive operation. Indexes reduce the cost.
 tags: [hoplite, overview, spec]
 created: 2026-05-30
 ---
 
-# Hoplite — map your corpus; discover latent signals; protect context
+# Efficient knowledge search, discovery, and retrieval
+
+Reading is the expensive operation indexes exist to avoid.
+
+Search spends the frontier; discovery expands it.
 
 An agent works within a fixed context budget. It must act on a corpus larger than it can read. The agent has a limited set of built-in tools: glob, grep, and read. It can discover relationships with these tools, but it burns tokens, relies on error-prone judgement, and injects bias by reading off-task content. 
 
@@ -13,7 +17,14 @@ The default tools operate over surface text, recovering only content channels �
 
 Hoplite augments the default navigation tools through a map over the markdown corpus. Instead of relying on the agent to read, comprehend, and infer relationships on-the-fly, Hoplite applies structure to the markdown and reifies the map as a durable graph with declared and latent relationships. The agent navigates the map and reads selectively, spending its context on the subset that matters.
 
-## The problem — hidden costs in the glob-grep-read explore loop
+## The compounding cost of the grep-read-judge loop
+
+For an LLM-based agent, content that sharpens the context is relevant knowledge. To acquire knowledge, the agent must locate and consume content. Locating relevant information can be costly. `grep` provides primitive search, but every hit is a raw leaf. The agent loads each leaf into the context window and judges relevance for itself. Reading is expensive. Scanning unrelated content spends against scarce resources: time, tokens, turns, context, and bias-inducing attention. The cost compounds. Every wasted read is debt serviced for the life of the context. `grep` is a loan shark.
+
+Scanned noise biases the agent; so does signal it never reaches. `grep` matches only what the agent can name. Explore agents, guarding the context budget, scan excerpts potentially missing critical information. The knowledge-starved agent excercises poor judgement: it reopens settled decisions, contradicts conventions, and overwrites working code. Failures compound.
+
+Relationships discovered die with the session...
+re-derives a relationship
 
 The simplicity of the default toolset has a cost: exploring with the glob, grep, and read loop wastes turns, tokens, and attention. The agent has to re-derive the same relationships every session. `Explore` agents, in the interest of preserving the context budget, employ a grep excerpt loop that can miss relevant information. After exploring blind alleys, agents make decisions biased by the wrong content, or rehash decisions that were present in missed content. Failures compound.
 

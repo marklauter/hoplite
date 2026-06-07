@@ -11,6 +11,29 @@ document:
 
 asserstions on the code base
 
+- Reading is the expensive operation indexes exist to avoid.
+- Reading is an expensive operation. Indexes reduce the cost.
+- search/locate reduce the scanable surface. scan is consumes content linearly.
+
+judgment-under-uncertainty
+
+Relationships discovered die with the session...
+re-derives a relationship
+
+
+## problem statement
+For an LLM-based agent, content that sharpens the context is relevant knowledge. To acquire knowledge, the agent must locate and consume content. Locating relevant information can be costly. `grep` and `glob` provide primitive search, but every hit is a raw leaf. The agent loads each leaf into the context window and judges relevance for itself. Reading is expensive. Scanning unrelated content spends against scarce resources: time, tokens, context, and bias-inducing attention. The cost compounds. Every wasted read is debt serviced for the life of the context. `grep` is a loan shark.
+
+A knowledge graph cuts waste by locating relevant content without reading for it. Debt avoided, not debt repaid. 
+
+The graph is the invesment broker to .
+ 
+- You go to the catalog with keys you already hold — a subject, a title, a Dewey number, a term. You get back exactly what matches what you asked.
+  - This is closed-loop. → search.
+- But you leave the loop richer: the bibliography hands you titles you didn't have, and "along the way my vocabulary grows — I discover related terms that require additional searches." You got back things you didn't know to ask for. 
+  - This is open-loop. → discover.
+- Search spends the frontier; discovery expands it.
+
 ## ready to ship
 
 - schema.sql
@@ -44,9 +67,13 @@ semantic graph - good
   So here's the recut I'd offer. Not "three graphs" — three sources of order over one node set, each a
   stronger claim than the last:
 
+i now realized that d, d, and d are properties of edges: declared (wikilinks), described (property graph), discovered (inferred) due to semantic proximity
+
   1. Declared order — authored links (mentions, cites). The structure you wrote by hand.
   2. Described order — properties (tags, document.<key>). The facts you classified.
   3. Discovered order — semantic similarity (related). The adjacency the graph found that you never stated.
+
+^ intrinsic / asserted / inferred is much better map than declared, describted, discovered because declared and described are really the same thing.
 
 Declared · Described · Discovered
   - Declared — the author wrote the relationship. A wikilink, a stereotype. Zero inference; the edge is
