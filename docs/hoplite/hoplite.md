@@ -1,11 +1,11 @@
 ---
-title: Maps of meaning - information search, discovery, and retrieval
-summary: Reading is an expensive operation. Indexes reduce the cost.
+title: Maps of meaning and the economics of information search, discovery, and retrieval
+summary: Reading is expensive.
 tags: [hoplite, overview, spec]
 created: 2026-05-30
 ---
 
-# Maps of meaning - information search, discovery, and retrieval
+# Maps of meaning and the economics of information search, discovery, and retrieval
 
 maximizing signal to noise
 
@@ -27,11 +27,11 @@ Scanned noise biases the agent; so does signal it never reaches. `grep` matches 
 
 The relationships discovered by the agent are the reward for every leaf it read and every dead end it ruled out. They live in the context window and nowhere else. They die with the session. The next agent re-derives them from scratch, or not. Cost compounds. Failure compounds. Knowledge that compounds is lost.
 
-## Maximizing signal-to-noise to reduce cost
+## Maximizing signal-to-noise
 
 Hoplite builds a durable knowledge graph over the corpus — a map of meaning. Documents become nodes, relationships become edges, and the author's meta assertions build a surveyable vocabulary. The agent queries the map instead of scanning the bytes: it discovers the vocabulary, searches by relevance, walks relationships the filesystem can't express, and judges a document by its summary before reading. Locating and consuming — the costly acts — become a query and a choice.
 
-Search returns ranked hits, each carrying its authored summary. The agent reads the lede, not the leaf, judging relevance from the summary before spending a token on the body. The map hands back a projection, never a document; the agent crosses to full content only for the hits that survive. The exploration loop collapses to a query and a few deliberate reads. The agent opens only what pays.
+The agent searches the map with rich predicates and shapes the result set projections. Walkable queries return ranked hits and gather the whole neighborhood in one turn. The agent judges the projection before spending tokens and context budget on the body. Every read is earned, and the agent protects itself from bias by reading only documents it trusts.
 
 The map answers more than the agent asks. Where grep matches only what the agent can name, the vocabulary names itself — the agent surveys the tags, properties, and stereotypes the corpus uses, and queries in its own terms. Beyond what it can name, it discovers. Search is closed-loop, but from any document the agent walks open-loop to its neighborhood: the edges the author declared, the documents that point back, and the kin the engine discovered. Those discovered ties rest on a shared feature, graded by how telling it is — an exact match like a common tag, a shared citation, a nearness in time, or a faint echo in the prose. Meaning emerges from the structure, not from the words alone. Ghosts keep the unwritten enumerable. Hard-won memory sits one hop away. The agent reaches what it never thought to name.
 
