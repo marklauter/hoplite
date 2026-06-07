@@ -27,54 +27,35 @@ Scanned noise biases the agent; so does signal it never reaches. `grep` matches 
 
 The relationships discovered by the agent are the reward for every leaf it read and every dead end it ruled out. They live in the context window and nowhere else. They die with the session. The next agent re-derives them from scratch, or not. Cost compounds. Failure compounds. Knowledge that compounds is lost.
 
-## Maximizing signal to noise to reduce cost
+## Maximizing signal-to-noise to reduce cost
 
-Mapping the corpus — its explicit, semantic, and emergent relationships, and the meta descriptions on each document — creates new affordances. The agent walks the corpus progressively, reading only what bears on the task. The result is less wasted context, less bias from stray input, and the agent kept in its smart-zone.
+Hoplite builds a durable knowledge graph over the corpus — documents become nodes, relationships become edges, and the author's descriptions define the ontology's schema. The agent queries the map instead of scanning the bytes: it ranks what matches, walks relationships the filesystem can't show, and reads a document's summary before opening it. Locating and consuming — the costly acts — become a query and a choice.
+
+Search returns ranked hits, each carrying its authored summary. The agent reads the lede, not the leaf, judging relevance from the summary before spending a token on the body. The map hands back a projection, never a document; the agent crosses to full content only for the hits that survive. The exploration loop collapses to a query and a few deliberate reads. The agent opens only what pays.
+
+The map answers more than the agent asks. Search is closed-loop, returning what matches the query; discovery is open-loop. From any document the agent walks to its neighborhood — the links the author declared, the documents that point back, the kin no one wrote down but the engine inferred from shared terms, citations, tags, and time, location, and meaning. Ghosts keep the unwritten enumerable. Hard-won memory sits one hop away. The agent reaches what it never thought to name.
+
+The relationships are derived once and persisted. They outlive the session that found them. The next agent inherits the map instead of re-deriving it: it walks to the rationale behind a decision before repeating it, and reads the prior art before rewriting it. The reward for every leaf read and every dead end ruled out is kept, not discarded. Every session adds to the graph; none starts from zero. Knowledge compounds.
+
+The map is built in three movements: the author declares and describes explicit structure, the engine discovers latent structure, and the agent reads by navigating both.
 
 ### Declare and describe — applying explicit structure
 
-Explicit structure is asserted, not derived — the author supplies what the bytes can't yield: a relationship that lives only in the link, a title that isn't the filename, a summary the document doesn't contain.
+The author asserts what the bytes can't yield: a relationship that lives only in a link, a title that isn't the filename, a summary the document never states. This is explicit structure — supplied, not inferred — and the graph treats it as fact.
 
-1. Declare a relationship — point one document at another.
-   - a `[[wikilink]]` declares an explicit relationship — the edge grep can't see
-   - a markdown link declares too — a reference to a URL is an edge to content outside the corpus, not only doc-to-doc; the corpus's reach doesn't stop at its own files
-   - declared once, it reads both ways — the backlink (inbound edge), who points here, is free structure
-   - direction follows the stereotype: the arrow always has a tail and a head, so the backlink is always there, but whether the tie is symmetric is the stereotype's call — `supersedes` runs one way, a `related` or `not-related` tie reads both
-   - a ghost link declares an open loop — aspirational, not-yet-written content made explicit rather than lost
-2. Describe a document or an edge — annotate the structure.
-   - a title and summary are asserted, not extracted — a filename is not a title, and a document carries no summary of itself; the author supplies both
-   - the summary is the lede — the asserted gist an agent reads to decide whether to open the document or follow the edge
-   - properties classify and qualify a document (tags, status) and crosscut the folder it's filed in
-   - a stereotype on a link says what kind of relationship it is: cites, supports, supersedes, contradicts
-   - describe an edge once and the stereotype rides it — inline next to the claim it makes, or in frontmatter as a document-level fact; same structure either way, the author picks rhetorical-in-context vs. categorical
-   - the vocabulary is open — tags and stereotypes aren't a fixed menu; the author coins a label and it earns canonical status by use, the way tags already do
+A wikilink declares a relationship grep can't see: a directed edge from one document to another. A markdown link declares one too, reaching content outside the corpus — the graph's edges don't stop at its own files. Declared once, an edge reads both ways; the backlink, who points here, is free structure. Whether the tie is symmetric is the stereotype's call — `supersedes` runs one way, a `related` or `not-related` tie reads both. A ghost link declares an open loop: not-yet-written content made explicit rather than lost.
+
+Description annotates the structure. A title and summary are asserted, not extracted — a filename is not a title, and a document carries no summary of itself. The summary is the lede the agent reads to decide whether to open the document or follow the edge. Properties — tags, status — classify a document and crosscut the folder it is filed in. A stereotype labels an edge with the kind of relationship it carries: cites, supports, supersedes, contradicts. Describe an edge inline beside the claim it makes, or in frontmatter as a document-level fact — same structure either way. The vocabulary is open: the author coins a label and it earns canonical status by use, the way tags do.
 
 ### Discover — inferring latent, emergent structure
 
-The corpus holds undiscovered relationships — implicit kinship that emerges from shared features: topics, tags, citations, commits, authors, proximity of time and space. A declared relationship is asserted and treated as fact. A latent signal is implied — present only as a pattern, recovered by inference.
+Beyond what the author declared, the corpus holds relationships no one wrote down — implicit kinship that emerges from shared features. A declared edge is asserted and treated as fact; a latent signal is implied, present only as a pattern the engine recovers by inference.
 
-Every inferred relationship is graded by the improbability of the coincidence — a rare shared feature, or a narrow shared window. Two documents sharing a common word carry zero signal; two sharing a rare term carry a strong signal. That's why relationships derived from latent signals can be ranked.
+Every inferred relationship is graded by the improbability of the coincidence — a rare shared feature, or a narrow shared window. Two documents sharing a common word carry no signal; two sharing a rare term carry a strong one. That grading is why discovered relationships can be ranked.
 
-Signals resolve into three channels, each an independent feature space:
+The signals resolve into three channels, each an independent feature space. Content and metadata measures what the documents say: topical similarity surfaces a kinship the author missed, and at its extreme gathers near-duplicates into one neighborhood instead of N strangers; a shared tag relates documents by kind even when their topics diverge; documents created close in time share the intent of whatever was underway, tracing an arc — genesis, build, refactor — that no one declared and that falls out of time. Structure measures topology, not content: two documents pointed to by the same third, pointing to the same third, citing the same external source, or naming the same rare entity couple through the shared connector — a rare connector strongly, a hub weakly. History measures provenance from the commit graph: documents changed in the same commit couple, often more strongly than their content suggests, as do documents edited in the same session or by the same author.
 
-1. Content and metadata — lexical and topical similarity, shared classification, temporal proximity.
-   - topical kinship — two documents about the same thing with no link between them; similarity surfaces the relationship the author missed, and at the high-similarity extreme the same signal gathers a set of near-duplicates into one neighborhood instead of leaving them as N strangers
-   - classification kinship — documents sharing a tag relate by kind even when their topics diverge
-   - arcs — documents created close in time tend to share the intent of whatever was underway; the design arc (genesis → build → refactor) is one shape, every activity traces its own; never declared, it falls out of time
-2. Structure — topology, not content: a rare connector couples strongly, a hub weakly.
-   - co-citation — two documents pointed to by the same third
-   - bibliographic coupling — two documents that point to the same third
-   - shared citation — two documents that cite the same external source
-   - entity co-mention — two documents naming the same rare entity (a file, an identifier, a ticket); the mention reifies the entity as a node, so a shared one couples the documents through it, the way a shared citation does — but recovered from prose, not a declared link
-   - hubs — a node's centrality, not a pairwise tie: a document many point to is central to the corpus, and as a shared connector it couples weakly
-3. History — provenance from the commit graph: co-change, co-authorship, shared lineage.
-   - change coupling — documents changed in the same commit, often a stronger signal than content
-   - co-modification — edited in the same session
-   - same author
-
-The tradeoff — latent signal buys recall at the cost of precision: it finds the connection the author missed, and sometimes one that isn't there; the threshold is the knob.
-
-Provenance ranks above score: every discovered tie is graded, but a declared edge carries full confidence and outranks any discovered one for the same pair. The author's word beats the engine's guess, so the reader establishes trust per edge by where it came from.
+Latent signal buys recall at the cost of precision — it finds the connection the author missed, and sometimes one that isn't there. The threshold is the knob. Provenance ranks above score: every discovered tie is graded, but a declared edge carries full confidence and outranks any discovered one for the same pair. The author's word beats the engine's guess.
 
 ### Read — navigating mapped relationships
 
