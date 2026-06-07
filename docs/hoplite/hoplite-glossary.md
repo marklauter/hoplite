@@ -65,6 +65,15 @@ The Hoplite domain terms in short form, alphabetical. Each entry is the quick de
 - walk — the read-operation that traverses edges from a node to gather a neighborhood. The same verb applied to the vocabulary graph is survey's second move.
 - wikilink — an in-body `[[docs/<path>.md]]` or `[[ghost/<slug>]]` reference; materializes a declared edge.
 
+## stubs (define and move to terms when better definitions emerge)
+
+- Provenance — who supplied the connecting feature: an author, or the engine. (authored vs inferred)
+- Instantiation — how the edge comes to exist: named directly, or emergent from a shared feature. (explicit vs implicit)
+- intrinsic - a natural, immutable feature of a document (identity, time, place)
+- asserted - a feature declareed by the author of a document (tags, properties)
+- inferred - semantic similarity (weighted minhash), weighted aggregation of intrinsic and asserted features.
+
+
 ## See also
 
 - [[docs/hoplite/hoplite.md]] — problem statement and scope.
