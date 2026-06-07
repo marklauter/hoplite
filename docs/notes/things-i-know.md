@@ -42,14 +42,22 @@ A knowledge graph cuts waste by locating relevant content without reading for it
   Confidence 1.0.
   - discovered — the engine inferred the relationship from shared features. Graded.
 
-edge features are:
-- intrisic (source and destination nodes)
-- providence
-  - declared (author linked documents via wikilink)
-  - described (emerge from author-declared properties)
-  - discovered (semantic)
-  - explicit / declared
-  - latent / detected
+-----
+
+1. The foundation the vision should plant, at altitude, so downstream has ground to stand on:
+   - document carries features — some intrinsic (emitted), some asserted (authored)
+   - documents connect by relationships — some declared (authored directly), some discovered (inferred from shared features)
+   - the link between them: discovery is inference over shared features — the engine reads the features the author never meant as relational and crystallizes the relationships they imply
+   - meaning is the precipitate (your line-98 reframe — Hoplite is a signal What falls out: two layers, two axes, and inference as the bridge)
+
+2. Everything in the scratch sorts cleanly once you separate the feature layer from the edge layer:
+   - Feature layer — where a document's facts come from. Two origins:
+     - intrinsic — falls out of what the document is: uri/identity, creation time, content fingerprint. Emitted, not authored.
+     - asserted — the author writes it down: title, summary, tags, properties, stereotypes, and the wikilinks themselves.
+
+3. Edge layer — where a relationship comes from. Two provenances (your locked binary):
+  - declared — the author asserted the relationship itself (a wikilink, a stereotype). Confidence 1.0.
+  - discovered — the engine inferred the relationship from shared features. Graded.
 
 Authored vs emergent
 authored link graph via [[wikilinks]]
