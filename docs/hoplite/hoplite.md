@@ -9,11 +9,9 @@ created: 2026-05-30
 
 maximizing signal to noise
 
-Reading is the expensive operation indexes exist to avoid.
-
 Search spends the frontier; discovery expands it.
 
-An agent works within a fixed context budget. It must act on a corpus larger than it can read. The agent has a limited set of built-in tools: glob, grep, and read. It can discover relationships with these tools, but it burns tokens, relies on error-prone judgement, and injects bias by reading off-task content. 
+An LLM-based agent works within a fixed context budget. It must act on a corpus larger than it can read. The agent has a limited set of built-in tools: glob, grep, and read. It can discover relationships with these tools, but it burns tokens, relies on error-prone judgement, and injects bias by reading off-task content. 
 
 The default tools operate over surface text, recovering only content channels — lexical and topical overlap, a shared rare term. Relatedness carried by graph topology, by commit and authorship provenance, by temporal proximity is inexpensive to recover but unreachable: no graph exists to traverse, no history to read. These channels are recoverable after the corpus is reified as a graph.
 
@@ -21,7 +19,7 @@ Hoplite augments the default navigation tools through a map over the markdown co
 
 ## The compounding cost of the grep-read-judge loop
 
-For an LLM-based agent, knowledge that sharpens the context is useful. Content that contains useful knowledge is relevant. To acquire useful knowledge, the agent must first locate and consume relevant content.
+For the agent, knowledge that sharpens the context is useful. Content that contains useful knowledge is relevant. To acquire useful knowledge, the agent must first locate and consume relevant content.
 
 The agent's default method of exploration, `grep`, is a primitive search tool that returns unranked and unordered results. The agent must sift through hits, loading each into the context and judging usefulness for itself. The exploration loop taxes scarce resources: time, tokens, turns, context budget, and bias-inducing attention. The quantitative and qualitative costs compound. Every wasted read is debt serviced for the life of the context.
 
@@ -29,7 +27,7 @@ Scanned noise biases the agent; so does signal it never reaches. `grep` matches 
 
 The relationships the agent discovers are the reward for every leaf it read and every dead end it ruled out. They live in the context window and nowhere else. They die with the session. The next agent re-derives them from scratch, or not. Cost compounds. Failure compounds. Knowledge that compounds is lost.
 
-## The solution — mapping the corpus; declare, describe, discover, and read relationships
+## Maximizing signal to noise to reduce cost
 
 Mapping the corpus — its explicit, semantic, and emergent relationships, and the meta descriptions on each document — creates new affordances. The agent walks the corpus progressively, reading only what bears on the task. The result is less wasted context, less bias from stray input, and the agent kept in its smart-zone.
 
