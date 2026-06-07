@@ -194,9 +194,20 @@ What a declared edge *means* — a citation, a refutation, an endorsement — is
 - WriteResult — returned by `refresh` and `export`. Fields: `path`, `counts` (optional), `warnings` (optional). The reindex's `warnings` list surfaces malformed wikilink targets (anything not starting with `docs/` or `ghost/`) so you can fix them.
 - Wikilink — an in-body cross-reference between documents; materializes a `declared` edge. Two valid shapes: `[[docs/<path>.md]]` for real refs and `[[ghost/<slug>]]` for intentional open loops.
 
+## Economy
+
+Economy is the spine: the most signal for the least text. Every section below applies it at one scope.
+
+- Shortest complete version — cut whole sentences and sections, not only words. Length is earned by purpose, not spent to look thorough.
+- Say it once — each point gets one statement and one home.
+- Cut waste, not substance — economy removes filler and redundancy, keeps precision and needed detail. The terse word is the exact word, not the simple one.
+- Every section earns its place — remove a passage; keep it only when the artifact needs it to do its job.
+
 ## Titles
 
-- Compresses to a short, distinctive handle — grep returns it, the reader recognizes it.
+The tightest compression of the claim.
+
+- A short, distinctive handle — grep returns it, the reader recognizes it.
 - States the artifact's claim, not its topic.
 - Declarative, present-tense, specific.
 
@@ -204,7 +215,8 @@ Shape varies — claim, decision, question, reference. Defer to the user's reque
 
 ## Summaries
 
-- Extends the title in its voice — adds what compression dropped.
+One decompression up from the title — extends it in the same voice, adding what the handle dropped.
+
 - Front-loads — informative phrase first.
 - Stands alone for the skim; bridges to the body for the read.
 
@@ -212,7 +224,8 @@ One to three sentences.
 
 ## Bodies
 
-- Body proves the summary — summary the lede, body the evidence.
+The full claim — the lede's assertion, now carrying its evidence and only that.
+
 - Separates observation from interpretation — facts before meaning; two sentences or two sections mark the boundary.
 - Every claim wears an epistemic badge — observation, inference, or guess. Unlabeled guesses pass as fact.
 - Sentence-style headings — first word and proper nouns only; no title case.
@@ -225,6 +238,8 @@ One to three sentences.
 - Skip bold and tables — they add noise to the markdown, making it hard to read; except in worked examples that demonstrate what to remove.
 
 ## Composition
+
+Economy at the sentence and word.
 
 - Say what is, not what it isn't — except in contrastive pairs that sharpen the positive claim.
 - Active voice over passive — agency stays with the actor; "the user signs in," not "sign-in is performed by the user."
@@ -242,13 +257,19 @@ One to three sentences.
 
 ## Punctuation
 
+The fewest marks that carry the structure.
+
 - Em-dash (`—`) for parenthetical breaks, definitions, and appositives; not double hyphens.
 - Oxford comma — `nodes, edges, and properties` for lists of three or more.
 - Backticks for code, paths, identifiers, and CLI commands; fenced blocks with language tags for multi-line samples.
 
 ## Validation
 
+The subtraction pass — grep for what to cut.
+
 - Lede check — first paragraph alone names what the artifact is for.
+- Cut test — remove each sentence and section in turn; restore only what the artifact needs to do its job.
+- Redundancy pass — any point made twice collapses to once; recaps and announce-transitions go.
 - Negation grep — `not`, `don't`, `doesn't`, `won't`, `can't`, `never`, `avoid` → positive rewrite, except contrastive pairs.
 - Hedge and filler grep — `might`, `perhaps`, `simply`, `just`, `actually`, `really`, `quite`, `very` → cut.
 - Tense drift grep — `will`, `would` → present tense.
