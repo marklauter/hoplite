@@ -56,3 +56,21 @@ That coined vocabulary is the representational schema over the corpus — the ma
 ## Storage
 
 The model is realized as a relational schema in SQLite — tables for nodes, their document facet, the relationships, and the interned vocabularies, with a text index for content search. The tables, columns, indexes, and their rationale live in [`schema.sql`](../../plugins/hoplite/mcp/src/hoplite/schema.sql); this document stays at the level of the model the schema serves.
+
+# from hoplite.md vision document
+
+Prose lifted verbatim from the `hoplite.md` vision draft when the vision doc was cut back to problem-plus-solution. Mining stock, not yet locked; integrate into the sections above when the model settles. The channel enumeration here is engine-measurement detail this doc currently punts ("How proximity is measured is the engine's concern"); decide whether it lands here or in a future discovery/engine spec.
+
+## Discover — inferring latent, emergent structure
+
+Beyond what the author declared, the corpus holds relationships no one wrote down — implicit kinship that emerges from shared features. A declared edge is asserted and treated as fact; a latent signal is implied, present only as a pattern the engine recovers by inference.
+
+Every inferred relationship is graded by the improbability of the coincidence — a rare shared feature, or a narrow shared window. Two documents sharing a common word carry no signal; two sharing a rare term carry a strong one. That grading is why discovered relationships can be ranked.
+
+The signals resolve into three channels, each an independent feature space.
+
+Content and metadata measures what the documents mean. The content comparison is lexical today — shared vocabulary and overlapping phrases — surfacing a kinship the author missed and, at its extreme, gathering near-duplicates into one neighborhood instead of N strangers; but lexical overlap couples documents that share words and misses those that share meaning without them. Semantic comparison is the aspiration — coupling the caching note to the memoization note though they name nothing in common — and it lives as a ghost, [[ghost/semantic-similarity]], until the engine reads meaning from the prose rather than its surface. The metadata needs no such inference: a shared tag relates documents by kind even when their topics diverge, and documents created close in time share the intent of whatever was underway, tracing an arc — genesis, build, refactor — that no one declared and that falls out of time.
+
+Structure measures topology, not content: two documents pointed to by the same third, pointing to the same third, citing the same external source, or naming the same rare entity couple through the shared connector — a rare connector strongly, a hub weakly. History measures provenance from the commit graph: documents changed in the same commit couple, often more strongly than their content suggests, as do documents edited in the same session or by the same author.
+
+Latent signal buys recall at the cost of precision — it finds the connection the author missed, and sometimes one that isn't there. The threshold is the knob. Provenance ranks above score: every discovered tie is graded, but a declared edge carries full confidence and outranks any discovered one for the same pair. The author's word beats the engine's guess.

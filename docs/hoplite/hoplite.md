@@ -38,35 +38,3 @@ The map answers more than the agent asks. Where grep matches only what the agent
 The relationships are derived once and persisted. They outlive the session that found them. The next agent inherits the map instead of re-deriving it: it walks to the rationale behind a decision before repeating it, and reads the prior art before rewriting it. The reward for every leaf read and every dead end ruled out is kept, not discarded. Every session adds to the graph; none starts from zero. Knowledge compounds.
 
 The map is built in three movements: the author declares and describes explicit structure, the engine discovers latent structure, and the agent reads by navigating both.
-
-### Declare and describe — applying explicit structure
-
-The author asserts what the bytes can't yield: a relationship that lives only in a link, a title that isn't the filename, a summary the document never states. This is explicit structure — supplied, not inferred — and the graph treats it as fact.
-
-A wikilink declares a relationship grep can't see: a directed edge from one document to another. A markdown link declares one too, reaching content outside the corpus — the graph's edges don't stop at its own files. Declared once, an edge reads both ways; the backlink, who points here, is free structure. Whether the tie is symmetric is the stereotype's call — `supersedes` runs one way, a `related` or `not-related` tie reads both. A ghost link declares an open loop: not-yet-written content made explicit rather than lost.
-
-Description annotates the structure. A title and summary are asserted, not extracted — a filename is not a title, and a document carries no summary of itself. The summary is the lede the agent reads to decide whether to open the document or follow the edge. Properties — tags, status — classify a document and crosscut the folder it is filed in. A stereotype labels an edge with the kind of relationship it carries: cites, supports, supersedes, contradicts. Describe an edge inline beside the claim it makes, or in frontmatter as a document-level fact — same structure either way. The vocabulary is open: the author coins a label and it earns canonical status by use, the way tags do.
-
-### Discover — inferring latent, emergent structure
-
-Beyond what the author declared, the corpus holds relationships no one wrote down — implicit kinship that emerges from shared features. A declared edge is asserted and treated as fact; a latent signal is implied, present only as a pattern the engine recovers by inference.
-
-Every inferred relationship is graded by the improbability of the coincidence — a rare shared feature, or a narrow shared window. Two documents sharing a common word carry no signal; two sharing a rare term carry a strong one. That grading is why discovered relationships can be ranked.
-
-The signals resolve into three channels, each an independent feature space.
-
-Content and metadata measures what the documents mean. The content comparison is lexical today — shared vocabulary and overlapping phrases — surfacing a kinship the author missed and, at its extreme, gathering near-duplicates into one neighborhood instead of N strangers; but lexical overlap couples documents that share words and misses those that share meaning without them. Semantic comparison is the aspiration — coupling the caching note to the memoization note though they name nothing in common — and it lives as a ghost, [[ghost/semantic-similarity]], until the engine reads meaning from the prose rather than its surface. The metadata needs no such inference: a shared tag relates documents by kind even when their topics diverge, and documents created close in time share the intent of whatever was underway, tracing an arc — genesis, build, refactor — that no one declared and that falls out of time.
-
-Structure measures topology, not content: two documents pointed to by the same third, pointing to the same third, citing the same external source, or naming the same rare entity couple through the shared connector — a rare connector strongly, a hub weakly. History measures provenance from the commit graph: documents changed in the same commit couple, often more strongly than their content suggests, as do documents edited in the same session or by the same author.
-
-Latent signal buys recall at the cost of precision — it finds the connection the author missed, and sometimes one that isn't there. The threshold is the knob. Provenance ranks above score: every discovered tie is graded, but a declared edge carries full confidence and outranks any discovered one for the same pair. The author's word beats the engine's guess.
-
-### Read — navigating mapped relationships
-
-Affordances emerge from the mapped structure: survey the vocabulary, filter by meaning, walk relationships, project and read the results.
-
-1. Survey — retrieve the schema vocabulary, properties and stereotypes, before composing a predicate over the corpus.
-2. Filter — narrow the corpus to the subset a Boolean predicate admits (`note & mcp & !draft`): semantic search matches by meaning, not literal string or path; properties crosscut folders, so filtering by one gathers a concept wherever it lives.
-3. Walk — traverse declared and discovered edges from a node to gather a neighborhood the tree can't show: a relationship declared once reads both ways (inbound and outbound edges); ghosts keep open loops enumerable.
-4. Project — organize the resultset: sort it by score or distance, shape what each hit returns (the lede and tags, never the body), and cap the hops and result set size. Hoplite hands back a projection, not a document — so the agent judges relevance from the summary authored in [Describe](#declare-and-describe--applying-explicit-structure) before spending a token to open the file.
-5. Read — the built-in Read tool. Hoplite ends at the projection; the agent crosses to full content only for the hits that survive.

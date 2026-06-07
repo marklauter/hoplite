@@ -34,3 +34,17 @@ Project shapes the result before it returns. It sorts by relevance score or trav
 ## Read
 
 Read is the handoff. Hoplite ends at the projection; the agent crosses to full content with the built-in `Read` tool, and only for the hits that survive.
+
+# from hoplite.md vision document
+
+Prose lifted verbatim from the `hoplite.md` vision draft when the vision doc was cut back to problem-plus-solution. Mining stock, not yet locked; integrate into the sections above when the model settles. Note this copy still says "filter by meaning" / "semantic search matches by meaning" — the sections above are already lexically honest (BM25 over the `fts` projection), so reconcile that on merge.
+
+## Read — navigating mapped relationships
+
+Affordances emerge from the mapped structure: survey the vocabulary, filter by meaning, walk relationships, project and read the results.
+
+1. Survey — retrieve the schema vocabulary, properties and stereotypes, before composing a predicate over the corpus.
+2. Filter — narrow the corpus to the subset a Boolean predicate admits (`note & mcp & !draft`): semantic search matches by meaning, not literal string or path; properties crosscut folders, so filtering by one gathers a concept wherever it lives.
+3. Walk — traverse declared and discovered edges from a node to gather a neighborhood the tree can't show: a relationship declared once reads both ways (inbound and outbound edges); ghosts keep open loops enumerable.
+4. Project — organize the resultset: sort it by score or distance, shape what each hit returns (the lede and tags, never the body), and cap the hops and result set size. Hoplite hands back a projection, not a document — so the agent judges relevance from the summary the author asserted before spending a token to open the file.
+5. Read — the built-in Read tool. Hoplite ends at the projection; the agent crosses to full content only for the hits that survive.
