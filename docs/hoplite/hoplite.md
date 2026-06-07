@@ -1,7 +1,7 @@
 ---
 title: Maps of meaning and the economics of information search, discovery, and retrieval
 summary: Reading is expensive.
-tags: [hoplite, overview, spec]
+tags: [hoplite, vision]
 created: 2026-05-30
 ---
 
@@ -19,13 +19,13 @@ Hoplite augments the default navigation tools through a map over the markdown co
 
 ## The compounding cost of the grep-read-judge loop
 
-For the agent, knowledge that sharpens the context is useful. Content that contains useful knowledge is relevant. To acquire useful knowledge, the agent must first locate and consume relevant content.
+Knowledge that sharpens the context is useful; the content carrying it is relevant. To acquire useful knowledge, the agent must locate and consume that content. The explore pipeline has three failure modes: extraction, reception, retention.
 
 The agent's default method of exploration, `grep`, is a primitive search tool that returns unranked and unordered results. The agent must sift through hits, loading each into the context and judging usefulness for itself. The exploration loop taxes scarce resources: time, tokens, turns, context budget, and bias-inducing attention. The quantitative and qualitative costs compound. Every wasted read is debt serviced for the life of the context.
 
-Scanned noise biases the agent; so does signal it never reaches. `grep` matches only what the agent can name. Explore agents, guarding their context budget, scan excerpts and risk missing critical information. Hard won memory sits unused. The knowledge-starved agent exercises poor judgment: it reopens settled decisions, contradicts conventions, overwrites working code, and reproduces prior art. Failures compound.
+Scanned noise biases the agent; so does signal it never reaches. `grep` matches only what the agent can name. Explore agents, guarding their context budget, scan excerpts and risk missing critical information. Hard-won memory sits unused. The knowledge-starved agent exercises poor judgment: it reopens settled decisions, contradicts conventions, overwrites working code, and reproduces prior art. Failures compound.
 
-The relationships discovered by the agent are the reward for every leaf it read and every dead end it ruled out. They live in the context window and nowhere else. They die with the session. The next agent re-derives them from scratch, or not. Cost compounds. Failure compounds. Knowledge that compounds is lost.
+The relationships the agent discovers are the reward for every leaf it read and every dead end it ruled out. They live in the context window and nowhere else. They die with the session. The next agent re-derives them from scratch, or not. Cost compounds. Failure compounds. Knowledge that compounds is lost.
 
 ## Maximizing signal-to-noise
 
