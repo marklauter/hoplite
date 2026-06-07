@@ -446,3 +446,82 @@ Affordances emerge from the mapped structure: survey the vocabulary, filter by m
   4. Project — organize the resultset: sort it by score or distance, shape what each hit returns (the lede and tags, never the body), and cap the hops and result set size. Hoplite hands back a projection, not a document — so the agent judges relevance from the summary authored in [Describe](#declare-and-describe--applying-explicit-structure) before spending a token to open the file.
   5. Read — the built-in Read tool. Hoplite ends at the projection; the agent crosses to full content only for the hits that survive.
   
+
+
+  ❯ i have an idea about ranked hits. it came from rarity. two docs share a rare    
+  tag, high rank. two docs share common tag (note), low rank. but proximity       
+  matters too, so docs in the hoplite folder are likely related. two docs sharing 
+  features across dimensions should rank high. this is like jackard ranking, but  
+  over features. tags, properties, property values, stereotypes, graph            
+  neighborhood, etc.                                                              
+  
+● Yes — and you've just derived the mechanism behind your own glossary stub. Line
+  74: "inferred — semantic similarity (weighted minhash), weighted aggregation of 
+  intrinsic and asserted features." That's exactly this. You wrote the conclusion;
+  now you've got the construction.
+
+  What it is, named: weighted Jaccard over a unified feature set, where each
+  feature is weighted by its rarity (IDF). That's the whole idea, and it's
+  principled.
+
+  The construction. Represent each document as a set of feature tokens drawn from
+  every dimension:
+
+  docA → { tag:note, tag:minhash, prop:status=design,
+           stereotype:supersedes→docX, neighbor:docY,
+           folder:docs/hoplite, created:2026-06 }
+
+  Weight each token by rarity — idf(f) = log(N / df(f)), df = how many docs carry
+  it. Then similarity is the rarity-weighted overlap of two docs' token sets.
+  Sharing tag:note (everyone has it, df huge) contributes ~nothing; sharing
+  tag:minhash or a rare entity:co-mention (df = 2) contributes a lot. And because
+  all dimensions live in one set, sharing across dimensions accumulates
+  automatically — that's the "high rank for multi-dimensional overlap" you want,
+  with no special combination rule. It falls out of the union.
+
+  This is the same principle you already wrote, generalized. The Discover section
+  says discovery is "graded by the improbability of the coincidence — a rare
+  shared feature, or a narrow shared window." Improbability of coincidence is IDF:
+  two random docs both carrying a feature of frequency p collide with probability
+  ~p², so rare features are high-signal. Your idea is just: apply that grading to
+  every feature dimension and sum, instead of only to text shingles. The current
+  minhash-over-shingles is then one special case — shingles are simply the content
+  dimension's features.
+
+  It also collapses your "three channels" into one space — elegantly. Structural
+  coupling stops being a separate mechanism: co-citation is a shared neighbor:
+  feature; bibliographic coupling is a shared out-neighbor; entity co-mention is a
+  shared entity: feature. Topology becomes feature-membership. So "content /
+  structure / history" stop being three independent similarity computations and
+  become three groups of features in one weighted-Jaccard. Cleaner model — though
+  see the wrinkle.
+
+  The one wrinkle — discrete vs. continuous. Jaccard is set-membership; it nails
+  "rare shared feature" but not "narrow shared window." Time and space are
+  continuous — two docs created 3 minutes apart aren't a set-membership match,
+  they're close. To fold proximity into the feature set you have to bin it
+  (created:2026-06, created:2026-06-07), and binning is lossy at the boundary
+  (23:59 vs 00:01 land in different buckets). So either bin proximity into
+  features (fits the unified model, loses sharpness) or keep proximity as a
+  separate distance kernel multiplied in (sharper, breaks the single-Jaccard
+  elegance). Your "rare shared feature / narrow shared window" phrasing already
+  names both modes — this is just where they diverge mechanically.
+
+  Implementation angle, since it rides on the existing schema. You don't need
+  minhash for the structured features at all. Per-doc structured feature sets are
+  small (dozens of tokens), so an inverted index — feature → posting list of docs,
+  each posting carrying the IDF weight — lets you compute exact weighted overlap
+  cheaply: node_property already gives you tag/property features, edge gives you
+  neighbor features. MinHash earns its keep only on the content dimension, where
+  shingle sets are huge and you need the sketch. So the honest split is: content →
+  minhash sketch; structured features → exact weighted Jaccard over an inverted
+  index. Two mechanisms, one combined score. No schema change — it's all derivable
+  from the tables you have.
+
+  The design question for the doc: does this reframe Discover from "three
+  independent feature spaces" into "one weighted-feature similarity, the channels
+  as feature groups"? That's truer to where you're headed and matches the stub —
+  but it's a real rewrite of that section's framing, so I'd hold it until you
+  decide. Want me to sketch what the Discover prose looks like under the
+  unified-feature framing, so you can compare it side-by-side with the current
+  three-channel version before committing?
