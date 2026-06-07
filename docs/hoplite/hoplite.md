@@ -1,11 +1,11 @@
 ---
-title: Efficient knowledge search, discovery, and retrieval
+title: Maps of meaning - information search, discovery, and retrieval
 summary: Reading is an expensive operation. Indexes reduce the cost.
 tags: [hoplite, overview, spec]
 created: 2026-05-30
 ---
 
-# Efficient knowledge search, discovery, and retrieval
+# Maps of meaning - information search, discovery, and retrieval
 
 Reading is the expensive operation indexes exist to avoid.
 
@@ -21,12 +21,11 @@ Hoplite augments the default navigation tools through a map over the markdown co
 
 For an LLM-based agent, content that sharpens the context is relevant knowledge. To acquire knowledge, the agent must locate and consume content. Locating relevant information can be costly. `grep` provides primitive search, but every hit is a raw leaf. The agent loads each leaf into the context window and judges relevance for itself. Reading is expensive. Scanning unrelated content spends against scarce resources: time, tokens, turns, context, and bias-inducing attention. The cost compounds. Every wasted read is debt serviced for the life of the context. `grep` is a loan shark.
 
-Scanned noise biases the agent; so does signal it never reaches. `grep` matches only what the agent can name. Explore agents, guarding the context budget, scan excerpts potentially missing critical information. The knowledge-starved agent excercises poor judgement: it reopens settled decisions, contradicts conventions, and overwrites working code. Failures compound.
+Scanned noise biases the agent; so does signal it never reaches. `grep` matches only what the agent can name. Explore agents, guarding the context budget, scan excerpts potentially missing critical information. The knowledge-starved agent exercises poor judgment: it reopens settled decisions, contradicts conventions, and overwrites working code. Failures compound.
 
-Relationships discovered die with the session...
-re-derives a relationship
+The relationships the agent discovers are the reward for every leaf it read and every dead end it ruled out. They live in the context window and nowhere else. They die with the session. The next agent re-derives them from scratch, or not. Cost compounds. Failure compounds. Knowledge that compounds is lost.
 
-The simplicity of the default toolset has a cost: exploring with the glob, grep, and read loop wastes turns, tokens, and attention. The agent has to re-derive the same relationships every session. `Explore` agents, in the interest of preserving the context budget, employ a grep excerpt loop that can miss relevant information. After exploring blind alleys, agents make decisions biased by the wrong content, or rehash decisions that were present in missed content. Failures compound.
+
 
 1. Search matches the wrong way — an agent must find information that matters before it can use it.
    - grep finds direct text matches with regex, not semantic matches by topic
