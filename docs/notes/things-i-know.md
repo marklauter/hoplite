@@ -13,6 +13,10 @@ asserstions on the code base
 
 judgment-under-uncertainty
 
+## ready to ship
+
+- schema.sql
+
 
 ## problem statement
  `grep` is a loan shark.
@@ -26,37 +30,17 @@ A knowledge graph cuts waste by locating relevant content without reading for it
   - This is open-loop. → discover.
 - Search spends the frontier; discovery expands it.
 
-## ready to ship
 
-- schema.sql
-- hoplite.md
-- migrations.py
-- db.py
 
-## wip
+## scratch
 
-## graph.py
-
-## frontmatter.py
-
-- created
-- extracted from walker which lived in graph.py
-- unreviewed
-- frontmatter is an expression of the spec - the spec should be defined elsewhere
-
-## hoplite-frontmatter.md
-- created
-- unreviewd
-
-## hoplite-graph.md
-- created
-- unreviewd
-
-document features are: 
-- intrinsic (immutable attributes such as identity that all documents emit)
-- asserted (author declared properties that define the corpus schema)
-- inferred (graded relatedness) .. is this a document feature or edge feature?
-- latent - is latent and intrisic the same thing?
+1. Feature layer — where a document's facts come from. Two origins:
+  - intrinsic — falls out of what the document is: uri/identity, creation time, content fingerprint. Emitted, not authored.
+  - asserted — the author writes it down: title, summary, tags, properties, stereotypes, and the wikilinks themselves.
+2. Edge layer — where a relationship comes from. Two provenances (your locked binary):
+  - declared — the author asserted the relationship itself (a wikilink, a stereotype).
+  Confidence 1.0.
+  - discovered — the engine inferred the relationship from shared features. Graded.
 
 edge features are:
 - intrisic (source and destination nodes)
