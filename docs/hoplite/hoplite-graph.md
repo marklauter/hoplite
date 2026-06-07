@@ -1,129 +1,58 @@
 ---
-title: A property graph over an addressable corpus
-summary: <todo: summary>
+title: Mapping documents through intrinsic, asserted, and inferred relationships
+summary: <todo - summarize when the content is locked in>
 tags: [hoplite, graph, spec]
 created: 2026-05-29
 ---
 
-# A property graph over an addressable corpus
+# Mapping documents through intrinsic, asserted, and inferred relationships
 
-<todo: introduction>
+graph - a closure of nodes and edges.
 
-## Documents
+Document features may be intrinsic, asserted, or inferred. Attributes such as identity, topic, category, location in space-time, and fingerprints are intrinsic. 
 
-A document is the graph's node.
+Documents may also carry author-delcared properties that form a schema over the corpus that distinquish it from another. For example, an oranization's ADR catalog exposes a different property graph than an issues catalog. Native attributes and author-defined properties form a map of related documents over many dimensions. The relationships may be explicit author-defined references to other documents, or they may be implicit such as sharing a topic, category, property, or semantic meaning.
 
-- `id` — internal integer key (storage only)
-- `uri` — identity; medium-agnostic, case-insensitive locator
-- `resolved` — whether the uri backs a real resource (document) or dangles (ghost, URL)
-- `content_hash` — exact fingerprint, for change detection
-- `minhash` — similarity sketch, for near-duplicate discovery
-- `created` — authored creation timestamp
-- `title` — first-class description attribute
-- `summary` — first-class description attribute
-- tags — classification label set
-- properties — open key/value description
-- aliases — alternate identities that resolve to the node
+## The document
 
-### Identity
+A document's structure falls out of what a document naturally is. Each facet answers a different question about it:
 
-A document's `uri` is its identity — a medium-agnostic, case-insensitive locator. A corpus document's uri is its repo-relative path (`docs/notes/foo.md`); `[[Docs/Foo.md]]` and `[[docs/foo.md]]` reach the same node because the uri collates case-insensitively.
+- **Location** — the `uri`: where the document is addressed, a medium-agnostic, case-insensitive locator.
+- **Identity** — the `title`, and `aliases`: what the document is called, and the alternate names that still resolve to it across a rename.
+- **Content** — the `summary` over the body: the authored gist a reader scans before opening the work.
+- **Temporal** — `created`: when the document came to be.
+- **Category** — `tags`: what kind of thing the document is, its classification.
+- **Properties** — user-defined attributes: the open key/values an author coins beyond the natural facets, recording state and qualities no fixed schema anticipates.
+
+Category and properties divide cleanly: a tag classifies (what is this?), a property carries state (what condition is it in?). Conflating them — a `draft` tag instead of a `status` property — churns the document's identity every time its lifecycle moves ([[docs/notes/tags-classify-properties-carry-state.md]]).
 
 ### Variants
 
-`resolved` marks whether the uri backs a real resource. Three variants follow:
+Not every node is a resolved file. Three variants:
 
-- Document — a real `.md` file on disk. `resolved = true`.
-- Ghost — a wikilink target authored `[[ghost/<slug>]]` as an intentional open loop, awaiting its file. `resolved = false`. A synthetic `ghost` tag enumerates the corpus's open loops.
-- URL — an external `http(s)` reference keyed by the verbatim URL. `resolved = false`, terminal, a synthetic `url` tag.
+- **Document** — a resolved file in the corpus, carrying every facet.
+- **Ghost** — an open loop: a reference to a work not yet written, placed deliberately as `[[ghost/<slug>]]` so the intention stays visible.
+- **URL** — an external reference: a link to a work the corpus points to but does not hold.
 
-### Fingerprints
-
-A resolved document carries two fingerprints of its bytes: `content_hash`, an exact hash for change detection, and `minhash`, a similarity sketch for near-duplicate discovery. Ghost and URL nodes are byteless.
-
-### Created
-
-`created` is the authored creation timestamp — a scalar fact, so a column on `node` rather than a property. Optional; when absent, git history is the authoritative date.
-
-### Title and summary
-
-`title` and `summary` are first-class description attributes, asserted by the author. The title names the document beyond its filename; the summary is its lede — the gist a reader scans before opening the file. Every document asserts one of each. Their canonical store is the `fts` text projection (title, summary, body), not a `node` column; the model treats them as first-class attributes regardless of where they reify.
-
-### Tags
-
-A document's classification: an open-vocabulary set of labels (`note`, `journal`, `design`). Tags is the node-side counterpart to edge stereotypes — a label set, not a key/value property — so its labels intern in `tag` and attach through the `node_tag` junction. The walker injects synthetic `ghost` and `url` tags, so those node variants enumerate like any other.
-
-Tags classify; properties carry state. A tag answers "what is this?" — immutable identity, the document's type and shape and domain. A mutable property answers "what state is it in?" Conflating them — a `draft` or `closed` tag — churns identity when the lifecycle moves. The full principle is in [[docs/notes/tags-classify-properties-carry-state.md]].
-
-### Properties
-
-Beyond the attributes above, a document carries open-ended description as properties — typed key/value facts in entity-attribute-value form, stored across two tables:
-
-- `node_property` — one row per (document, key, value)
-- `property_key` — the interned key vocabulary (see [Vocabulary](#vocabulary))
-
-Properties hold open vocabulary only: author-coined keys with no model-defined meaning. A key whose meaning the model fixes earns its own structure instead — a scalar becomes a column (`created`), a classification becomes the tag label set, an alternate identity becomes the alias index — so `node_property` stays purely open. A list-valued attribute fans out one row per element, values store as text, and a key string is interned once in `property_key` and referenced by integer from every row that carries it.
-
-### Aliases
-
-Alternate uris that resolve to the node, declared by the author — e.g. on rename, so old wikilinks still reach the file. A resolution index (`node_alias`), not a description: an alias is globally unique and maps to one node, differing from `uri` only in that uri is the canonical identity.
+A document carries every facet; a ghost or url carries only location and identity — there is no content to summarize until a work exists to read.
 
 ## Relationships
 
-A relationship is the graph's edge.
+A document points to others, and each relationship carries two facts beyond its direction:
 
-- `id` — internal integer key (storage only)
-- `src` — source node
-- `dst` — destination node
-- `kind` — provenance: `declared` or `discovered`
-- `confidence` — graded strength of the tie
-- stereotypes — open-vocabulary labels describing the link
+- **Origination** — who asserted it. The author **declared** it by drawing a link, or the engine **discovered** it by inferring a nearness the author never wrote.
+- **Category** — what kind of link it is: a stereotype — `cites`, `supports`, `supersedes`, `contradicts`, `not-related`. An open vocabulary, coined like tags.
 
-### Direction
+A declared relationship is a link the author drew and stands behind, asserted with full confidence. A discovered one is inferred from **proximity** — documents near each other in meaning (a shared topic, a rare shared term), in time (created close together), or in structure (citing the same source) — and graded by how improbable that nearness is, so a rare shared feature counts for more than a common one. Where both assert the same pair, the declared relationship wins: the author's word outranks the engine's guess. How proximity is measured is the engine's concern, not this document's.
 
-`src` and `dst` are the edge's endpoints — directed, tail to head. The backlink — the inbound view — comes free. Symmetry is the stereotype's property: `supersedes` runs one way, a `related` or `not-related` tie reads both. The destination's nature — document, ghost, or URL — is the node's fact: a markdown link to an external site is a `declared` edge to a URL node.
-
-### Kind
-
-`kind` is provenance, a closed enum of two — who asserted the edge:
-
-- `declared` — the author asserted it, by writing a `[[wikilink]]` or markdown link in body text or naming it in frontmatter.
-- `discovered` — the engine inferred it from a latent signal: content similarity, co-citation, temporal proximity, and the rest (the channels are in [[docs/hoplite/hoplite.md]]).
-
-### Confidence
-
-Confidence follows kind: a `declared` edge is `1.0`, a `discovered` edge carries the graded strength of the inference.
-
-### Uniqueness
-
-At most one edge connects an ordered pair — `UNIQUE(src, dst)`, across both kinds. The two-pass build inserts declared edges first and discovered second; a declared edge wins the slot against a discovered collision.
-
-### Stereotypes
-
-A relationship's meaning — citation, support, refutation — is a stereotype: an open-vocabulary label on a declared edge — `cites`, `supports`, `supersedes`, `contradicts`, `not-related` — classifying what kind of link it is. An edge's stereotypes are stored across two tables:
-
-- `edge_stereotype` — the junction, a set of labels per edge
-- `stereotype` — the interned label vocabulary (see [Vocabulary](#vocabulary))
-
-Description takes a different shape on each side: a document carries an open key/value property vocabulary, an edge carries a label set. A new stereotype extends the vocabulary as data, the way a new tag does; the parser accepts any label. The full model, the authoring surfaces, and the seed vocabulary are in [[docs/notes/stereotypes-are-open-vocab-edge-properties.md]].
+Every relationship reads both ways — the backlink, who-points-here, comes free. Whether it reads as symmetric is the stereotype's call: `supersedes` runs one direction, a `related` tie both.
 
 ## Vocabulary
 
-The find-namespace is interned in two tables, one per side of the graph:
+A vocabulary organizes the corpus. A fixed scheme imposes a closed set of terms up front; Hoplite's vocabulary is open — the tags, property keys, and stereotypes the corpus coins as it grows.
 
-- `property_key` — the document-side property keys
-- `stereotype` — the edge-side labels
-
-Each holds the same `(id, string)` shape: a surrogate id and the interned string, unique and case-insensitive. Interning stores each string once and exposes the vocabulary as a readable set. That set is the Survey affordance — what an agent reads to learn which predicates compose before it queries the corpus.
-
-Survey is the read graph's `match` shape applied to the schema: find and walk.
-
-Find reads the namespace: `property_key` on the document side, `stereotype` on the edge side, each a small interned list.
-
-Walk descends a key to its values — the distinct `value` rows under one `keyid`, served by the `(keyid, value)` reverse index. The keys are the nodes of a vocabulary graph, `key → value` the edge, the values the reachable set. A key's categorical-or-scalar nature resolves in the walk: a key reaching a handful of values is categorical — `tags`, `status`; one reaching thousands of near-unique values is scalar — a timestamp, a score. The distinction is empirical — the index carries the walk, and the agent reads it off the result.
-
-Interning covers the find namespace: `property_key` interns document keys, `stereotype` interns edge labels, while walk-reached document values stay inline. The edge side has a single description dimension, so its survey is the find alone — a direct read of `stereotype`.
+That coined vocabulary is the representational schema over the corpus — the map of how the corpus describes itself. An agent reads it to learn which categories, properties, and link-meanings are in use before composing a query. The vocabulary is never imposed up front; it accretes from what authors actually write, so it always reflects the corpus as it is. That is what makes the map meaningful rather than generic — the corpus supplies its own terms.
 
 ## Storage
 
-The graph persists in SQLite, rebuilt by drop-and-recreate — the dominant cost is the bulk load, so the performance levers live in the loader. [`schema.sql`](../../plugins/hoplite/mcp/src/hoplite/schema.sql) holds the tables, columns, indexes, and their rationale; the model maps to it directly: documents to `node`, relationships to `edge` (kinds interned in `edge_kind`), document properties to `node_property` (keys interned in `property_key`), edge stereotypes to `edge_stereotype` (labels interned in `stereotype`), the text projection to `fts`.
+The model is realized as a relational schema in SQLite — tables for nodes, their document facet, the relationships, and the interned vocabularies, with a text index for content search. The tables, columns, indexes, and their rationale live in [`schema.sql`](../../plugins/hoplite/mcp/src/hoplite/schema.sql); this document stays at the level of the model the schema serves.

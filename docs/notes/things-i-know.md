@@ -11,14 +11,7 @@ document:
 
 asserstions on the code base
 
-- Reading is the expensive operation indexes exist to avoid.
-- Reading is an expensive operation. Indexes reduce the cost.
-- search/locate reduce the scanable surface. scan is consumes content linearly.
-
 judgment-under-uncertainty
-
-Relationships discovered die with the session...
-re-derives a relationship
 
 
 ## problem statement
@@ -26,7 +19,6 @@ re-derives a relationship
 
 A knowledge graph cuts waste by locating relevant content without reading for it. Debt avoided, not debt repaid. 
 
-The graph is the invesment broker to .
  
 - You go to the catalog with keys you already hold — a subject, a title, a Dewey number, a term. You get back exactly what matches what you asked.
   - This is closed-loop. → search.
@@ -60,6 +52,21 @@ The graph is the invesment broker to .
 - created
 - unreviewd
 
+document features are: 
+- intrinsic (immutable attributes such as identity that all documents emit)
+- asserted (author declared properties that define the corpus schema)
+- inferred (graded relatedness) .. is this a document feature or edge feature?
+- latent - is latent and intrisic the same thing?
+
+edge features are:
+- intrisic (source and destination nodes)
+- providence
+  - declared (author linked documents via wikilink)
+  - described (emerge from author-declared properties)
+  - discovered (semantic)
+  - explicit / declared
+  - latent / detected
+
 Authored vs emergent
 authored link graph via [[wikilinks]]
 semantic graph - good
@@ -75,7 +82,7 @@ i now realized that d, d, and d are properties of edges: declared (wikilinks), d
 
 ^ intrinsic / asserted / inferred is much better map than declared, describted, discovered because declared and described are really the same thing.
 
-Declared · Described · Discovered
+edges: Declared · Described · Discovered
   - Declared — the author wrote the relationship. A wikilink, a stereotype. Zero inference; the edge is
   the authored thing.
   - Described — the author wrote a value about the node. Tags, dates, status. The relationship among
@@ -301,3 +308,14 @@ Good — file's unchanged, so I'm reviewing the version we built. Starting the d
   or declare-minimal? And once that's settled I'll move to Relationships (where the real items
   are: the overloaded Direction section, and the two-pass build that's really indexing
   behavior).
+
+
+
+
+3. The tree is the wrong tool for an ontology — a directory gives each file one home, though the idea belongs in many.
+   - directory hierarchy doesn't match real-world relationships between concepts
+   - a concept that matters in many places is filed in one folder; hierarchy forces a single home
+4. Connection is invisible — even what the tree holds, it can't connect from glob-grep alone.
+   - relationships between documents are invisible — the links you drew, the kinship of shared tags, the similarity no one wrote down; the filesystem shows containment, never connection
+   - a document shows what it points to, never who points back; the filesystem has no inbound view
+   - references to not-yet-written documents vanish — the backlog of intended work goes invisible, with no ghost to mark it

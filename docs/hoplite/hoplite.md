@@ -7,6 +7,8 @@ created: 2026-05-30
 
 # Maps of meaning - information search, discovery, and retrieval
 
+maximizing signal to noise
+
 Reading is the expensive operation indexes exist to avoid.
 
 Search spends the frontier; discovery expands it.
@@ -23,31 +25,9 @@ For an LLM-based agent, knowledge that sharpens the context is useful. Content t
 
 The agent's default method of exploration, `grep`, is a primitive search tool that returns unranked and unordered results. The agent must sift through hits, loading each into the context and judging usefulness for itself. The exploration loop taxes scarce resources: time, tokens, turns, context budget, and bias-inducing attention. The quantitative and qualitative costs compound. Every wasted read is debt serviced for the life of the context.
 
-Scanned noise biases the agent; so does signal it never reaches. `grep` matches only what the agent can name. Explore agents, guarding their context budget, scan excerpts and risk missing critical information. The knowledge-starved agent exercises poor judgment: it reopens settled decisions, contradicts conventions, overwrites working code, and reproduces prior art. Failures compound.
+Scanned noise biases the agent; so does signal it never reaches. `grep` matches only what the agent can name. Explore agents, guarding their context budget, scan excerpts and risk missing critical information. Hard won memory sits unused. The knowledge-starved agent exercises poor judgment: it reopens settled decisions, contradicts conventions, overwrites working code, and reproduces prior art. Failures compound.
 
 The relationships the agent discovers are the reward for every leaf it read and every dead end it ruled out. They live in the context window and nowhere else. They die with the session. The next agent re-derives them from scratch, or not. Cost compounds. Failure compounds. Knowledge that compounds is lost.
-
-
-
-1. Search matches the wrong way — an agent must find information that matters before it can use it.
-   - grep finds direct text matches with regex, not semantic matches by topic
-   - glob finds files by name, but the whole idea can't be contained in a name
-   - matches are unranked and arrive unordered, so the agent can't tell what's central from what barely qualifies
-2. Reading blind is costly — when search comes up wrong, the agent falls back to reading, and reading unranked and unfiltered costs twice.
-   - reading unrelated files burns tokens for nothing
-   - reading unrelated files injects bias into every future turn
-3. The tree is the wrong tool for an ontology — a directory gives each file one home, though the idea belongs in many.
-   - directory hierarchy doesn't match real-world relationships between concepts
-   - a concept that matters in many places is filed in one folder; hierarchy forces a single home
-4. Connection is invisible — even what the tree holds, it can't connect from glob-grep alone.
-   - relationships between documents are invisible — the links you drew, the kinship of shared tags, the similarity no one wrote down; the filesystem shows containment, never connection
-   - a document shows what it points to, never who points back; the filesystem has no inbound view
-   - references to not-yet-written documents vanish — the backlog of intended work goes invisible, with no ghost to mark it
-5. The corpus's memory goes unused — so the corpus repeats itself, the agent rewriting and rehashing what's already locked in.
-   - the same idea gets rewritten across several notes; the agent reads redundant copies or never sees they converge
-   - fixed context budget hides prior art — the decision, settled, remains unread
-     - re-derive — re-solves a solved problem; wasted work, usually the same answer
-     - contradict — lands on a different answer and breaks consistency; two conflicting decisions now drift apart
 
 ## The solution — mapping the corpus; declare, describe, discover, and read relationships
 
