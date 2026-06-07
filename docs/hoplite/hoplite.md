@@ -33,7 +33,7 @@ Hoplite builds a durable knowledge graph over the corpus — a map of meaning. D
 
 The agent searches the map with rich predicates and shapes the result set projections. Walkable queries return ranked hits and gather the whole neighborhood in one turn. The agent judges the projection before spending tokens and context budget on the body. Every read is earned, and the agent protects itself from bias by reading only documents it trusts.
 
-The agent surveys the map's vocabulary — the terms the corpus uses — and queries in them, with no need to name the answer in advance. The authored summary gists the whole document, so the agent judges the complete work, not a sampled excerpt. The walk gathers what no term would reach: kin no one wrote down, found without a fresh search term. Hard-won memory sits one hop away. The agent reaches what it never thought to name.
+The map encodes the corpus's own vocabulary. The agent reads it and queries in those terms. It asks informed questions instead of guessing the answer. The author summarizes the whole document, so the agent judges the complete work, not a sampled excerpt. The walk reaches what no search term could. It gathers kin no one wrote down. No follow-up search needed. Hard-won memory sits one hop away. The agent reaches what it never thought to name.
 
 The relationships are derived once and persisted. They outlive the session that found them. The next agent inherits the map instead of re-deriving it: it walks to the rationale behind a decision before repeating it, and reads the prior art before rewriting it. The reward for every leaf read and every dead end ruled out is kept, not discarded. Every session adds to the graph; none starts from zero. Knowledge compounds.
 
