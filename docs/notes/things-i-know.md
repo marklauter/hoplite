@@ -379,3 +379,35 @@ Affordances emerge from the mapped structure: survey the vocabulary, filter by m
 3. Walk — traverse declared and discovered edges from a node to gather a neighborhood the tree can't show: a relationship declared once reads both ways (inbound and outbound edges); ghosts keep open loops enumerable.
 4. Project — organize the resultset: sort it by score or distance, shape what each hit returns (the lede and tags, never the body), and cap the hops and result set size. Hoplite hands back a projection, not a document — so the agent judges relevance from the summary authored in [Describe](#declare-and-describe--applying-explicit-structure) before spending a token to open the file.
 5. Read — the built-in Read tool. Hoplite ends at the projection; the agent crosses to full content only for the hits that survive.
+
+
+  The mirror, so you can see the seams (each solution closer retires its problem
+  closer):
+
+  - Para 1 (tax) — "reads the lede, not the leaf" answers P1's "every hit is a raw
+  leaf"; "opens only what pays" retires "every wasted read is debt."
+  - Para 2 (blind) — "reaches what it never thought to name" answers P2's "matches
+  only what the agent can name"; "Hard-won memory sits one hop away" flips P2's
+  "Hard won memory sits unused" verbatim.
+  - Para 3 (lost) — "the reward for every leaf read and every dead end ruled out
+  is kept, not discarded" is P3's exact phrase with the fate reversed; "Knowledge
+  compounds" inverts "Knowledge that compounds is lost."
+  - Para 0 mirrors problem para 0: where the problem defined useful → relevant →
+  locate and consume, the solution defines the map → query → a choice, ending on
+  the same two verbs ("locating and consuming") it set up.
+
+  Two accuracy calls I made deliberately, flagging so you can veto:
+
+  1. I did not claim synonym/semantic reach (e.g. "search 'cache,' get the
+  'memoization' note"). Your matching is BM25/FTS + minhash — lexical, not
+  embeddings — so it can't bridge synonyms. The honest "reach what you can't name"
+  is discovery by traversal (open-loop: walk to neighbors you never queried), not
+  magic search. Para 2 is built on that, which is both true and the more
+  distinctive claim.
+  2. Para 0 says "ranks what matches" rather than "matches by meaning," for the
+  same reason — kept it to what FTS ranking actually does.
+
+  Where do you want to push? My own least-favorite line is para 1's "The
+  exploration loop collapses to a query and a few deliberate reads" — it's a touch
+  flat next to the others. The rest I'm fairly happy with, but it's your voice
+  the doc has to sound like.
