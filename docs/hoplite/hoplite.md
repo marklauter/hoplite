@@ -19,9 +19,11 @@ Hoplite augments the default navigation tools through a map over the markdown co
 
 ## The compounding cost of the grep-read-judge loop
 
-For an LLM-based agent, content that sharpens the context is relevant knowledge. To acquire knowledge, the agent must locate and consume content. Locating relevant information can be costly. `grep` provides primitive search, but every hit is a raw leaf. The agent loads each leaf into the context window and judges relevance for itself. Reading is expensive. Scanning unrelated content spends against scarce resources: time, tokens, turns, context, and bias-inducing attention. The cost compounds. Every wasted read is debt serviced for the life of the context. `grep` is a loan shark.
+For an LLM-based agent, knowledge that sharpens the context is useful. Content that contains useful knowledge is relevant. To acquire useful knowledge, the agent must first locate and consume relevant content.
 
-Scanned noise biases the agent; so does signal it never reaches. `grep` matches only what the agent can name. Explore agents, guarding the context budget, scan excerpts potentially missing critical information. The knowledge-starved agent exercises poor judgment: it reopens settled decisions, contradicts conventions, and overwrites working code. Failures compound.
+The agent's default method of exploration, `grep`, is a primitive search tool that returns unranked and unordered results. The agent must sift through hits, loading each into the context and judging usefulness for itself. The exploration loop taxes scarce resources: time, tokens, turns, context budget, and bias-inducing attention. The quantitative and qualitative costs compound. Every wasted read is debt serviced for the life of the context.
+
+Scanned noise biases the agent; so does signal it never reaches. `grep` matches only what the agent can name. Explore agents, guarding their context budget, scan excerpts and risk missing critical information. The knowledge-starved agent exercises poor judgment: it reopens settled decisions, contradicts conventions, overwrites working code, and reproduces prior art. Failures compound.
 
 The relationships the agent discovers are the reward for every leaf it read and every dead end it ruled out. They live in the context window and nowhere else. They die with the session. The next agent re-derives them from scratch, or not. Cost compounds. Failure compounds. Knowledge that compounds is lost.
 

@@ -22,7 +22,7 @@ re-derives a relationship
 
 
 ## problem statement
-For an LLM-based agent, content that sharpens the context is relevant knowledge. To acquire knowledge, the agent must locate and consume content. Locating relevant information can be costly. `grep` and `glob` provide primitive search, but every hit is a raw leaf. The agent loads each leaf into the context window and judges relevance for itself. Reading is expensive. Scanning unrelated content spends against scarce resources: time, tokens, context, and bias-inducing attention. The cost compounds. Every wasted read is debt serviced for the life of the context. `grep` is a loan shark.
+ `grep` is a loan shark.
 
 A knowledge graph cuts waste by locating relevant content without reading for it. Debt avoided, not debt repaid. 
 
