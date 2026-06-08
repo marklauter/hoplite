@@ -1,11 +1,12 @@
 ---
-title: "Durable maps of meaning: query > scan"
-summary: Reading is expensive.
+title: Durable maps of meaning augment judgment with mechanism
+summary: "Reading is expensive. The grep-read-judge loop over a corpus larger than the agent can read is a compounding cost. A durable map of meaning is a compounding reward: it ranks by meaning so the agent's judgment reads only what pays, then persists so knowledge accrues instead of dying with the session."
 tags: [hoplite, vision]
 created: 2026-05-30
+document.status: locked 
 ---
 
-# Durable maps of meaning: query > scan
+# Durable maps of meaning augment judgment with mechanism
 
 Search spends the frontier; discovery expands it.
 
@@ -25,7 +26,7 @@ Scanned noise biases the agent; so does signal it never reaches. `grep` requires
 
 The agent pieces together its own map of meaning — the vocabulary in use, the documents that matter, the relationships among them. That map is the reward for every leaf it read and every dead end it ruled out. It lives in the context window and nowhere else. It dies with the session. The next agent rebuilds it from scratch. Or not. Cost compounds. Failure compounds. Knowledge that compounds is lost.
 
-## Maximizing signal-to-noise
+## The compounding rewards of maps of meaning
 
 Hoplite builds a durable knowledge graph over the corpus — a map of meaning. Documents become nodes, relationships become edges, and the author's meta assertions build a surveyable vocabulary. The agent queries the map instead of scanning the bytes: it discovers the vocabulary, searches by relevance, walks relationships the filesystem can't express, and judges a document by its summary before reading. Locating and consuming — the costly acts — become a query and a choice.
 
