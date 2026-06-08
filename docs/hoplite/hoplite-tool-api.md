@@ -3,6 +3,7 @@ title: Hoplite tool API
 summary: Signatures, parameters, return types, and MCP-boundary semantics for the four agent-facing tools — where, relatives, refresh, export.
 tags: [hoplite, mcp, tool-api, spec]
 created: 2026-05-25
+document.status: wip
 ---
 
 # Hoplite tool API

@@ -3,6 +3,7 @@ title: Mapping documents through intrinsic, asserted, and inferred relationships
 summary: <todo - summarize when the content is locked in>
 tags: [hoplite, graph, spec]
 created: 2026-05-29
+document.status: wip
 ---
 
 # Mapping documents through intrinsic, asserted, and inferred relationships

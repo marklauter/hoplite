@@ -3,6 +3,7 @@ title: Affordances for the agent — survey, filter, walk, project, read
 summary: The five read moves the graph structure affords an agent — survey the vocabulary, filter the corpus by predicate, walk the edges, project the result, read the survivors. The query surface that replaces the glob-grep-read loop.
 tags: [hoplite, affordances, spec]
 created: 2026-06-04
+document.status: wip
 ---
 
 # Affordances for the agent — survey, filter, walk, project, read

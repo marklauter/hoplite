@@ -3,6 +3,7 @@ title: Hoplite glossary
 summary: Definitions for the Hoplite domain terms — nodes, edges, properties, stereotypes, the vocabulary and address model, the read affordances, and indexing. The short form of each term; the canonical model lives in the linked spec docs.
 tags: [hoplite, glossary, reference]
 created: 2026-06-05
+document.status: wip
 ---
 
 # Hoplite glossary
