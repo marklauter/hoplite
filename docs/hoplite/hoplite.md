@@ -1,11 +1,11 @@
 ---
-title: Maps of meaning and the economics of information search, discovery, and retrieval
+title: "Durable maps of meaning: query > scan"
 summary: Reading is expensive.
 tags: [hoplite, vision]
 created: 2026-05-30
 ---
 
-# Maps of meaning and the economics of information search, discovery, and retrieval
+# Durable maps of meaning: query > scan
 
 maximizing signal to noise
 
