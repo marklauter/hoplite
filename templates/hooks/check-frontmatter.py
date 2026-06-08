@@ -12,8 +12,8 @@ catches the structural issues that are cheap to detect:
 - Missing opening ``---`` fence.
 - Missing closing ``---`` fence.
 - Either of the two mandatory keys (title, summary) absent. Both are bare
-  first-class fields; everything in the property bag (``document.created``,
-  ``document.tags``, ``document.aliases``, and any ``document.<key>``) is optional.
+  first-class fields; the other bare fields (``created``, ``tags``, ``aliases``)
+  and everything in the property bag (any ``document.<key>``) are optional.
   The scanner still flattens nested ``document:`` / ``edge:`` blocks to dotted keys,
   mirroring the indexer.
 

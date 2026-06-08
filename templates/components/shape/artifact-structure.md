@@ -10,9 +10,10 @@ Template:
 ---
 title: <title>
 summary: <one-line summary>
-document:
-  tags: [<tag>, ...]
-  created: YYYY-MM-DD
+tags: [<tag>, ...]
+created: YYYY-MM-DD
+document: # optional — node properties, named value axes (status, severity, ...)
+  status: <lifecycle state, e.g. open>
 ---
 
 # <one-line title>
