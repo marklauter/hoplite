@@ -25,7 +25,7 @@ The agent's default method of exploration, `grep`, is a primitive search tool th
 
 Scanned noise biases the agent; so does signal it never reaches. `grep` requires the agent's prior knowledge of a string pattern before it can search for it. Explore agents, guarding their context budget, scan excerpts and risk missing critical information — valuable terms for the follow-up search. Hard-won groundwork sits undiscovered. The knowledge-starved agent exercises poor judgment: it reopens settled decisions, contradicts conventions, ignores precedent, and reproduces prior art. Failures compound.
 
-The relationships the agent discovers are the reward for every leaf it read and every dead end it ruled out. They live in the context window and nowhere else. They die with the session. The next agent re-derives them from scratch, or not. Cost compounds. Failure compounds. Knowledge that compounds is lost.
+The agent pieces together its own map of meaning — the vocabulary in use, the documents that matter, the relationships among them. That map is the reward for every leaf it read and every dead end it ruled out. It lives in the context window and nowhere else. It dies with the session. The next agent rebuilds it from scratch. Or not. Cost compounds. Failure compounds. Knowledge that compounds is lost.
 
 ## Maximizing signal-to-noise
 
