@@ -7,8 +7,6 @@ created: 2026-05-30
 
 # Durable maps of meaning: query > scan
 
-maximizing signal to noise
-
 Search spends the frontier; discovery expands it.
 
 An LLM-based agent works within a fixed context budget. It must act on a corpus larger than it can read. The agent has a limited set of built-in tools: glob, grep, and read. It can discover relationships with these tools, but it burns tokens, relies on error-prone judgement, and injects bias by reading off-task content. 
@@ -36,3 +34,13 @@ The agent searches the map with rich predicates and shapes the result set projec
 The agent surveys the vocabulary, encoded in the map, and queries the corpus in its own terms. It asks informed questions instead of guessing which string to `grep`. Search matches on meaning rather than a regular expression. The agent analyzes a signal-rich result set, not a sampled excerpt. Hits are ranked by IDF-weighted Jaccard over a unified feature set: content, metadata, and neighborhood. Relatedness surfaces in the ranking. Hard-won groundwork ranks among the results, no longer dark. The agent locates content it would have missed and trusts nothing is hidden.
 
 The map is built once and persists. It outlives every session. The next agent inherits it instead of rebuilding from scratch: it walks to the rationale behind a decision before repeating it, and reads prior art before acting. The reward for every leaf read and every dead end ruled out is saved, not discarded. Every session adds to the graph; none starts from zero. Knowledge compounds.
+
+## quary
+
+Search spends the frontier; discovery expands it.
+
+An LLM-based agent works within a fixed context budget. It must act on a corpus larger than it can read. The agent has a limited set of built-in tools: glob, grep, and read. It can discover relationships with these tools, but it burns tokens, relies on error-prone judgement, and injects bias by reading off-task content. 
+
+The default tools operate over surface text, recovering only content channels — lexical and topical overlap, a shared rare term. Relatedness carried by graph topology, by commit and authorship provenance, by temporal proximity is inexpensive to recover but unreachable: no graph exists to traverse, no history to read. These channels are recoverable after the corpus is reified as a graph.
+
+Hoplite augments the default navigation tools through a map over the markdown corpus. Instead of relying on the agent to read, comprehend, and infer relationships on-the-fly, Hoplite applies structure to the markdown and reifies the map as a durable graph with declared and latent relationships. The agent navigates the map and reads selectively, spending its context on the subset that matters.
