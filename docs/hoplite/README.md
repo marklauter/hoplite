@@ -13,6 +13,7 @@ The agreed outline for the Hoplite spec corpus, treated as an index. Each node i
 ## Map
 
 - hoplite - problem statement and scope
+  - feature taxonomy
   - graph
     - structure
       - nodes
@@ -43,6 +44,7 @@ The agreed outline for the Hoplite spec corpus, treated as an index. Each node i
 ## Documents
 
 - [[docs/hoplite/hoplite.md]] — problem statement and scope. Why the graph exists, what it covers. *Exists.*
+- [[docs/hoplite/hoplite-feature-taxonomy.md]] — the feature taxonomy: intrinsic (recovered from the bytes) vs asserted (supplied by the author), and the IDF-weighted Jaccard relatedness over the unified feature set. Foundational — read before graph; the asserted half is the write-side contract frontmatter reifies. *Exists (stub).*
 - [[docs/hoplite/hoplite-graph.md]] — the structure (nodes, edges, property and stereotype graph, vocabulary, BM25 FTS, minhash edges) plus **indexing**, the ETL that builds the graph from the corpus (walking the corpus → building minhash-ranked edges). Indexing is a section here, breakable into its own file if it grows. *Exists; indexing section pending.*
 - **affordances** — the affordances over the structure, write-side and read-side. A grouping, not yet its own file.
   - [[docs/hoplite/hoplite-declare-and-describe.md]] — write-side concepts: the mutation surface authors use to declare and describe. *Exists (stub).*
