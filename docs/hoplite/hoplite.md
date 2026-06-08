@@ -9,7 +9,11 @@ created: 2026-05-30
 
 Search spends the frontier; discovery expands it.
 
+An LLM-based agent works within a fixed context budget, against a corpus larger than it can read. Its tools are primitive: glob, grep, and read. Recovering useful knowledge with them burns tokens, leans on judgment, and biases the context with off-task reads.
 
+Those tools read literally. They recover narrow lexical overlap — shared words, a rare pattern in common — and nothing else. They miss documents that mean the same thing in other words. The relatedness carried by structure, by commit and authorship, by nearness in time is inexpensive to recover but unreachable: no graph to traverse, no history to read.
+
+Every read spends against a budget that never refills.
 
 ## The compounding cost of the grep-read-judge loop
 
@@ -27,7 +31,7 @@ Hoplite builds a durable knowledge graph over the corpus — a map of meaning. D
 
 The agent searches the map with rich predicates and shapes the result set projections. Walkable queries return ranked hits and gather the whole neighborhood in one turn. The agent judges the projection before spending tokens and context budget on the body. Noise sinks in the ranking, every read is earned, and the agent protects itself from bias by loading only content it trusts.
 
-The agent surveys the vocabulary, encoded in the map, and queries the corpus in its own terms. It asks informed questions instead of guessing which string to `grep`. Search matches on meaning rather than a regular expression. The agent analyzes a signal-rich result set, not a sampled excerpt. Hits are ranked by IDF-weighted Jaccard over a unified feature set: content, metadata, and neighborhood. Relatedness surfaces in the ranking. Hard-won groundwork ranks among the results, no longer dark. The agent locates content it would have missed and trusts nothing is hidden.
+The agent surveys the vocabulary, encoded in the map, and queries the corpus in its own terms. It asks informed questions instead of guessing which string to `grep`. Search matches on meaning rather than a regular expression. The agent analyzes a signal-rich result set, not a sampled excerpt. Hits are ranked by IDF-weighted Jaccard over a unified feature set: content, metadata, neighborhood, and history. Relatedness surfaces in the ranking. Hard-won groundwork ranks among the results, no longer dark. The agent locates content it would have missed and trusts nothing is hidden.
 
 The map is built once and persists. It outlives every session. The next agent inherits it instead of rebuilding from scratch: it walks to the rationale behind a decision before repeating it, and reads prior art before acting. The reward for every leaf read and every dead end ruled out is saved, not discarded. Every session adds to the graph; none starts from zero. Knowledge compounds.
 
