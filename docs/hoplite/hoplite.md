@@ -3,7 +3,8 @@ title: Durable maps of meaning augment judgment with mechanism
 summary: "Reading is expensive. The grep-read-judge loop over a corpus larger than the agent can read is a compounding cost. A durable map of meaning is a compounding reward: it ranks by meaning so the agent's judgment reads only what pays, then persists so knowledge accrues instead of dying with the session."
 tags: [hoplite, vision]
 created: 2026-05-30
-document.status: locked 
+aliases: []
+document.status: locked
 ---
 
 # Durable maps of meaning augment judgment with mechanism
@@ -32,6 +33,6 @@ Hoplite builds a durable knowledge graph over the corpus — a map of meaning. D
 
 The agent searches the map with rich predicates and shapes the result set projections. Walkable queries return ranked hits and gather the whole neighborhood in one turn. The agent judges the projection before spending tokens and context budget on the body. Noise sinks in the ranking, every read is earned, and the agent protects itself from bias by loading only content it trusts.
 
-The agent surveys the vocabulary, encoded in the map, and queries the corpus in its own terms. It asks informed questions instead of guessing which string to `grep`. Search matches on meaning rather than a regular expression. The agent analyzes a signal-rich result set, not a sampled excerpt. Hits are ranked by IDF-weighted Jaccard over a unified feature set: content, metadata, neighborhood, and history. Relatedness surfaces in the ranking. Hard-won groundwork ranks among the results, no longer dark. The agent locates content it would have missed and trusts nothing is hidden.
+The agent surveys the vocabulary, encoded in the map, and queries the corpus in its own terms. It asks informed questions instead of guessing which string to `grep`. Search matches on meaning rather than a regular expression. The agent analyzes a signal-rich result set, not a sampled excerpt. Relatedness surfaces in the ranking, scored by IDF-weighted Jaccard over a unified feature set: content, metadata, neighborhood, and history. Hard-won groundwork ranks among the results, no longer dark. The agent locates content it would have missed.
 
 The map is built once and persists. It outlives every session. The next agent inherits it instead of rebuilding from scratch: it walks to the rationale behind a decision before repeating it, and reads prior art before acting. The reward for every leaf read and every dead end ruled out is saved, not discarded. Every session adds to the graph; none starts from zero. Knowledge compounds.
