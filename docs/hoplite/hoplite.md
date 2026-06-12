@@ -19,9 +19,9 @@ Every read spends against a budget that never refills.
 
 ## The compounding cost of the grep-read-judge loop
 
-Knowledge that sharpens the context is useful; the content carrying it is relevant. To acquire useful knowledge, the agent must locate and consume that content. The explore pipeline has three failure modes: extraction, reception, retention.
+The grep-read-judge loop has three failure modes: extraction, reception, retention. Knowledge that sharpens the context is useful; the content carrying it is relevant. To acquire that knowledge, the agent must locate and consume the content.
 
-The agent's default method of exploration, `grep`, is a primitive search tool that returns unranked and unordered results. The agent must sift through hits, loading each into the context and judging usefulness for itself. The exploration loop taxes scarce resources: time, tokens, turns, context budget, and bias-inducing attention. The quantitative and qualitative costs compound. Every wasted read is debt serviced for the life of the context.
+The agent's default method of exploration, `grep`, is a primitive search tool that returns unranked and unordered results. The agent must sift through hits, loading each into the context and judging usefulness for itself. The loop taxes scarce resources: time, tokens, turns, context budget, and bias-inducing attention. The quantitative and qualitative costs compound. Every wasted read is debt serviced for the life of the context.
 
 Scanned noise biases the agent; so does signal it never reaches. `grep` requires the agent's prior knowledge of a string pattern before it can search for it. Explore agents, guarding their context budget, scan excerpts and risk missing critical information — valuable terms for the follow-up search. Hard-won groundwork sits undiscovered. The knowledge-starved agent exercises poor judgment: it reopens settled decisions, contradicts conventions, ignores precedent, and reproduces prior art. Failures compound.
 
@@ -29,7 +29,7 @@ The agent pieces together its own map of meaning — the vocabulary in use, the 
 
 ## The compounding rewards of maps of meaning
 
-Hoplite builds a durable knowledge graph over the corpus — a map of meaning. Documents become nodes, relationships become edges, and the author's metadata assertions build a surveyable vocabulary. The agent queries the map instead of scanning the bytes: it discovers the vocabulary, searches by relevance, walks relationships the filesystem can't express, and judges a document by its summary before reading. Locating and consuming — the costly acts — become a query and a choice.
+Hoplite builds a durable knowledge graph over the corpus — a map of meaning. Documents become nodes, relationships become edges, and the author's metadata builds a surveyable vocabulary. The agent queries the map instead of scanning the bytes: it discovers the vocabulary, searches by relevance, walks relationships the filesystem can't express, and judges a document by its summary before reading. Locating and consuming — the costly acts — become a query and a choice.
 
 The agent searches the map with rich predicates and shapes the result-set projection. Walkable queries return ranked hits and gather the whole neighborhood in one turn. The agent judges the projection before spending tokens and context budget on the body. Noise sinks in the ranking, every read is earned, and the agent protects itself from bias by loading only content it trusts.
 
