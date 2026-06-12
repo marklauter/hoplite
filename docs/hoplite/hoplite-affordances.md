@@ -6,6 +6,8 @@ created: 2026-06-04
 document.status: wip
 ---
 
+  Perceived vs. real affordances — an affordance only helps if the actor perceives it. A possibility no one discovers is dead. - A Donald Norman idea.
+
 # Affordances for the agent — survey, filter, walk, project, read
 
 The structure ([[docs/hoplite/hoplite-graph.md]]) affords five moves against the graph: survey the vocabulary, filter the corpus, walk the edges, project the result, read the survivors. The agent reads only what survives the projection, spending its context on the subset that bears on the task.

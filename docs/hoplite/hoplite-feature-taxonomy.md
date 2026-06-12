@@ -1,58 +1,53 @@
 ---
 title: Every document is a bag of intrinsic and asserted features
-summary: "The feature taxonomy that grounds the rest of the spec — features split into intrinsic (recovered from the bytes) and asserted (supplied by the author), and a document's relatedness is IDF-weighted Jaccard over the unified feature set."
+summary: "The feature taxonomy that grounds the rest of the spec: features split by origin into intrinsic (recovered from the bytes and their history) and asserted (supplied by the author), crossed by the dimension they measure, with relatedness scored as IDF-weighted Jaccard over the unified set."
 tags: [hoplite, features, spec]
 created: 2026-06-08
-document.status: stub
+document.status: wip
 ---
 
 # Every document is a bag of intrinsic and asserted features
 
-Stub. The feature taxonomy that grounds the rest of the spec — the umbrella term for everything Hoplite knows about a document, split by who supplied it. The model is locked in the vision ([[docs/hoplite/hoplite.md]]); this document carves it out of [[docs/hoplite/hoplite-graph.md]], which currently blurs features with relationship origination, and it feeds [[docs/hoplite/hoplite-frontmatter.md]], the reification of the asserted half.
+A feature is anything Hoplite knows about a document. This taxonomy is the enumeration the vision ([[docs/hoplite/hoplite.md]]) withholds on purpose — the vision names the feature dimensions and stays above the list for fear of foreclosing one. This document itemizes them, so [[docs/hoplite/hoplite-frontmatter.md]] can reify the asserted subset and the indexer can fix its input and output contracts against a closed set. It carves that enumeration out of [[docs/hoplite/hoplite-graph.md]], which still blurs features with relationship origination.
 
-Two axes that this document keeps separate, because graph.md currently runs them together: a feature is intrinsic or asserted (who supplied it); an edge is declared or discovered (who asserted the relationship). Inferred is a relationship origination, not a feature kind.
+Two cuts partition the same feature set, and they are orthogonal. Origin asks who supplied a feature: intrinsic features are recovered from the document and its history; asserted features are the author's meta-assertions of meaning. Dimension asks what a feature measures: content, metadata, neighborhood, history — the vision's unified set. A feature has exactly one origin and one dimension, and neither determines the other. A shingle is intrinsic content; a tag is asserted metadata; created-time is intrinsic history; a wikilink is asserted neighborhood. Ranking ignores both cuts: every feature contributes tokens to one bag, and relatedness is their rarity-weighted overlap.
 
-## Intrinsic features — recovered from the bytes
+Edges carry a third distinction, which is a relationship origination and not a feature cut. An edge originates as declared, property-derived, or inferred. A declared edge is a wikilink the author wrote. A property-derived edge falls out deterministically from shared metadata — every document tagged `todo`, every document whose `status` holds the same value, forms a subgraph; the holding of a property and each of its values cut their own graphs. An inferred edge is scored rather than derived: IDF overlap across features, semantic nearness, shared intent or topic, proximity in time, folder, or git author. Declared is the author's assertion; property-derived is mechanism, reproducible exactly from the asserted properties; inferred is judgment. Only the declared edge is an input feature, because the author supplied it. Property-derived and inferred edges are outputs of relatedness, computed from the bags and never tokens in them. This is the line graph.md crosses when it lists inferred as a feature kind.
 
-To be written. Features that fall out of the document and its history: content (shingles), fingerprint, created-time, git provenance. Cheap to recover, though grep reaches only the content. (Seam to resolve: `created` is written in frontmatter yet names an intrinsic attribute — genesis time — so it sits on the asserted surface but classifies as intrinsic.)
+## Intrinsic features — recovered from the bytes and their history
+
+Recovered without the author asserting anything; they fall out of the document and its commit history.
+
+- content carries two features. Shingles are the lexical surface — overlapping token windows, the only feature grep reaches. A vector embedding is the semantic surface — meaning that survives paraphrase, reachable by no lexical tool.
+- history carries two features. created-time is the document's genesis. git provenance is the commit and authorship trail — the same edit recorded as an authorial act in the commit graph.
+
+Two of these sit on a seam worth naming now. created-time is intrinsic by nature — a recovered fact about when the document began — yet it is transcribed into frontmatter, which is the asserted surface. git provenance is the mirror: it looks intrinsic because it is recovered rather than written, yet a commit is an authorial act, and it lives in the commit graph outside the document bytes. The deciding line is not who caused the feature but whether the author wrote it into the document as an assertion of meaning. By that line both are intrinsic — the author transcribes `created` for portability without asserting it as meaning, and a commit records history without being written into the page. This is why the intrinsic gloss reaches past the bytes to the commit graph.
 
 ## Asserted features — supplied by the author
 
-To be written. Features the author supplies beyond what the bytes carry: wikilinks (declared edges), tags, properties, stereotypes, title and summary. These are the write-side affordances — the surface [[docs/hoplite/hoplite-declare-and-describe.md]] describes and [[docs/hoplite/hoplite-frontmatter.md]] reifies. This list is the contract the indexer reads and the frontmatter doc closes over.
+The author's meta-assertions — meaning the bytes do not carry until the author writes it. These are the write-side affordances: the surface [[docs/hoplite/hoplite-declare-and-describe.md]] describes and [[docs/hoplite/hoplite-frontmatter.md]] reifies, and the contract the indexer reads.
+
+- tags — unnamed set membership that classifies the document.
+- properties — named axes carrying a value, such as `status` or `severity`; both the holding of the property and its value are assertable signal.
+- title and summary — the first-class fields; the summary is the projection the agent judges before reading the body.
+- declared edges — wikilinks, the neighborhood dimension's only asserted input feature.
+
+This list is the enumeration frontmatter closes over. When it changes, frontmatter and the indexer's input contract change with it; nothing else in the spec adds an asserted feature.
 
 ## Relatedness — IDF-weighted Jaccard over the unified feature set
 
-To be written. A document is a bag of rarity-weighted feature tokens across every dimension at once; relatedness is the rarity-weighted overlap of two bags. IDF supplies the weighting — the improbability of the coincidence — so a rare shared feature counts for more than a common one. This collapses the old "three channels" and the separate walk into one ranked space; the graph neighborhood is one feature among many, not its own pipeline.
+A document is a bag of feature tokens drawn from every dimension at once, and relatedness is the rarity-weighted overlap of two bags. IDF supplies the weight — the improbability of the coincidence — so a rare shared feature counts for more than a common one. Shared shingles, a shared tag, a shared `status` value, a common wikilink target, the same created-date, the same folder or author each contribute a token, and the property-derived and inferred subgraphs fall out of those coincidences rather than entering as separate signals. The graph neighborhood is one feature among many here, not its own pipeline. This is what collapses graph.md's three independent channels and its separate walk into a single ranked space.
+
+Meaning arrives in two layers over this bag. The first is the inferred subgraph structure — the relatedness the overlap itself surfaces. The second is semantic nearness from vectors, which no discrete token captures; it rides alongside the Jaccard score rather than inside it. How the two combine into one ranking is a mechanism the indexer spec owns, not this taxonomy — the seam to name here is that both are in scope.
 
 # mining stock — relocate from hoplite-graph.md
 
 The "Discover — inferring latent, emergent structure" section at the bottom of [[docs/hoplite/hoplite-graph.md]] is feature-and-relatedness content lifted from the vision draft. It belongs here. Pull it in when this doc is locked; the unified-feature-set model above supersedes its "three independent feature spaces" framing.
 
-# document review
+# open seams
 
-A content and fidelity review of this stub against the locked vision ([[docs/hoplite/hoplite.md]]). The carve-out is faithful, with one coherence gap that is load-bearing even at stub stage.
+The orthogonality reframe and the three-valued edge origination are folded into the framing above. What remains for the lock:
 
-## The orthogonality gap
-
-Origin and dimension are two independent cuts of the same feature set, and this stub runs them together. The vision ranks over a set cut by dimension — content, metadata, neighborhood, history (hoplite.md line 35). This document re-cuts the same set by origin — intrinsic against asserted. The stub implies the origin cut supersedes the dimension cut, but two dimensions fall through:
-
-- Neighborhood has no home in either bucket. The relatedness lede leans on it ("the graph neighborhood is one feature among many"), yet the member lists name only "wikilinks (declared edges)" under asserted. That equates the author's declared edge with the engine-recovered structural feature — co-citation, shared connectors — which is the feature-relationship blur this document exists to fix.
-- Metadata splits across both buckets: tags assert, created-time is intrinsic. The `created` seam note treats this as a one-off when it is the general case.
-
-The resolution is the insight itself: origin says where a feature came from; dimension says what it measures; the two are orthogonal, and ranking ignores both — every token lands in one rarity-weighted bag. State that, give the structural feature an origin home distinct from the declared wikilinks it is computed from, and the carve is coherent. This also governs the graph.md reconciliation: graph's three channels are the dimension cut, this taxonomy is the origin cut, and the two coexist as orthogonal axes rather than competing.
-
-## Nits for the full write
-
-- Fingerprint double-counts. MinHash is the estimator for the content feature; content_hash serves identity and change detection, not relatedness. The vision lists "content," not "content and fingerprint." Drop it or annotate it.
-- Git provenance is the mirror of the `created` seam. `created` looks asserted — it sits in frontmatter — yet is intrinsic; git provenance looks intrinsic — recovered, not written — yet a commit is an authorial act living in the commit graph, outside the document bytes. Widen the intrinsic gloss from "the bytes" to "the bytes and the commit graph." The deciding line is whether the author wrote the feature into the document, not whether a person caused it.
-- Discovered edges are outputs of relatedness, never input features. The asserted bucket's edge members are the declared subset by construction. The model holds; make this explicit when the section lands.
-
-## What holds
-
-- The two-axes move — feature origin against edge origin, with inferred demoted from a feature kind to a relationship origination — is correct and repairs the conflation in [[docs/hoplite/hoplite-graph.md]], whose title and opening still place inferred on the feature axis.
-- "Collapses the three channels and the separate walk into one ranked space" is authorized by the vision and correctly marks graph.md as the stale doc.
-- Title and summary belong in asserted. Economics and thesis carry no drift.
-
-## Recommendation
-
-Fold the orthogonality reframe into the stub now — the two-axes paragraph and the relatedness lede — while the section bodies stay to be written. It changes how the whole document gets written and it is the hinge for reconciling graph.md, so it earns its place before the full pass. The nits wait for that pass.
+- Fingerprint. content_hash serves identity and change detection, not relatedness — MinHash over shingles is the content estimator. It is deliberately absent from the feature list above; confirm that call when the indexer lands rather than reviving it as a feature.
+- The vector and Jaccard combination. The relatedness section names semantic nearness as a second layer but defers how it folds into an IDF-Jaccard score. That belongs to the indexer and ranking spec; carry the seam there.
+- graph.md reconciliation. graph's three channels are the dimension cut; this taxonomy is the origin cut; the two are orthogonal axes, not competitors. Pull the "Discover" section in — see mining stock — and rewrite its "three independent feature spaces" framing to match.
