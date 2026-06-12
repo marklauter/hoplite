@@ -1,6 +1,6 @@
 ---
-title: Features give rise to affordances; signifiers advertise them
-summary: The concept layer over the read and write surfaces. An affordance is an action possibility the corpus offers the agent; features give rise to affordances; they split into write (assert features) and read (query features); and a signifier — an MCP description or an ambient skill — is what makes an affordance perceivable, since one the agent cannot see is dead.
+title: Features give rise to affordances
+summary: The concept layer over the write and read surfaces, and the enumeration of every affordance the corpus offers the agent — the build's todo list. An affordance is an action possibility a document offers the agent in one of two roles: the author who asserts features, the researcher who queries them. Features give rise to affordances; the doc lists them all, write and read; a signifier — an MCP description or an ambient skill — advertises an affordance and trails its mechanism, since one the agent cannot perceive is dead.
 tags: [hoplite, affordances, spec]
 created: 2026-06-04
 document.status: wip
@@ -8,11 +8,11 @@ document.status: wip
 
 # Features give rise to affordances
 
-An affordance is an action possibility a thing offers a capable actor — a relationship between the features of the thing and the capabilities of the actor. In Hoplite the thing is a document; the actor is the agent in one of two roles — the author who writes, the researcher who reads; and a feature is anything Hoplite knows about a document ([[docs/hoplite/hoplite-feature-taxonomy.md]]).
+An affordance is an action possibility a thing offers a capable actor — a relationship between the features of the thing and the capabilities of the actor. In Hoplite the thing is a document, or the corpus the documents compose; the actor is the agent in one of two roles — the author who writes, the researcher who reads; and a feature is anything Hoplite knows about a document ([[docs/hoplite/hoplite-feature-taxonomy.md]]).
 
 ## The affordances
 
-Affordances come in two kinds, by actor: the author asserts over features, the researcher queries over features. The available feature set for read operations includes both authored and inferred features, so it is inherently richer than the author's feature set.
+Affordances come in two kinds, by actor: the author asserts over features, the researcher queries over them. The author asserts only one origin of feature; the researcher ranges over all three — asserted, intrinsic, and inferred ([[docs/hoplite/hoplite-feature-taxonomy.md]]) — so the read surface is inherently richer than the write surface.
 
 Write affordances — authoring ([[docs/hoplite/hoplite-authoring.md]]):
 
@@ -70,3 +70,4 @@ A signifier is the perceptible cue that advertises an affordance. Read affordanc
 2. Signifiers may earn their own section once the MCP descriptions and ambient skills are written — the fidelity contract between an affordance and its signifier is the seam to formalize.
 3. Carry the schema-ranking seam into the ranking model. The schema affordance now owns the meta layer here — compose it on write, query it on read (like reflection over a type rather than its runtime values). What remains for the ranking spec: IDF-weighted ranking, a core ranking feature, acts on the presence of a property — the holding, not only the value — so the schema layer ranks, not only filters. The mechanism (how presence enters the IDF-Jaccard score) belongs in [[docs/hoplite/hoplite-feature-taxonomy.md]].
 4. This enumeration is the build's todo list — nothing here is materialized yet; the proof-of-concept remnants are being refactored away. As each affordance ships, its signifier — the MCP tool description or ambient skill — gets authored to match, never ahead: the fidelity contract means a signifier advertises only a move the mechanism already makes. The doc drives the build; the signifiers trail it.
+5. Group the read list by feature origin — asserted, intrinsic, inferred ([[docs/hoplite/hoplite-feature-taxonomy.md]]) — to dogfood the provenance trinity. Deferred: reordering a 26-item list asserts a structure, a lock-time decision, not a wip one. Left unstructured until discovery closes.
