@@ -1,53 +1,49 @@
 ---
-title: Affordances for the agent — survey, filter, walk, project, read
-summary: The five read moves the graph structure affords an agent — survey the vocabulary, filter the corpus by predicate, walk the edges, project the result, read the survivors. The query surface that replaces the glob-grep-read loop.
+title: Features give rise to affordances; signifiers advertise them
+summary: The concept layer over the read and write surfaces. An affordance is an action possibility the corpus offers the agent; features give rise to affordances; they split into write (assert features) and read (query features); and a signifier — an MCP description or an ambient skill — is what makes an affordance perceivable, since one the agent cannot see is dead.
 tags: [hoplite, affordances, spec]
 created: 2026-06-04
 document.status: wip
 ---
 
-  Perceived vs. real affordances — an affordance only helps if the actor perceives it. A possibility no one discovers is dead. - A Donald Norman idea.
+# Features give rise to affordances
 
-# Affordances for the agent — survey, filter, walk, project, read
+An affordance is an action possibility a thing offers a capable actor — a relationship between the features of the thing and the capabilities of the actor. In Hoplite the thing is a document, the actor is the agent, and a feature is anything Hoplite knows about a document ([[docs/hoplite/hoplite-feature-taxonomy.md]]).
 
-The structure ([[docs/hoplite/hoplite-graph.md]]) affords five moves against the graph: survey the vocabulary, filter the corpus, walk the edges, project the result, read the survivors. The agent reads only what survives the projection, spending its context on the subset that bears on the task.
+## The affordances
 
-## Survey
+Affordances come in two kinds, by actor: the author asserts a feature, the agent queries it.
 
-Survey reads the schema vocabulary before a predicate is composed — the keys and labels available to filter on. It is the read graph's `match` shape applied to the schema: find and walk.
+Write affordances — authoring ([[docs/hoplite/hoplite-authoring.md]]):
 
-Find reads the namespace — `property_key` on the document side, `stereotype` on the edge side, each a small interned list (see [[docs/hoplite/hoplite-graph.md]]).
+- a title affords distilling the whole document into one unifying phrase, so others recognize its value at a glance.
+- a summary affords compressing the document to a lede, so others judge it without reading the body.
+- tags afford sorting the document into shared categories, so others gather it with its kind.
+- a property affords placing the document on a named axis, so others filter and order by it.
+- an alias affords keeping the document reachable under an old name, so references survive a rename.
+- a wikilink affords binding this document to another, so the relationship is traversable, not merely mentioned.
+- a stereotype affords typing that link — cites, supersedes, contradicts — so others query by what it means, not just that it exists.
 
-Walk descends a key to its values: the distinct `value` rows under one `keyid`, served by the `(keyid, value)` reverse index. The keys are the nodes of a vocabulary graph, `key → value` the edge, the values the reachable set. A key's categorical-or-scalar nature resolves in the walk — a key reaching a handful of values is categorical (`tags`, `status`), one reaching thousands of near-unique values is scalar (a timestamp, a score). The distinction is empirical: the index carries the walk, and the agent reads it off the result.
+Read affordances — navigation ([[docs/hoplite/hoplite-navigation.md]]):
 
-The edge side has a single description dimension, so its survey is the find alone — a direct read of `stereotype`.
+- a title or summary affords judging a document's relevance before reading its body.
+- a tag affords filtering the corpus to a concept by set membership, wherever it is filed.
+- a property affords filtering and ordering the corpus by a named axis.
+- an alias affords resolving a document by any of its identities.
+- a wikilink affords walking to a neighbor the directory tree cannot show.
+- a stereotype affords filtering edges by relationship — walking only what supersedes or contradicts a document.
+- an edge's kind affords choosing authored links or inferred relatives — the discovered ones reach relatives no one declared.
+- content affords searching by meaning rather than by literal string.
+- a creation date affords ordering and ranging the corpus by time.
+- the vocabulary affords surveying the corpus's terms — tags, property keys and their values, edge stereotypes — before composing a query.
 
-## Filter
+## Signifiers — the cue that makes an affordance perceivable
 
-Filter narrows the corpus to the subset a Boolean predicate admits — `note & mcp & !draft`. Two predicate kinds compose. A text predicate ranks documents by topical relevance: BM25 over the `fts` projection of title, summary, and body, so `caching strategy` surfaces documents about caching rather than lines carrying the token. A property predicate filters by tag or property expression; properties crosscut the folder tree, so filtering by one gathers a concept wherever it is filed.
+A signifier is the perceptible cue that advertises an affordance. Read affordances signify through MCP tool descriptions; write affordances signify through ambient info-injection skills. The signifier carries a fidelity contract — it must advertise the affordance the mechanism actually offers, no more — and the build-time mail-merge keeps the two in sync, so a description never promises a move the mechanism does not make. A signifier the agent cannot perceive leaves the affordance dead, which is why the signifiers stay implicit in the surfaces the agent already reads rather than living as a separate layer.
 
-## Walk
 
-Walk traverses edges from a starting node to gather a neighborhood the directory tree leaves invisible. It follows `declared` and `discovered` edges outward or inward — a relationship declared once reads both ways, so the backlink comes free. Ghost nodes keep the corpus's open loops enumerable along the walk. Depth, edge kind, direction, and a confidence-ranked cap on discovered neighbors per node bound the traversal.
+## open questions
 
-## Project
-
-Project shapes the result before it returns. It sorts by relevance score or traversal distance, caps the hop count and the result size, and returns a projection of each hit — the uri, the authored summary, and the tags. Hoplite hands back the projection, so the agent judges relevance from the summary before spending a token to open the file.
-
-## Read
-
-Read is the handoff. Hoplite ends at the projection; the agent crosses to full content with the built-in `Read` tool, and only for the hits that survive.
-
-# from hoplite.md vision document
-
-Prose lifted verbatim from the `hoplite.md` vision draft when the vision doc was cut back to problem-plus-solution. Mining stock, not yet locked; integrate into the sections above when the model settles. Note this copy still says "filter by meaning" / "semantic search matches by meaning" — the sections above are already lexically honest (BM25 over the `fts` projection), so reconcile that on merge.
-
-## Read — navigating mapped relationships
-
-Affordances emerge from the mapped structure: survey the vocabulary, filter by meaning, walk relationships, project and read the results.
-
-1. Survey — retrieve the schema vocabulary, properties and stereotypes, before composing a predicate over the corpus.
-2. Filter — narrow the corpus to the subset a Boolean predicate admits (`note & mcp & !draft`): semantic search matches by meaning, not literal string or path; properties crosscut folders, so filtering by one gathers a concept wherever it lives.
-3. Walk — traverse declared and discovered edges from a node to gather a neighborhood the tree can't show: a relationship declared once reads both ways (inbound and outbound edges); ghosts keep open loops enumerable.
-4. Project — organize the resultset: sort it by score or distance, shape what each hit returns (the lede and tags, never the body), and cap the hops and result set size. Hoplite hands back a projection, not a document — so the agent judges relevance from the summary the author asserted before spending a token to open the file.
-5. Read — the built-in Read tool. Hoplite ends at the projection; the agent crosses to full content only for the hits that survive.
+1. Sync the README map. This file is now the concept doc, not navigation; `hoplite-navigation.md` is the read half; `hoplite-authoring.md` is the write half. The Map and Documents list still describe the old shape.
+2. Signifiers may earn their own section once the MCP descriptions and ambient skills are written — the fidelity contract between an affordance and its signifier is the seam to formalize.
+3. Bridge the origin vocabulary with feature-taxonomy. The split here names three directions a feature arrives from — intrinsic, self-asserted, inherited — a document-standpoint view. The taxonomy's origin cut is binary, intrinsic vs asserted, where an inbound edge is still asserted (by the source author). The two do not conflict, but a reader holding both docs sees two origins there and three directions here. Add a one-line bridge in [[docs/hoplite/hoplite-feature-taxonomy.md]] so the vocabularies line up.

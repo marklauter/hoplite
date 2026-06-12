@@ -9,6 +9,8 @@ document:
 
 # things I know
 
+author's act → reader's payoff
+
 asserstions on the code base
 
 judgment-under-uncertainty
@@ -517,3 +519,9 @@ Affordances emerge from the mapped structure: survey the vocabulary, filter by m
   decide. Want me to sketch what the Discover prose looks like under the
   unified-feature framing, so you can compare it side-by-side with the current
   three-channel version before committing?
+
+
+
+  ## Signifiers — the cue that makes an affordance perceivable
+
+A signifier is the perceptible cue that advertises an affordance. Read affordances signify through MCP tool descriptions; write affordances signify through ambient info-injection skills. The signifier carries a fidelity contract — it must advertise the affordance the mechanism actually offers, no more — and the build-time mail-merge keeps the two in sync, so a description never promises a move the mechanism does not make. A signifier the agent cannot perceive leaves the affordance dead, which is why the signifiers stay implicit in the surfaces the agent already reads rather than living as a separate layer.

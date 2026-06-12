@@ -8,15 +8,15 @@ document.status: wip
 
 # Every document is a bag of intrinsic and asserted features
 
-A feature is anything Hoplite knows about a document. This taxonomy is the enumeration the vision ([[docs/hoplite/hoplite.md]]) withholds on purpose — the vision names the feature dimensions and stays above the list for fear of foreclosing one. This document itemizes them, so [[docs/hoplite/hoplite-frontmatter.md]] can reify the asserted subset and the indexer can fix its input and output contracts against a closed set. It carves that enumeration out of [[docs/hoplite/hoplite-graph.md]], which still blurs features with relationship origination.
+A feature is anything Hoplite knows about a document. This taxonomy is the enumeration the vision ([[docs/hoplite/hoplite.md]]) withholds — it names the feature dimensions and stays above the list for fear of foreclosing one. This document itemizes them, so [[docs/hoplite/hoplite-frontmatter.md]] can reify the asserted subset and the indexer can fix its input and output contracts against a closed set. It carves that enumeration out of [[docs/hoplite/hoplite-graph.md]], which still blurs features with relationship origination.
 
-Two cuts partition the same feature set, and they are orthogonal. Origin asks who supplied a feature: intrinsic features are recovered from the document and its history; asserted features are the author's meta-assertions of meaning. Dimension asks what a feature measures: content, metadata, neighborhood, history — the vision's unified set. A feature has exactly one origin and one dimension, and neither determines the other. A shingle is intrinsic content; a tag is asserted metadata; created-time is intrinsic history; a wikilink is asserted neighborhood. Ranking ignores both cuts: every feature contributes tokens to one bag, and relatedness is their rarity-weighted overlap.
+Two cuts partition the same feature set, and they are orthogonal. Origin asks who supplied a feature: intrinsic features are recovered from the document and its history; asserted features come from the author — the meaning the bytes do not carry on their own. Dimension asks what a feature measures: content, metadata, neighborhood, and history — the vision's unified set. A feature has exactly one origin and one dimension, and neither determines the other. A shingle is intrinsic content; a tag is asserted metadata; created-time is intrinsic history; a wikilink is asserted neighborhood. Ranking ignores both cuts: every feature contributes tokens to one bag, and relatedness is their rarity-weighted overlap.
 
 Edges carry a third distinction, which is a relationship origination and not a feature cut. An edge originates as declared, property-derived, or inferred. A declared edge is a wikilink the author wrote. A property-derived edge falls out deterministically from shared metadata — every document tagged `todo`, every document whose `status` holds the same value, forms a subgraph; the holding of a property and each of its values cut their own graphs. An inferred edge is scored rather than derived: IDF overlap across features, semantic nearness, shared intent or topic, proximity in time, folder, or git author. Declared is the author's assertion; property-derived is mechanism, reproducible exactly from the asserted properties; inferred is judgment. Only the declared edge is an input feature, because the author supplied it. Property-derived and inferred edges are outputs of relatedness, computed from the bags and never tokens in them. This is the line graph.md crosses when it lists inferred as a feature kind.
 
 ## Intrinsic features — recovered from the bytes and their history
 
-Recovered without the author asserting anything; they fall out of the document and its commit history.
+Intrinsic features are recovered without the author asserting anything; they fall out of the document and its commit history.
 
 - content carries two features. Shingles are the lexical surface — overlapping token windows, the only feature grep reaches. A vector embedding is the semantic surface — meaning that survives paraphrase, reachable by no lexical tool.
 - history carries two features. created-time is the document's genesis. git provenance is the commit and authorship trail — the same edit recorded as an authorial act in the commit graph.
@@ -25,7 +25,7 @@ Two of these sit on a seam worth naming now. created-time is intrinsic by nature
 
 ## Asserted features — supplied by the author
 
-The author's meta-assertions — meaning the bytes do not carry until the author writes it. These are the write-side affordances: the surface [[docs/hoplite/hoplite-declare-and-describe.md]] describes and [[docs/hoplite/hoplite-frontmatter.md]] reifies, and the contract the indexer reads.
+Asserted features are supplied by the author — the meaning the bytes do not carry until the author writes it. They are what the write-side affordances assert: the surface [[docs/hoplite/hoplite-authoring.md]] describes and [[docs/hoplite/hoplite-frontmatter.md]] reifies, and the contract the indexer reads.
 
 - tags — unnamed set membership that classifies the document.
 - properties — named axes carrying a value, such as `status` or `severity`; both the holding of the property and its value are assertable signal.
@@ -36,7 +36,7 @@ This list is the enumeration frontmatter closes over. When it changes, frontmatt
 
 ## Relatedness — IDF-weighted Jaccard over the unified feature set
 
-A document is a bag of feature tokens drawn from every dimension at once, and relatedness is the rarity-weighted overlap of two bags. IDF supplies the weight — the improbability of the coincidence — so a rare shared feature counts for more than a common one. Shared shingles, a shared tag, a shared `status` value, a common wikilink target, the same created-date, the same folder or author each contribute a token, and the property-derived and inferred subgraphs fall out of those coincidences rather than entering as separate signals. The graph neighborhood is one feature among many here, not its own pipeline. This is what collapses graph.md's three independent channels and its separate walk into a single ranked space.
+A document is a bag of feature tokens drawn from every dimension at once, and relatedness is the rarity-weighted overlap of two bags. IDF supplies the weight — the improbability of the coincidence — so a rare shared feature counts for more than a common one. Shared shingles, a shared tag, a shared `status` value, a common wikilink target, the same created-time, the same folder or author each contribute a token, and the property-derived and inferred subgraphs fall out of those coincidences rather than entering as separate signals. The graph neighborhood is one feature among many here, not its own pipeline. This is what collapses graph.md's three independent channels and its separate walk into a single ranked space.
 
 Meaning arrives in two layers over this bag. The first is the inferred subgraph structure — the relatedness the overlap itself surfaces. The second is semantic nearness from vectors, which no discrete token captures; it rides alongside the Jaccard score rather than inside it. How the two combine into one ranking is a mechanism the indexer spec owns, not this taxonomy — the seam to name here is that both are in scope.
 

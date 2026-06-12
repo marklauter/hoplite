@@ -30,7 +30,7 @@ The Hoplite domain terms in short form, alphabetical. Each entry is the quick de
 - edge_stereotype — the junction table linking an edge to its stereotype labels; a set per edge.
 - filter — narrowing the corpus by property-graph and stereotype predicates; one of the two ideas behind match.
 - fingerprint — a node's `content_hash` (exact) and `minhash` (similarity).
-- frontmatter — the YAML block atop each document; the reification of the declare-and-describe concepts.
+- frontmatter — the YAML block atop each document; the reification of the authoring concepts.
 - FTS — full-text search; the `fts5` index over title, summary, and body that powers BM25 ranking.
 - ghost — a node variant: a wikilink target with no backing file, `resolved = false`, authored `[[ghost/<slug>]]` as an open loop.
 - indexing — the ETL that builds the graph from the corpus: walking the corpus, then building edges, including the discovered minhash-ranked ones.

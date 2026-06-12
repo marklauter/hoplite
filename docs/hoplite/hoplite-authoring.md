@@ -1,14 +1,14 @@
 ---
-title: Declare and describe — applying explicit structure
-summary: The authoring surface for explicit structure — how an author declares relationships (inline wikilinks) and describes documents and edges (frontmatter properties, summaries, stereotypes). Express-only; the model it expresses lives in the graph canon.
-tags: [hoplite, express, spec]
+title: Authoring — declare relationships, describe documents
+summary: The write half of the affordances — how an author asserts features by declaring relationships (inline wikilinks) and describing documents and edges (frontmatter properties, summaries, stereotypes). Express-only; the model it expresses lives in the graph canon.
+tags: [hoplite, affordances, authoring, spec]
 created: 2026-05-31
 document.status: stub
 ---
 
-# Declare and describe — applying explicit structure
+# Authoring — declare relationships, describe documents
 
-Stub. The express surface for the Declare-and-describe affordance ([[docs/hoplite/hoplite.md]]) — the two mechanisms an author uses to apply explicit structure to the corpus. This document expresses the model defined in [[docs/hoplite/hoplite-graph.md]]; when the two disagree, the canon wins.
+Stub. Authoring is the write half of the affordances ([[docs/hoplite/hoplite-affordances.md]]) — the moves the author uses to assert features ([[docs/hoplite/hoplite-feature-taxonomy.md]]) into the corpus, across two mechanisms: declare and describe. This document expresses the model defined in [[docs/hoplite/hoplite-graph.md]]; when the two disagree, the canon wins.
 
 ## Declare — inline wikilinks
 
