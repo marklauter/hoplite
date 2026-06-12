@@ -19,11 +19,11 @@ Write affordances — authoring ([[docs/hoplite/hoplite-authoring.md]]):
 - a title affords distilling the whole document into one unifying phrase, so others recognize its value at a glance.
 - a summary affords compressing the document to a lede, so others judge it without reading the body.
 - tags afford sorting the document into shared categories, so others gather it with its kind.
-- the document's schema affords composition — the author chooses which named axes it holds and coins new keys, tags, or stereotypes, so the holding itself becomes ranked, queryable signal.
+- the document's schema affords composition — the author chooses which named axes it holds and coins new properties, tags, or stereotypes, so the holding itself becomes ranked, queryable signal.
 - a property affords setting the document's value on an axis it holds, so others filter, order, and rank by the value.
 - an alias affords keeping the document reachable under an old name, so references survive a rename.
 - a wikilink affords binding this document to another, so the relationship is traversable, not merely mentioned.
-- a stereotype affords typing that link — cites, supersedes, contradicts — so others query by what it means, not just that it exists.
+- a stereotype affords typing a wikilink — cites, supersedes, contradicts — so others query by what the link means, not just that it exists.
 
 Read affordances — navigation ([[docs/hoplite/hoplite-navigation.md]]):
 
@@ -37,6 +37,10 @@ Read affordances — navigation ([[docs/hoplite/hoplite-navigation.md]]):
 - an edge's kind affords choosing authored links or inferred relatives — the discovered ones reach relatives no one declared.
 - content affords searching by meaning rather than by literal string.
 - a creation date affords ordering and ranging the corpus by time.
+- a last-modified time affords ranking by recency and surfacing stale or fresh work.
+- an author affords gathering documents written by the same hand.
+- co-change affords reaching documents edited in the same commits — related by shared history.
+- churn affords judging a document's maturity, settled or still changing.
 - a result set affords projecting its hits — ordering and ranking them, and choosing which values each returns — so the researcher reviews the most relevant findings first.
 
 ## Signifiers — the cue that makes an affordance perceivable
