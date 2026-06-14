@@ -25,6 +25,7 @@ One gap worth a thought as you rebuild: that's a strong spine for constraint and
 
 ## Related
 
+- [[docs/notes/the-agent-problem-is-the-agency-problem.md]] — the economics expansion of the formal floor; the floor is really economics, not just game theory, and several repo principles are named economic results.
 - [[docs/notes/the-sovereign-constrains-the-action-not-the-soul.md]] — the safety principle this canon formalizes; signal integrity is the independently-derived incentive-compatibility condition.
 - [[docs/notes/inline-the-prose-spine-until-it-grows-large.md]] — the context-side application of the same mechanism-over-judgment spine.
 - [[docs/notes/a-review-agents-power-is-its-empty-context.md]] — separation of powers applied to review: independence by not sharing the prior.
