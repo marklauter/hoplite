@@ -11,8 +11,8 @@
 --     it is, every insert pays a check the builder doesn't need for data it
 --     constructs consistently itself. Decide deliberately whether to turn it on.
 --
--- Two-pass edge build: declared edges (authored, e.g. wikilinks) are inserted
--- first and always win; discovered edges (inferred) follow and collide out
+-- Two-pass edge build: asserted edges (e.g. wikilinks the author writes) are
+-- inserted first and always win; inferred edges follow and collide out
 -- against UNIQUE(src, dst).
 -- That precedence is enforced by the schema, not by loader comparison logic.
 --
@@ -38,7 +38,7 @@ create table node (
 -- row here, so the variant is the presence of this row and "byteless" is its
 -- absence. title and summary are first-class authored description; content_hash
 -- and minhash are byte fingerprints for change detection and near-duplicate
--- discovery; created is the authored creation timestamp (null when omitted, with
+-- inference; created is the authored creation timestamp (null when omitted, with
 -- git history as the fallback). fts indexes title/summary/body; this table is
 -- their store.
 create table document (
@@ -50,12 +50,12 @@ create table document (
   created text
 );
 -- Temporal index: order or range documents by creation date — the carrier for
--- temporal-proximity discovery and date-sorted listings. created is ISO-8601
+-- temporal-proximity inference and date-sorted listings. created is ISO-8601
 -- text, which sorts chronologically, so one index serves both order by and
 -- between/`>` range scans.
 create index idx_document_created on document(created);
 
--- Alternate identities: additional uris that resolve to a node, declared by the
+-- Alternate identities: additional uris that resolve to a node, asserted by the
 -- author (e.g. on rename, so old wikilinks still reach the file). A resolution
 -- index, not a description — an alias is globally unique and maps to one node, so
 -- it is the PRIMARY KEY; the reverse index answers "what are node X's aliases?".
@@ -124,16 +124,22 @@ create table node_tag (
 -- tags?"); this index leads with tagid for the reverse.
 create index idx_node_tag on node_tag(tagid, nodeid);
 
--- The interned vocabulary of edge kinds — two, by provenance: declared
--- (authored) and discovered (inferred). Normalized out so each edge stores a
+-- The interned vocabulary of edge kinds — two, by provenance: asserted (by the
+-- author) and inferred (by the engine). Normalized out so each edge stores a
 -- small integer kind instead of repeating the kind string on every row.
 create table edge_kind (
   id integer primary key,
   kind text not null unique collate nocase
 );
+-- This enum is closed and model-defined, so it is seeded here in the DDL rather
+-- than recovered from the corpus the way the open vocabularies (tag, stereotype,
+-- property_key) are. The id order carries precedence: asserted (1) is inserted
+-- before inferred (2), so the two-pass build's asserted-wins rule falls out of
+-- insertion order with no comparison logic.
+insert into edge_kind (id, kind) values (1, 'asserted'), (2, 'inferred');
 
--- A directed relationship between two nodes — the graph's edges (declared
--- wikilinks, discovered neighborhoods). kind names the provenance; confidence
+-- A directed relationship between two nodes — the graph's edges (asserted
+-- wikilinks, inferred neighborhoods). kind names the provenance; confidence
 -- weights it; UNIQUE(src, dst) allows at most one edge per ordered pair of nodes.
 create table edge (
   id integer primary key,
@@ -147,7 +153,7 @@ create table edge (
 -- access patterns, so they lead with different columns:
 --
 --   idx_edge_kind_src — kind-leading. Serves global "all edges of kind K"
---     enumeration (e.g. every `declared` edge, unanchored) AND forward
+--     enumeration (e.g. every `asserted` edge, unanchored) AND forward
 --     kind-filtered traversal (seek kind+src), both as covering seeks.
 --     Forward any-kind traversal (src alone) doesn't use this index — the
 --     UNIQUE(src,dst) auto-index gives it a clean src seek, just non-covering
@@ -165,7 +171,7 @@ create index idx_edge_kind_src on edge(kind, src, dst, confidence);
 create index idx_edge_dst on edge(dst, kind, src, confidence);
 
 -- The interned vocabulary of edge stereotypes — the open-ended set of labels an
--- author applies to a declared edge (cites, supports, supersedes, contradicts,
+-- author applies to an asserted edge (cites, supports, supersedes, contradicts,
 -- not-related, ...). The edge-side counterpart to tag: a label set the agent
 -- surveys to learn what link-meanings the corpus uses before filtering edges by
 -- one. Open vocabulary, the label stored once and referenced by id.
@@ -204,7 +210,7 @@ create virtual table fts using fts5(
 
 -- The surveyable namespaces as a derived view, not a base table: the union of the
 -- interning vocabularies, each entry projected as a uri-style path rooted under
--- its owning entity (edge/kind/declared, edge/stereotype/cites,
+-- its owning entity (edge/kind/asserted, edge/stereotype/cites,
 -- node/property/status, node/tag/note) — so a namespace is addressable in the
 -- same segmented form as a node uri. tag, property_key, and stereotype are open
 -- vocabularies (the labels and keys authors coin); edge_kind is the closed
