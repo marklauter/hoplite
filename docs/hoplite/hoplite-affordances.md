@@ -46,7 +46,7 @@ Read affordances — navigation ([[docs/hoplite/hoplite-navigation.md]]):
 - task state affords surfacing documents with open work and gathering the live backlog.
 - a wikilink affords walking to a neighbor the directory tree cannot show.
 - a stereotype affords filtering edges by relationship — walking only what supersedes or contradicts a document.
-- an edge's kind affords choosing declared links or discovered relatives — the discovered ones reach relatives no one declared.
+- an edge's kind affords choosing asserted links or inferred relatives — the inferred ones reach relatives no one asserted.
 - a ghost affords enumerating the corpus's unwritten work — the backlog of open loops.
 - an external reference affords enumerating a document's outbound citations.
 - a mention affords walking to every document that names an entity — a file, a symbol, a ticket — each entity standing as its own node.
