@@ -46,7 +46,7 @@ Read affordances — navigation ([[docs/hoplite/hoplite-navigation.md]]):
 - task state affords surfacing documents with open work and gathering the live backlog.
 - a wikilink affords walking to a neighbor the directory tree cannot show.
 - a stereotype affords filtering edges by relationship — walking only what supersedes or contradicts a document.
-- an edge's kind affords choosing authored links or inferred relatives — the discovered ones reach relatives no one declared.
+- an edge's kind affords choosing declared links or discovered relatives — the discovered ones reach relatives no one declared.
 - a ghost affords enumerating the corpus's unwritten work — the backlog of open loops.
 - an external reference affords enumerating a document's outbound citations.
 - a mention affords walking to every document that names an entity — a file, a symbol, a ticket — each entity standing as its own node.
@@ -64,7 +64,7 @@ Read affordances — navigation ([[docs/hoplite/hoplite-navigation.md]]):
 A signifier is the perceptible cue that advertises an affordance. Read affordances signify through MCP tool descriptions; write affordances signify through ambient info-injection skills. The signifier carries a fidelity contract — it must advertise the affordance the mechanism actually offers, no more — and the build-time mail-merge keeps the two in sync, so a description never promises a move the mechanism does not make. A signifier the agent cannot perceive leaves the affordance dead, which is why the signifiers stay implicit in the surfaces the agent already reads rather than living as a separate layer.
 
 
-## open questions
+## Open questions
 
 1. Sync the README map. This file is now the concept doc, not navigation; `hoplite-navigation.md` is the read half; `hoplite-authoring.md` is the write half. The Map and Documents list still describe the old shape.
 2. Signifiers may earn their own section once the MCP descriptions and ambient skills are written — the fidelity contract between an affordance and its signifier is the seam to formalize.
