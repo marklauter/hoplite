@@ -1,11 +1,11 @@
 ---
 name: domain-modeling
-description: Use when designing hoplite itself — resolving terminology against the glossary, stress-testing concept boundaries against the spec or the MCP source, or recording a design decision. The active discipline of changing the model, not reading the corpus for vocabulary.
+description: Use when designing hoplite itself — reducing a term, concept, or decision to its irreducible kernel: resolving terminology against the glossary, stress-testing concept boundaries against the spec, or recording a design decision. The active discipline of changing the model, not reading the corpus for vocabulary.
 ---
 
 # Domain modeling
 
-Actively build and sharpen hoplite's domain model as you design: reduce each concept to its irreducible kernel — challenging terms and inventing edge cases until only one reading survives — then write it down the moment it crystallises. A leaf concept reduces to a glossary term plus the smallest phrase that unpacks it in the domain; a composite concept to a spec document built from those terms. (Merely *reading* the corpus is not this skill — that's a one-line habit any skill can do. This skill is for when you're changing the model, not just consuming it.)
+Actively build and sharpen hoplite's domain model by reducing each concept to its irreducible kernel as you design — challenging terms and inventing edge cases until only one reading survives — then write it down the moment it crystallises. A leaf concept reduces to a glossary term plus the smallest phrase that unpacks it in the domain; a composite concept to a spec document built from those terms. (Merely *reading* the corpus is not this skill — that's a one-line habit any skill can do. This skill is for when you're changing the model, not just consuming it.)
 
 The model lives in the corpus, addressed by path:
 
@@ -24,7 +24,7 @@ Capture greedily, lock lazily — write a term the moment it's contested with `d
 
 ## During design
 
-Probe the model before asserting: `where({"tagged": "glossary", "text": "<term>"})` ranks entries; `relatives(...)` walks a term's neighborhood.
+The moves below are constraints; apply them to reduce a concept until a single reading survives. Probe before asserting: `where({"tagged": "glossary", "text": "<term>"})` ranks entries; `relatives(...)` walks a term's neighborhood.
 
 ### Challenge the term
 
