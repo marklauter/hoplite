@@ -55,7 +55,7 @@ Hoplite spec outline and index. Each items is a concept; some are their own file
 
 - [[docs/hoplite/hoplite-architecture.md]] — system internals (walker, FTS, minhash, dump). Placement under the map is deferred; it overlaps `indexing`.
 - [[docs/hoplite/hoplite-roadmap.md]] — features deferred past day one.
-- [[docs/hoplite/hoplite-glossary.md]] — definitions for every Hoplite domain term; cross-cutting reference over the whole map.
+- [[docs/hoplite/glossary/README.md]] — index over the per-term glossary nodes under `docs/hoplite/glossary/`; definitions for every Hoplite domain term, cross-cutting reference over the whole map.
 
 ## Conventions
 

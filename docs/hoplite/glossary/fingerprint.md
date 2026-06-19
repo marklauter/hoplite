@@ -1,0 +1,10 @@
+---
+title: fingerprint
+summary: "A node's `content_hash` (exact) and `minhash` (similarity)."
+tags: [hoplite, glossary]
+created: 2026-06-19
+document.status: evolving
+document.category: fingerprint
+---
+
+A node's `content_hash` (exact) and `minhash` (similarity).
