@@ -1,6 +1,6 @@
 ---
 title: Hoplite glossary
-summary: Index of the Hoplite domain-term nodes under docs/hoplite/glossary/. Each term is its own document carrying its definition, status (locked vs evolving), category, contrast edges, and the retired words that alias to it. This page links them and keeps the synonym crosswalk.
+summary: Index of the Hoplite domain-term nodes under docs/hoplite/glossary/. Links every term and keeps the synonym crosswalk.
 tags: [hoplite, glossary, reference]
 created: 2026-06-05
 document.status: wip
@@ -8,7 +8,7 @@ document.status: wip
 
 # Hoplite glossary
 
-The Hoplite domain terms, one node per term under [[docs/hoplite/glossary]]. Each node carries its definition (`summary`), a `document.status` of `locked` (the settled spine, not to be relitigated) or `evolving`, a `document.category`, `edge.contrast` links to the terms it's held against, and `aliases` for the retired words that resolve to it. Walk a term's node for the short form; the canonical model lives in the docs under [See also](#see-also).
+The Hoplite domain terms, one node per term. This page links them and keeps the synonym crosswalk; the canonical model lives in the docs under [See also](#see-also).
 
 ## Terms
 
