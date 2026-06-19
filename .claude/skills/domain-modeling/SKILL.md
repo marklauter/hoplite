@@ -5,17 +5,20 @@ description: Use when designing hoplite itself — resolving terminology against
 
 # Domain modeling
 
+Modeling reduces each concept to its irreducible kernel: a leaf concept to a glossary term plus the smallest phrase that unpacks it in the domain, a composite concept to a spec document built from those terms. Same discipline at every altitude.
+
 Actively build and sharpen hoplite's domain model as you design: challenge terms, invent edge-case scenarios, write the glossary and decisions down the moment they crystallise. (Merely *reading* the glossary for vocabulary is not this skill — any skill does that. This is for when you change the model.)
 
 The model lives in the corpus, addressed by path:
 
 ```
-docs/hoplite/
-├── glossary/             ← the domain model: one node per term
+docs/hoplite/             ← the spec corpus
+├── glossary/             ← leaf kernels: one term each
 │   ├── README.md         ← hand-maintained index + entry format
 │   └── <term>.md         ← title, summary, status, category, aliases, edge.contrast
-└── *.md                  ← spec prose that depends on the terms
-docs/journal/             ← design decisions (ADR-equivalent)
+└── *.md                  ← composite kernels: concepts built from the terms (affordances, frontmatter, graph)
+docs/journal/             ← the why: the design path, each tradeoff and its reasoning
+docs/notes/               ← current state: findings, decisions, scratch (mixed bag)
 plugins/hoplite/mcp/src/  ← ground truth
 ```
 
@@ -37,12 +40,19 @@ Probe a relationship with a concrete case, not the abstraction. "A `[[...]]` to 
 ### Cross-reference the source
 A stated behavior → check `plugins/hoplite/mcp/src/` agrees. "`discovered.md` calls edges symmetric, but the walker emits one direction — which is right?"
 
+### Narrow to one
+More than one definition survives → apply the next constraint — a scenario, the code, a contrast — to kill one, and repeat until a single reading is left. "Two senses of *X* are live — what case admits only one?"
+
+### Defer the decision
+A term or boundary being pinned before the information exists to decide well → hold it open as `evolving` and name the trigger that will force the choice. "We won't lock the stereotype vocabulary into an enum yet — keep it open, and let real edges show which stereotypes earn a definition."
+
 ### Sweep for drift
-`relatives(from_, edge_types=["discovered"], tagged="glossary")` finds terms the engine reads as adjacent with no `declared` link between them — unreconciled overlap. Merge, alias, or draw the contrast.
+`relatives(from_, edge_types=["discovered"], tagged="glossary")` finds terms the engine reads as adjacent with no `declared` link between them — unreconciled overlap. Merge, alias, or draw the contrast. This is the deadline on deferral: when staying open costs more than deciding, lock it.
 
 ## Record
 
-- **Resolved term** → write `docs/hoplite/glossary/<term>.md` in the format documented in `docs/hoplite/glossary/README.md` (exemplar: `kind.md`); add it to the README `## Terms` index; record any boundary as reciprocal `edge.contrast`. The one-line `summary` is the probe — if it won't write, the term isn't grasped yet. No implementation detail.
+- **Resolved term** → the entry *is* the kernel: `title` is the term, `summary` the smallest phrase that resolves it against its `document.category` (the domain). Reduce to it — collapse synonyms into `aliases`, strip mechanism to the term it belongs to, split an overloaded word into two entries. It's irreducible when the next cut costs meaning; that's the lock test. Write `docs/hoplite/glossary/<term>.md` (format in the README; exemplar `kind.md`), add it to the README `## Terms` index, record any boundary as reciprocal `edge.contrast`. No implementation detail.
+- **Resolved concept** → a concept built from several terms — an affordance, how it's expressed in frontmatter — reduces to a spec document under `docs/hoplite/`, not a glossary entry. Same lock test; it composes locked terms instead of defining one. Wikilink the terms it builds on so the altitude is explicit.
 - **Decision** → invoke the `journaling` skill, but only when all three hold:
   1. **Hard to reverse** — changing your mind later costs.
   2. **Surprising without context** — a future reader asks "why this way?"
