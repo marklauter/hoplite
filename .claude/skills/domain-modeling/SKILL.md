@@ -5,7 +5,7 @@ description: Use when designing hoplite itself — resolving terminology against
 
 # Domain modeling
 
-Actively build and sharpen hoplite's domain model as you design: challenge terms, invent edge-case scenarios, reduce each concept to its irreducible kernel — a leaf concept to a glossary term plus the smallest phrase that unpacks it in the domain, a composite concept to a spec document built from those terms — and write it down the moment it crystallises. (Merely *reading* the corpus is not this skill — that's a one-line habit any skill can do. This skill is for when you're changing the model, not just consuming it.)
+Actively build and sharpen hoplite's domain model as you design: reduce each concept to its irreducible kernel — challenging terms and inventing edge cases until only one reading survives — then write it down the moment it crystallises. A leaf concept reduces to a glossary term plus the smallest phrase that unpacks it in the domain; a composite concept to a spec document built from those terms. (Merely *reading* the corpus is not this skill — that's a one-line habit any skill can do. This skill is for when you're changing the model, not just consuming it.)
 
 The model lives in the corpus, addressed by path:
 
@@ -20,7 +20,7 @@ docs/notes/               ← current state: findings, decisions, scratch (mixed
 plugins/hoplite/mcp/src/  ← ground truth
 ```
 
-Capture greedily, lock lazily — write a term the moment it's contested with `document.status: evolving`, and let the drift sweep reconcile it; promote to `locked` only when it resolves. Decisions stay lazy: a journal entry only when one is earned.
+Capture greedily, lock lazily — write a term the moment it's contested with `document.status: evolving`, and let the drift sweep reconcile it; promote to `locked` only when it resolves. Decisions stay lazy: offer a `decision` note only when one is earned.
 
 ## During design
 
