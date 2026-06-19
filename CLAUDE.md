@@ -16,6 +16,7 @@ README covers install. Spec corpus lives at `docs/hoplite/`.
 - `templates/build/manifest.txt` — `src -> dst` list of files the build owns.
 - `templates/build/build.py` — the mail-merge script. Run from repo root: `python templates/build/build.py`.
 - `docs/hoplite/` — spec corpus. Architecture, tool API, roadmap.
+- `docs/hoplite/glossary/` — domain glossary, one node per term; `README.md` is the index over them.
 - `docs/notes/` and `docs/journal/` — the agent's own corpus. Notes from the design history live here as historical record; agents are free to add new ones.
 - `docs/proxies/` — proxy documents for external resources: frontmatter'd markdown stand-ins carrying an external resource's URLs and summary so it can be linked and referenced from the graph.
 
