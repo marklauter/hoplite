@@ -24,7 +24,11 @@ Capture greedily, lock lazily — write a term the moment it's contested with `d
 
 ## During design
 
-The moves below are constraints; apply them to reduce a concept until a single reading survives. Probe before asserting: `where({"tagged": "glossary", "text": "<term>"})` ranks entries; `relatives(...)` walks a term's neighborhood.
+Interview me relentlessly about every concept until we reach a shared understanding of its irreducible kernel. For each question, share your recommended answer.
+
+Ask the questions one at a time, waiting for feedback on each before continuing. Asking multiple questions at once is bewildering.
+
+If a question can be answered by exploring the corpus or codebase, then explore before asking.
 
 ### Challenge the term
 
