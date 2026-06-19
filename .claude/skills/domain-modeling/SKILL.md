@@ -53,7 +53,7 @@ A term or boundary being pinned before the information exists to decide well →
 
 - **Resolved term** → the entry *is* the kernel: `title` is the term, `summary` the smallest phrase that resolves it against its `document.category` (the domain). Reduce to it — collapse synonyms into `aliases`, strip mechanism to the term it belongs to, split an overloaded word into two entries. It's irreducible when the next cut costs meaning; that's the lock test. Write `docs/hoplite/glossary/<term>.md` (format in the README; exemplar `kind.md`), add it to the README `## Terms` index, record any boundary as reciprocal `edge.contrast`. No implementation detail.
 - **Resolved concept** → a concept built from several terms — an affordance, how it's expressed in frontmatter — reduces to a spec document under `docs/hoplite/`, not a glossary entry. Same lock test; it composes locked terms instead of defining one. Wikilink the terms it builds on so the altitude is explicit.
-- **Decision** → invoke the `journaling` skill, but only when all three hold:
+- **Decision** → an ADR-equivalent: write a `decision`-tagged note under `docs/notes/`, but only when all three hold:
   1. **Hard to reverse** — changing your mind later costs.
   2. **Surprising without context** — a future reader asks "why this way?"
   3. **A real trade-off** — genuine alternatives, one chosen for reasons.
