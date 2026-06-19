@@ -8,5 +8,3 @@ document.category: address segment
 ---
 
 A top-level address segment naming the kind of addressable thing: node, edge, property_key, stereotype, edge_kind.
-
-**Also.** tools dispatch on it.

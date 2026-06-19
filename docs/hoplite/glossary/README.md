@@ -13,7 +13,6 @@ The Hoplite domain terms, one node per term under [[docs/hoplite/glossary]]. Eac
 ## Terms
 
 - [[docs/hoplite/glossary/assert.md]]
-- [[docs/hoplite/glossary/backlink.md]]
 - [[docs/hoplite/glossary/bm25.md]]
 - [[docs/hoplite/glossary/claim.md]]
 - [[docs/hoplite/glossary/confidence.md]]

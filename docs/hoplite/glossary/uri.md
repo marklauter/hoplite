@@ -9,4 +9,4 @@ document.category: node identity
 
 A node's identity: a medium-agnostic, case-insensitive locator — a repo path (`docs/…`), a `ghost/<slug>`, or a `https://…` url.
 
-**Also.** stored bare; addressed as `node/<uri>`.
+**Also.** addressed as `node/<uri>`.

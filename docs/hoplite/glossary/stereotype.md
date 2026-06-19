@@ -9,4 +9,4 @@ document.category: edge label
 
 An open-vocabulary label on an asserted edge naming its meaning (cites, supports, supersedes, contradicts, not-related).
 
-**Also.** interned; a set per edge.
+**Also.** a set per edge.
