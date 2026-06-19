@@ -1,11 +1,13 @@
-## Economy
+## Comprehension
 
-Economy is the spine: the most signal for the least text. Every section below applies it at one scope.
+Comprehension is the spine: understand the subject before you write it. Clear prose is the residue of clear thought — every section below is what conveying that understanding to a reader looks like at one scope.
 
+- Understand first — you cannot compress what you have not grasped. Vague prose is a vague grasp padded out to hide the gap; the fix is upstream, in the thinking, not in the editing.
+- Concision follows — once the subject is understood you know which words carry weight, so the rest falls away on its own. Aim at understanding and let economy be its consequence, not a separate goal.
 - Shortest complete version — cut whole sentences and sections, not only words. Length is earned by purpose, not spent to look thorough.
 - Say it once — each point gets one statement and one home.
-- Cut waste, not substance — economy removes filler and redundancy, keeps precision and needed detail. The terse word is the exact word, not the simple one.
-- Every section earns its place — remove a passage; keep it only when the artifact needs it to do its job.
+- The exact word over the easy one — understanding picks the precise term; cut the filler around it, keep the substance and needed detail.
+- Every section earns its place — keep a passage only when the artifact needs it to do its job.
 
 ## Titles
 
@@ -74,19 +76,3 @@ The fewest marks that carry the structure.
 - Em-dash (`—`) for parenthetical breaks, definitions, and appositives; not double hyphens.
 - Oxford comma — `nodes, edges, and properties` for lists of three or more.
 - Backticks for code, paths, identifiers, and CLI commands; fenced blocks with language tags for multi-line samples.
-
-## Validation
-
-The subtraction pass — grep for what to cut.
-
-- Lede check — the first paragraph alone names what the artifact is for, and each section's first sentence names its subject.
-- Cut test — remove each sentence and section in turn; restore only what the artifact needs to do its job.
-- Redundancy pass — any point made twice collapses to once; recaps and announce-transitions go.
-- Synonym pass — two terms naming one concept collapse to the canonical term; vary the sentence, not the noun.
-- Restatement pass — a fact stated in full in more than one document collapses to one home plus links.
-- Referent pass — `it`, `they`, `this` across a heading or long gap → name the noun.
-- Negation grep — `not`, `don't`, `doesn't`, `won't`, `can't`, `never`, `avoid` → positive rewrite, except contrastive pairs.
-- Hedge and filler grep — `might`, `perhaps`, `simply`, `just`, `actually`, `really`, `quite`, `very` → cut.
-- Tense drift grep — `will`, `would` → present tense.
-- Marketing grep — `seamless`, `powerful`, `easy`, `intuitive` → substance.
-- Bold and table grep — `**`, `|---|` → zero hits outside worked examples.

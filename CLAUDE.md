@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Claude Code marketplace `msl.hoplite` shipping one plugin, `hoplite`, at `plugins/hoplite/`. The plugin bundles the Hoplite MCP server (knowledge graph over markdown) with four agent-facing skills (`research`, `taking-notes`, `journaling`, `todo`). Skill bodies and one hook are mail-merged at build time from `templates/` so the shipped plugin contains no runtime cross-tree reads.
+Claude Code marketplace `msl.hoplite` plugin, `hoplite`, at `plugins/hoplite/`. The plugin bundles the Hoplite MCP server (knowledge graph over markdown) with related agent-facing skills (`research`, `taking-notes`, `journaling`, `todo`). Skill bodies and one hook are mail-merged at build time from `templates/` so the shipped plugin contains no runtime cross-tree reads.
 
 README covers install. Spec corpus lives at `docs/hoplite/`.
 
@@ -17,6 +17,7 @@ README covers install. Spec corpus lives at `docs/hoplite/`.
 - `templates/build/build.py` — the mail-merge script. Run from repo root: `python templates/build/build.py`.
 - `docs/hoplite/` — spec corpus. Architecture, tool API, roadmap.
 - `docs/notes/` and `docs/journal/` — the agent's own corpus. Notes from the design history live here as historical record; agents are free to add new ones.
+- `docs/proxies/` — proxy documents for external resources: frontmatter'd markdown stand-ins carrying an external resource's URLs and summary so it can be linked and referenced from the graph.
 
 ## Conventions
 

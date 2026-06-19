@@ -1,14 +1,14 @@
 ---
-title: Every document is a bag of intrinsic and asserted features
+title: "Every document emits a set of features: intrinsic facts and asserted claims"
 summary: "The feature taxonomy that grounds the rest of the spec: features split by origin into intrinsic (recovered from the bytes and their history) and asserted (supplied by the author), crossed by the dimension they measure, with relatedness scored as IDF-weighted Jaccard over the unified set."
 tags: [hoplite, features, spec]
 created: 2026-06-08
 document.status: wip
 ---
 
-# Every document is a bag of intrinsic and asserted features
+# Every document emits a set of features: intrinsic facts and asserted claims
 
-A feature is anything Hoplite knows about a document. This taxonomy is the enumeration the vision ([[docs/hoplite/hoplite.md]]) withholds — it names the feature dimensions and stays above the list for fear of foreclosing one. This document itemizes them, so [[docs/hoplite/hoplite-frontmatter.md]] can reify the asserted subset and the indexer can fix its input and output contracts against a closed set. It carves that enumeration out of [[docs/hoplite/hoplite-graph.md]], which still blurs features with relationship origination.
+A feature is anything Hoplite knows about a document.
 
 Two cuts partition the same feature set, and they are orthogonal. Origin asks who supplied a feature: intrinsic features are recovered from the document and its history; asserted features come from the author — the meaning the bytes do not carry on their own. Dimension asks what a feature measures: content, metadata, neighborhood, and history — the vision's unified set. A feature has exactly one origin and one dimension, and neither determines the other. A shingle is intrinsic content; a tag is asserted metadata; created-time is intrinsic history; a wikilink is asserted neighborhood. Ranking ignores both cuts: every feature contributes tokens to one bag, and relatedness is their rarity-weighted overlap.
 

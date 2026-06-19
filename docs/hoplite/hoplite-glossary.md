@@ -1,6 +1,6 @@
 ---
 title: Hoplite glossary
-summary: Definitions for the Hoplite domain terms, split into the locked spine — claim, assert, infer, intrinsic, provenance — and the evolving terms still being curated (nodes, edges, properties, stereotypes, the vocabulary and address model, the read affordances, indexing). The short form of each term; the canonical model lives in the linked spec docs.
+summary: Definitions for the Hoplite domain terms, split into the locked spine — claim, assert, fact, feature, infer, intrinsic, provenance — and the evolving terms still being curated (nodes, edges, properties, stereotypes, the vocabulary and address model, the read affordances, indexing). The short form of each term; the canonical model lives in the linked spec docs.
 tags: [hoplite, glossary, reference]
 created: 2026-06-05
 document.status: wip
@@ -12,13 +12,15 @@ The Hoplite domain terms in short form. **Locked terms** are the settled spine �
 
 ## Locked terms
 
-The substrate. A feature is anything Hoplite knows about a document; these five terms partition and name where every feature comes from.
+The substrate. A feature is anything Hoplite knows about a document; these seven terms name the feature, its provenance, and the cut between what is made (a claim) and what is given (a fact).
 
-- assert — the author puts a claim forward: a wikilink, a tag, a summary, a property. The authoring verb. *authored* and *declared* name the same act — all collapse to **assert**; an asserted feature is a claim the author made.
-- claim — a feature put forward about a document: a citation (edge), a summary, a property, a tag. The subset of features that someone or something originates, so a claim is asserted or inferred, never intrinsic. claim ⊂ feature.
-- infer — Hoplite's compute puts a claim forward from evidence: FTS, IDF-weighted Jaccard, vector embeddings. The mechanism verb. *discovered* names the same act — it collapses to **infer**; an inferred feature is a claim the engine produced. (An author noticing a missing citation is "discovery" in the everyday sense, but that act ends in an assertion and is out of scope here.)
-- intrinsic — a feature inherent to the document: its bytes, history, location, identity. Not a claim — no one puts it forward, it simply is — so it has no provenance.
-- provenance — a claim's origin: asserted (by the author) or inferred (by the engine). The two-value cut over claims; intrinsic features have none, because no one originated them. (Subsumes the older "instantiation" framing — named-vs-emergent tracks asserted-vs-inferred one to one.)
+- assert — to make a claim.
+- claim — a feature asserted by the author or inferred by Hoplite.
+- fact — a feature intrinsic to a document.
+- feature — anything that can be known about a document.
+- infer — for Hoplite's engine to make a claim from evidence.
+- intrinsic — a fact's provenance: given by the document's own existence, originated by no one. The one origin that is not a claim — the feature it marks is a **fact**; intrinsic names where that fact comes from. (Every intrinsic feature is a fact and conversely: the term names the origin, fact the kind.)
+- provenance — a feature's origin: intrinsic, asserted (by the author), or inferred (by the engine). The three-value cut over every feature; the asserted and inferred two-thirds are claims, the intrinsic third is not. (Subsumes the older "instantiation" framing — named-vs-emergent tracks asserted-vs-inferred one to one.)
 
 ## Evolving terms
 
@@ -34,7 +36,7 @@ Alphabetical. Each is the quick definition; the full model lives in the linked d
 - document — a node variant: a real `.md` file on disk, `resolved = true`, carrying content fingerprints. Also the generic term for a corpus file.
 - drop-and-recreate — the rebuild model: the graph is rebuilt whole from the corpus, never incrementally. The dominant cost is the bulk load.
 - edge — a directed relationship between two nodes, `(src, dst)` carrying a kind and a confidence. Binary; addressed as the ordered pair, not a single uri.
-- edge_kind — the interned closed enum of the two provenance values (asserted, inferred); a vocabulary namespace. Seeded in the DDL, not recovered from the corpus.
+- edge_kind — the interned closed enum of the two claim provenances (asserted, inferred) — edges are claims, never intrinsic; a vocabulary namespace. Seeded in the DDL, not recovered from the corpus.
 - edge_stereotype — the junction table linking an edge to its stereotype labels; a set per edge.
 - filter — narrowing the corpus by property-graph and stereotype predicates; one of the two ideas behind match.
 - fingerprint — a node's `content_hash` (exact) and `minhash` (similarity).
