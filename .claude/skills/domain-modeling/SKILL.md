@@ -5,7 +5,7 @@ description: Use when designing hoplite itself — reducing a term, concept, or 
 
 # Domain modeling
 
-Actively build and sharpen hoplite's domain model by reducing each concept to its irreducible kernel as you design — challenging terms and inventing edge cases until only one reading survives — then write it down the moment it crystallises. A leaf concept reduces to a glossary term plus the smallest phrase that unpacks it in the domain; a composite concept to a spec document built from those terms. (Merely *reading* the corpus is not this skill — that's a one-line habit any skill can do. This skill is for when you're changing the model, not just consuming it.)
+Actively build and sharpen hoplite's domain model by reducing each concept to its irreducible kernel as we design — challenging terms and inventing edge cases until only one reading survives — then write it down the moment it crystallises. A leaf concept reduces to a glossary term plus the smallest phrase that unpacks it in the domain. A composite concept reduces to a spec document built from those terms. (Merely *reading* the corpus is not this skill — that's a one-line habit any skill can do. This skill is for when you're changing the model, not just consuming it.)
 
 The model lives in the corpus, addressed by path:
 

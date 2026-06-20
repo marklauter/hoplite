@@ -38,3 +38,5 @@ document.status: <evolving | locked>
 ```
 
 Wikilink the terms and concepts the decision turns on, so it sits beside what it affects.
+
+**Recoverable from the note alone.** Name the alternatives and the trade-off in full — the *why* must hold up without the conversation; never "the thing we discussed."
