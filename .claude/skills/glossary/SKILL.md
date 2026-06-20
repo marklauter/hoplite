@@ -18,13 +18,11 @@ Write `docs/hoplite/glossary/<term>.md` (kebab-case):
 ---
 title: <term>
 summary: "<the smallest phrase that unpacks it>"
-tags: [hoplite, glossary]
+tags: [hoplite, glossary, <grouping>]
 aliases: [<retired filename>, ...]
 created: YYYY-MM-DD
 document.status: <evolving | locked>
-document.retired: [<retired term>, ...]
-document.category: <a grouping for related terms>
-edge.contrast: [docs/hoplite/glossary/<other-term>.md, ...]
+document.retired: [<retired term>, ...]edge.contrast: [docs/hoplite/glossary/<other-term>.md, ...]
 ---
 
 <the summary, verbatim>
