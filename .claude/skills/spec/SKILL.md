@@ -7,7 +7,7 @@ description: Compose a resolved concept from locked terms into the smallest spec
 
 A spec document is a composite concept reduced to the smallest prose that still carries it, built from locked glossary terms. Stand it on the terms beneath it; lock when the next cut would cost meaning.
 
-- **Build from terms.** Wikilink every glossary term the concept composes — `[[docs/hoplite/glossary/<term>.md]]` — at first use. "Affordances stand on `feature`, `edge`, `signifier` — link them, don't re-explain them."
+- **Build from terms.** Wikilink every glossary term the concept composes — `[[<term>]]` — at first use (link/edge syntax: `docs/hoplite/expressing-edges.md`). "Affordances stand on `feature`, `edge`, `signifier` — link them, don't re-explain them."
 - **Smallest that carries it.** Cut prose the concept doesn't need; a spec is a kernel, not a tour.
 - **Next cut costs meaning → lock.** `locked` once it stops moving, `evolving` while it does.
 

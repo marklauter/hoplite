@@ -37,6 +37,6 @@ document.status: <evolving | locked>
 <the trade-off — what this choice costs, and what it buys>
 ```
 
-Wikilink the terms and concepts the decision turns on, so it sits beside what it affects.
+Wikilink the terms and concepts the decision turns on, so it sits beside what it affects (link/edge syntax: `docs/hoplite/expressing-edges.md`).
 
 **Recoverable from the note alone.** Name the alternatives and the trade-off in full — the *why* must hold up without the conversation; never "the thing we discussed."

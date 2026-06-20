@@ -9,7 +9,7 @@ A todo is a note tagged `todo` — an action item the corpus tracks. The tag is 
 
 - **Untriaged todo → assign.** A `todo` note with no triage fields → set `document.priority` (high|medium|low), `document.effort` (high|medium|low), `document.status: open`.
 - **Judge effort from the code, not the note.** Reading the file the note points at surfaces three shapes: *closure* (already done → `closed` plus a `## Resolution` naming where it landed), *fork* (two unrelated changes in one note → split into two), *revised effort* (a "localized" fix that actually needs migration or tests).
-- **Blocked → link it.** Todos that must close first → `edge.blocked_by: [<path>, ...]`.
+- **Blocked → link it.** Todos that must close first → `edges: [blocked_by::<target>, ...]` (edge/link syntax: `docs/hoplite/expressing-edges.md`).
 - **Done → close.** Work landed → `document.status: closed`, body gets `## Resolution`. Parked → `deferred`, naming what would un-park it (a blocker resolves, the scale arrives). Won't-do → `declined`, body says why.
 - **Recoverable from the note alone.** A `## Resolution` or a `declined` reason → name where it landed in full — file, function, or commit — concrete enough to verify without re-walking the conversation.
 - **Action-shaped but untagged → sweep.** A note that reads as an action item but lacks `todo` → tag it, then triage.

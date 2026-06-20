@@ -13,5 +13,6 @@ Capture the current state of one idea as a note under `docs/notes/` — repo mem
 - **Recoverable from the note alone.** The reader has lost the context you hold now → name it all in full — files, functions, numbers, dates; never "the thing we discussed."
 - **Overwrite freely.** Distill, correct, refine — belief moves, the note moves; no changelog, no hedging about the past. The one bar: a cut that drops a still-true claim is a deletion, not a refinement — pause and confirm before making it.
 - **Don't duplicate the source.** What code, CLAUDE.md, or git already states → reference it, never copy it; copies drift. Cross-repo facts and user preferences → memory, not a note.
+- **Link what it sits beside.** Wikilink the notes, terms, and sources the note turns on where the connection is durable, so it surfaces in their neighbourhood (edge/link syntax: `docs/hoplite/expressing-edges.md`).
 
 Write `docs/notes/<slug>.md` (slug = the title, kebab-case): `title`, `summary`, `tags: [note, <domain>]`, `created`, `document.status` (`evolving` while in flux, `locked` when settled).
