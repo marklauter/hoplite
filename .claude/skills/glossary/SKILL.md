@@ -7,9 +7,9 @@ description: Reduce a resolved term to its kernel — a word plus the smallest p
 
 A glossary entry is a term reduced to its kernel: the word, plus the smallest phrase that unpacks it in the domain. Reduce before you write; lock only when it's reduced and resolved.
 
-- **Synonyms → collapse.** Several words for one idea → keep one canonical term, retire the rest into `document.retired`. If a retired word had its own glossary file, also list its old filename in `aliases` so existing links still resolve. "`declare`, `author`, `describe` name one act → retire them to `assert`."
-- **Mechanism creeping in → strip it.** A definition carrying implementation → move that to the term it belongs to. "`assert` is *to make a claim* — not *a wikilink in body text*; that's `wikilink`'s job."
-- **One word, two meanings → keep reducing.** An overloaded word is an incomplete reduction, not a kernel — each idea within the domain has its own precise word. Find the word for each sense and retire the overloaded one into them. You never write a second file under the same name. "`declared` did double duty → the act reduced to `assert`, the edge sense to its own provenance term; `declared` retired into them, and — because `declared.md` existed — aliases `assert` too."
+- **Synonyms → collapse.** Several words for one idea → keep one canonical term, retire the rest into `document.retired`. If a retired word had its own glossary file, also list its old filename in `aliases` so existing links still resolve. "`couch`, `settee`, `davenport` name one thing → retire them to `sofa`."
+- **Mechanism creeping in → strip it.** A definition carrying implementation → move that to the term it belongs to. "`engine` is *what converts fuel to motion* — not *the spark-plug firing order*; that's `ignition`'s job."
+- **One word, two meanings → keep reducing.** An overloaded word is an incomplete reduction, not a kernel — each idea within the domain has its own precise word. Find the word for each sense and retire the overloaded one into them. You never write a second file under the same name. "`bug` did double duty → the creature sense reduced to `insect`, the fault sense to `defect`; `bug` retired into them, and — because `bug.md` existed — aliases `defect` too."
 - **Reduced and resolved → lock.** The next cut would cost meaning, *and* the word carries one sense with its contrasts drawn → `document.status: locked`; until both hold, `evolving`.
 
 Write `docs/hoplite/glossary/<term>.md` (kebab-case):
@@ -23,7 +23,7 @@ aliases: [<retired filename>, ...]
 created: YYYY-MM-DD
 document.status: <evolving | locked>
 document.retired: [<retired term>, ...]
-document.category: <domain grouping, e.g. edge anatomy>
+document.category: <a grouping for related terms>
 edge.contrast: [docs/hoplite/glossary/<other-term>.md, ...]
 ---
 
