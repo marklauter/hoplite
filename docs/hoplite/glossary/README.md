@@ -48,6 +48,7 @@ The Hoplite domain terms, one node per term. This page links them and keeps the 
 - [[docs/hoplite/glossary/property.md]]
 - [[docs/hoplite/glossary/property_key.md]]
 - [[docs/hoplite/glossary/provenance.md]]
+- [[docs/hoplite/glossary/ranking-function.md]]
 - [[docs/hoplite/glossary/reindex.md]]
 - [[docs/hoplite/glossary/reserved-word.md]]
 - [[docs/hoplite/glossary/resolved.md]]

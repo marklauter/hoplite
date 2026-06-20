@@ -27,6 +27,10 @@ document.retired: [<retired term>, ...]edge.contrast: [docs/hoplite/glossary/<ot
 
 <the summary, verbatim>
 
+## Examples
+
+- <a concrete instance — the term in use, not more definition>
+
 ## Contrasts
 
 - `<contrast-term>` — <one line drawing the boundary against it — never implementation detail>
@@ -35,3 +39,4 @@ document.retired: [<retired term>, ...]edge.contrast: [docs/hoplite/glossary/<ot
 - `aliases`, `document.retired`, and `edge.contrast` are optional; omit when empty.
 - **Index it** — add `- [[docs/hoplite/glossary/<term>.md]]` to the `## Terms` list in `docs/hoplite/glossary/README.md`, kept alphabetical.
 - **Reciprocate contrasts** — for every `edge.contrast` target, add this term back on that entry (contrast is mutual), and give it a bullet in the optional `## Contrasts` section drawing the boundary. One bullet per target; omit the section when there are none.
+- **Examples** — the optional `## Examples` section illustrates the term with concrete instances; the definition stays in the summary, and an example never restates it. Omit the section when there are none.
