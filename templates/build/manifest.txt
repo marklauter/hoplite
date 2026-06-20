@@ -6,8 +6,5 @@
 # Files not listed here are not built. Anything under plugins/hoplite/ that is not a dst
 # in this manifest is committed source.
 
-templates/skills/journaling/SKILL.md   -> plugins/hoplite/skills/journaling/SKILL.md
-templates/skills/research/SKILL.md     -> plugins/hoplite/skills/research/SKILL.md
-templates/skills/taking-notes/SKILL.md -> plugins/hoplite/skills/taking-notes/SKILL.md
-templates/skills/todo/SKILL.md         -> plugins/hoplite/skills/todo/SKILL.md
-templates/hooks/check-frontmatter.py   -> plugins/hoplite/hooks/check-frontmatter.py
+templates/skills/research/SKILL.md   -> plugins/hoplite/skills/research/SKILL.md
+templates/hooks/check-frontmatter.py -> plugins/hoplite/hooks/check-frontmatter.py

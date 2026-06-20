@@ -1,10 +1,10 @@
 ---
 title: assert
-summary: "To write a claim."
+summary: "To advance a claim."
 tags: [hoplite, glossary]
 created: 2026-06-19
 document.status: locked
-document.retired: [authored, declare, declared]
+document.retired: [author, declare]
 ---
 
-To write a claim.
+To advance a claim.

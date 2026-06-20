@@ -8,4 +8,4 @@ document.category: feature by provenance
 edge.contrast: [docs/hoplite/glossary/claim.md]
 ---
 
-A feature intrinsic to a document.
+An intrinsic feature.
