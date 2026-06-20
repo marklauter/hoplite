@@ -3,7 +3,7 @@ title: provenance
 summary: "A feature's origin: intrinsic, asserted (by the author), or inferred (by the engine)."
 tags: [hoplite, glossary]
 created: 2026-06-19
-document.status: locked
+document.status: evolving
 document.category: the provenance axis
 aliases: [instantiation, explicit, implicit, named, emergent]
 ---

@@ -3,7 +3,7 @@ title: intrinsic
 summary: "A fact's provenance: given by the document's own existence, originated by no one."
 tags: [hoplite, glossary]
 created: 2026-06-19
-document.status: locked
+document.status: evolving
 document.category: provenance value
 edge.contrast: [docs/hoplite/glossary/assert.md, docs/hoplite/glossary/infer.md]
 ---
