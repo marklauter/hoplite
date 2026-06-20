@@ -60,13 +60,8 @@ A term or boundary being pinned before the information exists to decide well →
 
 ## Record
 
-Each kernel leads with discipline here; the mechanics live in a companion file, read it when you write.
+When a kernel resolves, hand it to the skill that owns its form:
 
-- **Term** → the kernel is the term plus the smallest phrase that resolves it against its `document.category`; reduce by collapsing synonyms into `aliases`, stripping mechanism out to the term it belongs to, and splitting an overloaded word into separate entries; locked when the next cut costs meaning. How: read `term-mechanism.md`.
-- **Concept** → the kernel is a concept composed from locked terms, reduced to the smallest spec that still carries it; locked by the same cut test. How: read `concept-mechanism.md`.
-- **Decision** → record only what is hard to reverse, surprising without context, and a genuine trade-off — absent any one, it's noise:
-  1. **Hard to reverse** — changing your mind later costs.
-  2. **Surprising without context** — a future reader asks "why this way?"
-  3. **A real trade-off** — genuine alternatives, one chosen for reasons.
-
-  How: read `decision-mechanism.md`.
+- **Term** — a word plus its smallest phrase → the `/glossary` skill.
+- **Concept** — composed from locked terms → the `/spec` skill.
+- **Decision** — a hard-to-reverse trade-off → the `/decision` skill.
