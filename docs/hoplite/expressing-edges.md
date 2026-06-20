@@ -1,5 +1,5 @@
 ---
-title: Defining edges
+title: Expressing edges
 summary: "The three ways to assert an edge: an inline wikilink, a frontmatter edge stereotype, and a markdown link for external content — with the target grammar the two internal forms share."
 tags: [hoplite, edges, authoring]
 created: 2026-06-20
