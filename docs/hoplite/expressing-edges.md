@@ -1,14 +1,14 @@
 ---
 title: Expressing edges
-summary: "The three ways to assert an edge: an inline wikilink, a frontmatter edge stereotype, and a markdown link for external content — with the target grammar the two internal forms share."
+summary: "The three ways to express an edge: an inline wikilink, a frontmatter edge stereotype, and a markdown link for external content — with the target grammar the two internal forms share."
 tags: [hoplite, edges, authoring]
 created: 2026-06-20
-document.status: evolving
+document.status: locked
 ---
 
-# Defining edges
+# Expressing edges
 
-There are three ways to express relationships between documents. In the body, a [[wikilink]] asserts an internal edge and a markdown link asserts an external one (to a URL node). In frontmatter, an `edges` list asserts internal edges, structured. Wikilinks and frontmatter edges share one target grammar; markdown links carry only display text and a URL.
+There are three ways to express an edge between documents. In the body, a [[wikilink]] expresses an internal edge and a markdown link expresses an external one (to a URL node). In frontmatter, an `edges` list expresses internal edges, structured. Wikilinks and frontmatter edges share one target grammar; markdown links carry only display text and a URL.
 
 ## Wikilinks
 
@@ -32,7 +32,7 @@ The target is a page name, optionally qualified by its [[namespace]]. No `.md` e
 
 ### Stereotype
 
-A bare wikilink asserts an untyped edge. Lead the target with a `stereotype::` prefix to type it — `[[refines::circle]]`. The single colon stays the namespace separator, so the two never collide: `[[refines::lib/shapes:circle]]`.
+A bare wikilink expresses an untyped edge. Lead the target with a `stereotype::` prefix to type it — `[[refines::circle]]`. The single colon stays the namespace separator, so the two never collide: `[[refines::lib/shapes:circle]]`.
 
 ### Rendering
 
@@ -45,7 +45,7 @@ A link whose target does not exist is a [[ghost]] — the wiki redlink: it surfa
 
 ## Frontmatter edges
 
-`edges: [<target>, ...]` asserts edges in frontmatter. Each `<target>` is exactly a wikilink target — the same string you would write inside `[[ ]]`, `stereotype::` prefix and all.
+`edges: [<target>, ...]` expresses edges in frontmatter. Each `<target>` is exactly a wikilink target — the same string you would write inside `[[ ]]`, `stereotype::` prefix and all.
 
 - **Identical grammar.** `name`, `namespace:page`, `/subpage`, `#section`, `#^block`, `stereotype::target`, `ghost/<slug>` — every form carries over verbatim; a bare target is an untyped edge.
 - **No rendering features.** Display text (`|`) and embedding (`!`) are inline-only; a frontmatter edge is data, not rendered.
@@ -55,5 +55,5 @@ A link whose target does not exist is a [[ghost]] — the wiki redlink: it surfa
 
 External content only: `[text](https://example.com)`. The wikilink feature set does not apply — a markdown link is display text plus a URL.
 
-- The walker indexes the URL as a graph node, joined by an asserted edge, so external references are backlink-discoverable like any other node.
+- The walker indexes the URL as a graph node, joined by an edge, so external references are backlink-discoverable like any other node.
 - A durable or reused external reference earns a proxy note under `docs/proxies/`, then is wikilinked like any internal document.
