@@ -11,5 +11,6 @@ Record one event in the project's path as a dated entry under `docs/journal/` �
 - **Intent before outcome.** Write the hypothesis and expectation before you know the result; a hypothesis recorded after the answer is hindsight, and worthless.
 - **One cycle, one entry.** An experiment, a decision, a dead-end, a day. Immutable once written — a correction is a new entry, never an edit.
 - **Warts and all.** The wrong turns are the value; they stop the next traveller retrying them.
+- **Recoverable from the entry alone.** The reader has lost the context you held then → name it all in full — files, functions, numbers, dates; never "the thing we discussed."
 
-Write `docs/journal/<YYYY-MM-DD>-<HHMM>-<slug>.md`: `title`, `summary`, `tags: [journal, <domain>]`, `created`. Open with the context going in, then what you tried, expected, and learned. Call `refresh()` after.
+Write `docs/journal/<YYYY-MM-DD>-<HHMM>-<slug>.md`: `title`, `summary`, `tags: [journal, <domain>]`, `created`. Open with the context going in, then what you tried, expected, and learned.
