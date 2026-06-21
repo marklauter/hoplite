@@ -1,43 +1,46 @@
 ---
 title: Expressing edges
-summary: "The three ways to express an edge: an inline wikilink, a frontmatter property whose value is a wikilink, and a markdown link for external content — Obsidian-native, with the target grammar the two internal forms share."
+summary: "The two ways to express an edge — an inline wikilink (untyped) and a frontmatter property whose value is a wikilink (typed) — Obsidian-native, sharing one target grammar. A markdown link is plain hypertext, not an edge."
 tags: [hoplite, edges, authoring]
 created: 2026-06-20
-document.status: evolving
+status: locked
 ---
 
 # Expressing edges
 
-An [[edge]] links one document to another, and three forms express it: in the body, a [[wikilink]] (untyped) or a markdown link to a URL (external); in frontmatter, a property whose value is a wikilink — typed, the key naming the [[stereotype]]. The two internal forms share one target grammar; a markdown link carries only display text and a URL.
+Hoplite supports the full Obsidian wikilink and property grammar.
 
-The grammar is Obsidian-native: every target resolves in Obsidian and joins its graph and backlinks. Obsidian draws each edge untyped — it has no edge labels — so Hoplite reads the stereotype from the frontmatter key, the typed layer over the same links Obsidian sees.
+There are two ways to express edges within a markdown document:
+
+- In the body, a wikilink like `[[circle]]`. This is an untyped edge.
+- In frontmatter, a property whose value is a wikilink, like `cites: "[[circle]]"`. This is a typed edge, and the key (`cites`) is the stereotype.
 
 ## Wikilinks
 
-Internal references, Obsidian-native — every target form below resolves in Obsidian.
+Edges are created by declaring wikilinks from one document to another.
+
+### Source
+
+The source is the document containing the wikilink declaration.
 
 ### Target
 
-The target is a page path. A segment is `SEG = [A-Za-z0-9._-]` (strict ASCII filename characters; the `.md` extension is optional — just dots in a name). The folder is the [[namespace]]: `/` separates path segments, exactly as Obsidian addresses notes.
+The target is the document referenced by the wikilink — a required slug, with an optional path prefix and an optional anchor:
 
-- **By name** — `[[circle]]`: resolves to the unique page of that name anywhere in the vault.
-- **Path-qualified** — `[[lib/shapes/circle]]`, `[[docs/hoplite/glossary/term]]`: the folder path disambiguates when a name repeats. Obsidian needs only the shortest unique path; the full path always resolves.
+- Slug (required) — the document's filename, like `circle`. A slug alone resolves to that page anywhere in the vault.
+- Path prefix (optional) — folders before the slug, joined by `/`, like `lib/shapes/circle`. A namespace that disambiguates same-named pages; the shortest unique path works.
+- Anchor (optional) — a section or block within the page: `circle#properties`, a block `circle#^radius-def`, or same-page `#properties`. Section labels are the heading text, spaces included; block ids are letters, numbers, and dashes.
 
-There are no colons — the folder path is the only namespace mechanism. `[[docs/hoplite/term]]` is valid and addresses `term` under `docs/hoplite/`.
-
-### Sections and blocks
-
-- **Section** — `[[circle#properties]]`; same page `[[#properties]]`; subheading `[[circle#properties#radius]]`. A section label is the heading text, spaces and all: `[[circle#cross sections]]`.
-- **Block** — `[[circle#^radius-def]]`: a single block, finer than a heading. The block id is letters, numbers, and dashes.
+Slug and path segments use the characters `A-Z a-z 0-9 . _ -`. The `.md` extension is optional: `circle` and `circle.md` are the same target.
 
 ### Rendering
 
-- **Display text** — `[[circle|shown text]]`: target first, display text second.
-- **Embedding** — `![[circle]]`: transcludes the target's content in place.
+- Display text — `[[circle|shown text]]`: target first, display text second.
+- Embedding — `![[circle]]`: transcludes the target's content in place.
 
 ### Ghosts
 
-A link whose target has no backing file is a [[ghost]] — Obsidian renders it as an unresolved link, and it surfaces as creatable backlog. No special syntax: a ghost is an ordinary `[[slug]]` that does not resolve yet.
+A ghost is a wikilink whose target has no file yet — an ordinary `[[slug]]`, no special syntax. Obsidian shows it as an unresolved link.
 
 ### Grammar
 
@@ -65,29 +68,27 @@ As the `TARGET_RE` regex (`re.VERBOSE`):
 $
 ```
 
-There are no colons: `/` is the only separator, so `docs/hoplite/term` parses as a folder path and resolves — the form Obsidian itself uses. A section label is permissive (heading text, spaces included) so links to real headings resolve; a block id is letters, numbers, and dashes, matching Obsidian. Rendering features never appear inside a target: `SEG` excludes `|` and `!`, so a frontmatter edge bearing either fails the match; inline, display text after `|` and a leading `!` embed marker are stripped before matching. The executable form — `TARGET_RE` plus a `validate_target` checker and the frontmatter/inline extractors, with `test_edge_grammar.py` exercising the regex independently — is `plugins/hoplite/hooks/edge_grammar.py`. The `check-frontmatter` hook applies it to every in-body `[[wikilink]]` and every frontmatter `edge.<stereotype>` wikilink value at write time.
+`plugins/hoplite/hooks/edge_grammar.py` implements this grammar:
+
+- `TARGET_RE` — the regex above.
+- `validate_target` — validates a single target.
+- Frontmatter and inline extractors — pull targets from a document.
+
+`test_edge_grammar.py` tests the regex directly. The `check-frontmatter` hook runs the validator on every body wikilink and every frontmatter wikilink value at write time.
 
 ## Frontmatter edges
 
-A typed internal edge is a frontmatter property whose value is a wikilink — the key names the relationship, the value points at the target:
+A frontmatter edge is a property whose value is a wikilink — the key is the stereotype, the value is the target:
 
 ```yaml
-cites: ["[[shape]]"]          # flow sequence — compact, one line
-contrast:                     # block sequence — same value, hyphen per line
+refines: "[[pi]]"             # scalar — one edge
+cites: ["[[shape]]"]          # flow list — several, on one line
+contrast:                     # block list — several, one per line
   - "[[square]]"
   - "[[triangle]]"
 ```
 
-- **The key is the stereotype.** Properties are one flat open vocabulary — `title`, `summary`, `tags`, `created`, `status` are the recognized keys; any other key is yours to coin. There is no `edge.` or `document.` namespace; a property named `cites` *is* the `cites` stereotype. Hoplite reads the key as the edge's stereotype.
-- **Edge or property, decided by value.** The value's shape assigns the role: a wikilink makes the key a stereotype and the property an edge; a scalar (`status: draft`) makes it a node property. One vocabulary, two roles, no prefix to choose.
-- **Value is a quoted wikilink.** The quotes are required — Obsidian indexes a link into its graph and backlinks only from a quoted `[[ ]]` value, and bare `cites: [[shape]]` is not valid YAML (the `[[ ]]` parses as a nested list). Past that it is standard YAML: the two sequences above — flow (`["[[a]]", "[[b]]"]`) and block (a hyphen per line) — are the same value to any YAML parser, so use whichever reads better; a bare scalar `"[[a]]"` works for a single edge. Obsidian reads them all.
-- **Typed for Hoplite, connected for Obsidian.** Both read the same edge: Hoplite types it by the key, Obsidian draws it untyped.
-- **No rendering features.** Display text (`|`) and embedding (`!`) are inline-only; a frontmatter edge is data, not rendered.
-- **Untyped edges are inline.** A bare body `[[target]]` is an untyped edge; to type it, give it a stereotype key in frontmatter.
-
-## Markdown links
-
-External content only: `[text](https://example.com)`. The wikilink feature set does not apply — a markdown link is display text plus a URL.
-
-- The walker indexes the URL as a graph node, joined by an edge, so external references are backlink-discoverable like any other node.
-- A durable or reused external reference earns a proxy note under `docs/proxies/`, then is wikilinked like any internal document.
+- Key — the stereotype, like `cites` or `refines`. Keys are one flat open vocabulary: `title`, `summary`, `tags`, `created`, and `status` are recognized; coin any other key you need. There is no `edge.` or `document.` prefix.
+- Value — a quoted wikilink. Quote it: Obsidian indexes the link only when it's quoted, and unquoted `[[ ]]` isn't valid YAML. Use a scalar for one edge, a list for several.
+- Edge or property, decided by value. A wikilink value makes the property an edge; a scalar value like `status: draft` makes it a node property.
+- No rendering. Display text (`|`) and embedding (`!`) work only in the body; a frontmatter edge is data.
