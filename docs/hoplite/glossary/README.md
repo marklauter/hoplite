@@ -32,6 +32,7 @@ The Hoplite domain terms, one node per term. This page links them and keeps the 
 - [[docs/hoplite/glossary/frontmatter.md]]
 - [[docs/hoplite/glossary/fts.md]]
 - [[docs/hoplite/glossary/ghost.md]]
+- [[docs/hoplite/glossary/idf.md]]
 - [[docs/hoplite/glossary/indexing.md]]
 - [[docs/hoplite/glossary/infer.md]]
 - [[docs/hoplite/glossary/intrinsic.md]]
