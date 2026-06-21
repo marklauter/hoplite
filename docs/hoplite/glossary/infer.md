@@ -3,7 +3,7 @@ title: infer
 summary: "To derive a feature from evidence."
 tags: [hoplite, glossary]
 created: 2026-06-19
-document.status: evolving
+document.status: locked
 document.retired: [discover, deduce]
 edges: [contrast::docs/hoplite/glossary:assert]
 ---
