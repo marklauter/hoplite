@@ -1,6 +1,6 @@
 ---
 title: stereotype
-summary: "An open-vocabulary label naming the relationship an edge expresses."
+summary: "A label naming the relationship an edge expresses."
 tags: [hoplite, glossary]
 aliases: [edge_stereotype]
 created: 2026-06-19
@@ -9,7 +9,7 @@ document.retired: [edge_stereotype]
 edges: [contrast::docs/hoplite/glossary:kind]
 ---
 
-An open-vocabulary label naming the relationship an edge expresses.
+A label naming the relationship an edge expresses.
 
 ## Contrasts
 
@@ -17,5 +17,5 @@ An open-vocabulary label naming the relationship an edge expresses.
 
 ## Examples
 
-- `specializes`, `uses`, `estimates`, `contrast` — the structural relationships between glossary terms.
+- `is-a`, `has-a`, `contrast` — common structural relationships between glossary terms.
 - `cites`, `supports`, `supersedes`, `contradicts` — authored relationships between documents.
