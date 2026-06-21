@@ -3,7 +3,7 @@ title: Hoplite glossary
 summary: Index of the Hoplite domain-term nodes under docs/hoplite/glossary/. Links every term and keeps the synonym crosswalk.
 tags: [hoplite, glossary, reference]
 created: 2026-06-05
-document.status: wip
+document.status: evolving
 ---
 
 # Hoplite glossary
@@ -12,68 +12,66 @@ The Hoplite domain terms, one node per term. This page links them and keeps the 
 
 ## Terms
 
-- [[docs/hoplite/glossary/assert.md]]
-- [[docs/hoplite/glossary/bm25.md]]
-- [[docs/hoplite/glossary/claim.md]]
-- [[docs/hoplite/glossary/confidence.md]]
-- [[docs/hoplite/glossary/content_hash.md]]
-- [[docs/hoplite/glossary/corpus.md]]
-- [[docs/hoplite/glossary/corpus-graph.md]]
-- [[docs/hoplite/glossary/describe.md]]
-- [[docs/hoplite/glossary/document.md]]
-- [[docs/hoplite/glossary/drop-and-recreate.md]]
-- [[docs/hoplite/glossary/edge.md]]
-- [[docs/hoplite/glossary/edge_kind.md]]
-- [[docs/hoplite/glossary/edge_stereotype.md]]
-- [[docs/hoplite/glossary/fact.md]]
-- [[docs/hoplite/glossary/feature.md]]
-- [[docs/hoplite/glossary/filter.md]]
-- [[docs/hoplite/glossary/fingerprint.md]]
-- [[docs/hoplite/glossary/frontmatter.md]]
-- [[docs/hoplite/glossary/fts.md]]
-- [[docs/hoplite/glossary/ghost.md]]
-- [[docs/hoplite/glossary/idf.md]]
-- [[docs/hoplite/glossary/indexing.md]]
-- [[docs/hoplite/glossary/infer.md]]
-- [[docs/hoplite/glossary/intrinsic.md]]
-- [[docs/hoplite/glossary/jaccard.md]]
-- [[docs/hoplite/glossary/kind.md]]
-- [[docs/hoplite/glossary/match.md]]
-- [[docs/hoplite/glossary/minhash.md]]
-- [[docs/hoplite/glossary/namespace.md]]
-- [[docs/hoplite/glossary/node.md]]
-- [[docs/hoplite/glossary/node_property.md]]
-- [[docs/hoplite/glossary/open-loop.md]]
-- [[docs/hoplite/glossary/predicate-atom.md]]
-- [[docs/hoplite/glossary/projection.md]]
-- [[docs/hoplite/glossary/property.md]]
-- [[docs/hoplite/glossary/property_key.md]]
-- [[docs/hoplite/glossary/provenance.md]]
-- [[docs/hoplite/glossary/ranking-function.md]]
-- [[docs/hoplite/glossary/reindex.md]]
-- [[docs/hoplite/glossary/reserved-word.md]]
-- [[docs/hoplite/glossary/resolved.md]]
-- [[docs/hoplite/glossary/semantic-search.md]]
-- [[docs/hoplite/glossary/src-dst.md]]
-- [[docs/hoplite/glossary/stereotype.md]]
-- [[docs/hoplite/glossary/summary.md]]
-- [[docs/hoplite/glossary/survey.md]]
-- [[docs/hoplite/glossary/tag.md]]
-- [[docs/hoplite/glossary/title.md]]
-- [[docs/hoplite/glossary/uri.md]]
-- [[docs/hoplite/glossary/url-node.md]]
-- [[docs/hoplite/glossary/vault.md]]
-- [[docs/hoplite/glossary/vocabulary.md]]
-- [[docs/hoplite/glossary/vocabulary-graph.md]]
-- [[docs/hoplite/glossary/wal-mmap.md]]
-- [[docs/hoplite/glossary/walk.md]]
-- [[docs/hoplite/glossary/wikilink.md]]
+- [[docs/hoplite/glossary:assert]]
+- [[docs/hoplite/glossary:bm25]]
+- [[docs/hoplite/glossary:claim]]
+- [[docs/hoplite/glossary:confidence]]
+- [[docs/hoplite/glossary:content_hash]]
+- [[docs/hoplite/glossary:corpus]]
+- [[docs/hoplite/glossary:corpus-graph]]
+- [[docs/hoplite/glossary:document]]
+- [[docs/hoplite/glossary:drop-and-recreate]]
+- [[docs/hoplite/glossary:edge]]
+- [[docs/hoplite/glossary:edge_kind]]
+- [[docs/hoplite/glossary:fact]]
+- [[docs/hoplite/glossary:feature]]
+- [[docs/hoplite/glossary:filter]]
+- [[docs/hoplite/glossary:fingerprint]]
+- [[docs/hoplite/glossary:frontmatter]]
+- [[docs/hoplite/glossary:fts]]
+- [[docs/hoplite/glossary:ghost]]
+- [[docs/hoplite/glossary:idf]]
+- [[docs/hoplite/glossary:indexing]]
+- [[docs/hoplite/glossary:infer]]
+- [[docs/hoplite/glossary:intrinsic]]
+- [[docs/hoplite/glossary:jaccard]]
+- [[docs/hoplite/glossary:kind]]
+- [[docs/hoplite/glossary:match]]
+- [[docs/hoplite/glossary:minhash]]
+- [[docs/hoplite/glossary:namespace]]
+- [[docs/hoplite/glossary:node]]
+- [[docs/hoplite/glossary:node_property]]
+- [[docs/hoplite/glossary:open-loop]]
+- [[docs/hoplite/glossary:predicate-atom]]
+- [[docs/hoplite/glossary:projection]]
+- [[docs/hoplite/glossary:property]]
+- [[docs/hoplite/glossary:property_key]]
+- [[docs/hoplite/glossary:provenance]]
+- [[docs/hoplite/glossary:ranking-function]]
+- [[docs/hoplite/glossary:reindex]]
+- [[docs/hoplite/glossary:reserved-word]]
+- [[docs/hoplite/glossary:resolved]]
+- [[docs/hoplite/glossary:semantic-search]]
+- [[docs/hoplite/glossary:src-dst]]
+- [[docs/hoplite/glossary:stereotype]]
+- [[docs/hoplite/glossary:summary]]
+- [[docs/hoplite/glossary:survey]]
+- [[docs/hoplite/glossary:tag]]
+- [[docs/hoplite/glossary:title]]
+- [[docs/hoplite/glossary:uri]]
+- [[docs/hoplite/glossary:url-node]]
+- [[docs/hoplite/glossary:vault]]
+- [[docs/hoplite/glossary:vocabulary]]
+- [[docs/hoplite/glossary:vocabulary-graph]]
+- [[docs/hoplite/glossary:wal-mmap]]
+- [[docs/hoplite/glossary:walk]]
+- [[docs/hoplite/glossary:wikilink]]
 
 ## See also
 
-- [[docs/hoplite/hoplite.md]] — problem statement and scope.
-- [[docs/hoplite/hoplite-feature-taxonomy.md]] — the feature taxonomy: the three origins (asserted, intrinsic, inferred) and the IDF-weighted Jaccard relatedness over the unified feature set.
-- [[docs/hoplite/hoplite-affordances.md]] — the affordances concept: features give rise to affordances; the write/read split; signifiers.
-- [[docs/hoplite/hoplite-graph.md]] — the structure: nodes, edges, properties, stereotypes, vocabulary.
-- [[docs/notes/one-walk-verb-spans-the-corpus-and-vocabulary-graphs.md]] — the two-graph and namespace-address model.
-- [[docs/hoplite/README.md]] — the document map.
+- [[docs/hoplite:hoplite]] — problem statement and scope.
+- [[docs/hoplite:hoplite-feature-taxonomy]] — the feature taxonomy: the three origins (asserted, intrinsic, inferred) and the IDF-weighted Jaccard relatedness over the unified feature set.
+- [[docs/hoplite:hoplite-affordances]] — the affordances concept: features give rise to affordances; the write/read split; signifiers.
+- [[docs/hoplite:hoplite-graph]] — the structure: nodes, edges, properties, stereotypes, vocabulary.
+- [[docs/notes:one-walk-verb-spans-the-corpus-and-vocabulary-graphs]] — the two-graph and namespace-address model.
+- [[docs/hoplite:README]] — the document map.
