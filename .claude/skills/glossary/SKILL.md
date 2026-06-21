@@ -44,7 +44,7 @@ edges: [is-a::docs/hoplite/glossary:<broader-term>, contrast::docs/hoplite/gloss
 
 ## Edge stereotypes
 
-A **stereotype** is an open-vocabulary label naming the relationship an edge expresses, read `<source> <stereotype> <target>`. The vocabulary is open, but reach for a recognized relation below before coining a new one. Edge direction follows dependency; only symmetric edges reciprocate.
+A **stereotype** is a label naming the relationship an edge expresses, read `<source> <stereotype> <target>`. The vocabulary is open, but reach for a recognized relation below before coining a new one. Edge direction follows dependency; only symmetric edges reciprocate.
 
 - **Directional — the default.** The edge lives on the dependent's side and points at what it depends on; the target stays ignorant, so a new dependent never edits it.
   - `is-a::` — species → genus. Transitive.
