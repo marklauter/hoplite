@@ -1,3 +1,16 @@
+---
+title: Schema
+summary: "The SQLite schema for the Hoplite knowledge graph — nodes, the document facet, edges, the interned vocabularies, FTS, and the namespace view."
+tags: [hoplite, schema, reference]
+created: 2026-06-21
+document.status: evolving
+---
+
+# Schema
+
+The canonical SQLite schema for the Hoplite knowledge graph: a property graph over the markdown corpus plus an FTS5 lexical index, rebuilt by drop-and-recreate. This spec is the source of truth — the MCP server's `schema.sql` mirrors it, never the other way around.
+
+```sql
 -- Hoplite knowledge graph: a property graph over addressable byte resources
 -- (the markdown corpus), plus an fts5 lexical index. The graph is rebuilt by
 -- drop-and-recreate, never incrementally — so the dominant cost is the bulk
@@ -207,3 +220,4 @@ select 'node/property/' || key from property_key
 union all
 select 'node/tag/' || label from tag
 order by 1;
+```
