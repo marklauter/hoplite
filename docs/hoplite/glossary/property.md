@@ -1,9 +1,10 @@
 ---
 title: property
-summary: "A key/value pair on a document."
+summary: "A claim expressed in frontmatter."
 tags: [hoplite, glossary]
 created: 2026-06-19
-document.status: evolving
+document.status: locked
+edges: [is-a::docs/hoplite/glossary:claim]
 ---
 
-A key/value pair on a document.
+A claim expressed in frontmatter.
