@@ -4,7 +4,7 @@ summary: "To advance a claim."
 tags: [hoplite, glossary]
 created: 2026-06-19
 document.status: locked
-document.retired: [author, declare]
+document.retired: [author, declare, describe]
 edges: [contrast::docs/hoplite/glossary:infer]
 ---
 
