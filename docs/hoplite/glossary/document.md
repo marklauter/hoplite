@@ -1,12 +1,13 @@
 ---
 title: document
-summary: "A real `.md` file on disk, `resolved = true`, carrying content fingerprints."
+summary: "A markdown file."
 tags: [hoplite, glossary]
 created: 2026-06-19
-document.status: evolving
-document.category: node variant
+document.status: locked
 ---
 
-A real `.md` file on disk, `resolved = true`, carrying content fingerprints.
+A markdown file.
 
-**Also.** also the generic term for a corpus file.
+## Structure
+
+Frontmatter — a block of metadata properties — over a body of markdown prose. Hoplite reads metadata features from the frontmatter and content features from the body.

@@ -1,11 +1,10 @@
 ---
 title: node
-summary: "The graph's vertex: an addressable resource identified by its uri. Variants: document, ghost, url."
+summary: "An addressable entity stored in a graph."
 tags: [hoplite, glossary]
 created: 2026-06-19
-document.status: evolving
-document.category: graph structure
-edge.contrast: [docs/hoplite/glossary/edge.md]
+document.status: locked
+edges: [implements::docs/hoplite/glossary:document, has-a::docs/hoplite/glossary:property]
 ---
 
-The graph's vertex: an addressable resource identified by its uri. Variants: document, ghost, url.
+An addressable entity stored in a graph.
