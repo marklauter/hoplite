@@ -3,7 +3,6 @@ title: Durable maps of meaning augment judgment with mechanism
 summary: "Reading is expensive. The grep-read-judge loop over a corpus larger than the agent can read is a compounding cost. A durable map of meaning is a compounding reward: it ranks by meaning so the agent's judgment reads only what pays, then persists so knowledge accrues instead of dying with the session."
 tags: [hoplite, vision]
 created: 2026-05-30
-aliases: []
 document.status: locked
 ---
 

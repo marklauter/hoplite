@@ -1,10 +1,10 @@
 ---
 title: ghost
-summary: "A wikilink target with no backing file, `resolved = false`, authored `[[ghost/<slug>]]` as an open loop."
+summary: "A document that doesn't exist yet."
 tags: [hoplite, glossary]
 created: 2026-06-19
 document.status: evolving
-document.category: node variant
+edges: [is-a::docs/hoplite/glossary:document]
 ---
 
-A wikilink target with no backing file, `resolved = false`, authored `[[ghost/<slug>]]` as an open loop.
+A document that doesn't yet exist.
