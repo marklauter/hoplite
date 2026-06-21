@@ -3,7 +3,7 @@ title: Jaccard
 summary: "The ratio of two sets' intersection to their union."
 tags: [hoplite, glossary]
 created: 2026-06-19
-document.status: evolving
+document.status: locked
 edges: [specializes::docs/hoplite/glossary:ranking-function, contrast::docs/hoplite/glossary:bm25]
 ---
 
