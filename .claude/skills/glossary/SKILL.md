@@ -23,7 +23,7 @@ aliases: [<retired page name>, ...]
 created: YYYY-MM-DD
 document.status: <evolving | locked>
 document.retired: [<retired term>, ...]
-edges: [specializes::docs/hoplite/glossary:<broader-term>, contrast::docs/hoplite/glossary:<other-term>]
+edges: [is-a::docs/hoplite/glossary:<broader-term>, contrast::docs/hoplite/glossary:<other-term>]
 ---
 
 <the summary, verbatim>
@@ -44,10 +44,10 @@ edges: [specializes::docs/hoplite/glossary:<broader-term>, contrast::docs/hoplit
 
 ## Edge stereotypes
 
-A **stereotype** is an open-vocabulary label naming the relationship an edge expresses, read `<source> <stereotype> <target>`. The vocabulary is open — coin a verb that reads cleanly in that frame and use it; there's no registry, and an edge may bear several. One rule places any stereotype: **direction follows dependency; only symmetric edges reciprocate.**
+A **stereotype** is an open-vocabulary label naming the relationship an edge expresses, read `<source> <stereotype> <target>`. The vocabulary is open, but reach for a recognized relation below before coining a new one. Edge direction follows dependency; only symmetric edges reciprocate.
 
 - **Directional — the default.** The edge lives on the dependent's side and points at what it depends on; the target stays ignorant, so a new dependent never edits it.
-  - `specializes::` — species → genus.
-  - `uses::` — whole → part.
-  - `estimates::` — estimator → estimated.
-- **Symmetric — reciprocated.** The relationship reads identical from both ends, so write it on both terms. `contrast::` — a mutual boundary: add this term back on the target and give it a `## Contrasts` bullet, one per target.
+  - `is-a::` — species → genus. Transitive.
+  - `has-a::` — whole → part.
+- **Symmetric — reciprocated.** The relationship reads identical from both ends, so write it on both terms: add this term back on the target and give it a `## Contrasts` bullet, one per target.
+  - `contrast::` — opposite; a mutual boundary.
