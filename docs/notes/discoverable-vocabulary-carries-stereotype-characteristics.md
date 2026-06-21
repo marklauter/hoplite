@@ -15,13 +15,13 @@ document.status: evolving
 Borrow OWL's move: **don't enumerate relations, characterize them.** OWL governs an unbounded set of relations with a small, closed set of **property characteristics**:
 
 - `SymmetricProperty` — holds both ways (`contrast`, `not-related`).
-- `TransitiveProperty` — chains (`specializes`: A→B→C ⊢ A→C).
-- `inverseOf` — A→B implies B→A under a *different* name (`uses` ↔ `used-by`, `cites` ↔ `cited-by`).
+- `TransitiveProperty` — chains (`is-a`: A→B→C ⊢ A→C).
+- `inverseOf` — A→B implies B→A under a *different* name (`has-a` ↔ `part-of`, `cites` ↔ `cited-by`).
 - `AsymmetricProperty`, `Reflexive`/`Irreflexive`, `FunctionalProperty` — as needed.
 
 Record these characteristics **on the stereotype in the vocabulary**, alongside its name. Then:
 
-1. **The agent discovers behavior, not just names.** Surveying the vocabulary returns "`specializes` is transitive, `contrast` is symmetric" — the agent knows how a walk over that stereotype composes before issuing it.
+1. **The agent discovers behavior, not just names.** Surveying the vocabulary returns "`is-a` is transitive, `contrast` is symmetric" — the agent knows how a walk over that stereotype composes before issuing it.
 2. **The reasoner computes closure.** Per [[the-agent-problem-is-the-agency-problem]]-adjacent reasoning, hoplite already infers (statistical relatedness) and derives (property subgraphs); characteristics give it a *deductive* mode over declared edges — materialize the symmetric inverse, chase the transitive chain — instead of storing every implied edge by hand.
 3. **A closed set governs an open one.** Coin any verb; classify it by a fixed handful of characteristics. Infinite vocabulary, finite governance.
 
@@ -33,9 +33,9 @@ The glossary skill's edge-stereotype rule — *"direction follows dependency; on
 
 Where a recognized relation already exists, use its name rather than coining:
 
-- **SKOS** (W3C, the standard for exactly this kind of concept vocabulary): `broader`/`narrower` ≈ `specializes`, `related` ≈ associative, `prefLabel`/`altLabel`/`hiddenLabel` ≈ canonical/`aliases`/`document.retired`, `definition`/`scopeNote`/`example` ≈ `summary`/Also/Examples. The glossary is structurally a SKOS concept scheme.
+- **SKOS** (W3C, the standard for exactly this kind of concept vocabulary): `broader`/`narrower` ≈ `is-a`, `related` ≈ associative, `prefLabel`/`altLabel`/`hiddenLabel` ≈ canonical/`aliases`/`document.retired`, `definition`/`scopeNote`/`example` ≈ `summary`/Also/Examples. The glossary is structurally a SKOS concept scheme.
 - **WordNet**: hypernym/hyponym (is-a), meronym/holonym (part-of), antonym (≈ `contrast`), synonym (≈ aliases).
-- **Winston, Chaffin & Herrmann (1987)**: the named six-way part-whole taxonomy, if `uses`/part-of needs splitting.
+- **Winston, Chaffin & Herrmann (1987)**: the named six-way part-whole taxonomy, if `has-a`/part-of needs splitting.
 - **OBO Relation Ontology / BFO**: a curated, reusable by-name relation set.
 
 So the model is hybrid: **standard names for the recognized few, open coinage for the tail — and every stereotype, named or coined, is governed by its declared characteristics, not by enumeration.**
@@ -44,4 +44,4 @@ So the model is hybrid: **standard names for the recognized few, open coinage fo
 
 - **Where characteristics live.** The stereotype vocabulary is interned in `schema.sql` (`stereotype` table, today just `id, label`). Characteristics would be columns or a companion table — a closed enum of characteristic flags per label. Design when the deductive layer is built.
 - **Which characteristics earn day-one support.** `symmetric` and `transitive` are already implied by the glossary rule; `inverseOf` needs a paired-name convention. Start with the two we use; add as real stereotypes demand.
-- **Reasoner scope.** This is the deductive third mode for hoplite (alongside inductive relatedness and deterministic property subgraphs). Closure over declared stereotype edges — transitive `specializes`, symmetric `contrast` — is the first target.
+- **Reasoner scope.** This is the deductive third mode for hoplite (alongside inductive relatedness and deterministic property subgraphs). Closure over declared stereotype edges — transitive `is-a`, symmetric `contrast` — is the first target.
