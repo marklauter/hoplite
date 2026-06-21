@@ -48,3 +48,4 @@ A tag answers "what is this document?" — its type, classification, shape. A pr
 - `templates/components/shape/frontmatter.md` — the principle landed here as authoring guidance.
 - [[docs/notes/stereotypes-are-open-vocab-edge-properties.md]] — the parallel at the edge layer. Stereotypes classify; edge confidence carries state.
 - [[docs/journal/2026-05-27-1845-related-edges-land-and-rank-replaces-threshold.md]] — the cycle that promoted `confidence` from an `edge_property` lookup to a first-class column on `Edge`, the precedent for treating state as first-class while leaving classification labels in the property bag.
+- [[docs/notes:properties-subsume-first-class-columns]] — the later view: summary, tags, and created are themselves properties and the first-class columns dissolve; title is the slug, not a property.

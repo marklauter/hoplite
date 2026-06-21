@@ -122,3 +122,4 @@ Two adjacent design problems sit outside the v1 stereotype proposal:
 - [[docs/notes/add-not-related-as-a-structural-negative-edge-kind.md]] — the not-related stereotype, the structural-negative case.
 - [[docs/journal/2026-05-27-1845-related-edges-land-and-rank-replaces-threshold.md]] — the cycle where `confidence` was promoted to a first-class `Edge` column, the precedent for first-class column vs. property treatment.
 - [[docs/notes/rank-related-edges-by-bm25-cosine-not-minhash-jaccard.md]] — adjacent edge-quality work; stereotypes are independent of how `related` confidence gets computed.
+- [[docs/notes:properties-subsume-first-class-columns]] — revisits the "title and summary are first-class fields, not properties" claim above: in the current model summary is a property and title is the slug, and the first-class columns collapse into the property concept.
