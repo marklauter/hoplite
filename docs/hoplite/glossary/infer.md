@@ -12,4 +12,4 @@ To derive a feature from evidence.
 
 ## Contrasts
 
-- `assert` — infer derives a feature; assert advances a claim. Deriving is not advancing.
+- `assert` — infer derives a feature; assert advances an opinion as true. Deriving is not advancing.

@@ -71,7 +71,7 @@ The Hoplite domain terms, one node per term. This page links them and keeps the 
 ## See also
 
 - [[docs/hoplite:hoplite]] — problem statement and scope.
-- [[docs/hoplite:hoplite-feature-taxonomy]] — the feature taxonomy: the three origins (asserted, intrinsic, inferred) and the IDF-weighted Jaccard relatedness over the unified feature set.
+- [[docs/hoplite:hoplite-feature-taxonomy]] — the feature taxonomy: the two origins (intrinsic, asserted) and the IDF-weighted Jaccard relatedness over the unified feature set.
 - [[docs/hoplite:hoplite-affordances]] — the affordances concept: features give rise to affordances; the write/read split; signifiers.
 - [[docs/hoplite:hoplite-graph]] — the structure: nodes, edges, properties, stereotypes, vocabulary.
 - [[docs/notes:one-walk-verb-spans-the-corpus-and-vocabulary-graphs]] — the two-graph and namespace-address model.
