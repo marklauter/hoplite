@@ -1,13 +1,13 @@
 ---
 title: claim
-summary: "A feature advanced as true by the author or Hoplite."
+summary: "A feature advanced as true."
 tags: [hoplite, glossary]
 created: 2026-06-19
-document.status: evolving
-edges: [contrast::docs/hoplite/glossary:fact]
+document.status: locked
+edges: [is-a::docs/hoplite/glossary:feature, contrast::docs/hoplite/glossary:fact]
 ---
 
-A feature advanced as true by the author or Hoplite.
+A feature advanced as true.
 
 ## Examples
 
