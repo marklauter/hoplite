@@ -14,4 +14,6 @@ Record one event in the project's path as a dated entry under `docs/journal/` �
 - **Recoverable from the entry alone.** The reader has lost the context you held then → name it all in full — files, functions, numbers, dates; never "the thing we discussed."
 - **Link the path's landmarks.** Wikilink the notes, entries, and terms the cycle turns on where the connection is durable, so the path stays walkable from either end (edge/link syntax: `docs/hoplite/expressing-edges.md`).
 
+Write to the [Microsoft Writing Style Guide](https://learn.microsoft.com/style-guide/welcome/) — plain and scannable; say what a thing is before how to use it.
+
 Write `docs/journal/<YYYY-MM-DD>-<HHMM>-<slug>.md`: `title`, `summary`, `tags: [journal, <domain>]`, `created`. Open with the context going in, then what you tried, expected, and learned.

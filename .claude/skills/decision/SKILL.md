@@ -13,6 +13,8 @@ A decision note records a choice hard enough to reverse that it earns a durable 
 
 **Offer before you write.** A decision is consequential — name the choice and the alternatives, and write only on the user's agreement.
 
+Write to the [Microsoft Writing Style Guide](https://learn.microsoft.com/style-guide/welcome/) — plain and scannable; say what a thing is before how to use it.
+
 Write `docs/notes/<slug>.md` (kebab-case of the title):
 
 ```markdown

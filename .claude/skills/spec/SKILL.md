@@ -11,6 +11,8 @@ A spec document is a composite concept reduced to the smallest prose that still 
 - **Smallest that carries it.** Cut prose the concept doesn't need; a spec is a kernel, not a tour.
 - **Next cut costs meaning → lock.** `locked` once it stops moving, `evolving` while it does.
 
+Write to the [Microsoft Writing Style Guide](https://learn.microsoft.com/style-guide/welcome/) — plain and scannable; say what a thing is before how to use it.
+
 Write `docs/hoplite/<concept>.md`:
 
 ```markdown
