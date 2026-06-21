@@ -13,7 +13,7 @@ The model lives in the corpus, addressed by path:
 docs/hoplite/             ← the spec corpus
 ├── glossary/             ← leaf kernels: one term each
 │   ├── README.md         ← hand-maintained index
-│   └── <term>.md         ← title, summary, status, category, aliases, contrast:: edges
+│   └── <term>.md         ← title, summary, status, aliases, specializes::/contrast:: edges
 └── *.md                  ← composite kernels: concepts built from the terms (affordances, frontmatter, graph)
 docs/journal/             ← the why: the design path, each tradeoff and its reasoning
 docs/notes/               ← current state: findings, decisions, scratch (mixed bag)
