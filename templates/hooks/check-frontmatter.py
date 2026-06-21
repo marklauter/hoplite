@@ -14,8 +14,12 @@ catches the structural issues that are cheap to detect:
 - Either of the two mandatory keys (title, summary) absent. Both are bare
   first-class fields; the other bare fields (``created``, ``tags``, ``aliases``)
   and everything in the property bag (any ``document.<key>``) are optional.
-  The scanner still flattens nested ``document:`` / ``edge:`` blocks to dotted keys,
-  mirroring the indexer.
+  The scanner flattens a nested ``document:`` block to dotted keys.
+- A retired ``edge.<stereotype>`` key. Edges are now the bare ``edges`` list;
+  the advisory points the author at the new form.
+- A malformed edge target — a frontmatter ``edges`` entry or an in-body
+  ``[[wikilink]]``. Both are validated against the shared grammar in the sibling
+  ``edge_grammar`` module, the executable form of docs/hoplite/expressing-edges.md.
 
 Wrong types, typos in keys, malformed YAML — left to the indexer.
 
@@ -28,29 +32,50 @@ import json
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from edge_grammar import (  # noqa: E402  — sibling module; the hook runs by path (see hooks.json)
+    frontmatter_edge_targets,
+    inline_wikilinks,
+    validate_target,
+)
+
 WATCHED_TOOLS = {"Write", "Edit", "MultiEdit"}
 REQUIRED_FIELDS = {"title", "summary"}
 # Top-level keys whose indented mapping expands into dotted keys (the nested form).
-NESTED_CLASSES = {"document", "edge"}
+# `edge` is retired: edges are the bare `edges` list, not an `edge.<stereotype>` namespace.
+NESTED_CLASSES = {"document"}
 
+# Guidance is scoped to the error class: a structural frontmatter fault gets the
+# full canonical shape; a malformed edge gets only the edge grammar, since the
+# diagnostic already names the specific mistake.
 _FRONTMATTER_GUIDANCE = """\
+Hoplite skips documents with malformed frontmatter at reindex. Canonical shape:
+
 {{components/shape/frontmatter.md}}
+"""
+
+_EDGE_GUIDANCE = """\
+An edge target is a name or `namespace:page` — no `.md` extension — optionally led \
+by a `stereotype::` prefix. Display text (`|`) and embedding (`!`) are inline-only. \
+The full grammar and examples are the locked spec at docs/hoplite/expressing-edges.md.
 """
 
 ADVISORY_TEMPLATE = """\
 [frontmatter-check] {path} — {issue}.
 
-Hoplite skips documents with malformed frontmatter at reindex. Canonical shape:
-
 {guidance}
 """
 
 
-def _frontmatter_issue(path: Path) -> str | None:
-    """Return the first structural issue found in the file's frontmatter, or None.
+def _document_issue(path: Path) -> tuple[str, str] | None:
+    """Return ``(kind, issue)`` for the first/aggregated problem, or ``None``.
 
-    Catches missing opening fence, missing closing fence, and missing mandatory
-    keys. Doesn't validate value types or YAML correctness — that's the indexer's job.
+    ``kind`` selects the advisory's guidance: ``"frontmatter"`` for a structural
+    fault (fence, mandatory key), ``"edge"`` for a retired key or malformed edge
+    target. Order: opening fence, closing fence, mandatory keys, retired `edge.`
+    key — each returns immediately — then every malformed edge target, frontmatter
+    `edges` entries and in-body `[[wikilink]]`s alike, collected into one advisory.
+    Value types and YAML correctness are the indexer's job.
     """
     try:
         text = path.read_text(encoding="utf-8-sig")
@@ -59,18 +84,20 @@ def _frontmatter_issue(path: Path) -> str | None:
 
     lines = text.splitlines()
     if not lines or lines[0] != "---":
-        return "missing opening --- fence"
+        return ("frontmatter", "missing opening --- fence")
 
     closing_idx = next(
         (i for i, line in enumerate(lines[1:], start=1) if line == "---"),
         None,
     )
     if closing_idx is None:
-        return "missing closing --- fence"
+        return ("frontmatter", "missing closing --- fence")
+
+    fm_lines = lines[1:closing_idx]
 
     keys: set[str] = set()
-    nested_class: str | None = None  # set while inside a `document:`/`edge:` block
-    for line in lines[1:closing_idx]:
+    nested_class: str | None = None  # set while inside a `document:` block
+    for line in fm_lines:
         if not line or line.lstrip().startswith("#"):
             continue
         indented = line[0].isspace()
@@ -94,7 +121,31 @@ def _frontmatter_issue(path: Path) -> str | None:
 
     missing = sorted(REQUIRED_FIELDS - keys)
     if missing:
-        return f"missing mandatory fields: {missing}"
+        return ("frontmatter", f"missing mandatory fields: {missing}")
+
+    retired = sorted(k for k in keys if k == "edge" or k.startswith("edge."))
+    if retired:
+        return (
+            "edge",
+            f"retired edge key(s) {retired}: express edges as one bare `edges` list, "
+            "each entry a `stereotype::target` string — e.g. `edges: [blocked_by::foo]`",
+        )
+
+    problems: list[str] = []
+    for target in frontmatter_edge_targets(fm_lines):
+        msg = validate_target(target)
+        if msg is not None:
+            problems.append(f"edges: {msg}")
+
+    offset = closing_idx + 1  # body line 1 == file line closing_idx + 2
+    body = "\n".join(lines[closing_idx + 1 :])
+    for target, body_line in inline_wikilinks(body):
+        msg = validate_target(target, inline=True)
+        if msg is not None:
+            problems.append(f"line {body_line + offset}: {msg}")
+
+    if problems:
+        return ("edge", "malformed edge target(s):\n" + "\n".join(f"  - {p}" for p in problems))
 
     return None
 
@@ -122,17 +173,25 @@ def main() -> int:
     if not path.is_file():
         return 0
 
-    issue = _frontmatter_issue(path)
-    if issue is None:
+    result = _document_issue(path)
+    if result is None:
         return 0
 
-    sys.stderr.write(
-        ADVISORY_TEMPLATE.format(
-            path=file_path,
-            issue=issue,
-            guidance=_FRONTMATTER_GUIDANCE,
-        ),
+    kind, issue = result
+    guidance = _EDGE_GUIDANCE if kind == "edge" else _FRONTMATTER_GUIDANCE
+    advisory = ADVISORY_TEMPLATE.format(
+        path=file_path,
+        issue=issue,
+        guidance=guidance,
     )
+    # Write UTF-8 bytes directly: the guidance carries em-dashes and other
+    # non-ASCII, and a Windows interpreter's text-mode stderr defaults to a
+    # locale codec (cp1252), which Claude Code then misreads as UTF-8 (mojibake).
+    try:
+        sys.stderr.buffer.write(advisory.encode("utf-8"))
+        sys.stderr.buffer.flush()
+    except (AttributeError, ValueError):
+        sys.stderr.write(advisory)
     return 2
 
 

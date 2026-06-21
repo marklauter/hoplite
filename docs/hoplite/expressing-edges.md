@@ -43,6 +43,23 @@ A bare wikilink expresses an untyped edge. Lead the target with a `stereotype::`
 
 A link whose target does not exist is a [[ghost]] — the wiki redlink: it surfaces as backlog and is creatable. Expressed explicitly as `[[ghost/<slug>]]`.
 
+### Grammar
+
+The forms above reduce to one regular grammar. `SEG` is a single segment — any run without whitespace or the delimiters `: / # | [ ] !`:
+
+```
+SEG    = [^\s:/#|\[\]!]+
+path   = SEG ("/" SEG)*
+anchor = "#^" SEG | ("#" SEG)+
+target = (SEG "::")?     # stereotype
+         (path ":")?     # namespace
+         "/"?            # leading slash, relative-to-root
+         path            # page and subpages
+         anchor?
+```
+
+Two constraints sit outside the structural grammar: a target carries no `.md` extension, and the rendering features — display text (`|...`) and the embed marker (`!`) — are inline-only, never inside the target. The executable form — the assembled regex plus a `validate_target` checker covering both surfaces — is `plugins/hoplite/hooks/edge_grammar.py`; the `check-frontmatter` hook applies it to every `edges` entry and in-body `[[wikilink]]` at write time.
+
 ## Frontmatter edges
 
 `edges: [<target>, ...]` expresses edges in frontmatter. Each `<target>` is exactly a wikilink target — the same string you would write inside `[[ ]]`, `stereotype::` prefix and all.
