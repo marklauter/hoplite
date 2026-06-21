@@ -40,7 +40,14 @@ edges: [specializes::docs/hoplite/glossary:<broader-term>, contrast::docs/hoplit
 - `aliases`, `document.retired`, and `edges` are optional; omit when empty.
 - **Edges follow the wikilink grammar** — frontmatter edges are one `edges:` list; each entry is a `stereotype::target` string, the target namespace-qualified with no `.md`: `edges: [contrast::docs/hoplite/glossary:jaccard]`, not a file path and not an `edge.<stereotype>` key. The full grammar lives in `docs/hoplite/expressing-edges.md`.
 - **Index it** — add `- [[docs/hoplite/glossary:<term>]]` to the `## Terms` list in `docs/hoplite/glossary/README.md`, kept alphabetical.
-- **Reciprocate contrasts** — for every `contrast::` edge, add this term back on that entry (contrast is mutual), and give it a bullet in the optional `## Contrasts` section drawing the boundary. One bullet per target; omit the section when there are none.
-- **Specialize upward, never down** — a genus declares no edge to its species. The specialization edge points from the narrower term to the broader one (`specializes::`) and is *not* reciprocated: the genus stays ignorant of what extends it, so coining a new species never forces an edit to the parent. The asymmetric counterpart to reciprocated contrast — a contrast is mutual, a specialization is one-way.
-- **Compose toward the part** — when a term is built from another, the composition edge (`uses::`) points from the whole to the part and is *not* reciprocated: the part stays ignorant of what uses it, so a new consumer never forces an edit to the component. `bm25 → uses → idf` — BM25 is built on IDF; IDF knows nothing of BM25. One-way, like `specializes::`.
 - **Examples** — the optional `## Examples` section illustrates the term with concrete instances; the definition stays in the summary, and an example never restates it. Omit the section when there are none.
+
+## Edge stereotypes
+
+A stereotype names the relationship an edge expresses, read as `<source> <stereotype> <target>`. The vocabulary is **open**: when a term relates to another in a way the known stereotypes don't capture, coin a verb that reads cleanly in that frame and just use it — no need to register it here. One rule places any stereotype, new or known: **direction follows dependency, and only symmetric edges reciprocate.**
+
+- **Directional — the default.** When one term depends on another's meaning, the edge is written on the dependent's side only and points at the depended-upon. The target stays ignorant of what points at it, so coining a new dependent never forces an edit to the target. A freshly coined stereotype is directional unless the relationship genuinely reads identical from both ends. The known directional stereotypes:
+  - `specializes::` — species → genus (a narrower term is-a broader one).
+  - `uses::` — whole → part (a term built from a component).
+  - `estimates::` — estimator → estimated (a term that approximates another's value).
+- **Symmetric — reciprocated.** When the relationship reads the same from both ends, write it on both terms. The known symmetric stereotype is `contrast::` — a mutual boundary; for every `contrast::` edge, add this term back on the target and give it a `## Contrasts` bullet drawing the boundary. One bullet per target; omit the section when there are none.
