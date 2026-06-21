@@ -55,9 +55,10 @@ Hoplite skips documents with malformed frontmatter at reindex. Canonical shape:
 """
 
 _EDGE_GUIDANCE = """\
-An edge target is a name or `namespace:page` — no `.md` extension — optionally led \
-by a `stereotype::` prefix. Display text (`|`) and embedding (`!`) are inline-only. \
-The full grammar and examples are the locked spec at docs/hoplite/expressing-edges.md.
+An edge target is a page name `[A-Za-z0-9._-]`, optionally namespace-qualified with a \
+colon (`docs/hoplite:term`) and led by a `stereotype::` prefix. There are no subpages, so a \
+directory path needs the colon — `docs/hoplite/term` is invalid. Display text (`|`) and \
+embedding (`!`) are inline-only. The full grammar is the locked spec at docs/hoplite/expressing-edges.md.
 """
 
 ADVISORY_TEMPLATE = """\

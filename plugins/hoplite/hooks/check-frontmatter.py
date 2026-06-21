@@ -115,7 +115,7 @@ An edge is a labeled link from this document to another. Express edges in the ba
 edges: [refines::circle, contrast::square]
 ```
 
-- **Target.** A page name (`circle`) or a namespace-qualified page (`lib/shapes:circle`, a single colon dividing namespace from page). No `.md` extension. Subpages divide with `/`, a section with `#`, a block with `#^`, and an intentional open loop is `ghost/<slug>`.
+- **Target.** A page name — strict ASCII filename characters `[A-Za-z0-9._-]`, so the `.md` extension is just dots in a name. Optionally namespace-qualify it: `lib/shapes:circle`, a colon dividing the directory path from the page. There are no subpages — `/` lives only in a namespace, so a directory path always needs the colon (`docs/hoplite:term`, never `docs/hoplite/term`). A section is `#`, a block is `#^`, and an open loop is the ghost namespace `ghost:<slug>`.
 - **Stereotype.** Lead the target with `stereotype::` to type the edge — `refines::circle`. A bare target with no `::` is an untyped edge. The `::` is the stereotype separator; the single `:` stays the namespace separator, so the two never collide: `refines::lib/shapes:circle`.
 - **No rendering.** Display text (`|`) and embedding (`!`) are inline-only; a frontmatter edge is data, never rendered.
 - **Equivalence.** `edges: [refines::circle]` and an in-body `[[refines::circle]]` express the same edge — identical target string, structured versus inline.
@@ -152,9 +152,10 @@ edges: [supports::sqlite-hybrid]
 """
 
 _EDGE_GUIDANCE = """\
-An edge target is a name or `namespace:page` — no `.md` extension — optionally led \
-by a `stereotype::` prefix. Display text (`|`) and embedding (`!`) are inline-only. \
-The full grammar and examples are the locked spec at docs/hoplite/expressing-edges.md.
+An edge target is a page name `[A-Za-z0-9._-]`, optionally namespace-qualified with a \
+colon (`docs/hoplite:term`) and led by a `stereotype::` prefix. There are no subpages, so a \
+directory path needs the colon — `docs/hoplite/term` is invalid. Display text (`|`) and \
+embedding (`!`) are inline-only. The full grammar is the locked spec at docs/hoplite/expressing-edges.md.
 """
 
 ADVISORY_TEMPLATE = """\

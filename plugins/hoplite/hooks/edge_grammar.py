@@ -17,48 +17,59 @@ import re
 
 __all__ = ["TARGET_RE", "frontmatter_edge_targets", "inline_wikilinks", "validate_target"]
 
-# One path segment: a run without the structural delimiters or whitespace.
-_SEG = r"[^\s:/#|\[\]!]+"
-# A path: one or more segments joined by `/`.
-_PATH = rf"{_SEG}(?:/{_SEG})*"
-# An anchor: a single `#^block`, or one-or-more `#section` headings.
-_ANCHOR = rf"(?:\#\^{_SEG}|(?:\#{_SEG})+)"
+# A name — the character set of a page, a stereotype, and an anchor label. Strict
+# ASCII filename characters; the structural delimiters (`/ : # | ! [ ]`) are absent
+# by construction, so a name never collides with the grammar.
+_NAME = r"[A-Za-z0-9._-]+"
+# A namespace — name characters plus the path separator `/`, which is an ordinary
+# character here, not a parsed separator: `docs//x` and `docs/` are accepted.
+_NS = r"[A-Za-z0-9._/-]+"
+# An anchor — a single `#^block`, or one-or-more `#section` headings.
+_ANCHOR = rf"(?:\#\^{_NAME}|(?:\#{_NAME})+)"
 
-# The edge-target grammar — the link portion, after any `stereotype::` prefix and
-# minus any inline `|display`. See docs/hoplite/expressing-edges.md.
+# The edge-target grammar — the link portion, after any inline `|display` is
+# stripped. There are no subpages: `/` lives only inside a namespace, so a
+# slash-bearing target without a `:` has no parseable page and is rejected.
+# See docs/hoplite/expressing-edges.md.
 TARGET_RE = re.compile(
     rf"""
     ^
-    (?:{_SEG}::)?     # optional  stereotype::
-    (?:{_PATH}:)?     # optional  namespace:    (a path, divided by a single colon)
-    /?                # optional  leading slash  (relative-to-root)
-    {_PATH}           # page and subpages        (../parent is a '..' segment)
-    {_ANCHOR}?        # optional  #section / #section#sub / #^block
+    (?:
+        (?:{_NAME}::)?      # optional  stereotype::
+        (?:{_NS}:)?         # optional  namespace:    ('/' is an ordinary char here)
+        {_NAME}             # page — one filename, no '/'
+        {_ANCHOR}?          # optional  anchor
+      |
+        {_ANCHOR}           # OR a same-page anchor (#section / #^block)
+    )
     $
     """,
     re.VERBOSE,
 )
 
-# `.md` as a path segment — at end, or before a `#` anchor or `/` subpath.
-_MD_EXT_RE = re.compile(r"\.md($|[#/])")
-
 
 def validate_target(target: str, *, inline: bool = False) -> str | None:
     """Return a diagnostic if ``target`` violates the edge grammar, else ``None``.
 
-    ``inline`` permits display text and reports the embed marker as misplaced; a
-    frontmatter edge (``inline=False``) rejects all rendering. The specific checks
-    run before the structural fallback so the diagnostic names the actual mistake.
+    The regex is the gate: a target is valid iff it matches ``TARGET_RE``. The `.md`
+    extension is optional — an ordinary segment to the grammar — so there is no
+    semantic rule outside it. The branch below runs only when the gate fails, purely
+    to name *why*, so the verdict and the explanation can never disagree. ``inline``
+    strips the free-form display text (``name|shown``) before gating; a frontmatter
+    edge keeps the ``|`` so the gate rejects it.
     """
     t = target.strip().strip("\"'").strip()
+    if inline:
+        t = t.split("|", 1)[0].strip()  # display text is free-form; gate the link
+
+    if TARGET_RE.match(t):  # gate — the grammar is the whole verdict
+        return None
+
+    # Diagnose the gate failure: name the specific mistake, else fall back.
     if not t:
         return "empty edge target"
     if "|" in t:
-        if not inline:
-            return f"`{target}`: display text `|` is inline-only; a frontmatter edge carries no rendering"
-        t = t.split("|", 1)[0].strip()
-        if not t:
-            return f"`{target}`: empty target before `|`"
+        return f"`{target}`: display text `|` is inline-only; a frontmatter edge carries no rendering"
     if "!" in t:
         return f"`{target}`: `!` marks the embed site, not the target"
     if t.startswith("::"):
@@ -67,11 +78,7 @@ def validate_target(target: str, *, inline: bool = False) -> str | None:
         return f"`{target}`: more than one `::` stereotype separator"
     if t.endswith("::"):
         return f"`{target}`: empty target after `::`"
-    if _MD_EXT_RE.search(t):
-        return f"`{target}`: drop the `.md` — wikilink targets are extensionless"
-    if not TARGET_RE.match(t):
-        return f"`{target}`: does not match the edge-target grammar"
-    return None
+    return f"`{target}`: does not match the edge-target grammar"
 
 
 def frontmatter_edge_targets(fm_lines: list[str]) -> list[str]:

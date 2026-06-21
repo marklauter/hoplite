@@ -16,14 +16,12 @@ Internal references, following the standard wiki conventions (MediaWiki, Obsidia
 
 ### Target
 
-The target is a page name, optionally qualified by its [[namespace]]. No `.md` extension.
+The target is a page name — `NAME = [A-Za-z0-9._-]` (strict ASCII filename characters; the `.md` extension is just dots in a name, nothing special). Optionally qualify it with a [[namespace]].
 
 - **By name** — `[[circle]]`: the resolver finds the unique page.
-- **Namespace-qualified** — a namespace is a path; a colon divides namespace from page: `[[lib/shapes:circle]]`. Qualify only when the bare name would be ambiguous.
+- **Namespace-qualified** — a namespace is a directory path, and a colon divides it from the page: `[[lib/shapes:circle]]`, `[[docs/hoplite/glossary:term]]`. Inside a namespace `/` is an ordinary character, not a parsed separator.
 
-### Subpages
-
-`/` divides subpages, `:` divides namespace from page, so the two never collide: `[[lib/shapes:circle/area]]` is page `circle`, subpage `area`. Relative forms: `[[/child]]`, `[[../parent]]`.
+There are no subpages, so `/` appears *only* inside a namespace — a colon is mandatory the moment a directory path is involved. `[[docs/hoplite/term]]` is invalid; it must be `[[docs/hoplite:term]]`.
 
 ### Sections and blocks
 
@@ -41,24 +39,35 @@ A bare wikilink expresses an untyped edge. Lead the target with a `stereotype::`
 
 ### Ghosts
 
-A link whose target does not exist is a [[ghost]] — the wiki redlink: it surfaces as backlog and is creatable. Expressed explicitly as `[[ghost/<slug>]]`.
+A link whose target does not exist is a [[ghost]] — the wiki redlink: it surfaces as backlog and is creatable. A ghost lives in the mandatory `ghost` namespace: `[[ghost:<slug>]]`, or with a stereotype `[[<stereotype>::ghost:<slug>]]`.
 
 ### Grammar
 
-The forms above reduce to one regular grammar. `SEG` is a single segment — any run without whitespace or the delimiters `: / # | [ ] !`:
+The forms above reduce to one regular grammar over two character classes — `NAME` for a page, stereotype, and anchor label, and `NS` for a namespace (the same set plus `/`, an ordinary character here):
 
 ```
-SEG    = [^\s:/#|\[\]!]+
-path   = SEG ("/" SEG)*
-anchor = "#^" SEG | ("#" SEG)+
-target = (SEG "::")?     # stereotype
-         (path ":")?     # namespace
-         "/"?            # leading slash, relative-to-root
-         path            # page and subpages
-         anchor?
+NAME   = [A-Za-z0-9._-]+
+NS     = [A-Za-z0-9._/-]+
+anchor = "#^" NAME | ("#" NAME)+
+target = (NAME "::")?  (NS ":")?  NAME  anchor?    # (stereotyped?) (namespaced?) page
+       | anchor                                      # OR a same-page anchor
 ```
 
-Two constraints sit outside the structural grammar: a target carries no `.md` extension, and the rendering features — display text (`|...`) and the embed marker (`!`) — are inline-only, never inside the target. The executable form — the assembled regex plus a `validate_target` checker covering both surfaces — is `plugins/hoplite/hooks/edge_grammar.py`; the `check-frontmatter` hook applies it to every `edges` entry and in-body `[[wikilink]]` at write time.
+As the `TARGET_RE` regex (`re.VERBOSE`):
+
+```
+^
+(?:
+    (?:[A-Za-z0-9._-]+::)?                            # stereotype
+    (?:[A-Za-z0-9._/-]+:)?                            # namespace
+    [A-Za-z0-9._-]+                                   # page — one filename, no '/'
+    (?:\#\^[A-Za-z0-9._-]+|(?:\#[A-Za-z0-9._-]+)+)?   # anchor
+  | (?:\#\^[A-Za-z0-9._-]+|(?:\#[A-Za-z0-9._-]+)+)    # same-page anchor only
+)
+$
+```
+
+There are no subpages: `/` is a namespace character only, so a slash-bearing target without a `:` has no parseable page and is rejected — `docs/hoplite/term` fails, `docs/hoplite:term` passes. Rendering features never appear inside a target: `NAME` excludes `|` and `!`, so a frontmatter edge bearing either fails the match; inline, display text after `|` is stripped before matching. The executable form — `TARGET_RE` plus a `validate_target` checker and the frontmatter/inline extractors, with `test_edge_grammar.py` exercising the regex independently — is `plugins/hoplite/hooks/edge_grammar.py`. The `check-frontmatter` hook applies it to every `edges` entry and in-body `[[wikilink]]` at write time.
 
 ## Frontmatter edges
 
