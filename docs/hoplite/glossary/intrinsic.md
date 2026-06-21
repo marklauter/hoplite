@@ -1,13 +1,14 @@
 ---
 title: intrinsic
-summary: "A fact's provenance: given by the document's own existence, originated by no one."
+summary: "Provenance given by the document's own existence."
 tags: [hoplite, glossary]
 created: 2026-06-19
-document.status: evolving
-document.category: provenance value
-edge.contrast: [docs/hoplite/glossary/assert.md, docs/hoplite/glossary/infer.md]
+document.status: locked
+edges: [is-a::docs/hoplite/glossary:provenance, contrast::docs/hoplite/glossary:asserted]
 ---
 
-A fact's provenance: given by the document's own existence, originated by no one.
+Provenance given by the document's own existence.
 
-**Also.** the one origin that is not a claim — the feature it marks is a **fact**; intrinsic names where that fact comes from. Every intrinsic feature is a fact and conversely: the term names the origin, fact the kind.
+## Contrasts
+
+- `asserted` — intrinsic is given by the document's own existence; asserted is advanced by someone. A feature is one or the other.

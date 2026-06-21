@@ -3,8 +3,8 @@ title: fact
 summary: "An intrinsic feature."
 tags: [hoplite, glossary]
 created: 2026-06-19
-document.status: evolving
-edges: [contrast::docs/hoplite/glossary:claim]
+document.status: locked
+edges: [is-a::docs/hoplite/glossary:feature, contrast::docs/hoplite/glossary:claim]
 ---
 
 An intrinsic feature.
@@ -14,6 +14,7 @@ An intrinsic feature.
 - The document's path and file name.
 - Its word count, or that its body opens with an H1 — read straight off the file.
 - Its file timestamp or git authorship — given by the file's history, not by anyone. (A `created:` or `author:` frontmatter value, by contrast, is a claim — the author typed it.)
+- A fingerprint of its content, such as its MinHash — computed deterministically from the bytes, asserted by no one. (The *similarity edge* derived from comparing two fingerprints, by contrast, is inferred — a claim.)
 
 ## Contrasts
 

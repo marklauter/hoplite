@@ -13,6 +13,7 @@ The Hoplite domain terms, one node per term. This page links them and keeps the 
 ## Terms
 
 - [[docs/hoplite/glossary:assert]]
+- [[docs/hoplite/glossary:asserted]]
 - [[docs/hoplite/glossary:bm25]]
 - [[docs/hoplite/glossary:claim]]
 - [[docs/hoplite/glossary:confidence]]
