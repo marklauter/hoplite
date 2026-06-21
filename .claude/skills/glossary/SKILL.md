@@ -38,16 +38,16 @@ edges: [specializes::docs/hoplite/glossary:<broader-term>, contrast::docs/hoplit
 ```
 
 - `aliases`, `document.retired`, and `edges` are optional; omit when empty.
-- **Edges follow the wikilink grammar** — frontmatter edges are one `edges:` list; each entry is a `stereotype::target` string, the target namespace-qualified with no `.md`: `edges: [contrast::docs/hoplite/glossary:jaccard]`, not a file path and not an `edge.<stereotype>` key. The full grammar lives in `docs/hoplite/expressing-edges.md`.
+- **Edges follow the wikilink grammar** — each `edges:` entry is a `stereotype::target` string, not a file path and not an `edge.<stereotype>` key (edge/link syntax: `docs/hoplite/expressing-edges.md`).
 - **Index it** — add `- [[docs/hoplite/glossary:<term>]]` to the `## Terms` list in `docs/hoplite/glossary/README.md`, kept alphabetical.
 - **Examples** — the optional `## Examples` section illustrates the term with concrete instances; the definition stays in the summary, and an example never restates it. Omit the section when there are none.
 
 ## Edge stereotypes
 
-A stereotype names the relationship an edge expresses, read as `<source> <stereotype> <target>`. The vocabulary is **open**: when a term relates to another in a way the known stereotypes don't capture, coin a verb that reads cleanly in that frame and just use it — no need to register it here. One rule places any stereotype, new or known: **direction follows dependency, and only symmetric edges reciprocate.**
+A **stereotype** is an open-vocabulary label naming the relationship an edge expresses, read `<source> <stereotype> <target>`. The vocabulary is open — coin a verb that reads cleanly in that frame and use it; there's no registry, and an edge may bear several. One rule places any stereotype: **direction follows dependency; only symmetric edges reciprocate.**
 
-- **Directional — the default.** When one term depends on another's meaning, the edge is written on the dependent's side only and points at the depended-upon. The target stays ignorant of what points at it, so coining a new dependent never forces an edit to the target. A freshly coined stereotype is directional unless the relationship genuinely reads identical from both ends. The known directional stereotypes:
-  - `specializes::` — species → genus (a narrower term is-a broader one).
-  - `uses::` — whole → part (a term built from a component).
-  - `estimates::` — estimator → estimated (a term that approximates another's value).
-- **Symmetric — reciprocated.** When the relationship reads the same from both ends, write it on both terms. The known symmetric stereotype is `contrast::` — a mutual boundary; for every `contrast::` edge, add this term back on the target and give it a `## Contrasts` bullet drawing the boundary. One bullet per target; omit the section when there are none.
+- **Directional — the default.** The edge lives on the dependent's side and points at what it depends on; the target stays ignorant, so a new dependent never edits it.
+  - `specializes::` — species → genus.
+  - `uses::` — whole → part.
+  - `estimates::` — estimator → estimated.
+- **Symmetric — reciprocated.** The relationship reads identical from both ends, so write it on both terms. `contrast::` — a mutual boundary: add this term back on the target and give it a `## Contrasts` bullet, one per target.
