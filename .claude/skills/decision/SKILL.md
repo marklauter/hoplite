@@ -23,7 +23,7 @@ title: <the decision, stated as a claim>
 summary: "<one line — what was decided and why>"
 tags: [note, decision, <domain>]
 created: YYYY-MM-DD
-document.status: <evolving | locked>
+status: <evolving | locked>
 ---
 
 # <the decision, stated as a claim>

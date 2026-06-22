@@ -21,7 +21,10 @@ title: <concept>
 summary: "<one line — what the concept is, built from its terms>"
 tags: [hoplite, <domain>]
 created: YYYY-MM-DD
-document.status: <evolving | locked>
+status: <evolving | locked>
+cites:
+  - "[[<term>]]"
+  - "[[<other-term>]]"
 ---
 
 # <concept>

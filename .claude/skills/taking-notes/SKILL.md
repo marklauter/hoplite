@@ -15,4 +15,4 @@ Capture the current state of one idea as a note under `docs/notes/` — repo mem
 - **Don't duplicate the source.** What code, CLAUDE.md, or git already states → reference it, never copy it; copies drift. Cross-repo facts and user preferences → memory, not a note.
 - **Link what it sits beside.** Wikilink the notes, terms, and sources the note turns on where the connection is durable, so it surfaces in their neighbourhood (edge/link syntax: `docs/hoplite/expressing-edges.md`).
 
-Write `docs/notes/<slug>.md` (slug = the title, kebab-case): `title`, `summary`, `tags: [note, <domain>]`, `created`, `document.status` (`evolving` while in flux, `locked` when settled).
+Write `docs/notes/<slug>.md` (slug = the title, kebab-case): `title`, `summary`, `tags: [note, <domain>]`, `created`, `status` (`evolving` while in flux, `locked` when settled).
