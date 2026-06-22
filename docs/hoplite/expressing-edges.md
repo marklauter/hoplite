@@ -3,7 +3,7 @@ title: Expressing edges
 summary: "The two ways to express an edge — an inline wikilink (untyped) and a frontmatter property whose value is a wikilink (typed) — Obsidian-native, sharing one target grammar. A markdown link is plain hypertext, not an edge."
 tags: [hoplite, edges, spec]
 created: 2026-06-20
-status: evolving
+status: locked
 ---
 
 # Expressing edges
