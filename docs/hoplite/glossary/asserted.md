@@ -4,6 +4,7 @@ summary: "Provenance given by an act of assertion."
 tags: [hoplite, glossary]
 created: 2026-06-21
 status: locked
+retired: [authored, declared, described]
 is-a: "[[glossary/provenance]]"
 contrast: "[[glossary/intrinsic]]"
 ---
