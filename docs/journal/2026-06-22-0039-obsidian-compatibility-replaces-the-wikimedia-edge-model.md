@@ -1,6 +1,6 @@
 ---
 title: Obsidian compatibility replaces the WikiMedia edge model
-summary: Formalizing the wikilink edge syntax on a rich WikiMedia format broke Obsidian; the fix was to drop the colons and sub-pages and rebuild on Obsidian's own Properties model, which already covered what we needed.
+summary: Formalizing the wikilink edge syntax on a rich WikiMedia format hit validation ambiguity and Obsidian incompatibility; we pivoted to Obsidian's own Properties model, which already covered what we needed.
 tags: [journal, obsidian, edges, frontmatter, milestone]
 created: 2026-06-22
 ---
@@ -17,7 +17,7 @@ We built the rich format first — `[[stereotype::namespace:page]]`, sub-pages a
 
 Then we checked the format against Obsidian, and it broke outright: Obsidian forbids `:` in link targets and addresses notes by folder path, not colon-namespaces. The rich model and Obsidian were structurally opposed, not partially compatible.
 
-The wrong turn was building the format before confirming it could be validated or live in Obsidian. The cost was a refactor.
+This wasn't a wrong turn — it was prototyping while eating our own dogfood. We set a hypothesis, found an inconsistency in use, researched it, and pivoted once better informed, making the tradeoffs deliberately and staying with the design until the full vision held and Obsidian compatibility was achieved. Each refactor was the price of that.
 
 ## Decision
 
