@@ -15,7 +15,7 @@ A decision note records a choice hard enough to reverse that it earns a durable 
 
 Write to the [Microsoft Writing Style Guide](https://learn.microsoft.com/style-guide/welcome/) — plain and scannable; say what a thing is before how to use it.
 
-Write `docs/notes/<slug>.md` (kebab-case of the title):
+Write `docs/notes/<slug>.md` (kebab-case of the title) to the frontmatter standard (`docs/hoplite/frontmatter.md`):
 
 ```markdown
 ---

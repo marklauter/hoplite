@@ -7,7 +7,7 @@ description: Triage notes tagged `todo` — assign priority, effort, and status,
 
 A todo is a note tagged `todo` — an action item the corpus tracks. The tag is immutable; its lifecycle lives in three properties, so history stays queryable without rewriting it. Triage sets those properties; state is a property, never a tag.
 
-- **Untriaged todo → assign.** A `todo` note with no triage fields → set `priority` (high|medium|low), `effort` (high|medium|low), `status: open`.
+- **Untriaged todo → assign.** A `todo` note with no triage fields → set `priority` (high|medium|low), `effort` (high|medium|low), `status: open` (frontmatter standard: `docs/hoplite/frontmatter.md`).
 - **Judge effort from the code, not the note.** Reading the file the note points at surfaces three shapes: *closure* (already done → `closed` plus a `## Resolution` naming where it landed), *fork* (two unrelated changes in one note → split into two), *revised effort* (a "localized" fix that actually needs migration or tests).
 - **Blocked → link it.** Todos that must close first → a `blocked_by` edge property whose value is a quoted wikilink, like `blocked_by: "[[<target>]]"` (a block-style list when there are several; edge/link syntax: `docs/hoplite/expressing-edges.md`).
 - **Done → close.** Work landed → `status: closed`, body gets `## Resolution`. Parked → `deferred`, naming what would un-park it (a blocker resolves, the scale arrives). Won't-do → `declined`, body says why.

@@ -13,7 +13,7 @@ A spec document is a composite concept reduced to the smallest prose that still 
 
 Write to the [Microsoft Writing Style Guide](https://learn.microsoft.com/style-guide/welcome/) — plain and scannable; say what a thing is before how to use it.
 
-Write `docs/hoplite/<concept>.md`:
+Write `docs/hoplite/<concept>.md` to the frontmatter standard (`docs/hoplite/frontmatter.md`):
 
 ```markdown
 ---

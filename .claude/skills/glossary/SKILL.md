@@ -14,7 +14,7 @@ A glossary entry is a term reduced to its kernel: the word, plus the smallest ph
 
 Write to the [Microsoft Writing Style Guide](https://learn.microsoft.com/style-guide/welcome/) — plain and scannable; say what a thing is before how to use it.
 
-Write `docs/hoplite/glossary/<term>.md` (kebab-case):
+Write `docs/hoplite/glossary/<term>.md` (kebab-case) to the frontmatter standard (`docs/hoplite/frontmatter.md`):
 
 ```markdown
 ---
