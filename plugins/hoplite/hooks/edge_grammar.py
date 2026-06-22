@@ -1,131 +1,135 @@
 """Edge-target grammar for the Hoplite corpus — validation and extraction.
 
-Dependency-free (stdlib only) so the ``check-frontmatter`` hook, which runs under
-whatever ``python`` is on PATH rather than the project venv, can import it as a
-sibling. The grammar enforced here is the locked spec at
-``docs/hoplite/expressing-edges.md``; this module is its executable form.
+Stdlib only, so the ``check-frontmatter`` hook (which runs under whatever ``python``
+is on PATH, not the project venv) can import it as a sibling. This module is the
+executable form of the locked spec at ``docs/hoplite/expressing-edges.md``.
 
-An edge *target* is the string inside ``[[ ]]`` (inline) or one ``edges:`` entry
-(frontmatter). Both share the target grammar; the surfaces differ only in
-rendering — inline permits display text (``name|shown``) and an embed marker
-(``![[name]]``), a frontmatter edge permits neither.
+A *target* is the document a wikilink points to: a slug, an optional folder-path
+prefix, and an optional ``#section`` / ``#^block`` anchor. There are no colons — the
+folder path is the namespace. In frontmatter an *edge* is a property whose value is a
+wikilink, and the key is the stereotype; the special keys (title, summary, aliases,
+tags) are read by meaning, never as edges.
 """
 
 from __future__ import annotations
 
 import re
 
-__all__ = ["TARGET_RE", "frontmatter_edge_targets", "inline_wikilinks", "validate_target"]
+__all__ = [
+    "TARGET_RE",
+    "frontmatter_wikilink_targets",
+    "inline_wikilinks",
+    "validate_target",
+]
 
-# A name — the character set of a page, a stereotype, and an anchor label. Strict
-# ASCII filename characters; the structural delimiters (`/ : # | ! [ ]`) are absent
-# by construction, so a name never collides with the grammar.
-_NAME = r"[A-Za-z0-9._-]+"
-# A namespace — name characters plus the path separator `/`, which is an ordinary
-# character here, not a parsed separator: `docs//x` and `docs/` are accepted.
-_NS = r"[A-Za-z0-9._/-]+"
-# An anchor — a single `#^block`, or one-or-more `#section` headings.
-_ANCHOR = rf"(?:\#\^{_NAME}|(?:\#{_NAME})+)"
+# Character classes — see docs/hoplite/expressing-edges.md ### Grammar.
+_SEG = r"[A-Za-z0-9._-]+"      # one path segment (slug or folder)
+_HEADING = r"[^#^|\[\]]+"      # a section label — heading text, spaces allowed
+_BLOCKID = r"[A-Za-z0-9-]+"    # an Obsidian block id
+_ANCHOR = rf"(?:\#\^{_BLOCKID}|(?:\#{_HEADING})+)"
+_PATH = rf"{_SEG}(?:/{_SEG})*"
 
-# The edge-target grammar — the link portion, after any inline `|display` is
-# stripped. There are no subpages: `/` lives only inside a namespace, so a
-# slash-bearing target without a `:` has no parseable page and is rejected.
-# See docs/hoplite/expressing-edges.md.
+# A target is a page path (optionally anchored) or a same-page anchor. No colons:
+# `/` is the only separator, so the folder path is the whole namespace mechanism.
 TARGET_RE = re.compile(
     rf"""
     ^
     (?:
-        (?:{_NAME}::)?      # optional  stereotype::
-        (?:{_NS}:)?         # optional  namespace:    ('/' is an ordinary char here)
-        {_NAME}             # page — one filename, no '/'
-        {_ANCHOR}?          # optional  anchor
+        {_PATH}        # page path — the folder is the namespace
+        {_ANCHOR}?     # optional anchor
       |
-        {_ANCHOR}           # OR a same-page anchor (#section / #^block)
+        {_ANCHOR}      # OR a same-page anchor (#section / #^block)
     )
     $
     """,
     re.VERBOSE,
 )
 
+# Keys Hoplite reads by their defined meaning, never as edges — a wikilink in one is
+# not an edge target. See docs/hoplite/frontmatter.md.
+SPECIAL_KEYS = frozenset({"title", "summary", "aliases", "tags"})
+
 
 def validate_target(target: str, *, inline: bool = False) -> str | None:
     """Return a diagnostic if ``target`` violates the edge grammar, else ``None``.
 
-    The regex is the gate: a target is valid iff it matches ``TARGET_RE``. The `.md`
-    extension is optional — an ordinary segment to the grammar — so there is no
-    semantic rule outside it. The branch below runs only when the gate fails, purely
-    to name *why*, so the verdict and the explanation can never disagree. ``inline``
-    strips the free-form display text (``name|shown``) before gating; a frontmatter
-    edge keeps the ``|`` so the gate rejects it.
+    ``TARGET_RE`` is the gate: a target is valid iff it matches. The branch below runs
+    only when the gate fails, to name why, so the verdict and the explanation can never
+    disagree. ``inline`` strips the free-form ``|display`` text before gating (it is
+    body-only); a frontmatter target keeps the ``|`` so the gate rejects it.
     """
     t = target.strip().strip("\"'").strip()
     if inline:
-        t = t.split("|", 1)[0].strip()  # display text is free-form; gate the link
+        t = t.split("|", 1)[0].strip()  # display text is body-only; gate the link
 
-    if TARGET_RE.match(t):  # gate — the grammar is the whole verdict
+    if TARGET_RE.match(t):
         return None
 
-    # Diagnose the gate failure: name the specific mistake, else fall back.
     if not t:
         return "empty edge target"
+    if "::" in t:
+        return (
+            f"`{target}`: a stereotype is the property key, not part of the target — "
+            'write `cites: "[[target]]"`, not `[[cites::target]]`'
+        )
+    if ":" in t:
+        return (
+            f"`{target}`: targets have no colons — the folder path is the namespace "
+            "(`docs/hoplite/term`, not `docs/hoplite:term`)"
+        )
     if "|" in t:
-        return f"`{target}`: display text `|` is inline-only; a frontmatter edge carries no rendering"
+        return f"`{target}`: display text `|` is body-only; a frontmatter edge is data"
     if "!" in t:
-        return f"`{target}`: `!` marks the embed site, not the target"
-    if t.startswith("::"):
-        return f"`{target}`: empty stereotype before `::`"
-    if t.count("::") > 1:
-        return f"`{target}`: more than one `::` stereotype separator"
-    if t.endswith("::"):
-        return f"`{target}`: empty target after `::`"
-    return f"`{target}`: does not match the edge-target grammar"
+        return f"`{target}`: embedding `!` is body-only"
+    return f"`{target}`: does not match the edge-target grammar (docs/hoplite/expressing-edges.md)"
 
 
-def frontmatter_edge_targets(fm_lines: list[str]) -> list[str]:
-    """Every ``edges:`` list entry — flow or block — as raw target strings.
+_BRACKET_RE = re.compile(r"!?\[\[([^\]]+)\]\]")
 
-    ``fm_lines`` is the frontmatter block (the lines between the ``---`` fences).
-    Captures a flow list (``edges: [a, b]``), a block list (``- a`` items), or a
-    lone scalar where a list belongs (so the grammar check still flags it).
+
+def _value_wikilinks(text: str) -> list[tuple[str, bool]]:
+    """Each ``[[target]]`` in a frontmatter value as ``(target, quoted)``.
+
+    ``quoted`` is True when the link is wrapped in matching quotes — the form Obsidian
+    indexes, and the only valid YAML for a ``[[ ]]`` value.
     """
-    targets: list[str] = []
-    i, n = 0, len(fm_lines)
-    while i < n:
-        line = fm_lines[i]
-        if line[:1].isspace() or line.split(":", 1)[0].strip() != "edges":
-            i += 1
-            continue
-        value = line.split(":", 1)[1].strip() if ":" in line else ""
-        if value.startswith("[") and value.endswith("]"):
-            targets.extend(p.strip() for p in value[1:-1].split(",") if p.strip())
-            i += 1
-            continue
-        if value:  # a scalar where a list belongs — capture it for the grammar check
-            targets.append(value)
-            i += 1
-            continue
-        # Block list: indented `- item` lines until the block closes.
-        j = i + 1
-        while j < n:
-            item = fm_lines[j]
-            if not item.strip():
-                j += 1
-                continue
-            if not item[:1].isspace():
-                break
-            stripped = item.strip()
-            if stripped == "-":
-                targets.append("")
-            elif stripped.startswith("- "):
-                targets.append(stripped[2:].strip())
-            else:
-                break
-            j += 1
-        i = j
-    return targets
+    out: list[tuple[str, bool]] = []
+    for m in _BRACKET_RE.finditer(text):
+        target = m.group(1).strip()
+        before = text[m.start() - 1] if m.start() > 0 else ""
+        after = text[m.end()] if m.end() < len(text) else ""
+        quoted = before == after and before in ("'", '"')
+        out.append((target, quoted))
+    return out
 
 
-_WIKILINK_RE = re.compile(r"!?\[\[([^\]]+)\]\]")
+def frontmatter_wikilink_targets(fm_lines: list[str]) -> list[tuple[str, bool, int]]:
+    """Every wikilink in a non-special frontmatter property value.
+
+    ``fm_lines`` is the block between the ``---`` fences. Returns ``(target, quoted,
+    line_index)`` per ``[[wikilink]]``, ``line_index`` 0-based within ``fm_lines``. A
+    wikilink under a special key (title, summary, aliases, tags) is skipped — those are
+    read by meaning, not as edges. Handles scalar, flow-list, and block-list values.
+    """
+    out: list[tuple[str, bool, int]] = []
+    key_is_edge = False  # inside a non-special top-level key's value (and its block list)
+    for idx, line in enumerate(fm_lines):
+        if not line.strip() or line.lstrip().startswith("#"):
+            continue
+        if line[:1].isspace():  # continuation or block-list item under the current key
+            if key_is_edge:
+                out.extend((t, q, idx) for t, q in _value_wikilinks(line))
+            continue
+        if ":" not in line:
+            key_is_edge = False
+            continue
+        key, _, value = line.partition(":")
+        key_is_edge = key.strip() not in SPECIAL_KEYS
+        if key_is_edge:
+            out.extend((t, q, idx) for t, q in _value_wikilinks(value))
+    return out
+
+
 _FENCE_RE = re.compile(r"```[\s\S]*?```")
 _INLINE_CODE_RE = re.compile(r"`+[^`\n]+?`+")
 
@@ -140,19 +144,20 @@ def _mask_code(body: str) -> str:
 
 
 def inline_wikilinks(body: str) -> list[tuple[str, int]]:
-    """Each unique ``[[target]]`` in ``body`` as ``(target, line)``, code spans skipped.
+    """Each unique ``[[target]]`` in ``body`` as ``(target, line)``, code masked.
 
-    Backticked sample wikilinks are masked, mirroring the convention the corpus
-    uses to show syntax without materializing an edge. Line numbers are 1-indexed.
+    Backticked sample wikilinks and fenced blocks are masked, mirroring the corpus
+    convention for showing syntax without materializing an edge. A leading ``!`` embed
+    marker is not part of the target. Line numbers are 1-based.
     """
     masked = _mask_code(body)
     seen: set[str] = set()
     out: list[tuple[str, int]] = []
-    for match in _WIKILINK_RE.finditer(masked):
-        target = match.group(1).strip()
+    for m in _BRACKET_RE.finditer(masked):
+        target = m.group(1).strip()
         if not target or target in seen:
             continue
         seen.add(target)
-        line = masked.count("\n", 0, match.start()) + 1
+        line = masked.count("\n", 0, m.start()) + 1
         out.append((target, line))
     return out
