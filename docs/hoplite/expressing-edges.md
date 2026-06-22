@@ -4,7 +4,6 @@ summary: "The two ways to express an edge — an inline wikilink (untyped) and a
 tags: [hoplite, edges, spec]
 created: 2026-06-20
 status: locked
-cites: "[[frontmatter]]"
 ---
 
 # Expressing edges

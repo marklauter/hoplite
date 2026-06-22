@@ -4,6 +4,7 @@ summary: "Hoplite's frontmatter standard: flat Obsidian Properties. Four special
 tags: [hoplite, frontmatter, spec]
 created: 2026-05-29
 status: locked
+requires: "[[expressing-edges]]"
 ---
 
 # Frontmatter
