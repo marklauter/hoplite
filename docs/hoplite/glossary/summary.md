@@ -1,11 +1,14 @@
 ---
 title: summary
-summary: "A node's first-class one-line lede, asserted by the author and indexed for FTS."
+summary: "A document's main points in one line."
 tags: [hoplite, glossary]
 created: 2026-06-19
-status: evolving
+status: locked
+is-a: "[[glossary/property]]"
 ---
 
-A node's first-class one-line lede, asserted by the author and indexed for FTS.
+A document's main points in one line.
 
-**Also.** bare in frontmatter.
+## Details
+
+Also called an abstract or lede — it covers the main points succinctly. Defaults to a body excerpt; set the bare `summary` key in frontmatter to override. Indexed for search and returned by every query, so a caller can scan a hit without opening the document.
