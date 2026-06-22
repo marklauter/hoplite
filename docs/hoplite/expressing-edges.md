@@ -3,7 +3,7 @@ title: Expressing edges
 summary: "The two ways to express an edge — an inline wikilink (untyped) and a frontmatter property whose value is a wikilink (typed) — Obsidian-native, sharing one target grammar. A markdown link is plain hypertext, not an edge."
 tags: [hoplite, edges, spec]
 created: 2026-06-20
-status: locked
+status: evolving
 ---
 
 # Expressing edges
@@ -12,7 +12,7 @@ Hoplite supports the full Obsidian wikilink and property grammar.
 
 There are two ways to express edges within a markdown document:
 
-- In the body, a wikilink like `[[circle]]`. This is an untyped edge.
+- In the body, a wikilink like `[[circle]]`. This is an untyped edge; a stereotype comment can type it (see Inline stereotypes below).
 - In frontmatter, a property whose value is a wikilink, like `cites: "[[circle]]"`. This is a typed edge, and the key (`cites`) is the stereotype.
 
 ## Wikilinks
@@ -37,6 +37,16 @@ Slug and path segments use the characters `A-Z a-z 0-9 . _ -`. The `.md` extensi
 
 - Display text — `[[circle|shown text]]`: target first, display text second.
 - Embedding — `![[circle]]`: transcludes the target's content in place.
+
+### Inline stereotypes
+
+A bare `[[circle]]` is an untyped edge. To type it in the body, attach a stereotype in a comment beside the link. Hoplite reads three forms:
+
+- HTML comment — `[[circle]]<!--refines-->`. The default: invisible in Obsidian, on GitHub, and in any renderer.
+- Obsidian comment — `[[circle]]%%refines%%`. Invisible in Obsidian only.
+- Dataview field — `[refines:: [[circle]]]`. Visible, and renders as literal brackets without the Dataview plugin.
+
+The stereotype is a slug (`[A-Za-z0-9._-]`), and the comment sits immediately beside the link. The link is untouched in every form, so Obsidian still resolves it and draws the edge — untyped, as always — while Hoplite reads the stereotype. The parser accepts all three; authors emit the HTML comment. (A future setting will choose the emitted form.)
 
 ### Ghosts
 
@@ -72,7 +82,7 @@ $
 
 - `TARGET_RE` — the regex above.
 - `validate_target` — validates a single target.
-- Frontmatter and inline extractors — pull targets from a document.
+- Frontmatter and inline extractors — pull edge targets and inline stereotypes from a document.
 
 `test_edge_grammar.py` tests the regex directly. The `check-frontmatter` hook runs the validator on every body wikilink and every frontmatter wikilink value at write time.
 
@@ -88,7 +98,7 @@ contrast:                       # block list — several, one per line
   - "[[triangle]]"
 ```
 
-- Key — the stereotype, like `cites` or `refines`. Keys are one flat open vocabulary: `title`, `summary`, `tags`, `created`, and `status` are recognized; coin any other key you need. There is no `edge.` or `document.` prefix.
+- Key — the stereotype, like `cites` or `refines`. Keys are one flat open vocabulary: a few are special (read by meaning), and any other key is a stereotype.
 - Value — a quoted wikilink. Quote it: Obsidian indexes the link only when it's quoted, and unquoted `[[ ]]` isn't valid YAML. Use a scalar for one edge, a list for several.
 - Edge or property, decided by value. A wikilink value makes the property an edge; a scalar value like `status: draft` makes it a node property.
 - No rendering. Display text (`|`) and embedding (`!`) work only in the body; a frontmatter edge is data.

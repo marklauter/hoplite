@@ -14,6 +14,7 @@ import pytest
 from edge_grammar import (
     TARGET_RE,
     frontmatter_wikilink_targets,
+    inline_edges,
     inline_wikilinks,
     validate_target,
 )
@@ -249,3 +250,56 @@ def test_surrounding_quotes_stripped() -> None:
 def test_anchor_only_is_valid_not_a_false_positive() -> None:
     assert validate_target("#summary") is None
     assert validate_target("#^block") is None
+
+
+# --- inline stereotypes (typed inline edges) ----------------------------------
+
+
+def test_inline_edges_bare_is_untyped() -> None:
+    assert inline_edges("see [[circle]] here") == [("circle", None, 1)]
+
+
+def test_inline_edges_html_comment() -> None:
+    assert inline_edges("[[circle]]<!--refines-->") == [("circle", "refines", 1)]
+
+
+def test_inline_edges_obsidian_comment() -> None:
+    assert inline_edges("[[circle]]%%refines%%") == [("circle", "refines", 1)]
+
+
+def test_inline_edges_dataview_field() -> None:
+    assert inline_edges("[refines:: [[circle]]]") == [("circle", "refines", 1)]
+
+
+def test_inline_edges_comment_with_spaces() -> None:
+    assert inline_edges("[[circle]] <!-- refines -->") == [("circle", "refines", 1)]
+
+
+def test_inline_edges_comment_needs_adjacency() -> None:
+    # a comment separated by words does not type the link
+    assert inline_edges("[[circle]] and also <!--refines-->") == [("circle", None, 1)]
+
+
+def test_inline_edges_embed_marker_with_stereotype() -> None:
+    assert inline_edges("![[circle]]<!--refines-->") == [("circle", "refines", 1)]
+
+
+def test_inline_edges_anchored_target_with_stereotype() -> None:
+    assert inline_edges("[[circle#properties]]<!--refines-->") == [("circle#properties", "refines", 1)]
+
+
+def test_inline_edges_skips_code() -> None:
+    assert inline_edges("an example `[[circle]]<!--refines-->` is skipped") == []
+
+
+def test_inline_edges_multiple_in_order() -> None:
+    body = "[[a]]<!--x-->\nand [[b]] bare\n[c:: [[d]]]"
+    assert inline_edges(body) == [("a", "x", 1), ("b", None, 2), ("d", "c", 3)]
+
+
+def test_inline_edges_extracts_target_for_validation() -> None:
+    # the stereotype wrapper never affects which target is extracted or its validity
+    edges = inline_edges("[[circle]]<!--refines-->\n[bad:: [[x/]]]")
+    assert edges == [("circle", "refines", 1), ("x/", "bad", 2)]
+    assert validate_target("circle") is None
+    assert validate_target("x/") is not None

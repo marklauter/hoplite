@@ -18,6 +18,7 @@ import re
 __all__ = [
     "TARGET_RE",
     "frontmatter_wikilink_targets",
+    "inline_edges",
     "inline_wikilinks",
     "validate_target",
 ]
@@ -160,4 +161,44 @@ def inline_wikilinks(body: str) -> list[tuple[str, int]]:
         seen.add(target)
         line = masked.count("\n", 0, m.start()) + 1
         out.append((target, line))
+    return out
+
+
+# Inline stereotype forms, beside a wikilink — see expressing-edges.md ### Inline stereotypes.
+_TRAILING_STEREOTYPE_RE = re.compile(
+    r"\s*(?:<!--\s*([A-Za-z0-9._-]+)\s*-->|%%\s*([A-Za-z0-9._-]+)\s*%%)"
+)
+_LEADING_FIELD_RE = re.compile(r"\[\s*([A-Za-z0-9._-]+)\s*::\s*$")
+
+
+def inline_edges(body: str) -> list[tuple[str, str | None, int]]:
+    """Each in-body ``[[target]]`` as ``(target, stereotype | None, line)``.
+
+    A bare ``[[target]]`` is untyped (``stereotype`` is None). Three forms attach a
+    stereotype beside the link, all read here; the HTML comment is the emit default::
+
+        [[target]]<!--refines-->    HTML comment
+        [[target]]%%refines%%        Obsidian comment
+        [refines:: [[target]]]       Dataview inline field
+
+    The comment must be adjacent — only whitespace may separate it from the link.
+    Code spans and fences are masked. Occurrences are returned in document order
+    (no dedup; the indexer collapses per edge). Line numbers are 1-based.
+    """
+    masked = _mask_code(body)
+    out: list[tuple[str, str | None, int]] = []
+    for m in _BRACKET_RE.finditer(masked):
+        target = m.group(1).strip()
+        if not target:
+            continue
+        stereotype: str | None = None
+        trail = _TRAILING_STEREOTYPE_RE.match(masked, m.end())
+        if trail:
+            stereotype = trail.group(1) or trail.group(2)
+        else:
+            lead = _LEADING_FIELD_RE.search(masked, 0, m.start())
+            if lead and masked[m.end() :].lstrip().startswith("]"):
+                stereotype = lead.group(1)
+        line = masked.count("\n", 0, m.start()) + 1
+        out.append((target, stereotype, line))
     return out
