@@ -52,6 +52,7 @@ The Hoplite domain terms, one node per term. This page links them and keeps the 
 - [[glossary/reserved-word]]
 - [[glossary/resolved]]
 - [[glossary/semantic-search]]
+- [[glossary/slug]]
 - [[glossary/src-dst]]
 - [[glossary/stereotype]]
 - [[glossary/summary]]
