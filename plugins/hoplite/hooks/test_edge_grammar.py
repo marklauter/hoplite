@@ -280,6 +280,16 @@ def test_inline_edges_comment_needs_adjacency() -> None:
     assert inline_edges("[[circle]] and also <!--refines-->") == [("circle", None, 1)]
 
 
+def test_inline_edges_comment_across_newline_does_not_bind() -> None:
+    # a comment on a later line is not "beside" the link — same-line adjacency only
+    assert inline_edges("[[circle]]\n<!--refines-->") == [("circle", None, 1)]
+
+
+def test_inline_edges_tab_before_comment_binds() -> None:
+    # horizontal whitespace (space or tab) is allowed between link and comment
+    assert inline_edges("[[circle]]\t<!--refines-->") == [("circle", "refines", 1)]
+
+
 def test_inline_edges_embed_marker_with_stereotype() -> None:
     assert inline_edges("![[circle]]<!--refines-->") == [("circle", "refines", 1)]
 

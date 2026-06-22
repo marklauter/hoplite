@@ -46,7 +46,7 @@ A bare `[[circle]]` is an untyped edge. To type it in the body, attach a stereot
 - Obsidian comment — `[[circle]]%%refines%%`. Invisible in Obsidian only.
 - Dataview field — `[refines:: [[circle]]]`. Visible, and renders as literal brackets without the Dataview plugin.
 
-The stereotype is a slug (`[A-Za-z0-9._-]`), and the comment sits immediately beside the link. The link is untouched in every form, so Obsidian still resolves it and draws the edge — untyped, as always — while Hoplite reads the stereotype. The parser accepts all three; authors emit the HTML comment. (A future setting will choose the emitted form.)
+The stereotype is a slug (`[A-Za-z0-9._-]`), and the comment sits on the same line, immediately beside the link. The link is untouched in every form, so Obsidian still resolves it and draws the edge — untyped, as always — while Hoplite reads the stereotype. The parser accepts all three; authors emit the HTML comment. (A future setting will choose the emitted form.)
 
 ### Ghosts
 

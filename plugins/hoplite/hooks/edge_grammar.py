@@ -166,7 +166,7 @@ def inline_wikilinks(body: str) -> list[tuple[str, int]]:
 
 # Inline stereotype forms, beside a wikilink — see expressing-edges.md ### Inline stereotypes.
 _TRAILING_STEREOTYPE_RE = re.compile(
-    r"\s*(?:<!--\s*([A-Za-z0-9._-]+)\s*-->|%%\s*([A-Za-z0-9._-]+)\s*%%)"
+    r"[^\S\n]*(?:<!--\s*([A-Za-z0-9._-]+)\s*-->|%%\s*([A-Za-z0-9._-]+)\s*%%)"
 )
 _LEADING_FIELD_RE = re.compile(r"\[\s*([A-Za-z0-9._-]+)\s*::\s*$")
 
@@ -181,9 +181,10 @@ def inline_edges(body: str) -> list[tuple[str, str | None, int]]:
         [[target]]%%refines%%        Obsidian comment
         [refines:: [[target]]]       Dataview inline field
 
-    The comment must be adjacent — only whitespace may separate it from the link.
-    Code spans and fences are masked. Occurrences are returned in document order
-    (no dedup; the indexer collapses per edge). Line numbers are 1-based.
+    A comment must sit on the same line as the link — only horizontal whitespace may
+    separate them; the bracket-delimited Dataview field may span lines. Code spans and
+    fences are masked. Occurrences are returned in document order (no dedup; the indexer
+    collapses per edge). Line numbers are 1-based.
     """
     masked = _mask_code(body)
     out: list[tuple[str, str | None, int]] = []
