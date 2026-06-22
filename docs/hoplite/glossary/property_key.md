@@ -3,8 +3,7 @@ title: property_key
 summary: "The vocabulary of property keys; an open vocabulary namespace."
 tags: [hoplite, glossary]
 created: 2026-06-19
-document.status: evolving
-document.category: vocabulary namespace
+status: evolving
 ---
 
 The vocabulary of property keys; an open vocabulary namespace.

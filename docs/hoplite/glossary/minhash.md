@@ -3,8 +3,8 @@ title: MinHash
 summary: "A compact sketch of a set that estimates its Jaccard similarity to another."
 tags: [hoplite, glossary]
 created: 2026-06-19
-document.status: locked
-edges: [estimates::docs/hoplite/glossary:jaccard]
+status: locked
+estimates: "[[glossary/jaccard]]"
 ---
 
 A compact sketch of a set that estimates its Jaccard similarity to another.

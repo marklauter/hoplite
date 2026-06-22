@@ -3,8 +3,7 @@ title: confidence
 summary: "An edge's weight."
 tags: [hoplite, glossary]
 created: 2026-06-19
-document.status: evolving
-document.category: edge anatomy
+status: evolving
 ---
 
 An edge's weight.

@@ -3,8 +3,9 @@ title: fact
 summary: "An intrinsic feature."
 tags: [hoplite, glossary]
 created: 2026-06-19
-document.status: locked
-edges: [is-a::docs/hoplite/glossary:feature, contrast::docs/hoplite/glossary:claim]
+status: locked
+is-a: "[[glossary/feature]]"
+contrast: "[[glossary/claim]]"
 ---
 
 An intrinsic feature.

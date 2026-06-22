@@ -4,8 +4,8 @@ summary: "A label naming the relationship an edge expresses."
 tags: [hoplite, glossary]
 aliases: [edge_stereotype]
 created: 2026-06-19
-document.status: locked
-document.retired: [edge_stereotype]
+status: locked
+retired: [edge_stereotype]
 ---
 
 A label naming the relationship an edge expresses.

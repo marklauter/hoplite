@@ -3,7 +3,7 @@ title: ranking-function
 summary: "A function that scores candidates to order them."
 tags: [hoplite, glossary]
 created: 2026-06-20
-document.status: locked
+status: locked
 ---
 
 A function that scores candidates to order them.

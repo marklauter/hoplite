@@ -3,8 +3,8 @@ title: document
 summary: "A markdown file."
 tags: [hoplite, glossary]
 created: 2026-06-19
-document.status: locked
-edges: [has-a::docs/hoplite/glossary:property]
+status: locked
+has-a: "[[glossary/property]]"
 ---
 
 A markdown file.

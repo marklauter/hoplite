@@ -3,7 +3,7 @@ title: provenance
 summary: "A feature's origin."
 tags: [hoplite, glossary]
 created: 2026-06-19
-document.status: locked
+status: locked
 ---
 
 A feature's origin.

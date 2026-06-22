@@ -3,8 +3,7 @@ title: content_hash
 summary: "A node's exact byte fingerprint, for change detection."
 tags: [hoplite, glossary]
 created: 2026-06-19
-document.status: evolving
-document.category: fingerprint
+status: evolving
 ---
 
 A node's exact byte fingerprint, for change detection.

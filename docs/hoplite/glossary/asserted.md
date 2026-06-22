@@ -3,8 +3,9 @@ title: asserted
 summary: "Provenance given by an act of assertion."
 tags: [hoplite, glossary]
 created: 2026-06-21
-document.status: locked
-edges: [is-a::docs/hoplite/glossary:provenance, contrast::docs/hoplite/glossary:intrinsic]
+status: locked
+is-a: "[[glossary/provenance]]"
+contrast: "[[glossary/intrinsic]]"
 ---
 
 Provenance given by an act of assertion.

@@ -3,9 +3,8 @@ title: reserved word
 summary: "A property key with a defined meaning and validation across the graph (e.g. `created`)."
 tags: [hoplite, glossary]
 created: 2026-06-19
-document.status: evolving
-document.category: property model
-edge.contrast: [docs/hoplite/glossary/property_key.md]
+status: evolving
+contrast: "[[glossary/property_key]]"
 ---
 
 A property key with a defined meaning and validation across the graph (e.g. `created`).
