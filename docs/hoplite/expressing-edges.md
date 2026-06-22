@@ -1,9 +1,10 @@
 ---
 title: Expressing edges
 summary: "The two ways to express an edge — an inline wikilink (untyped) and a frontmatter property whose value is a wikilink (typed) — Obsidian-native, sharing one target grammar. A markdown link is plain hypertext, not an edge."
-tags: [hoplite, edges, authoring]
+tags: [hoplite, edges, spec]
 created: 2026-06-20
 status: locked
+cites: "[[frontmatter]]"
 ---
 
 # Expressing edges
@@ -81,9 +82,9 @@ $
 A frontmatter edge is a property whose value is a wikilink — the key is the stereotype, the value is the target:
 
 ```yaml
-refines: "[[pi]]"             # scalar — one edge
-cites: ["[[shape]]"]          # flow list — several, on one line
-contrast:                     # block list — several, one per line
+refines: "[[pi]]"               # scalar — one edge
+cites: ["[[shape]]", "[[pi]]"]  # flow list — several, on one line
+contrast:                       # block list — several, one per line
   - "[[square]]"
   - "[[triangle]]"
 ```

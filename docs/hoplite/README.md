@@ -45,7 +45,7 @@ Hoplite spec outline and index. Each items is a concept; some are their own file
 - [[docs/hoplite/hoplite.md]] — problem statement and scope. Why the graph exists, what it covers. *Exists.*
 - [[docs/hoplite/hoplite-feature-taxonomy.md]] — the feature taxonomy: intrinsic (recovered from the bytes) vs asserted (supplied by the author), and the IDF-weighted Jaccard relatedness over the unified feature set. The nouns — they give rise to the affordances. *Exists (wip).*
 - [[docs/hoplite/hoplite-authoring.md]] — authoring: the write-side mutation surface for asserting features (declare relationships, describe documents). *Exists (stub).*
-- [[docs/hoplite/hoplite-frontmatter.md]] — reifies the asserted features in the YAML block: title, summary, tags, properties, stereotyped edges. *Exists.*
+- [[docs/hoplite/frontmatter.md]] — the frontmatter standard: flat Obsidian Properties, special keys, and edges as wikilink-valued properties. *Exists.*
 - [[docs/hoplite/hoplite-affordances.md]] — the affordances concept: features give rise to affordances, the write/read split, and signifiers (MCP descriptions, ambient skills). The verbs over the feature nouns; sibling of feature-taxonomy. *Exists (wip).*
 - [[docs/hoplite/hoplite-navigation.md]] — navigation: the read-side query surface — the five moves (survey, filter, walk, project, read). The read half of the affordances. *Exists (wip).*
 - [[docs/hoplite/hoplite-graph.md]] — the structure (nodes, edges, property and stereotype graph, vocabulary, BM25 FTS, minhash edges) plus **indexing**, the ETL that builds the graph from the corpus (walking the corpus → building minhash-ranked edges). Indexing is a section here, breakable into its own file if it grows. *Exists; indexing section pending.*
