@@ -1,9 +1,9 @@
 ---
 title: frontmatter
-summary: "The YAML block atop each document; the reification of the authoring concepts."
+summary: "The YAML block at the top of a document."
 tags: [hoplite, glossary]
 created: 2026-06-19
-status: evolving
+status: locked
 ---
 
-The YAML block atop each document; the reification of the authoring concepts.
+The YAML block at the top of a [[glossary/document]].

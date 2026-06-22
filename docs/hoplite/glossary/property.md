@@ -7,4 +7,4 @@ status: locked
 is-a: "[[glossary/claim]]"
 ---
 
-A claim expressed in frontmatter.
+A claim expressed in [[glossary/frontmatter]].

@@ -4,7 +4,9 @@ summary: "A markdown file."
 tags: [hoplite, glossary]
 created: 2026-06-19
 status: locked
-has-a: "[[glossary/property]]"
+has-a:
+  - "[[glossary/property]]"
+  - "[[glossary/frontmatter]]"
 ---
 
 A markdown file.
