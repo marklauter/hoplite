@@ -3,7 +3,8 @@ title: slug
 summary: "A document's filename."
 tags: [hoplite, glossary]
 created: 2026-06-21
-status: evolving
+status: locked
+is-a: "[[glossary/fact]]"
 ---
 
 A document's filename.

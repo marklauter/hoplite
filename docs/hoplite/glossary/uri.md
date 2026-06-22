@@ -1,11 +1,13 @@
 ---
 title: uri
-summary: "A node's identity: a medium-agnostic, case-insensitive locator — a repo path (`docs/…`), a `ghost/<slug>`, or a `https://…` url."
+summary: "A node's identity."
 tags: [hoplite, glossary]
 created: 2026-06-19
-status: evolving
+status: locked
 ---
 
-A node's identity: a medium-agnostic, case-insensitive locator — a repo path (`docs/…`), a `ghost/<slug>`, or a `https://…` url.
+A node's identity.
 
-**Also.** addressed as `node/<uri>`.
+## Details
+
+A case-insensitive identifier. For a document, a folder path and a [[glossary/slug]]: `docs/hoplite/glossary/property-graphs`. For an unresolved target, a `ghost/<slug>`. The MCP addresses a node by the URN `node:<uri>` — see [[mcp-addresses-graph-entities-by-urn-scheme]].

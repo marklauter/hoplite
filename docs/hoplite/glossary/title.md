@@ -3,7 +3,7 @@ title: title
 summary: "A document's name."
 tags: [hoplite, glossary]
 created: 2026-06-19
-status: evolving
+status: locked
 is-a: "[[glossary/property]]"
 ---
 
