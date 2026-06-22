@@ -1,11 +1,14 @@
 ---
 title: title
-summary: "A node's first-class short name, asserted by the author and indexed for FTS."
+summary: "A document's name."
 tags: [hoplite, glossary]
 created: 2026-06-19
 status: evolving
+is-a: "[[glossary/property]]"
 ---
 
-A node's first-class short name, asserted by the author and indexed for FTS.
+A document's name.
 
-**Also.** bare in frontmatter.
+## Details
+
+Defaults to the [[glossary/slug]] with dashes as spaces — `property-graphs` becomes "property graphs". Set the bare `title` key in frontmatter to override. Indexed for search.
