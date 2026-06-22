@@ -7,4 +7,3 @@
 # in this manifest is committed source.
 
 templates/skills/research/SKILL.md   -> plugins/hoplite/skills/research/SKILL.md
-templates/hooks/check-frontmatter.py -> plugins/hoplite/hooks/check-frontmatter.py
