@@ -31,6 +31,5 @@ In [[docs/hoplite:schema]], the `document` facet's first-class columns (title, s
 
 ## See also
 
-- [[docs/notes:tags-classify-properties-carry-state]] — the tag/property axis (tags classify, properties carry state). This note extends the property side: summary, tags, and created are themselves properties.
 - [[docs/notes:stereotypes-are-open-vocab-edge-properties]] — holds the prior "title and summary are first-class fields, not properties" model that this note unifies away.
 - [[docs/notes:uris-are-a-tool-layer-projection-over-relational-storage]] — why first-class columns are a storage choice: the relational schema is the model-of-record, projected to uris at the tool boundary.
