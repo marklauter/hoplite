@@ -57,7 +57,7 @@ The Hoplite domain terms, one node per term. This page links them and keeps the 
 - [[glossary/stereotype]]
 - [[glossary/summary]]
 - [[glossary/survey]]
-- [[glossary/tag]]
+- [[glossary/tags]]
 - [[glossary/title]]
 - [[glossary/uri]]
 - [[glossary/vault]]

@@ -25,7 +25,7 @@ A document's structure falls out of what a document naturally is. Each facet ans
 - **Category** — `tags`: what kind of thing the document is, its classification.
 - **Properties** — user-defined attributes: the open key/values an author coins beyond the natural facets, recording state and qualities no fixed schema anticipates.
 
-Category and properties divide cleanly: a tag classifies (what is this?), a property carries state (what condition is it in?). Conflating them — a `draft` tag instead of a `status` property — churns the document's identity every time its lifecycle moves.
+A tag classifies the document (what is this?); other properties record state (what condition is it in?). Both are properties — `tags` is a list property, special only by wiki convention.
 
 ### Variants
 

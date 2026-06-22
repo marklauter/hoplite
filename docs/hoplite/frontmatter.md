@@ -31,10 +31,6 @@ A special key is read by its defined meaning, so a wikilink in one is not an edg
 
 There is no `updated` key. Git history is the modification record, and a hand-maintained date goes stale the moment someone forgets to update it.
 
-## Tags and properties
-
-Use a tag for identity and a property for state. A tag answers "what is this document?" — its type, shape, and domain — and stays fixed. A property like `status` answers "what state is it in?" and changes over time. Keep state out of tags: a `draft` tag churns the identity axis, so a closed `todo` drops out of a `tagged: todo` query. Full principle: [[docs/notes/tags-classify-properties-carry-state.md]].
-
 ## Edges
 
 An edge is a property whose value is a wikilink, and the key is the stereotype — `supports`, `contradicts`, `supersedes`. The vocabulary is open, like tags: a new stereotype is a doc change, not a schema migration. For the grammar and seed vocabulary, see [[docs/notes/stereotypes-are-open-vocab-edge-properties.md]].
@@ -75,6 +71,5 @@ Warnings surface in `WriteResult.warnings`, so the agent is notified while the f
 ## See also
 
 - [[docs/hoplite/expressing-edges.md]] — the edge and wikilink grammar.
-- [[docs/notes/tags-classify-properties-carry-state.md]] — identity versus state.
 - [[docs/notes/stereotypes-are-open-vocab-edge-properties.md]] — the edge-stereotype model.
 - [[docs/hoplite/hoplite-architecture.md]] — the system this feeds.
