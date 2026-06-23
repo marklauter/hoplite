@@ -27,8 +27,8 @@ status: <evolving | locked>
 retired: [<retired term>, ...]
 is-a: "[[<broader-term>]]"
 contrast:
-  - "[[docs/hoplite/glossary/<other-term>]]"
-  - "[[docs/hoplite/glossary/<another-term>]]"
+  - "[[<other-term>]]"
+  - "[[<another-term>]]"
 ---
 
 <the summary, verbatim>
@@ -44,7 +44,7 @@ contrast:
 
 - `aliases`, `retired`, and the edge keys are optional; omit when empty.
 - **An edge is a property whose value is a quoted wikilink** — the key is the stereotype, the value the target, like `is-a: "[[...]]"`; there is no `edges:` list and no `edge.` prefix (edge/link syntax: `docs/hoplite/expressing-edges.md`).
-- **Index it** — add `- [[docs/hoplite/glossary/<term>]]` to the `## Terms` list in `docs/hoplite/glossary/README.md`, kept alphabetical.
+- **Index it** — add `- [[<term>]]` to the `## Terms` list in `docs/hoplite/glossary/README.md`, kept alphabetical.
 - **Examples** — the optional `## Examples` section illustrates the term with concrete instances; the definition stays in the summary, and an example never restates it. Omit the section when there are none.
 
 ## Edge stereotypes
