@@ -5,11 +5,13 @@ tags: [hoplite, glossary]
 created: 2026-06-19
 status: locked
 retired: [discover, deduce]
-contrast: "[[glossary/assert]]"
 ---
 
-To derive a feature from evidence.
+To derive a [[glossary/feature]] from evidence.
 
-## Contrasts
+## Mechanism
 
-- `assert` — infer derives a feature; assert advances an opinion as true. Deriving is not advancing.
+Inference feeds [[glossary/assert|assertion]]. The engine infers a candidate
+edge and its [[glossary/confidence|confidence]]. It asserts the edge only when that confidence clears
+the threshold. Inference is unconditional: the sub-threshold findings are
+inferred and never asserted.
