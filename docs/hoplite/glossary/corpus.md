@@ -1,9 +1,10 @@
 ---
 title: corpus
-summary: "The directory of markdown files Hoplite indexes; the only persistent source of truth."
+summary: "The set of documents."
 tags: [hoplite, glossary]
 created: 2026-06-19
-status: evolving
+status: locked
+has-a: "[[document]]"
 ---
 
-The directory of markdown files Hoplite indexes; the only persistent source of truth.
+The set of documents.
