@@ -1,12 +1,12 @@
 ---
 title: vocabulary
-summary: "The meta labels (property keys and edge stereotypes) and bounded property values asserted within the knowledge graph."
+summary: "The meta labels (property keys and edge stereotypes) and bounded property values mapped within the knowledge graph."
 tags: [hoplite, glossary]
 created: 2026-06-19
 status: locked
 ---
 
-The meta labels ([[property]] keys and [[edge]] [[stereotype|stereotypes]]) and bounded property values [[asserted]] within the knowledge graph.
+The meta labels ([[property]] keys and [[edge]] [[stereotype|stereotypes]]) and bounded property values mapped within the knowledge graph.
 
 ## Examples
 

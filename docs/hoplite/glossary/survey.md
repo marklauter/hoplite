@@ -1,14 +1,9 @@
 ---
 title: survey
-summary: "The affordance the vocabulary grants: discovering what it holds before a predicate is composed."
+summary: "To explore and navigate the vocabulary."
 tags: [hoplite, glossary]
 created: 2026-06-19
-status: evolving
-is-a: "[[affordance]]"
+status: locked
 ---
 
-The affordance [[vocabulary]] grants: discovering what it holds before a predicate is composed.
-
- So the model is vocabulary (a feature surface) → affords → survey (the action).
-
- survey is the affordance granted by vocabulary. 
+To explore and navigate the [[vocabulary]].
