@@ -17,7 +17,6 @@ The Hoplite domain terms, one node per term. This page links them and keeps the 
 - [[glossary/bm25]]
 - [[glossary/claim]]
 - [[glossary/confidence]]
-- [[glossary/content_hash]]
 - [[glossary/corpus]]
 - [[glossary/corpus-graph]]
 - [[glossary/document]]
