@@ -22,7 +22,7 @@ This document covers the system as one piece. Tool signatures and the 4-tool API
 
 A Hoplite corpus is a directory of `.md` files. The MCP server roots itself at the working directory when spawned; every file matching `**/*.md` under that root is a candidate document. Subdirectory structure is presentational — `docs/notes/coffee.md` and `docs/journal/2026-05-25-1430-roast.md` are both documents, identified by their relative paths.
 
-The corpus is fully Obsidian-compatible — same frontmatter shape, same `[[wikilink]]` syntax, same tag convention. Hand-edits in Obsidian and writes by agents are indistinguishable from Hoplite's view; both round-trip through `refresh`.
+The corpus is fully Obsidian-compatible — same frontmatter shape, same `[[wikilink]]` syntax, same tag convention. Hand-edits in Obsidian and writes by agents are indistinguishable from Hoplite's view; both round-trip through `refresh`. The compatibility runs one way: Obsidian is an optional lens, never a dependency. Hoplite reads the plain files directly and runs headless — no Obsidian runtime, GUI, or plugins — so nothing that needs them can be load-bearing.
 
 ## Frontmatter — the YAML envelope
 
