@@ -1,14 +1,12 @@
 ---
 title: stereotype
-summary: "A label naming the relationship an edge expresses."
+summary: "A label naming the relationship expressed by an edge."
 tags: [hoplite, glossary]
-aliases: [edge_stereotype]
 created: 2026-06-19
 status: locked
-retired: [edge_stereotype]
 ---
 
-A label naming the relationship an edge expresses.
+A label naming the [[glossary/relationship|relationship]] expressed by an [[glossary/edge|edge]].
 
 ## Examples
 

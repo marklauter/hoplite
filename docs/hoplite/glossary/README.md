@@ -12,6 +12,7 @@ The Hoplite domain terms, one node per term. This page links them and keeps the 
 
 ## Terms
 
+- [[glossary/affordance]]
 - [[glossary/assert]]
 - [[glossary/asserted]]
 - [[glossary/bm25]]
@@ -20,7 +21,6 @@ The Hoplite domain terms, one node per term. This page links them and keeps the 
 - [[glossary/corpus]]
 - [[glossary/corpus-graph]]
 - [[glossary/document]]
-- [[glossary/drop-and-recreate]]
 - [[glossary/edge]]
 - [[glossary/fact]]
 - [[glossary/feature]]
@@ -46,7 +46,6 @@ The Hoplite domain terms, one node per term. This page links them and keeps the 
 - [[glossary/ranking-function]]
 - [[glossary/reindex]]
 - [[glossary/relationship]]
-- [[glossary/reserved-word]]
 - [[glossary/resolved]]
 - [[glossary/semantic-search]]
 - [[glossary/slug]]

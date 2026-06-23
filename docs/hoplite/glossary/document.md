@@ -1,15 +1,13 @@
 ---
 title: document
-summary: "A markdown file."
+summary: "A structured markdown file."
 tags: [hoplite, glossary]
 created: 2026-06-19
 status: locked
-has-a:
-  - "[[glossary/property]]"
-  - "[[glossary/frontmatter]]"
+has-a: "[[glossary/frontmatter]]"
 ---
 
-A markdown file.
+A structured markdown file.
 
 ## Structure
 
