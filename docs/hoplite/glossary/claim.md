@@ -4,8 +4,8 @@ summary: "An asserted feature."
 tags: [hoplite, glossary]
 created: 2026-06-19
 status: locked
-is-a: "[[glossary/feature]]"
-contrast: "[[glossary/fact]]"
+is-a: "[[feature]]"
+contrast: "[[fact]]"
 ---
 
 An asserted feature.
@@ -13,7 +13,7 @@ An asserted feature.
 ## Examples
 
 - A `tags: [hoplite, glossary]` line the author wrote — attested as true, and revisable.
-- A relationship Hoplite [[glossary/infer|inferred]] between two documents and [[glossary/assert|asserted]] as an [[glossary/edge]] into the graph.
+- A relationship Hoplite [[infer|inferred]] between two documents and [[assert|asserted]] as an [[edge]] into the graph.
 
 ## Contrasts
 

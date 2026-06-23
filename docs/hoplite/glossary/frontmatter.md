@@ -6,4 +6,4 @@ created: 2026-06-19
 status: locked
 ---
 
-The YAML block at the top of a [[glossary/document]].
+The YAML block at the top of a [[document]].

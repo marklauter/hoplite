@@ -4,8 +4,8 @@ summary: "The ratio of two sets' intersection to their union."
 tags: [hoplite, glossary]
 created: 2026-06-19
 status: locked
-is-a: "[[glossary/ranking-function]]"
-contrast: "[[glossary/bm25]]"
+is-a: "[[ranking-function]]"
+contrast: "[[bm25]]"
 ---
 
 The ratio of two sets' intersection to their union.

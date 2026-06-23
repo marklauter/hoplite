@@ -4,8 +4,8 @@ summary: "An intrinsic feature."
 tags: [hoplite, glossary]
 created: 2026-06-19
 status: locked
-is-a: "[[glossary/feature]]"
-contrast: "[[glossary/claim]]"
+is-a: "[[feature]]"
+contrast: "[[claim]]"
 ---
 
 An intrinsic feature.

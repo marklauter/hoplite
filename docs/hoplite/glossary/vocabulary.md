@@ -6,7 +6,7 @@ created: 2026-06-19
 status: locked
 ---
 
-The set of keys and values of [[glossary/property|properties]] and [[glossary/stereotype|stereotypes]] of [[glossary/edge|edges]] [[glossary/assert|asserted]] within the knowledge graph.
+The set of keys and values of [[property|properties]] and [[stereotype|stereotypes]] of [[edge|edges]] [[asserted]] within the knowledge graph.
 
 ## Examples
 

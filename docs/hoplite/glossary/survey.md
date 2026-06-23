@@ -4,10 +4,10 @@ summary: "The affordance the vocabulary grants: discovering what it holds before
 tags: [hoplite, glossary]
 created: 2026-06-19
 status: evolving
-is-a: "[[glossary/affordance]]"
+is-a: "[[affordance]]"
 ---
 
-The affordance [[glossary/vocabulary|vocabulary]] grants: discovering what it holds before a predicate is composed.
+The affordance [[vocabulary]] grants: discovering what it holds before a predicate is composed.
 
  So the model is vocabulary (a feature surface) → affords → survey (the action).
 

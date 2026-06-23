@@ -4,7 +4,7 @@ summary: "A compact sketch of a set that estimates its Jaccard similarity to ano
 tags: [hoplite, glossary]
 created: 2026-06-19
 status: locked
-estimates: "[[glossary/jaccard]]"
+estimates: "[[jaccard]]"
 ---
 
 A compact sketch of a set that estimates its Jaccard similarity to another.

@@ -6,7 +6,7 @@ created: 2026-06-19
 status: locked
 ---
 
-A label naming the [[glossary/relationship|relationship]] expressed by an [[glossary/edge|edge]].
+A label naming the [[relationship]] expressed by an [[edge]].
 
 ## Examples
 

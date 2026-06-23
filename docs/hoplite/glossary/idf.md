@@ -4,7 +4,7 @@ summary: "A feature's rarity, scored as the inverse of its document frequency."
 tags: [hoplite, glossary]
 created: 2026-06-20
 status: locked
-is-a: "[[glossary/ranking-function]]"
+is-a: "[[ranking-function]]"
 ---
 
 A feature's rarity, scored as the inverse of its document frequency.

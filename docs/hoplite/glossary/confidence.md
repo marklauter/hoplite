@@ -6,7 +6,7 @@ created: 2026-06-19
 status: locked
 ---
 
-The strength of an [[glossary/assert|assertion]].
+The strength of an [[assert|assertion]].
 
 ## Mechanism
 

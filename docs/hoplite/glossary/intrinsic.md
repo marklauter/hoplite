@@ -4,8 +4,8 @@ summary: "Provenance given by the document's own existence."
 tags: [hoplite, glossary]
 created: 2026-06-19
 status: locked
-is-a: "[[glossary/provenance]]"
-contrast: "[[glossary/asserted]]"
+is-a: "[[provenance]]"
+contrast: "[[asserted]]"
 ---
 
 Provenance given by the document's own existence.

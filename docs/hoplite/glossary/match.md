@@ -8,4 +8,4 @@ status: evolving
 
 The read-operation that narrows the corpus by predicate.
 
-**Also.** one endpoint expressing two ideas — [[glossary/filter.md]] and [[glossary/semantic-search.md]].
+**Also.** one endpoint expressing two ideas — [[filter]] and [[semantic-search]].

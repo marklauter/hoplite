@@ -7,7 +7,7 @@ status: locked
 retired: [author, declare, describe]
 ---
 
-To attest a [[glossary/feature]] as true.
+To attest a [[feature]] as true.
 
 ## Examples
 

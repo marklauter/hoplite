@@ -4,8 +4,8 @@ summary: "An attachment between two nodes."
 tags: [hoplite, glossary]
 created: 2026-06-19
 status: locked
-implements: "[[glossary/relationship]]"
-has-a: "[[glossary/confidence]]"
+implements: "[[relationship]]"
+has-a: "[[confidence]]"
 ---
 
 An attachment between two nodes.

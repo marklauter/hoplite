@@ -4,7 +4,7 @@ summary: "A list property that carries document labels."
 tags: [hoplite, glossary]
 created: 2026-06-19
 status: locked
-is-a: "[[glossary/property]]"
+is-a: "[[property]]"
 ---
 
 A list property that carries document labels.
