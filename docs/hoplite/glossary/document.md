@@ -4,7 +4,9 @@ summary: "A structured markdown file."
 tags: [hoplite, glossary]
 created: 2026-06-19
 status: locked
-has-a: "[[frontmatter]]"
+has-a: 
+    - "[[frontmatter]]"
+    - "[[feature]]"
 ---
 
 A structured markdown file.
