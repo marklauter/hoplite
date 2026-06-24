@@ -3,7 +3,7 @@ title: Expressing edges
 summary: "The ways to express an edge — an inline link (wikilink or markdown) or a frontmatter property whose value is a wikilink — Obsidian-native. Any inline link is an edge: an adjacent comment types it, otherwise it defaults to the `links-to` stereotype."
 tags: [hoplite, edges, spec]
 created: 2026-06-20
-status: evolving
+status: locked
 ---
 
 # Expressing edges
@@ -94,9 +94,7 @@ $
 
 A markdown link `[text](target)` is an edge, the same as a wikilink. It defaults to the `links-to` stereotype and accepts the same inline stereotype comments (`[text](target)<!--cites-->`). A markdown link is just another link syntax.
 
-This is a recent change. Markdown links were previously plain hypertext, excluded from the graph because there was no way to stereotype them; naming a default stereotype (`links-to`) removes that obstacle, so every inline link is now an edge.
-
-**Open — the markdown-link target grammar is not yet specified.** A markdown target may be an external URL, a relative path, or an anchor — a superset of the wikilink `TARGET_RE`, where external URLs resolve to `url` nodes. Pinning this grammar, and extending `edge_grammar.py` to extract markdown links, is tracked separately; until it lands, this section is the reason the spec is `evolving`.
+A markdown target is a CommonMark link destination. An external URL resolves to a `url` node, a relative path to a `document`, and a fragment like `#section` to a same-page anchor.
 
 ## Frontmatter edges
 
@@ -114,3 +112,9 @@ contrast:                       # block list — several, one per line
 - Value — a quoted wikilink. Quote it: Obsidian indexes the link only when it's quoted, and unquoted `[[ ]]` isn't valid YAML. Use a scalar for one edge, a list for several.
 - Edge or property, decided by value. A wikilink value makes the property an edge; a scalar value like `status: draft` makes it a node property.
 - No rendering. Display text (`|`) and embedding (`!`) work only in the body; a frontmatter edge is data.
+
+## Portability
+
+The wikilink grammar is Obsidian-native. Other renderers read the same syntax differently:
+
+- GitHub wiki (Gollum) reverses the pipe order. Obsidian writes `[[target|display]]`, but Gollum reads the first field as the display text and the second as the target — `[[display|target]]`. An aliased wikilink resolves backwards there: Gollum treats the display text as the page name. A bare `[[slug]]` carries no pipe, so it ports unchanged.
