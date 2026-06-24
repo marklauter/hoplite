@@ -1,7 +1,9 @@
 ---
 title: claim
-summary: "An asserted feature."
-tags: [hoplite, glossary]
+summary: An asserted feature.
+tags:
+  - hoplite
+  - glossary
 created: 2026-06-19
 status: locked
 is-a: "[[feature]]"

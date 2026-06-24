@@ -4,6 +4,7 @@ summary: "Anything that can be known about a document."
 tags: [hoplite, glossary]
 created: 2026-06-19
 status: locked
+has-a: "[[provenance]]"
 ---
 
 Anything that can be known about a document.

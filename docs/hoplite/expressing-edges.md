@@ -1,19 +1,21 @@
 ---
 title: Expressing edges
-summary: "The two ways to express an edge — an inline wikilink (untyped) and a frontmatter property whose value is a wikilink (typed) — Obsidian-native, sharing one target grammar. A markdown link is plain hypertext, not an edge."
+summary: "The ways to express an edge — an inline link (wikilink or markdown) or a frontmatter property whose value is a wikilink — Obsidian-native. Any inline link is an edge: an adjacent comment types it, otherwise it defaults to the `links-to` stereotype."
 tags: [hoplite, edges, spec]
 created: 2026-06-20
-status: locked
+status: evolving
 ---
 
 # Expressing edges
 
 Hoplite supports the full Obsidian wikilink and property grammar.
 
-There are two ways to express edges within a markdown document:
+There are two places to express edges within a markdown document — the body and the frontmatter:
 
-- In the body, a wikilink like `[[circle]]`. This is an untyped edge; a stereotype comment can type it (see Inline stereotypes below).
+- In the body, an inline link: a wikilink like `[[circle]]`, or a markdown link like `[circle](circle)`. Either is an edge. A stereotype comment beside it types the edge; without one, the edge defaults to the `links-to` stereotype (see Inline stereotypes below).
 - In frontmatter, a property whose value is a wikilink, like `cites: "[[circle]]"`. This is a typed edge, and the key (`cites`) is the stereotype.
+
+Every inline link is an edge — there is no plain-hypertext link in a Hoplite corpus. `links-to` is what an untyped link means; an explicit stereotype overrides it.
 
 ## Wikilinks
 
@@ -40,13 +42,15 @@ Slug and path segments use the characters `A-Z a-z 0-9 . _ -`. The `.md` extensi
 
 ### Inline stereotypes
 
-A bare `[[circle]]` is an untyped edge. To type it in the body, attach a stereotype in a comment beside the link. Hoplite reads three forms:
+A bare inline link defaults to the `links-to` stereotype. To type it, attach a stereotype in a comment beside the link. Hoplite reads three forms:
 
 - HTML comment — `[[circle]]<!--refines-->`. The default: invisible in Obsidian, on GitHub, and in any renderer.
 - Obsidian comment — `[[circle]]%%refines%%`. Invisible in Obsidian only.
 - Dataview field — `[refines:: [[circle]]]`. Visible, and renders as literal brackets without the Dataview plugin.
 
-The stereotype is a slug (`[A-Za-z0-9._-]`), and the comment sits on the same line, immediately beside the link. The link is untouched in every form, so Obsidian still resolves it and draws the edge — untyped, as always — while Hoplite reads the stereotype. The parser accepts all three; authors emit the HTML comment. (A future setting will choose the emitted form.)
+The same comment forms attach to a markdown link: `[circle](circle)<!--refines-->`.
+
+The stereotype is a slug (`[A-Za-z0-9._-]`), and the comment sits on the same line, immediately beside the link. The link is untouched in every form, so Obsidian still resolves it and draws the edge — `links-to` by default — while Hoplite reads the stereotype. The parser accepts all three; authors emit the HTML comment. (A future setting will choose the emitted form.)
 
 ### Ghosts
 
@@ -85,6 +89,14 @@ $
 - Frontmatter and inline extractors — pull edge targets and inline stereotypes from a document.
 
 `test_edge_grammar.py` tests the regex directly. The `check-frontmatter` hook runs the validator on every body wikilink and every frontmatter wikilink value at write time.
+
+## Markdown links
+
+A markdown link `[text](target)` is an edge, the same as a wikilink. It defaults to the `links-to` stereotype and accepts the same inline stereotype comments (`[text](target)<!--cites-->`). A markdown link is just another link syntax.
+
+This is a recent change. Markdown links were previously plain hypertext, excluded from the graph because there was no way to stereotype them; naming a default stereotype (`links-to`) removes that obstacle, so every inline link is now an edge.
+
+**Open — the markdown-link target grammar is not yet specified.** A markdown target may be an external URL, a relative path, or an anchor — a superset of the wikilink `TARGET_RE`, where external URLs resolve to `url` nodes. Pinning this grammar, and extending `edge_grammar.py` to extract markdown links, is tracked separately; until it lands, this section is the reason the spec is `evolving`.
 
 ## Frontmatter edges
 
