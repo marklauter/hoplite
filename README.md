@@ -8,15 +8,19 @@
 
 *Another weapon from the MSL Armory*
 
-A knowledge graph over markdown documents. Claude Code MCP plugin that organizes your agent's thoughts.
+A knowledge graph over a markdown corpus — a **map of meaning** your agent can read, traverse, and act on. A Claude Code MCP plugin that organizes your agent's thoughts.
 
 ## What hoplite is
 
-The corpus is a directory of `.md` files with structured headers — Obsidian-compatible YAML frontmatter. Hoplite builds an in-memory graph from the corpus during Claude session start and exposes four query tools so agents can discover documents, traverse the graph, refresh after writing, and dump state as SQLite for debugging.
+A directory of `.md` files with Obsidian-compatible YAML frontmatter is bare text on disk. Hoplite reads it as a layered map:
 
-Content reads happen through the agent's built-in `Read` tool; writes happen through `Write` and `Edit`. There is no CRUD surface on hoplite itself.
+- **Substrate** — the bare graph. Every document is a `node`, every link an `edge`. Structure, no meaning.
+- **Meaning** — the knowledge graph. A `document` is what a node holds: its frontmatter and content. A `relationship` is a stereotyped link that says *how* two documents relate, not merely that they do. This is the map drawn on the structure.
+- **Use** — `affordances`. What the map makes possible for an agent: search it, walk a neighborhood, filter edges by what a link means, rank by relatedness.
 
-The corpus of `.md` files is the only persistent state in the system. Everything else — edges, MinHash signatures, the FTS5 text index, alias and casefold lookup tables — derives at startup and lives in RAM.
+Provenance runs through the meaning layer. Every feature is a **fact** — intrinsic, read off the bytes — or a **claim** — asserted by the author or inferred by the engine. So the map separates the terrain from what was drawn on it.
+
+The corpus of `.md` files is the only persistent state. The graph, the MinHash signatures, and the text index all derive at session start and live in RAM, rebuilt from the files on demand. There is no CRUD surface on hoplite itself: content reads go through the agent's `Read` tool, writes through `Write` and `Edit`.
 
 ## Install
 
