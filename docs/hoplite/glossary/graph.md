@@ -13,4 +13,4 @@ The set of nodes and edges.
 
 ## Structure
 
-The bare substrate: vertices and the attachments between them, identity and topology with no meaning attached. A [[knowledge-graph]] is built on a graph — its nodes carry documents and its edges carry relationships.
+The bare substrate: vertices and the edges between them, identity and topology with no meaning attached. A [[knowledge-graph]] is built on a graph — its nodes carry documents and its edges carry relationships.
