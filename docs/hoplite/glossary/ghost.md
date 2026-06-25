@@ -7,4 +7,4 @@ status: locked
 is-a: "[[document]]"
 ---
 
-A document that doesn't yet exist.
+A document that doesn't exist yet.
