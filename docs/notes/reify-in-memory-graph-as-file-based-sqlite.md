@@ -14,14 +14,14 @@ The in-memory graph model has stabilized across several iterations; revisit pers
 
 ## Motivation
 
-Persistence got dropped on 2026-05-25 when the design pivoted from SQLite-hybrid to a `:memory:` SQLite FTS5 engine plus dict-based adjacency — see [[docs/journal/2026-05-25-0202-dead-then-redesign-in-memory-graph-and-four-tools.md]]. The reasoning at the time: a long-running MCP server eats one 50 s warmup per session, then serves sub-millisecond queries for hours, so the persistence layer was preventing a problem that did not exist.
+Persistence got dropped on 2026-05-25 when the design pivoted from SQLite-hybrid to a `:memory:` SQLite FTS5 engine plus dict-based adjacency. See [[docs/journal/2026-05-25-0202-dead-then-redesign-in-memory-graph-and-four-tools.md]]. The reasoning at the time: a long-running MCP server pays one 50 s warmup per session, then serves sub-millisecond queries for hours. The persistence layer solved a problem that did not exist.
 
-That reasoning held while the corpus was small and the in-memory shape was still settling. Two things have changed:
+That reasoning held while the corpus was small and the in-memory shape was still settling. Two things have changed.
 
 - Cold-start cost scales with corpus size. The roadmap already flags ~5 min startup at 5000 docs (`docs/hoplite/hoplite-roadmap.md`, MinHash section). The 50 s figure was a day-one budget, not a stable cost.
-- The runtime model has held up. Identity-as-path, the four-tool surface, `mentions`/`cites`/`related` edges, the FTS5 + MinHash split — none of these have churned in weeks. The schema is no longer a moving target, so persisting it costs less than it would have during the redesign window.
+- The runtime model has held up. Identity-as-path, the four-tool surface, `mentions`/`cites`/`related` edges, the FTS5 + MinHash split: none of these have churned in weeks. The schema is no longer a moving target, so persisting it costs less than it would have during the redesign window.
 
-The prior file-based design — `docs/` for content, `.hoplite/` for the index, WAL mode and PRAGMA tuning — already exists as a reference point. See [[docs/journal/2026-05-24-0411-sqlite-hybrid-wins-file-based-dropped.md]]. It got dropped because the cache-invalidation problem was unwanted, not because the storage shape was wrong.
+The prior file-based design already exists as a reference point: `docs/` for content, `.hoplite/` for the index, WAL mode and PRAGMA tuning. See [[docs/journal/2026-05-24-0411-sqlite-hybrid-wins-file-based-dropped.md]]. It got dropped because the cache-invalidation problem was unwanted, not because the storage shape was wrong.
 
 ## What persistence would buy
 
@@ -41,17 +41,17 @@ The prior file-based design — `docs/` for content, `.hoplite/` for the index, 
 Worth doing when any of these arrive:
 
 - Corpus pushes past ~2000 docs and cold start becomes noticeable in normal use.
-- An agent workflow wants Hoplite as a short-lived process (one query, one exit) — current model makes that prohibitively expensive.
+- An agent workflow wants Hoplite as a short-lived process (one query, one exit). The current model makes that prohibitively expensive.
 - MinHash gives way to a heavier embedding step that pushes warmup well past one minute.
 
 Until then, the in-memory model is fine. This note exists so the option is visible when the trigger fires.
 
-Trigger fired 2026-05-27 on a different axis than the ones listed above — the user is running many Claude Code windows against the same corpus and wants the graph shared across processes with no per-window cold start. WAL mode plus persistent file storage gives many-readers-one-writer concurrency for free. Execution plan lives at [[docs/notes/db-refactor.md]].
+The trigger fired 2026-05-27 on a different axis than the ones listed above. The user is running many Claude Code windows against the same corpus and wants the graph shared across processes with no per-window cold start. WAL mode plus persistent file storage gives many-readers-one-writer concurrency for free. The execution plan lives at [[docs/notes/db-refactor.md]].
 
 ## Resolved
 
-The trigger fired and the work is underway; the execution plan is [[docs/notes/db-refactor.md]]. The open questions resolved as:
+The trigger fired and the work is underway. The execution plan is [[docs/notes/db-refactor.md]]. The open questions resolved as follows.
 
-- **Schema designed fresh, not reused from the dump.** Storage is authoritative now, so the schema was reworked into `node`/`node_property`/`edge` (interned `edge_kind`)/`edge_property`/`fts`, with `COLLATE NOCASE` doing case-insensitive matching. See `plugins/hoplite/mcp/src/hoplite/schema.sql`.
-- **Explicit `refresh`, not stat-and-hash on every query.** Day-one is truncate-and-rebuild on a manual `refresh`; divergence-based reconcile is deferred (db-refactor "Held for future").
-- **The in-memory graph is retired, not kept as a peer.** SQLite is the only implementation; there is no Protocol and no two-impl split. [[docs/notes/swap-in-memory-graph-dicts-for-a-property-graph-object-model.md]] is superseded — its property-graph object model is realized directly in the SQLite schema rather than as an in-memory shape.
+- Schema designed fresh, not reused from the dump. Storage is authoritative now, so the schema was reworked into `node`/`node_property`/`edge` (interned `edge_kind`)/`edge_property`/`fts`, with `COLLATE NOCASE` doing case-insensitive matching. See `plugins/hoplite/mcp/src/hoplite/schema.sql`.
+- Explicit `refresh`, not stat-and-hash on every query. Day-one is truncate-and-rebuild on a manual `refresh`. Divergence-based reconcile is deferred (db-refactor "Held for future").
+- The in-memory graph is retired, not kept as a peer. SQLite is the only implementation; there is no Protocol and no two-impl split. [[docs/notes/swap-in-memory-graph-dicts-for-a-property-graph-object-model.md]] is superseded. Its property-graph object model is realized directly in the SQLite schema rather than as an in-memory shape.

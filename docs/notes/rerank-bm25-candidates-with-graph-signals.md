@@ -21,7 +21,7 @@ The graph prior is a scalar per candidate computed from features the graph alrea
 
 ## Why this is Hoplite-shaped
 
-[Inference] Every general retriever — BM25, dense embeddings, hybrid, cross-encoder rerank — operates on text alone. Each treats documents as bags of tokens or vectors of meaning. None has access to *how the corpus is wired*. Hoplite does. The wikilinks the author placed and the MinHash adjacencies the indexer inferred are signal no off-the-shelf RAG library can use, because they don't exist outside this index.
+Every general retriever — BM25, dense embeddings, hybrid, cross-encoder rerank — operates on text alone. Each treats a document as a bag of tokens or a vector of meaning. None can see *how the corpus is wired*. Hoplite can. The wikilinks the author placed and the MinHash adjacencies the indexer inferred are signal no off-the-shelf RAG library can use, because they don't exist outside this index.
 
 Closing the lexical-semantic gap with a cross-encoder is a commodity upgrade; many retrievers do it. Reranking by graph topology is the move that can't be replicated by swapping in a better off-the-shelf component.
 
@@ -34,9 +34,9 @@ Closing the lexical-semantic gap with a cross-encoder is a commodity upgrade; ma
 
 ## Dependencies and risks
 
-- [Observation] The `related` edge currently rarely fires — see [[docs/notes/related-edges-rarely-fire-in-current-corpus.md]]. Until that's fixed, the graph prior collapses to wikilinks + tags + recency, losing the inferred-adjacency signal that distinguishes graph-aware retrieval from "follow the links the author wrote." Reranking quality depends on `related` edges working.
-- [Guess] On a corpus this small (tens of documents), the graph prior may overfit — a few wikilinks dominate the topology, and the rerank becomes deterministic. The signal sharpens as the corpus grows; worth measuring before claiming a quality win.
-- [Inference] A "focus node" requires the agent to declare one — implicit (last document read in the session) or explicit (passed as a query parameter). The implicit version needs state the MCP server doesn't currently carry; the explicit version needs the agent to know what to pass.
+- The `related` edge rarely fires today — see [[docs/notes/related-edges-rarely-fire-in-current-corpus.md]]. Until that's fixed, the graph prior collapses to wikilinks, tags, and recency, losing the inferred-adjacency signal that separates graph-aware retrieval from "follow the links the author wrote." Reranking quality depends on `related` edges working.
+- The prior may overfit a small corpus. On tens of documents, a few wikilinks dominate the topology and the rerank turns deterministic. The signal sharpens as the corpus grows; measure before claiming a quality win.
+- A focus node has to come from somewhere. The agent supplies one either implicitly (the last document read in the session) or explicitly (passed as a query parameter). The implicit version needs state the MCP server doesn't carry today; the explicit version needs the agent to know what to pass.
 
 ## Where it sits relative to other upgrades
 

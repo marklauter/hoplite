@@ -14,7 +14,7 @@ Sibling design notes: [[docs/notes/reify-in-memory-graph-as-file-based-sqlite.md
 
 ## Interface — `Database`
 
-A `typing.Protocol` with two methods, both context managers that yield a fresh connection per call. Neither method knows anything about the schema; that responsibility lives in `migrations.py`.
+A `typing.Protocol` with two methods. Both are context managers that yield a fresh connection per call. Neither method knows the schema; that responsibility lives in `migrations.py`.
 
 ```python
 class Database(Protocol):
@@ -25,15 +25,15 @@ class Database(Protocol):
 - `open_rw` — write path. Used only by `refresh`. Creates the file if missing.
 - `open_ro` — read path. Used by every query tool. Errors cleanly if the file doesn't exist.
 
-Callers depend on `Database`, not on a concrete class. Tool handlers receive an instance via the MCP server's closure; no global state, no module-level connection.
+Callers depend on `Database`, not on a concrete class. Tool handlers receive an instance through the MCP server's closure. There is no global state and no module-level connection.
 
 ## Implementation — `FileDatabase`
 
 `FileDatabase(path: Path)` is the day-one implementation. Each method opens a fresh `sqlite3.Connection`, applies the appropriate PRAGMAs, sets `row_factory = sqlite3.Row`, yields, and closes on `with` exit.
 
-`open_rw` opens the file with create-if-missing semantics — the default of `sqlite3.connect(path)`. Before opening, it ensures the parent directory exists via `path.parent.mkdir(parents=True, exist_ok=True)`; the `.hoplite/` directory is created on first use, no manual setup needed.
+`open_rw` opens the file with create-if-missing semantics, the default of `sqlite3.connect(path)`. Before opening, it ensures the parent directory exists via `path.parent.mkdir(parents=True, exist_ok=True)`. The `.hoplite/` directory is created on first use; no manual setup is needed.
 
-`open_ro` opens with the URI form, built via `path.as_uri()` so Windows paths produce the correct `file:///D:/...` shape and POSIX paths produce `file:///home/...`. The query string `?mode=ro&immutable=0` appends to the URI. SQLite errors if the file doesn't exist; `FileDatabase.open_ro` catches that and re-raises as `IndexNotFoundError` (loud is right; see the "fail loud" decision in [[docs/notes/db-refactor.md]]).
+`open_ro` opens with the URI form, built via `path.as_uri()` so Windows paths produce the correct `file:///D:/...` shape and POSIX paths produce `file:///home/...`. The query string `?mode=ro&immutable=0` appends to the URI. SQLite errors if the file doesn't exist. `FileDatabase.open_ro` catches that and re-raises as `IndexNotFoundError`. Failing loud is right here; see the "fail loud" decision in [[docs/notes/db-refactor.md]].
 
 Caller shape:
 
@@ -42,7 +42,7 @@ with db.open_ro() as conn:
     rows = conn.execute("SELECT uri FROM node").fetchall()
 ```
 
-Connection lifetime equals the `with` block. No caching, no sharing, no thread-safety concerns. Two overlapping tool calls get independent connections that don't block each other under WAL.
+Connection lifetime equals the `with` block. There is no caching, no sharing, and no thread-safety concern. Two overlapping tool calls get independent connections that don't block each other under WAL.
 
 ## PRAGMAs
 
@@ -68,22 +68,22 @@ Read-only path (`open_ro`):
 
 Both `open_rw` and `open_ro` construct connections with `isolation_level=None` — autocommit mode. Callers manage transactions explicitly. Reference: [SQLite isolation model](https://sqlite.org/isolation.html).
 
-Python's stdlib `sqlite3` defaults to an "implicit transaction on first DML" mode that interferes with explicit `BEGIN IMMEDIATE` — calling it on a connection where Python has already issued an implicit `BEGIN` raises "cannot start a transaction within a transaction." `isolation_level=None` turns that off.
+Python's stdlib `sqlite3` defaults to an "implicit transaction on first DML" mode that interferes with explicit `BEGIN IMMEDIATE`. Calling it on a connection where Python has already issued an implicit `BEGIN` raises "cannot start a transaction within a transaction." `isolation_level=None` turns that off.
 
 Caller protocol under autocommit:
 
-- `refresh` and `migrations.apply` issue `BEGIN IMMEDIATE` ... `COMMIT` (or `ROLLBACK` on exception) themselves. `BEGIN IMMEDIATE` grabs the write lock upfront so concurrent writers serialize cleanly instead of racing and failing partway through.
+- `refresh` and `migrations.apply` issue `BEGIN IMMEDIATE` ... `COMMIT` (or `ROLLBACK` on exception) themselves. `BEGIN IMMEDIATE` grabs the write lock upfront, so concurrent writers serialize cleanly instead of racing and failing partway through.
 - Query tools issue plain `SELECT` statements with no transaction wrapping. Each statement autocommits (a no-op for reads).
 
 Under WAL, this gives:
 
-- Snapshot isolation across connections — a read transaction sees a frozen snapshot from start; concurrent writes are invisible to that reader.
-- Serialized writers — `BEGIN IMMEDIATE` on connection B blocks until connection A's writer commits.
-- No isolation within one connection — sequential statements see each other's uncommitted changes. Fine for our single-writer walker.
+- Snapshot isolation across connections. A read transaction sees a frozen snapshot from its start; concurrent writes are invisible to that reader.
+- Serialized writers. `BEGIN IMMEDIATE` on connection B blocks until connection A's writer commits.
+- No isolation within one connection. Sequential statements see each other's uncommitted changes. This is fine for our single-writer walker.
 
 ## Domain errors
 
-Two domain exceptions live in `db.py` to translate raw `sqlite3.OperationalError` into actionable messages the agent can read.
+Two domain exceptions live in `db.py`. They translate raw `sqlite3.OperationalError` into actionable messages the agent can read.
 
 ### `IndexNotFoundError`
 
@@ -92,7 +92,7 @@ class IndexNotFoundError(RuntimeError):
     """The index file is missing. Caller should run refresh before retrying."""
 ```
 
-Raised by `FileDatabase.open_ro` when the file doesn't exist. Message names the path and the remediation: `"no Hoplite index at <path>; call refresh to build it"`. Catching it doesn't require a `sqlite3` import.
+Raised by `FileDatabase.open_ro` when the file doesn't exist. The message names the path and the remediation: `"no Hoplite index at <path>; call refresh to build it"`. Catching it doesn't require a `sqlite3` import.
 
 ### `GraphRefreshInProgressError`
 
@@ -101,13 +101,13 @@ class GraphRefreshInProgressError(RuntimeError):
     """A writer holds the lock. Caller should retry shortly."""
 ```
 
-Raised when `BEGIN IMMEDIATE` returns `SQLITE_BUSY` after the busy_timeout expires — another `refresh` is in flight. Message: `"knowledge graph is being refreshed; retry shortly"`. Translation happens at the call sites that issue `BEGIN IMMEDIATE` (the walker and `migrations.apply`): catch `sqlite3.OperationalError` where the SQLite error code is `SQLITE_BUSY`, re-raise as the domain error.
+Raised when `BEGIN IMMEDIATE` returns `SQLITE_BUSY` after the busy_timeout expires, meaning another `refresh` is in flight. The message is `"knowledge graph is being refreshed; retry shortly"`. Translation happens at the call sites that issue `BEGIN IMMEDIATE` (the walker and `migrations.apply`): catch `sqlite3.OperationalError` where the SQLite error code is `SQLITE_BUSY`, then re-raise as the domain error.
 
-busy_timeout stays at Python's default 5 seconds (`sqlite3.connect(timeout=5.0)`). Under WAL, readers never block on writers, so this only fires when two refreshes race — rare given agents start manually, and 5 seconds is enough cushion to absorb the typical refresh window's commit phase.
+busy_timeout stays at Python's default 5 seconds (`sqlite3.connect(timeout=5.0)`). Under WAL, readers never block on writers, so this only fires when two refreshes race. That is rare because agents start manually, and 5 seconds is enough cushion to absorb the commit phase of a typical refresh.
 
 ## Helper — `write_transaction`
 
-Context-manager helper in `db.py`. Centralizes the `BEGIN IMMEDIATE` / `COMMIT` / `ROLLBACK` protocol and translates `SQLITE_BUSY` into `GraphRefreshInProgressError`. Callers (the walker, `migrations.apply`) wrap their work in it instead of issuing the transaction commands by hand.
+A context-manager helper in `db.py`. It centralizes the `BEGIN IMMEDIATE` / `COMMIT` / `ROLLBACK` protocol and translates `SQLITE_BUSY` into `GraphRefreshInProgressError`. Callers (the walker, `migrations.apply`) wrap their work in it instead of issuing the transaction commands by hand.
 
 ```python
 from contextlib import contextmanager
@@ -141,19 +141,20 @@ with db.open_rw() as conn:
         # ... walker bulk inserts ...
 ```
 
-Two nested `with` blocks compose cleanly. `open_rw` owns connection lifecycle (open/close). `write_transaction` owns transaction lifecycle (BEGIN/COMMIT/ROLLBACK + busy translation). Each helper has one job; the caller composes them.
+Two nested `with` blocks compose cleanly. `open_rw` owns the connection lifecycle (open/close). `write_transaction` owns the transaction lifecycle (BEGIN/COMMIT/ROLLBACK plus busy translation). Each helper has one job, and the caller composes them.
 
-Note: `OperationalError.sqlite_errorcode` requires Python 3.11+. The current `pyproject.toml` declares `requires-python = ">=3.10"`; bump to `>=3.11` as part of this refactor (the bootstrapped venv already runs 3.14, so no production impact). Alternative if 3.10 must stay: fall back to `"database is locked" in str(e)` message-sniffing — workable but locale-sensitive.
+Note: `OperationalError.sqlite_errorcode` requires Python 3.11+. The current `pyproject.toml` sets `requires-python = ">=3.10"`; bump it to `>=3.11` as part of this refactor. The bootstrapped venv already runs 3.14, so there is no production impact. If 3.10 must stay, fall back to `"database is locked" in str(e)` message-sniffing. That works but is locale-sensitive.
 
 ## Why per-call open
 
-A shared connection would chokepoint concurrent requests: one transaction per connection, and stdlib `sqlite3` defaults to `check_same_thread=True`, which would crash outright under FastMCP's concurrent handler model. Per-call open under WAL is cheap: pragma application is microseconds, and `mmap_size = 256MB` keeps most reads in the OS page cache across connection close.
+A shared connection would chokepoint concurrent requests: one transaction per connection, and stdlib `sqlite3` defaults to `check_same_thread=True`, which would crash outright under FastMCP's concurrent handler model. Per-call open under WAL is cheap. Pragma application takes microseconds, and `mmap_size = 256MB` keeps most reads in the OS page cache across connection close.
 
 The `Database` interface is the seam for future optimization. A `PooledDatabase` that satisfies the same protocol slots in without changes to tool handlers or `refresh`. See the lock-vs-pool tradeoff in [[docs/notes/db-refactor.md]] for the future direction.
 
+
 ## Module skeleton
 
-Full `db.py` shape, consolidating the prose decisions above. The implementation agent should mirror this structure; deviations are the agent's call but should be justified.
+The full `db.py` shape, consolidating the prose decisions above. The implementation agent should mirror this structure. Deviations are the agent's call but should be justified.
 
 ```python
 from collections.abc import Iterator
@@ -242,7 +243,7 @@ def write_transaction(conn: sqlite3.Connection) -> Iterator[sqlite3.Connection]:
         raise
 ```
 
-`AbstractContextManager` import: `from contextlib import AbstractContextManager` — included at the top of the real module. Omitted from the skeleton above for brevity since it's only referenced in the Protocol's return type annotation.
+`AbstractContextManager` import: `from contextlib import AbstractContextManager`, included at the top of the real module. It is omitted from the skeleton above for brevity, since it's only referenced in the Protocol's return type annotation.
 
 ## Tests
 

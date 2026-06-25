@@ -20,15 +20,15 @@ New module at `plugins/hoplite/mcp/src/hoplite/walker.py`. One public function:
 def walk(conn: sqlite3.Connection, corpus_root: Path) -> WriteResult: ...
 ```
 
-Why a separate module from `graph.py`: today's walker (`graph.py:walk`) is ~115 lines; inlining it as a method on `Graph` would balloon the class, and the walker has its own test surface (`:memory:` connection plus a synthetic corpus directory) that doesn't need a `Graph` instance. `Graph.refresh()` is the only caller (see [[docs/notes/graph-py-design.md]]).
+Why a separate module from `graph.py`: today's walker (`graph.py:walk`) is ~115 lines. Inlining it as a method on `Graph` would balloon the class, and the walker has its own test surface (`:memory:` connection plus a synthetic corpus directory) that doesn't need a `Graph` instance. `Graph.refresh()` is the only caller (see [[docs/notes/graph-py-design.md]]).
 
 `walk` assumes the caller has opened the rw connection, applied migrations, and started a `BEGIN IMMEDIATE` via `write_transaction(conn)`. Returns a `WriteResult` with row counts and warnings; raises on any DB error, letting `write_transaction`'s `ROLLBACK` undo the partial walk.
 
 ## Schema and vocabulary note
 
-The walker writes the *current* `schema.sql`: `node(id, uri, resolved, content_hash, minhash)`, `node_property(id, key, value)` (`WITHOUT ROWID`), `edge(id, src, dst, kind, confidence)` where `kind` is an integer FK into `edge_kind(id, kind)`, `edge_property`, and `fts(uri, title, summary, body)`. The frontmatter vocabulary in this note (`title`, `summary`, `tags`, `aliases`, `created`) is unchanged from today.
+The walker writes the current `schema.sql`: `node(id, uri, resolved, content_hash, minhash)`, `node_property(id, key, value)` (`WITHOUT ROWID`), `edge(id, src, dst, kind, confidence)` where `kind` is an integer FK into `edge_kind(id, kind)`, `edge_property`, and `fts(uri, title, summary, body)`. The frontmatter vocabulary in this note (`title`, `summary`, `tags`, `aliases`, `created`) is unchanged from today.
 
-**No casefold-on-store.** `node.uri COLLATE NOCASE` makes URI matching case-insensitive at query time. The walker stores each URI *verbatim* (its natural case). There is no casefolded copy and no casefold step — that contract is deleted. Tag *values* are still casefolded on store (a tag-normalization choice, independent of URI identity), so predicate matching against casefolded query tags works.
+No casefold-on-store. `node.uri COLLATE NOCASE` makes URI matching case-insensitive at query time. The walker stores each URI verbatim, in its natural case. There is no casefolded copy and no casefold step; that contract is deleted. Tag values are still casefolded on store, a tag-normalization choice independent of URI identity, so predicate matching against casefolded query tags works.
 
 ## Edge-kind interning
 
@@ -42,7 +42,7 @@ conn.executemany(
 kind_to_id = dict(conn.execute("SELECT kind, id FROM edge_kind").fetchall())
 ```
 
-`edge_kind` is a fixed vocabulary, **not truncated** by the walk (truncating it would orphan the FK from `edge`). `INSERT OR IGNORE` keeps it idempotent across rebuilds. Every `edge` insert uses `kind_to_id[kind]`.
+`edge_kind` is a fixed vocabulary, not truncated by the walk; truncating it would orphan the FK from `edge`. `INSERT OR IGNORE` keeps it idempotent across rebuilds. Every `edge` insert uses `kind_to_id[kind]`.
 
 ## Truncate-and-rebuild semantics
 
@@ -56,13 +56,13 @@ conn.execute("DELETE FROM node_property")
 conn.execute("DELETE FROM node")
 ```
 
-`edge_kind` is left intact (see above). Order respects FK direction: `edge_property → edge`, `edge → node`, `node_property → node`; `fts` is independent but cleared for the same logical reason. The caller's PRAGMA state is `foreign_keys = ON` per [[docs/notes/db-py-design.md]], so the walker defers FK checks to commit time for the duration of the truncate-and-reinsert:
+`edge_kind` is left intact (see above). Order respects FK direction: `edge_property → edge`, `edge → node`, `node_property → node`. `fts` is independent but cleared for the same logical reason. The caller's PRAGMA state is `foreign_keys = ON` per [[docs/notes/db-py-design.md]], so the walker defers FK checks to commit time for the duration of the truncate-and-reinsert:
 
 ```python
 conn.execute("PRAGMA defer_foreign_keys = ON")
 ```
 
-`defer_foreign_keys = ON` is per-transaction and resets at COMMIT — the walker re-inserts every referenced row before the transaction commits, so FKs are satisfied at the boundary. No cleanup needed.
+`defer_foreign_keys = ON` is per-transaction and resets at COMMIT. The walker re-inserts every referenced row before the transaction commits, so FKs are satisfied at the boundary. No cleanup needed.
 
 Reconcile semantics (added/changed/removed via `content_hash`) is future work — see [[docs/notes/db-refactor.md]] "Held for future."
 
@@ -74,7 +74,7 @@ Glob `*.md` recursively under `corpus_root`. For each file:
 2. Skip if `canonical` contains `/.hoplite/` or starts with `.hoplite/`.
 3. Read as UTF-8; on `OSError`/`UnicodeDecodeError`, warn and continue.
 4. Parse YAML frontmatter. Missing/unterminated → warn, skip.
-5. Validate mandatory fields — `title` and `summary` only (bare, first-class). `created`, `tags`, and `aliases` are optional. Missing `title`/`summary` → warn, skip. **Note:** today's `graph.py` checks `tags`/`created` as mandatory; the reduced mandatory set requires this updated check, so they must land together.
+5. Validate mandatory fields: `title` and `summary` only (bare, first-class). `created`, `tags`, and `aliases` are optional. Missing `title`/`summary` → warn, skip. Note: today's `graph.py` checks `tags`/`created` as mandatory; the reduced mandatory set requires this updated check, so they must land together.
 6. Validate `tags` is a list and `aliases` (if present) is a list. Otherwise → warn, skip.
 7. Compute `content_hash = sha256(body).hexdigest()`.
 8. Insert into `node`:
@@ -86,7 +86,7 @@ VALUES (?, ?, 1, ?, NULL)
 
 The `id` is assigned in iteration order starting at 1; the walker holds a `uri_to_id: dict[str, int]` map for pass 2 and the aggregate pass.
 
-9. Insert frontmatter into `node_property`. **`title` and `summary` are skipped — they're FTS-only fields, not properties** (see [[docs/notes/row-factories-py-design.md]] "Why summary isn't in node_property"). Every other key fans out per the EAV decomposition pattern in [docs/hoplite/hoplite-architecture.md#eav-decomposition](../hoplite/hoplite-architecture.md#eav-decomposition):
+9. Insert frontmatter into `node_property`. `title` and `summary` are skipped: they're FTS-only fields, not properties (see [[docs/notes/row-factories-py-design.md]] "Why summary isn't in node_property"). Every other key fans out per the EAV decomposition pattern in [docs/hoplite/hoplite-architecture.md#eav-decomposition](../hoplite/hoplite-architecture.md#eav-decomposition):
    - Scalar value → one row `(id, key, str(value))`.
    - List value → one row per element `(id, key, str(element))`. Tag values are casefolded; other list values stored verbatim (aliases, custom keys).
    - `None` → skip.
@@ -135,7 +135,7 @@ INSERT INTO fts (rowid, uri, title, summary, body) VALUES (?, ?, ?, ?, ?)
 
 ## Aggregate pass: related edges
 
-After pass 2 writes all nodes and authored edges, run pairwise MinHash similarity:
+After pass 2 writes all nodes and asserted edges, run pairwise MinHash similarity:
 
 1. Load every resolved node's `(id, minhash)`.
 2. Load the set of pairs already connected by `mentions` (either direction) — skipped per today's `_emit_related_edges` behavior.
@@ -146,7 +146,7 @@ After pass 2 writes all nodes and authored edges, run pairwise MinHash similarit
 
 The `UNIQUE (src, dst)` constraint on `edge` allows at most one edge per ordered pair regardless of kind. A reverse-direction `related` edge does not collide with a forward `mentions` edge because the ordered pair differs; the mentions skip-check handles the both-directions case.
 
-Cost: O(N²) pairwise (~100 ms for 1000 docs). Past 10⁵ docs, LSH bucketing is the optimization; out of scope here.
+Cost: O(N²) pairwise (~100 ms for 1000 docs). Past 10⁵ docs, LSH bucketing is the optimization; it is out of scope here.
 
 ## Frontmatter classification — the canonical rule
 
@@ -162,9 +162,9 @@ The walker is where "FTS vs `node_property`" is enforced:
 | `<any-key>` (scalar) | `node_property` row with `key='<any-key>'` |
 | `<any-key>` (list) | `node_property` rows with `key='<any-key>'`, one row per element |
 
-Keys are flat — no `document.` prefix (see [docs/hoplite/hoplite-architecture.md#eav-decomposition](../hoplite/hoplite-architecture.md#eav-decomposition)); the walker stores each non-special key verbatim (`priority: high` → `(id, 'priority', 'high')`).
+Keys are flat, with no `document.` prefix (see [docs/hoplite/hoplite-architecture.md#eav-decomposition](../hoplite/hoplite-architecture.md#eav-decomposition)); the walker stores each non-special key verbatim (`priority: high` → `(id, 'priority', 'high')`).
 
-A property whose value is a wikilink is a stereotyped edge — the stereotype layer, a **locked-in design**, see [[docs/notes/stereotypes-are-open-vocab-edge-properties.md]] and [[docs/notes/ship-the-stereotype-edge-annotation-layer.md]]. Each wikilink in a `<stereotype>: ["[[target]]"]` value (and each inline `[[target]]<!--stereotype-->`) materializes a `mentions` edge plus an `edge_property` row `(edge_id, 'stereotype', '<stereotype>')` keyed by that edge's id. The stereotype layer ships as its own coordinated cycle, independent of this refactor's ship order; this walker is where its emit path lands when the two converge.
+A property whose value is a wikilink is a stereotyped edge, handled by the stereotype layer, a locked-in design (see [[docs/notes/stereotypes-are-open-vocab-edge-properties.md]] and [[docs/notes/ship-the-stereotype-edge-annotation-layer.md]]). Each wikilink in a `<stereotype>: ["[[target]]"]` value (and each inline `[[target]]<!--stereotype-->`) materializes a `mentions` edge plus an `edge_property` row `(edge_id, 'stereotype', '<stereotype>')` keyed by that edge's id. The stereotype layer ships as its own coordinated cycle, independent of this refactor's ship order; this walker is where its emit path lands when the two converge.
 
 ## Tests
 
@@ -206,25 +206,25 @@ Test bullets:
 
 ### Hard rules — don't violate these
 
-- **`defer_foreign_keys = ON` before the truncate.** Without it the FK cascades fire on intermediate states and the truncate fails. Per-transaction; no cleanup.
-- **Don't truncate `edge_kind`.** It's a fixed vocabulary that `edge.kind` FKs into. Seed with `INSERT OR IGNORE`; leave it across rebuilds.
-- **Don't casefold URIs.** Store verbatim; `COLLATE NOCASE` does case-insensitive matching at query time. Casefolding on store is the deleted contract.
-- **Title and summary skip `node_property`.** Not optional — the query layer reads summary from `fts.summary`; duplicating into `node_property` reintroduces a two-sources-of-truth problem (see [[docs/notes/row-factories-py-design.md]]).
-- **The walker holds the only write surface.** Don't add a second write path. Future mutations go through `walk` (full rebuild) until reconcile semantics arrive.
+- `defer_foreign_keys = ON` before the truncate. Without it the FK cascades fire on intermediate states and the truncate fails. Per-transaction; no cleanup.
+- Don't truncate `edge_kind`. It's a fixed vocabulary that `edge.kind` FKs into. Seed with `INSERT OR IGNORE`; leave it across rebuilds.
+- Don't casefold URIs. Store verbatim; `COLLATE NOCASE` does case-insensitive matching at query time. Casefolding on store is the deleted contract.
+- Title and summary skip `node_property`. This is not optional. The query layer reads summary from `fts.summary`; duplicating into `node_property` reintroduces a two-sources-of-truth problem (see [[docs/notes/row-factories-py-design.md]]).
+- The walker holds the only write surface. Don't add a second write path. Future mutations go through `walk` (full rebuild) until reconcile semantics arrive.
 
 ### Known gaps — accepted, documented, not yet fixed
 
-- **No reconcile semantics.** Every walk is truncate-and-rebuild. Past ~5k docs this is minutes per refresh; reconcile is the next perf lever (see [[docs/notes/db-refactor.md]] "Held for future").
-- **The stereotype layer is locked-in design, shipped on its own cycle.** Both authoring surfaces (`[[target]]<!--stereotype-->` inline, `<stereotype>: "[[target]]"` frontmatter) emit a `mentions` edge plus an `edge_property` stereotype row through this walker (see [[docs/notes/stereotypes-are-open-vocab-edge-properties.md]] and [[docs/notes/ship-the-stereotype-edge-annotation-layer.md]]). Whether it lands in the same pass as this refactor depends on ship order between the two clusters, which is free.
-- **`node_property` is `WITHOUT ROWID`.** No insertion-order column. Tags are sorted at projection, so order is moot for them; any future order-sensitive property needs an explicit ordinal.
+- No reconcile semantics. Every walk is truncate-and-rebuild. Past ~5k docs this is minutes per refresh; reconcile is the next perf lever (see [[docs/notes/db-refactor.md]] "Held for future").
+- The stereotype layer is locked-in design, shipped on its own cycle. Both authoring surfaces (`[[target]]<!--stereotype-->` inline, `<stereotype>: "[[target]]"` frontmatter) emit a `mentions` edge plus an `edge_property` stereotype row through this walker (see [[docs/notes/stereotypes-are-open-vocab-edge-properties.md]] and [[docs/notes/ship-the-stereotype-edge-annotation-layer.md]]). Whether it lands in the same pass as this refactor depends on ship order between the two clusters, which is free.
+- `node_property` is `WITHOUT ROWID`. No insertion-order column. Tags are sorted at projection, so order is moot for them; any future order-sensitive property needs an explicit ordinal.
 
 ### Future considerations — forward-pointers
 
-- **MinHash cold start** dominates walk time (~50 ms × N). A persistent signature cache returns when corpus sizes grow.
-- **Body memory pressure** — bodies held in RAM during the walk (~25 MB at 5k × 5 KB). Stream pass 2 (read, process, discard) if it grows.
-- **The `executescript`-vs-`write_transaction` integration test** (deferred from [[docs/notes/migrations-py-design.md]]) lands here: walker called inside a `write_transaction` with a fresh schema apply just before; verify no spurious COMMIT.
+- MinHash cold start dominates walk time (~50 ms × N). A persistent signature cache returns when corpus sizes grow.
+- Body memory pressure: bodies held in RAM during the walk (~25 MB at 5k × 5 KB). Stream pass 2 (read, process, discard) if it grows.
+- The `executescript`-vs-`write_transaction` integration test (deferred from [[docs/notes/migrations-py-design.md]]) lands here: walker called inside a `write_transaction` with a fresh schema apply just before; verify no spurious COMMIT.
 
 ### Editorial
 
 - `wikilinks.extract` and `urls.extract` are reused unchanged from today's `graph.py`.
-- Pass-1/pass-2 separation is load-bearing: the resolve step in pass 2 depends on pass 1 having materialized every canonical URI first.
+- The pass-1/pass-2 separation is load-bearing: the resolve step in pass 2 depends on pass 1 having materialized every canonical URI first.

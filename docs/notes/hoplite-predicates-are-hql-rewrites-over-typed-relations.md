@@ -27,13 +27,13 @@ The current Hoplite parser at `parser.py` already accepts `!`, `&`, `|`, parens,
 
 ## Relations in Hoplite
 
-[Inference] Hoplite has one node kind (document, day one) and three sources of relations:
+Hoplite has one node kind (document, day one) and three sources of relations:
 
-- **Property relations** — each frontmatter key parameterized by value. `tag(notes)`, `tag(mcp)`, `status(draft)`, `priority(high)`, `aliases(foo)`. The userset of `tag(notes)` is the set of documents with a `node_properties` row where `(key='tags', value='notes')`. One indexed lookup per leaf.
-- **Edge relations** — `mentions`, `related`. The userset of `mentions` on a focus document is the set of documents mentioned by it (or mentioning it; direction is a parameter).
-- **Alias relations** — `aliases(foo)` resolves to the canonical document claiming `foo`. Loaded today, ungovernable through any tool — see [[docs/notes/predicate-leaves-should-carry-relation-identity.md]].
+- Property relations — each frontmatter key parameterized by value. `tag(notes)`, `tag(mcp)`, `status(draft)`, `priority(high)`, `aliases(foo)`. The userset of `tag(notes)` is the set of documents with a `node_properties` row where `(key='tags', value='notes')`. One indexed lookup per leaf.
+- Edge relations — `mentions`, `related`. The userset of `mentions` on a focus document is the set of documents mentioned by it (or mentioning it; direction is a parameter).
+- Alias relations — `aliases(foo)` resolves to the canonical document claiming `foo`. Loaded today, ungovernable through any tool — see [[docs/notes/predicate-leaves-should-carry-relation-identity.md]].
 
-[Guess] Value-parameterized relations deviate from strict PDL (HQL's heritage), where a relation is a bare identifier with no argument. Alternatives — one relation per (key, value) pair (`tag_notes`, `tag_mcp`, exploding by tag cardinality), or relations whose userset contains (subject, value) pairs rather than just subjects (changes the set algebra) — are worse in their own ways. Parameterization keeps the relation count bounded and the surface readable.
+Value-parameterized relations deviate from strict PDL (HQL's heritage), where a relation is a bare identifier with no argument. The alternatives are worse in their own ways: one relation per (key, value) pair (`tag_notes`, `tag_mcp`) explodes by tag cardinality, and relations whose userset contains (subject, value) pairs rather than just subjects change the set algebra. Parameterization keeps the relation count bounded and the surface readable.
 
 ## Examples
 
@@ -66,11 +66,11 @@ Today's `notes & mcp` is the same query as `tag(notes) & tag(mcp)` with `tag(_)`
 
 ## Operators and composition
 
-[Inference] The three rewrite terms map onto Hoplite as:
+The three rewrite terms map onto Hoplite as:
 
-- **`direct`** — explicit membership. For property relations, the EAV lookup. For edge relations, the materialized edge row.
-- **`computed <r>`** — the userset of `r` on the current subject. Lets one relation reuse another's set on the same node. Bare `tag(notes)` at query position is shorthand for `computed tag(notes)`.
-- **`tuple(<e>, <r>)`** — walk edge relation `e` from the current subject; for each reached subject, evaluate `r`; union the resulting subject sets. This is `traverse_nodes`' BFS expressed declaratively. Depth is a fix-point on `(self) | tuple(e, self)`; in practice the executor caps depth rather than computing convergence, and `relatives` retains its `depth` parameter.
+- `direct` — explicit membership. For property relations, the EAV lookup. For edge relations, the materialized edge row.
+- `computed <r>` — the userset of `r` on the current subject. Lets one relation reuse another's set on the same node. Bare `tag(notes)` at query position is shorthand for `computed tag(notes)`.
+- `tuple(<e>, <r>)` — walk edge relation `e` from the current subject; for each reached subject, evaluate `r`; union the resulting subject sets. This is `traverse_nodes`' BFS expressed declaratively. Depth is a fix-point on `(self) | tuple(e, self)`; in practice the executor caps depth rather than computing convergence, and `relatives` retains its `depth` parameter.
 
 ## What this commits to
 
@@ -81,11 +81,11 @@ Today's `notes & mcp` is the same query as `tag(notes) & tag(mcp)` with `tag(_)`
 
 ## Open questions
 
-- **Leaf surface syntax.** `tag(notes)` is one notation. Alternatives: `tag.notes`, `tag=notes`, `tag:notes`. Affects readability more than semantics; pick once and hold.
-- **Range and comparison.** `created(2026-05-27)` is equality. Range queries (`created > 2026-01-01`, `priority >= 3`) need a leaf shape outside pure HQL — a comparison operator on parameterized relations.
-- **Wildcards.** `tag(*)` meaning "any tag" — useful for "docs with tags" vs "docs without." Not in HQL today; cheap to add, and the inverse `!tag(*)` reads naturally.
-- **Subject scope split.** HQL is defined relative to an object. `relatives` has an explicit origin and walks from it; `where` has no origin and ranges over the whole corpus. `tuple(_, _)` semantics differ between the two — from the origin in `relatives`, from each candidate in `where`. Worth making explicit in the tool API.
-- **Where the executor lives.** SQL against the live `node_properties` table, an in-memory inverted index per relation, or both. Touches the in-memory shape question — see [[docs/notes/swap-in-memory-graph-dicts-for-a-property-graph-object-model.md]].
+- Leaf surface syntax. `tag(notes)` is one notation. Alternatives: `tag.notes`, `tag=notes`, `tag:notes`. Affects readability more than semantics; pick once and hold.
+- Range and comparison. `created(2026-05-27)` is equality. Range queries (`created > 2026-01-01`, `priority >= 3`) need a leaf shape outside pure HQL — a comparison operator on parameterized relations.
+- Wildcards. `tag(*)` meaning "any tag" — useful for "docs with tags" vs "docs without." Not in HQL today; cheap to add, and the inverse `!tag(*)` reads naturally.
+- Subject scope split. HQL is defined relative to an object. `relatives` has an explicit origin and walks from it; `where` has no origin and ranges over the whole corpus. `tuple(_, _)` semantics differ between the two — from the origin in `relatives`, from each candidate in `where`. Worth making explicit in the tool API.
+- Where the executor lives. SQL against the live `node_properties` table, an in-memory inverted index per relation, or both. Touches the in-memory shape question — see [[docs/notes/swap-in-memory-graph-dicts-for-a-property-graph-object-model.md]].
 
 ## See also
 

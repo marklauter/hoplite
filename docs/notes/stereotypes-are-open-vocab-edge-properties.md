@@ -12,22 +12,24 @@ A stereotype is an open-vocabulary label attached to an edge (or node property),
 
 ## Why this abstraction
 
-[Inference] Two design proposals from this session — `contradicts` and `not-related` — each looked like a new edge kind. Both collapse into one mechanism under the stereotype framing. `contradicts` is a stereotype labeling a `mentions` edge that argues against its target. `not-related` is a stereotype labeling a `mentions` edge that declines an inferred similarity. Neither adds to the closed enum of edge kinds; both are open-vocab labels on a `declared` edge.
+Two design proposals from this session — `contradicts` and `not-related` — each looked like a new edge provenance. Both collapse into one mechanism under the stereotype framing. `contradicts` is a stereotype labeling a `mentions` edge that argues against its target. `not-related` is a stereotype labeling a `mentions` edge that declines an inferred similarity. Neither adds to the closed enum of edge provenance; both are open-vocab labels on a `declared` edge.
 
-[Inference] Once the abstraction lands, new stereotypes are parser-and-doc changes only. No schema migration per new label. Authors extend the vocabulary as use cases emerge, the same way tags work today.
+Once the abstraction lands, new stereotypes are parser-and-doc changes only. No schema migration per new label. Authors extend the vocabulary as use cases emerge, the same way tags work today.
 
 ## Schema
 
-[Observation] Edge kind is a closed enum of two, by provenance:
+<!-- caution contains obsolete: superseded by the bare-graph rework. An edge is now a bare attachment + confidence with no "kind"; provenance is a feature concept (intrinsic vs asserted), and the claim leaves are declared (author) vs inferred (engine), not declared/discovered. -->
+Edge kind is a closed enum of two, by provenance:
 
 - `declared` — the author asserted the edge: a `[[wikilink]]`, or a markdown link to a URL node.
 - `discovered` — the engine inferred it from a shared feature (similarity, co-citation, proximity).
 
-[Observation] `Edge.confidence` is already a first-class column (shipped earlier this cycle — see [[docs/journal/2026-05-27-1845-related-edges-land-and-rank-replaces-threshold.md]]). `declared` carries `1.0`; `discovered` carries its inference score.
+`Edge.confidence` is already a first-class column (shipped earlier this cycle — see [[docs/journal/2026-05-27-1845-related-edges-land-and-rank-replaces-threshold.md]]). `declared` carries `1.0`; `discovered` carries its inference score.
+<!-- end obsolete -->
 
-[Inference] Stereotypes do not extend the `edge` schema. They live as `edge_property` rows with the shape `(edge_id, "stereotype", <value>)`, where `edge_id` is the integer `edge.id` of the labeled edge. Same EAV layout as node tags, which sit in `node_property` as `(node_id, "tags", <value>)`.
+Stereotypes do not extend the `edge` schema. They live as `edge_property` rows with the shape `(edge_id, "stereotype", <value>)`, where `edge_id` is the integer `edge.id` of the labeled edge. Same EAV layout as node tags, which sit in `node_property` as `(node_id, "tags", <value>)`.
 
-[Inference] The `edge` table has an integer `id` primary key and `UNIQUE (src, dst)` — at most one edge per ordered pair, regardless of kind. Since stereotypes label the single `mentions` edge between a pair, multiple stereotype rows per edge are allowed and expected: an author writing `[[B]]<!--supports-->` in one paragraph and `[[B]]<!--questions-->` in another produces one `mentions` edge plus two `edge_property` rows keyed by that edge's `id`.
+The `edge` table has an integer `id` primary key and `UNIQUE (src, dst)` — at most one edge per ordered pair, regardless of kind. Since stereotypes label the single `mentions` edge between a pair, multiple stereotype rows per edge are allowed and expected: an author writing `[[B]]<!--supports-->` in one paragraph and `[[B]]<!--questions-->` in another produces one `mentions` edge plus two `edge_property` rows keyed by that edge's `id`.
 
 ## Authoring surfaces
 
@@ -41,7 +43,7 @@ A bare inline link defaults to the `links-to` stereotype. To type it, attach the
 - `[[docs/notes/foo.md|short reason]]<!--supports-->` — endorsement; pipe-alias still works as the human-readable label.
 - `[[ghost/some-slug]]<!--not-related-->` — assertion against an unwritten document; composes with ghost targets.
 
-[Inference] The link itself is untouched, so Obsidian still resolves it and draws the edge; the walker reads the adjacent comment to override the default `links-to` stereotype, then materializes the `mentions` edge plus the `edge_property` row. Parsing the comment beside an already-validated wikilink is a localized change (see [[docs/notes/walker-py-design.md]] "Wikilink mentions edges").
+The link itself is untouched, so Obsidian still resolves it and draws the edge; the walker reads the adjacent comment to override the default `links-to` stereotype, then materializes the `mentions` edge plus the `edge_property` row. Parsing the comment beside an already-validated wikilink is a localized change (see [[docs/notes/walker-py-design.md]] "Wikilink mentions edges").
 
 ### Frontmatter property
 
@@ -57,41 +59,41 @@ supports: "[[baz]]"
 not-related: "[[qux]]"
 ```
 
-[Observation] Quote the wikilink. Obsidian indexes a link in a property only when it is quoted, and a bare `[[ ]]` is not valid YAML. Use a scalar for one target, a list for several.
+Quote the wikilink. Obsidian indexes a link in a property only when it is quoted, and a bare `[[ ]]` is not valid YAML. Use a scalar for one target, a list for several.
 
-[Inference] Each wikilink value materializes one edge (`src` = this document, `dst` = target, `kind` = `declared`) plus one stereotype property row in `edge_property`. The inline and frontmatter parsers converge on the same writes.
+Each wikilink value materializes one edge (`src` = this document, `dst` = target, `kind` = `declared`) plus one stereotype property row in `edge_property`. The inline and frontmatter parsers converge on the same writes.
 
-[Inference] The two surfaces split the stereotype differently: frontmatter carries it as the property key, while an inline link carries it in an adjacent comment and leaves the link bare. Both reduce to the same `edge_property` row, so an author picks by whether the assertion is a document-level fact (frontmatter) or rhetorical-in-context (inline).
+The two surfaces split the stereotype differently: frontmatter carries it as the property key, while an inline link carries it in an adjacent comment and leaves the link bare. Both reduce to the same `edge_property` row, so an author picks by whether the assertion is a document-level fact (frontmatter) or rhetorical-in-context (inline).
 
 ## Canonical seed vocabulary
 
-[Inference] The v1 canonical set, documented in `templates/components/hoplite/mcp-reference.md` next to the edge-kind enumeration:
+The v1 canonical set, documented in `templates/components/hoplite/mcp-reference.md` next to the edge-kind enumeration:
 
 - `supports` — endorses a claim or framing.
 - `contradicts` — argues against a claim or framing. See [[docs/notes/add-contradicts-as-an-authored-edge-kind.md]].
-- `not-related` — declares topical disjointness despite vocabulary overlap. See [[docs/notes/add-not-related-as-a-structural-negative-edge-kind.md]].
+- `not-related` — asserts topical disjointness despite vocabulary overlap. See [[docs/notes/add-not-related-as-a-structural-negative-edge-kind.md]].
 - `supersedes` — replaces a specific claim or section.
 - `cites` — references an external source; the optional reading of a markdown link to a URL node.
 
-[Inference] `writing-prose.md` covers the inline and frontmatter syntax with a one-line pointer to the vocabulary list. The vocabulary lives in one place to prevent drift between the authoring guide and the tool reference.
+`writing-prose.md` covers the inline and frontmatter syntax with a one-line pointer to the vocabulary list. The vocabulary lives in one place to prevent drift between the authoring guide and the tool reference.
 
 ## Open-vocab policy
 
-[Inference] The parser does not warn on unknown stereotype values. Emergent vocabulary surfaces by use — if `questions` or `derives-from` gets used fifty times across the corpus, it earns canonical status. The same pattern governs tags today.
+The parser does not warn on unknown stereotype values. Emergent vocabulary surfaces by use — if `questions` or `derives-from` gets used fifty times across the corpus, it earns canonical status. The same pattern governs tags today.
 
-[Inference] Authoring discipline: check existing usage before inventing a new stereotype. An audit affordance — a `where` predicate for stereotype usage or a SQL view against the dump — is future work. Without one, synonym drift (`supports` vs `endorses` vs `agrees-with`) accumulates undetected.
+Authoring discipline: check existing usage before inventing a new stereotype. An audit affordance — a `where` predicate for stereotype usage or a SQL view against the dump — is future work. Without one, synonym drift (`supports` vs `endorses` vs `agrees-with`) accumulates undetected.
 
 ## Mention-skip implications
 
-[Inference] The related-edge aggregate pass already excludes any `(src, dst)` pair connected by a `mentions` edge from the inferred-related pass (the mentions skip-set — see [[docs/notes/walker-py-design.md]] "Aggregate pass: related edges"). The logic does not inspect stereotypes — every `mentions` edge counts.
+The related-edge aggregate pass already excludes any `(src, dst)` pair connected by a `mentions` edge from the inferred-related pass (the mentions skip-set — see [[docs/notes/walker-py-design.md]] "Aggregate pass: related edges"). The logic does not inspect stereotypes — every `mentions` edge counts.
 
-[Inference] `not-related` therefore gets its suppression behavior for free under this model. An author writing `[[B]]<!--not-related-->` materializes a `mentions` edge with `stereotype = not-related`, and the existing skip-set logic excludes the pair from the inferred related pass. No code change needed for the suppression mechanism.
+`not-related` therefore gets its suppression behavior for free under this model. An author writing `[[B]]<!--not-related-->` materializes a `mentions` edge with `stereotype = not-related`, and the existing skip-set logic excludes the pair from the inferred related pass. No code change needed for the suppression mechanism.
 
 ## Markdown links stay neutral
 
-[Inference] Markdown URL links (`[text](https://...)`) produce un-stereotyped `declared` edges to URL nodes — citation is a stereotype now, not a kind, and a bare link asserts none. Link text remains free-form for readability; reserving canonical stereotype words as link text would collide with descriptive use.
+Markdown URL links (`[text](https://...)`) produce un-stereotyped `declared` edges to URL nodes — citation is a stereotype now, not a kind, and a bare link asserts none. Link text remains free-form for readability; reserving canonical stereotype words as link text would collide with descriptive use.
 
-[Inference] For a stereotyped URL reference (an explicit `cites`, say), write a proxy note at `docs/proxies/<slug>.md` carrying the URL plus context, then stereotype an inline wikilink to the proxy or list it as a `<stereotype>: "[[proxy]]"` frontmatter edge. Reuses the existing proxy pattern.
+For a stereotyped URL reference (an explicit `cites`, say), write a proxy note at `docs/proxies/<slug>.md` carrying the URL plus context, then stereotype an inline wikilink to the proxy or list it as a `<stereotype>: "[[proxy]]"` frontmatter edge. Reuses the existing proxy pattern.
 
 ## Out of scope
 

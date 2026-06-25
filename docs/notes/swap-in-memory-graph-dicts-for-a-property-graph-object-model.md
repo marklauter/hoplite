@@ -20,17 +20,17 @@ Persistence isn't a constraint — the SQLite dump is a one-shot debug serializa
 
 ## What a Graph<Node, Edge> object model would give us
 
-- **Cleaner API.** `node.neighbors(kind="mentions")` and `node.props["tags"]` read better than `graph.out_edges.get(path, [])` plus `graph.node_properties.get(path, {}).get("tags", [])`.
-- **Invariant safety.** `out_edges` and `in_edges` are two views of the same graph that can drift apart under careless mutation. A `Graph.add_edge(src, dst, kind)` that maintains both atomically removes the failure mode.
-- **In-memory secondary indexes.** "All docs with `status='draft'`" today either scans `node_properties` or falls back to the SQLite dump. An object graph that maintains an inverted property index on every insert serves the lookup in O(1) without leaving Python.
-- **Path-traversal idioms.** Cypher-shaped patterns ("from X, follow mentions, then related, depth ≤ 2") fall out naturally when nodes and edges are objects that know how to walk.
-- **Edge properties as first-class.** `edge.confidence` reads better than `graph.edge_properties[(src, dst, kind)]["confidence"][0]`.
+- Cleaner API. `node.neighbors(kind="mentions")` and `node.props["tags"]` read better than `graph.out_edges.get(path, [])` plus `graph.node_properties.get(path, {}).get("tags", [])`.
+- Invariant safety. `out_edges` and `in_edges` are two views of the same graph that can drift apart under careless mutation. A `Graph.add_edge(src, dst, kind)` that maintains both atomically removes the failure mode.
+- In-memory secondary indexes. "All docs with `status='draft'`" today either scans `node_properties` or falls back to the SQLite dump. An object graph that maintains an inverted property index on every insert serves the lookup in O(1) without leaving Python.
+- Path-traversal idioms. Cypher-shaped patterns ("from X, follow mentions, then related, depth ≤ 2") fall out naturally when nodes and edges are objects that know how to walk.
+- Edge properties as first-class. `edge.confidence` reads better than `graph.edge_properties[(src, dst, kind)]["confidence"][0]`.
 
 ## What we'd give up
 
-- **Dependency choice.** NetworkX is the obvious off-the-shelf option but heavyweight and Python-pure — often slower than direct dicts at corpus scale.
-- **Object overhead.** At thousands of docs the cost is invisible. At hundreds of thousands the dict-of-list version may still win.
-- **Migration cost.** Tools.py and graph.py both touch the in-memory model; a swap means coordinated edits.
+- Dependency choice. NetworkX is the obvious off-the-shelf option, but it is heavyweight and Python-pure — often slower than direct dicts at corpus scale.
+- Object overhead. At thousands of docs the cost is invisible. At hundreds of thousands the dict-of-list version may still win.
+- Migration cost. Tools.py and graph.py both touch the in-memory model, so a swap means coordinated edits.
 
 ## Reference
 

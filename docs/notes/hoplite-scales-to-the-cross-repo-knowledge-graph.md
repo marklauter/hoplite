@@ -19,13 +19,13 @@ Two coupled upgrades make Hoplite usable across the multi-repo personal knowledg
 
 ## Coupling
 
-[Inference] The two upgrades couple at the IDF table. BM25 over a multi-vault corpus needs IDF computed across the union of vaults, not per vault — otherwise vault-local jargon over-weights and cross-vault rare terms under-weight, which kills the cross-vault `related` signal that multi-vault was meant to surface in the first place.
+The two upgrades couple at the IDF table. BM25 over a multi-vault corpus needs IDF computed across the union of vaults, not per vault — otherwise vault-local jargon over-weights and cross-vault rare terms under-weight, which kills the cross-vault `related` signal that multi-vault was meant to surface in the first place.
 
-[Inference] Ship order: BM25 first against the existing single-corpus index — proves the scoring function works, leaves the global-IDF question pending. Multi-vault second, with IDF re-anchored across the union when the second ship happens. Either order works conceptually; this order minimizes scope per ship.
+Ship order: BM25 first against the existing single-corpus index — proves the scoring function works, leaves the global-IDF question pending. Multi-vault second, with IDF re-anchored across the union when the second ship happens. Either order works conceptually; this order minimizes scope per ship.
 
 ## Why both ship together (eventually)
 
-[Inference] At the multi-repo target scale, neither upgrade alone solves the problem. BM25 on one repo is a quality lift, but the user's notes still live across silos. Multi-vault on MinHash ranking surfaces noisy pairs across the wider corpus because MinHash Jaccard's signal collapses on prose without rare-term weighting. Both together close the loop: BM25 with global IDF ranks pair similarity meaningfully across the full personal knowledge graph.
+At the multi-repo target scale, neither upgrade alone solves the problem. BM25 on one repo is a quality lift, but the user's notes still live across silos. Multi-vault on MinHash ranking surfaces noisy pairs across the wider corpus because MinHash Jaccard's signal collapses on prose without rare-term weighting. Both together close the loop: BM25 with global IDF ranks pair similarity meaningfully across the full personal knowledge graph.
 
 ## What is out of scope
 
@@ -36,7 +36,7 @@ Two coupled upgrades make Hoplite usable across the multi-repo personal knowledg
 
 ## Dependencies
 
-[Inference] Independent of the stereotype cluster at [[docs/notes/ship-the-stereotype-edge-annotation-layer.md]]. Different code paths; different tests. Stereotype semantics work the same regardless of pair-similarity scoring function. Ship order between the two clusters is free.
+Independent of the stereotype cluster at [[docs/notes/ship-the-stereotype-edge-annotation-layer.md]]. Different code paths; different tests. Stereotype semantics work the same regardless of pair-similarity scoring function. Ship order between the two clusters is free.
 
 ## See also
 

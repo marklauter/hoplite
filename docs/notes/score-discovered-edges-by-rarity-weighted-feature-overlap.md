@@ -8,11 +8,11 @@ status: open
 
 # Score discovered edges by rarity-weighted feature overlap
 
-A discovered edge's confidence can be one rarity-weighted Jaccard over a single feature set that unions every dimension — tags, properties, property values, stereotypes, graph neighbors, and binned proximity — rather than a separate similarity computed per channel. Each shared feature contributes in proportion to its rarity, and overlap across dimensions accumulates into one rank.
+An inferred edge's confidence can be one rarity-weighted Jaccard over a single feature set that unions every dimension — tags, properties, property values, stereotypes, graph neighbors, and binned proximity — rather than a separate similarity computed per channel. Each shared feature contributes in proportion to its rarity, and overlap across dimensions accumulates into one rank.
 
 ## The construction
 
-[Inference] Represent each document as a set of feature tokens drawn from every relatedness dimension:
+Represent each document as a set of feature tokens drawn from every relatedness dimension:
 
 ```
 docA → { tag:note, tag:minhash, prop:status=design,
@@ -22,32 +22,32 @@ docA → { tag:note, tag:minhash, prop:status=design,
 
 Weight each token by its rarity — `idf(f) = log(N / df(f))`, where `df(f)` is the number of documents carrying the feature. The score between two documents is the rarity-weighted overlap of their token sets — weighted Jaccard, or weighted-set cosine. A shared `tag:note` (high `df`) adds almost nothing; a shared `tag:minhash` or a co-mentioned rare entity (`df = 2`) adds a lot.
 
-[Inference] Because every dimension lives in one set, sharing across dimensions accumulates with no explicit combination rule. Two documents that share a rare tag and a neighbor and a property value outrank two that share only one of the three. The cross-dimensional boost falls out of the union; it is a property of the score, not a tuned weighted sum of per-channel scores.
+Because every dimension lives in one set, sharing across dimensions accumulates with no explicit combination rule. Two documents that share a rare tag, a neighbor, and a property value outrank two that share only one of the three. The cross-dimensional boost falls out of the union. It is a property of the score, not a tuned weighted sum of per-channel scores.
 
 ## It generalizes a principle the corpus already holds
 
-[Observation] [[docs/notes/relatedness-signals.md]] states the unit: a signal's strength is the self-information (rarity) of the shared feature — pointwise mutual information — and enumerates the channels (shared tag graded by tag rarity, shared property by value rarity, co-citation, common neighbors, proximity). That note is the territory; it lists the channels as separate signals.
+[[docs/notes/relatedness-signals.md]] states the unit: a signal's strength is the self-information (rarity) of the shared feature — pointwise mutual information. It enumerates the channels: shared tag graded by tag rarity, shared property by value rarity, co-citation, common neighbors, and proximity. That note is the territory, and it lists the channels as separate signals.
 
-[Observation] [[docs/notes/rank-related-edges-by-bm25-cosine-not-minhash-jaccard.md]] applies the same rarity weighting to the content channel alone — BM25 cosine over FTS tokens, where IDF supplies the rare-term weight that plain MinHash Jaccard washes out by voting every shingle equally.
+[[docs/notes/rank-related-edges-by-bm25-cosine-not-minhash-jaccard.md]] applies the same rarity weighting to the content channel alone — BM25 cosine over FTS tokens, where IDF supplies the rare-term weight that plain MinHash Jaccard washes out by voting every shingle equally.
 
-[Inference] This note is the synthesis of those two: take the rarity principle from the first and the IDF-weighting move from the second, then apply them across all channels at once by folding every feature into a single weighted set. Content stops being privileged — text shingles become one more feature dimension, and structural and metadata features are the rest. One score, every channel.
+This note is the synthesis of those two. Take the rarity principle from the first and the IDF-weighting move from the second, then apply them across all channels at once by folding every feature into a single weighted set. Content stops being privileged. Text shingles become one more feature dimension, and structural and metadata features are the rest. One score, every channel.
 
 ## The discrete-versus-continuous wrinkle
 
-[Inference] Jaccard is set membership: it captures "rare shared feature" cleanly but not "narrow shared window." Time and space are continuous — two documents created three minutes apart are close, not set-equal. Two ways to fold proximity in:
+Jaccard is set membership. It captures "rare shared feature" cleanly but not "narrow shared window." Time and space are continuous — two documents created three minutes apart are close, not set-equal. Two ways to fold proximity in:
 
-- Bin the continuous value into a feature token (`created-month:2026-06`, `created-day:2026-06-07`). Fits the unified model, loses sharpness at bucket boundaries — `23:59` and `00:01` fall in different bins.
-- Keep proximity as a separate distance kernel multiplied into the score. Sharper, breaks the single-Jaccard elegance.
+- Bin the continuous value into a feature token (`created-month:2026-06`, `created-day:2026-06-07`). This fits the unified model but loses sharpness at bucket boundaries — `23:59` and `00:01` fall in different bins.
+- Keep proximity as a separate distance kernel multiplied into the score. This is sharper but breaks the single-Jaccard elegance.
 
-[Observation] The relatedness-signals note already names both modes — a rare shared feature, or the tightest window that contains both. This is where they diverge mechanically.
+The relatedness-signals note already names both modes — a rare shared feature, or the tightest window that contains both. This is where they diverge mechanically.
 
 ## Implementation rides the existing tables
 
-[Inference] Structured features need no MinHash. Per-document structured feature sets are small — dozens of tokens — so an inverted index (feature to posting list of documents, each posting carrying the feature's IDF weight) computes exact weighted overlap cheaply. `node_property` supplies tag and property features; `edge` supplies neighbor features. The features are derivable from tables that already exist, so this carries no schema change.
+Structured features need no MinHash. Per-document structured feature sets are small — dozens of tokens — so an inverted index (feature to posting list of documents, each posting carrying the feature's IDF weight) computes exact weighted overlap cheaply. `node_property` supplies tag and property features; `edge` supplies neighbor features. The features are derivable from tables that already exist, so this carries no schema change.
 
-[Inference] MinHash earns its keep only on the content dimension, where shingle sets are large and the sketch avoids materializing them. The honest split: content reaches similarity through MinHash or BM25 cosine; structured features reach it through exact weighted Jaccard over an inverted index; the two combine into one `Edge.confidence`.
+MinHash earns its keep only on the content dimension, where shingle sets are large and the sketch avoids materializing them. The split: content reaches similarity through MinHash or BM25 cosine; structured features reach it through exact weighted Jaccard over an inverted index; the two combine into one `Edge.confidence`.
 
-[Guess] The destination is already named in the glossary stub at [[docs/hoplite/hoplite-glossary.md]] — "weighted minhash, weighted aggregation of intrinsic and asserted features." Weighted MinHash (consistent weighted sampling) is the sketch form if the unified feature set ever outgrows exact computation; at current corpus scale, exact computation suffices.
+The destination is already named in the glossary stub at [[docs/hoplite/hoplite-glossary.md]] — "weighted minhash, weighted aggregation of intrinsic and asserted features." Weighted MinHash (consistent weighted sampling) is the sketch form if the unified feature set ever outgrows exact computation. At current corpus scale, exact computation suffices.
 
 ## Open questions
 

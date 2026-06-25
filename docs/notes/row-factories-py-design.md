@@ -8,13 +8,13 @@ status: design
 
 # row_factories.py — sqlite3.Row to dataclass mappers
 
-`row_factories.py` turns `sqlite3.Row` objects into the dataclasses defined in `models.py`. Inputs are explicit; transformations (JSON parsing, summary fallback, edge-list copy) are contained inside the module rather than delegated to SQL writers. Each factory carries a named SQL contract.
+`row_factories.py` turns `sqlite3.Row` objects into the dataclasses defined in `models.py`. Inputs are explicit. Transformations (JSON parsing, summary fallback, edge-list copy) are contained inside the module rather than delegated to SQL writers. Each factory carries a named SQL contract.
 
 Sibling design notes: [[docs/notes/reify-in-memory-graph-as-file-based-sqlite.md]] for the rationale; [[docs/notes/db-refactor.md]] for the broader plan; [[docs/notes/db-py-design.md]] and [[docs/notes/migrations-py-design.md]] for collaborating modules; [[docs/notes/graph-py-design.md]] for the sole consumer. This note covers `row_factories.py` alone.
 
 ## Schema/vocabulary note
 
-The landed factories read the `Document`/`path` vocabulary (`row["path"]`, `row["src_path"]`, `row["kind"]`). The current `schema.sql` uses `node`/`uri` and an interned `edge_kind`. The two are bridged in the **query**, not the factory: every SQL block below projects `n.uri AS path` and joins `edge_kind` to surface `k.kind AS kind`. The factory code is therefore unchanged by the schema rename — only the SQL contracts move. The `node`/`uri` ↔ `Document`/`path` drift is tracked in [[docs/notes/db-refactor.md]].
+The landed factories read the `Document`/`path` vocabulary (`row["path"]`, `row["src_path"]`, `row["kind"]`). The current `schema.sql` uses `node`/`uri` and an interned `edge_kind`. The two are bridged in the query, not the factory: every SQL block below projects `n.uri AS path` and joins `edge_kind` to surface `k.kind AS kind`. The factory code is therefore unchanged by the schema rename; only the SQL contracts move. The `node`/`uri` ↔ `Document`/`path` drift is tracked in [[docs/notes/db-refactor.md]].
 
 ## Public API
 
@@ -29,7 +29,7 @@ def row_to_traversal_hit(row: sqlite3.Row, via_edges: list[Edge]) -> TraversalHi
 def parse_tags(raw: str | None) -> list[str]: ...
 ```
 
-`row_to_traversal_hit` takes an extra `via_edges` argument because the edge list is variable-length per row and can't fit in one `sqlite3.Row` without aggregation. The caller assembles edges separately and passes them in; the factory copies the list so caller-side mutation can't leak into a frozen `TraversalHit`.
+`row_to_traversal_hit` takes an extra `via_edges` argument because the edge list is variable-length per row and can't fit in one `sqlite3.Row` without aggregation. The caller assembles edges separately and passes them in. The factory copies the list so caller-side mutation can't leak into a frozen `TraversalHit`.
 
 `row_to_document_with_id` is a thin sibling for the common case where a caller needs both the integer id (for edge-table joins) and the dataclass. `parse_tags` is exposed because the JSON-array shape is part of the module's contract.
 
@@ -43,11 +43,11 @@ def parse_tags(raw: str | None) -> list[str]: ...
 | `row_to_hit`             | `path`, `summary`, `tags`, `score`        | `tags` is JSON-array text from `json_group_array`.               |
 | `row_to_traversal_hit`   | `path`, `summary`, `tags`, `distance`     | `via_edges` passed separately; factory copies the list.          |
 
-Extra columns are always tolerated — `sqlite3.Row.__getitem__` ignores anything the factory doesn't ask for. The contract is "at least these columns," not "exactly these."
+Extra columns are always tolerated: `sqlite3.Row.__getitem__` ignores anything the factory doesn't ask for. The contract is "at least these columns," not "exactly these."
 
 ## Factories
 
-Each factory names every column it reads, so a schema change that renames or drops a column surfaces as an `IndexError` from `sqlite3.Row.__getitem__` under test — not a silent default. (`sqlite3.Row` raises `IndexError` for both integer-out-of-range and string-key-not-found, per CPython's `Modules/_sqlite/row.c`.) `row_to_document` and `row_to_edge` are essentially pure projection; `row_to_hit`/`row_to_traversal_hit` also carry contained transformations the SQL writer can't produce from one column.
+Each factory names every column it reads. A schema change that renames or drops a column then surfaces as an `IndexError` from `sqlite3.Row.__getitem__` under test, not a silent default. (`sqlite3.Row` raises `IndexError` for both integer-out-of-range and string-key-not-found, per CPython's `Modules/_sqlite/row.c`.) `row_to_document` and `row_to_edge` are essentially pure projection. `row_to_hit` and `row_to_traversal_hit` also carry contained transformations the SQL writer can't produce from one column.
 
 ### `row_to_document`
 
@@ -101,13 +101,13 @@ def row_to_edge(row: sqlite3.Row) -> Edge:
     )
 ```
 
-The `src_path`/`dst_path` naming (not `src`/`dst`) deliberately mismatches the table columns so the join intent is explicit at every call site. If a query writes `SELECT src, dst, ...` and feeds those rows to the factory, the `IndexError` fires immediately. Likewise `kind` must be the *joined* `edge_kind.kind` string, not the raw integer `edge.kind` — a query that selects `e.kind` directly would put an integer into `Edge.kind`.
+The `src_path`/`dst_path` naming (not `src`/`dst`) deliberately mismatches the table columns so the join intent is explicit at every call site. If a query writes `SELECT src, dst, ...` and feeds those rows to the factory, the `IndexError` fires immediately. Likewise, `kind` must be the joined `edge_kind.kind` string, not the raw integer `edge.kind`. A query that selects `e.kind` directly would put an integer into `Edge.kind`.
 
-**Gap worth owning.** This catches the *missing-alias* case but not the *miswritten-alias* case. A query that writes `SELECT e.src AS src_path, e.dst AS dst_path, e.kind AS kind, ...` aliases integer FKs to the expected names; the factory cheerfully constructs `Edge(src=<int>, dst=<int>, kind=<int>, ...)` and the frozen dataclass performs no runtime type check. Integers then silently propagate. The deliberate name mismatch is half a defense, not a full one. Mitigations considered (runtime `isinstance`, typed-scalar args instead of a Row) are rejected day-one; rely on the integration tests that round-trip real edges through `relatives` to surface int-as-string mistakes.
+**Gap worth owning.** This catches the missing-alias case but not the miswritten-alias case. A query that writes `SELECT e.src AS src_path, e.dst AS dst_path, e.kind AS kind, ...` aliases integer FKs to the expected names. The factory then constructs `Edge(src=<int>, dst=<int>, kind=<int>, ...)`, and the frozen dataclass performs no runtime type check. Integers silently propagate. The deliberate name mismatch is half a defense, not a full one. Mitigations considered (runtime `isinstance`, typed-scalar args instead of a Row) are rejected on day one. Rely instead on the integration tests that round-trip real edges through `relatives` to surface int-as-string mistakes.
 
 ### `row_to_hit`
 
-Maps a `where`-query row to the `Hit` dataclass — a document plus its summary, tags, and BM25 score.
+Maps a `where`-query row to the `Hit` dataclass: a document plus its summary, tags, and BM25 score.
 
 **SQL contract.** Row must carry: `path` (str), `summary` (str), `tags` (str — JSON array as text), `score` (float). Summary comes directly from the `fts` virtual table; tags are aggregated from `node_property` via `json_group_array`:
 
@@ -126,9 +126,9 @@ ORDER BY score
 LIMIT ?
 ```
 
-**Why summary isn't in `node_property`.** FTS5 already stores the original text of each indexed column, and `fts` carries one row per document by construction. Duplicating title/summary into `node_property` as `(id, 'summary', <text>)` rows would mean two sources of truth and a uniqueness problem. The walker writes `title`/`summary` to FTS only; `node_property` holds every other frontmatter key.
+**Why summary isn't in `node_property`.** FTS5 already stores the original text of each indexed column, and `fts` carries one row per document by construction. Duplicating title/summary into `node_property` as `(id, 'summary', <text>)` rows would mean two sources of truth and a uniqueness problem. The walker writes `title`/`summary` to FTS only. `node_property` holds every other frontmatter key.
 
-**Tags is one instance of the EAV list-decomposition pattern.** List-valued frontmatter fields decompose into multiple EAV rows — the convention is documented in [docs/hoplite/hoplite-architecture.md#eav-decomposition](../hoplite/hoplite-architecture.md#eav-decomposition). The factories materialize one such list back out via the `json_group_array(...)` sub-select; `Hit.tags` is the first list-property the dataclasses surface by name, but the same SQL shape and `parse_tags` helper work for any other list-property.
+**Tags is one instance of the EAV list-decomposition pattern.** List-valued frontmatter fields decompose into multiple EAV rows. The convention is documented in [docs/hoplite/hoplite-architecture.md#eav-decomposition](../hoplite/hoplite-architecture.md#eav-decomposition). The factories materialize one such list back out via the `json_group_array(...)` sub-select. `Hit.tags` is the first list-property the dataclasses surface by name, but the same SQL shape and `parse_tags` helper work for any other list-property.
 
 ```python
 def row_to_hit(row: sqlite3.Row) -> Hit:
@@ -140,7 +140,7 @@ def row_to_hit(row: sqlite3.Row) -> Hit:
     )
 ```
 
-`summary` may be `None` for documents indexed without a frontmatter summary; fall back to empty string. Ghosts and URL nodes never reach this path — they have no FTS row, so `JOIN fts` filters them out. `tags` is parsed from a JSON-array string and sorted ascending before construction — see [Tag sort lives here](#tag-sort-lives-here).
+`summary` may be `None` for documents indexed without a frontmatter summary; fall back to empty string. Ghosts and URL nodes never reach this path. They have no FTS row, so `JOIN fts` filters them out. `tags` is parsed from a JSON-array string and sorted ascending before construction. See [Tag sort lives here](#tag-sort-lives-here).
 
 ### `row_to_traversal_hit`
 
@@ -159,17 +159,17 @@ def row_to_traversal_hit(row: sqlite3.Row, via_edges: list[Edge]) -> TraversalHi
     )
 ```
 
-**The `list(via_edges)` copy is load-bearing.** `TraversalHit` is `frozen=True, slots=True`, but freezing applies to attribute *bindings*, not to the mutable lists held on them. If the caller passes a per-row buffer that's cleared and refilled across iterations, every `TraversalHit` would point at the same final list. The shallow copy isolates the dataclass. `tags` is accidentally safe because `parse_tags` returns a fresh `list`; `via_edges` is the asymmetric case that needs explicit handling.
+**The `list(via_edges)` copy is load-bearing.** `TraversalHit` is `frozen=True, slots=True`, but freezing applies to attribute bindings, not to the mutable lists held on them. If the caller passes a per-row buffer that's cleared and refilled across iterations, every `TraversalHit` would point at the same final list. The shallow copy isolates the dataclass. `tags` is accidentally safe because `parse_tags` returns a fresh `list`. `via_edges` is the asymmetric case that needs explicit handling.
 
 ## Tag sort lives here
 
-The `sorted(parse_tags(row["tags"]))` call inside `row_to_hit` and `row_to_traversal_hit` is the canonical sort site for tag lists on result dataclasses. There is one `Graph` implementation (see [[docs/notes/graph-py-design.md]]) and it goes through these factories, so pinning the sort here means tag ordering can't be silently violated by a caller. `parse_tags` itself does **not** sort — it stays the generic "JSON-array of strings to `list[str]`" parser; sortedness is a property of how the factories compose `parse_tags` with `sorted`.
+The `sorted(parse_tags(row["tags"]))` call inside `row_to_hit` and `row_to_traversal_hit` is the canonical sort site for tag lists on result dataclasses. There is one `Graph` implementation (see [[docs/notes/graph-py-design.md]]) and it goes through these factories, so pinning the sort here means tag ordering can't be silently violated by a caller. `parse_tags` itself does not sort. It stays the generic "JSON-array of strings to `list[str]`" parser. Sortedness is a property of how the factories compose `parse_tags` with `sorted`.
 
-**`node_property` has no insertion order.** It is a `WITHOUT ROWID` table, so there is no `rowid` to `ORDER BY` — the old "SQL preserves insertion order, factory sorts" two-stage claim no longer applies. The `json_group_array` sub-select returns tags in `node_property`'s primary-key order `(id, key, value)`, i.e. value-sorted within a key. That's harmless here precisely because the factory sorts anyway: `Hit.tags`/`TraversalHit.tags` are ascending-sorted regardless of the column's order. Any *future* order-sensitive list-property would need an explicit ordinal column, not a reliance on rowid.
+**`node_property` has no insertion order.** It is a `WITHOUT ROWID` table, so there is no `rowid` to `ORDER BY`. The old two-stage claim that SQL preserves insertion order and the factory sorts no longer applies. The `json_group_array` sub-select returns tags in `node_property`'s primary-key order `(id, key, value)`, that is, value-sorted within a key. That's harmless here precisely because the factory sorts anyway: `Hit.tags` and `TraversalHit.tags` are ascending-sorted regardless of the column's order. Any future order-sensitive list-property would need an explicit ordinal column, not a reliance on rowid.
 
 ## List-property representation (tags is the first example)
 
-The contract between the SQL writers and the factories: any list-valued property arrives as a **JSON-array-formatted string** in a column named for the property. One public helper parses any such column:
+The contract between the SQL writers and the factories: any list-valued property arrives as a JSON-array-formatted string in a column named for the property. One public helper parses any such column:
 
 ```python
 def parse_tags(raw: str | None) -> list[str]:
@@ -178,11 +178,11 @@ def parse_tags(raw: str | None) -> list[str]:
     return [str(item) for item in json.loads(raw)]
 ```
 
-Named `parse_tags` because tags is the only list-property `Hit` currently surfaces — but the parser is just "JSON-array of strings to `list[str]`." Rename to `parse_list_property` in one move if a second list-property lands; the body doesn't change.
+Named `parse_tags` because tags is the only list-property `Hit` currently surfaces, but the parser is just "JSON-array of strings to `list[str]`." Rename to `parse_list_property` in one move if a second list-property lands; the body doesn't change.
 
-JSON over comma-separated because `json_group_array` is a built-in SQLite aggregate, so the SQL stays one line and the format is self-describing. The contracted shape returns `'[]'` for the zero-row case, not `NULL`, so the `if not raw` branch is unreachable under the documented contract — it stays as a defense for alternative SQL shapes (e.g. a `LEFT JOIN ... GROUP BY` yielding real `NULL`).
+JSON over comma-separated because `json_group_array` is a built-in SQLite aggregate, so the SQL stays one line and the format is self-describing. The contracted shape returns `'[]'` for the zero-row case, not `NULL`, so the `if not raw` branch is unreachable under the documented contract. It stays as a defense for alternative SQL shapes, such as a `LEFT JOIN ... GROUP BY` yielding real `NULL`.
 
-The `[str(item) for item in json.loads(raw)]` form is deliberate: `json.loads` returns `Any`, and a `cast(list[str], ...)` would be a typing lie (`json.loads("[1,2]")` is a list of ints). The `str(...)` coercion keeps the type honest if the walker invariant ever cracks. Malformed JSON propagates as `json.JSONDecodeError` — a real walker bug worth surfacing, not catching.
+The `[str(item) for item in json.loads(raw)]` form is deliberate. `json.loads` returns `Any`, and a `cast(list[str], ...)` would be a typing lie (`json.loads("[1,2]")` is a list of ints). The `str(...)` coercion keeps the type honest if the walker invariant ever cracks. Malformed JSON propagates as `json.JSONDecodeError`, a real walker bug worth surfacing, not catching.
 
 ## Module skeleton
 
@@ -242,7 +242,7 @@ def parse_tags(raw: str | None) -> list[str]:
 
 ## Tests
 
-Tests use `:memory:` connections populated via `executescript` of `schema.sql` plus a small fixture of inserts, then read back through the factories. No `FileDatabase` dependency.
+Tests use `:memory:` connections populated via `executescript` of `schema.sql` plus a small fixture of inserts, then read the rows back through the factories. No `FileDatabase` dependency.
 
 ```python
 def _populate_node(conn, *, id, uri, resolved=True, content_hash=None, minhash=None): ...
@@ -268,43 +268,43 @@ Test bullets:
 13. `test_row_to_traversal_hit_copies_via_edges` — identity check that the stored list isn't the input list; mutate the input, assert the dataclass is unchanged.
 14. `test_row_to_traversal_hit_preserves_edge_order` — length-3 list in known order; assert order preserved.
 
-**Scope of these tests.** The `:memory:` tests prove the projections work against a freshly-applied schema. They do **not** prove the queries in `graph.py` produce the right domain objects for the real corpus — that's the step-9 correctness check.
+**Scope of these tests.** The `:memory:` tests prove the projections work against a freshly-applied schema. They do not prove the queries in `graph.py` produce the right domain objects for the real corpus. That's the step-9 correctness check.
 
 ## Why a separate module
 
-**Alternative A: classmethods on the dataclasses in `models.py`** (`Document.from_row(row)`). Rejected: `models.py` stays schema-agnostic — it knows its own fields, not `sqlite3.Row` or the JSON-array tag encoding. Hoplite has churned through several persistence designs; a clean models module survives those churns. Classmethods on frozen dataclasses are also awkward syntactically.
+**Alternative A: classmethods on the dataclasses in `models.py`** (`Document.from_row(row)`). Rejected. `models.py` stays schema-agnostic: it knows its own fields, not `sqlite3.Row` or the JSON-array tag encoding. Hoplite has churned through several persistence designs, and a clean models module survives those churns. Classmethods on frozen dataclasses are also awkward syntactically.
 
-**Alternative B: free functions inline at the top of `graph.py`** — co-located queries make schema drift harder to introduce. Rejected with less conviction: the factories ship as a step-3 artifact validated by `:memory:` tests before `graph.py`'s query layer lands in step 4, they have potential consumers beyond `graph.py` (a debug-dump tool reusing `parse_tags`, integration tests round-tripping rows), and test isolation is real. The choice is "step boundaries beat code-locality" — reversible if step 4 wants to inline.
+**Alternative B: free functions inline at the top of `graph.py`.** Co-located queries make schema drift harder to introduce. Rejected with less conviction. The factories ship as a step-3 artifact validated by `:memory:` tests before `graph.py`'s query layer lands in step 4. They have potential consumers beyond `graph.py`, such as a debug-dump tool reusing `parse_tags` and integration tests round-tripping rows. And test isolation is real. The choice is "step boundaries beat code-locality," reversible if step 4 wants to inline.
 
 ## Why explicit projection over reflection
 
-`cls(**dict(row))` would work only if column names matched field names. Two reasons it's wrong: (1) the names *don't* match — `edge.src` is an integer id, `Edge.src` is a URI; `edge.kind` is an integer FK, `Edge.kind` is a name; reflection would either inject integers or force the SQL to alias to field names, making the implicit contract brittler than the explicit one. (2) Schema drift surfaces louder — renaming a column raises `IndexError` from the exact factory that reads it. The tradeoff (schema changes touch the factory file) is right at Hoplite's scale — five factories plus one helper.
+`cls(**dict(row))` would work only if column names matched field names. Two reasons it's wrong. First, the names don't match: `edge.src` is an integer id but `Edge.src` is a URI, and `edge.kind` is an integer FK but `Edge.kind` is a name. Reflection would either inject integers or force the SQL to alias to field names, making the implicit contract brittler than the explicit one. Second, schema drift surfaces louder: renaming a column raises `IndexError` from the exact factory that reads it. The tradeoff is that schema changes touch the factory file, and that's right at Hoplite's scale of five factories plus one helper.
 
 ## Risks for the implementer
 
 ### Hard rules — don't violate these
 
-- **Don't add defensive coding inside factories.** A missing column's `IndexError` is the bug signal. Don't catch it; don't substitute defaults. Same for malformed JSON in `parse_tags`.
+- **Don't add defensive coding inside factories.** A missing column's `IndexError` is the bug signal. Don't catch it, and don't substitute defaults. Same for malformed JSON in `parse_tags`.
 - **Don't drop the `list(via_edges)` copy in `row_to_traversal_hit`.** Pinned by test #13.
-- **Don't reach for naive JSON slicing as a perf shortcut.** `json_group_array` emits JSON-escaped values; `raw[1:-1].split(", ")` breaks on commas/quotes inside values.
+- **Don't reach for naive JSON slicing as a perf shortcut.** `json_group_array` emits JSON-escaped values, and `raw[1:-1].split(", ")` breaks on commas or quotes inside values.
 - **Model-evolution rule.** Adding a dataclass field means editing `models.py`, `schema.sql`, `row_factories.py`, and the matching SQL in `graph.py` together. One home for the schema-to-dataclass mapping; don't grow a second path.
 
 ### Known gaps — accepted, documented, not yet fixed
 
-- **`row_to_edge` doesn't guard the miswritten-alias case** (integer FK or integer `kind` aliased to the expected name passes through unchecked). Captured in test #7. Revisit (typed-scalar args) if integration tests surface it.
+- **`row_to_edge` doesn't guard the miswritten-alias case.** An integer FK or integer `kind` aliased to the expected name passes through unchecked. Captured in test #7. Revisit (typed-scalar args) if integration tests surface it.
 - **`row_to_edge` doesn't guard scalar type widening either.** `Edge.confidence: float` is unenforced at runtime; `CAST(confidence AS INTEGER) AS confidence` would yield an int. Same class of gap.
-- **Schema vs dataclass docstring contradiction.** `schema.sql` declares `edge UNIQUE (src, dst)` — at most one edge per ordered pair, *regardless of kind*. `models.py`'s `Edge` docstring still says "at most one edge per kind." The `UNIQUE (src, dst)` constraint is the **correct** one: the locked-in stereotype model ([[docs/notes/stereotypes-are-open-vocab-edge-properties.md]]) depends on one edge per pair with stereotypes hung off it as `edge_property` rows, and the doc→doc / doc→URL kinds never collide on a pair anyway. The fix is to correct the `Edge` docstring, not to widen the constraint. The factory is downstream and unaffected.
-- **Keep the SQL contracts above in sync with the queries in `graph.py`.** A mismatch shows up as an `IndexError` in tests — good — but the intent is for SQL writers to read the contract before writing the query.
+- **Schema vs dataclass docstring contradiction.** `schema.sql` declares `edge UNIQUE (src, dst)`: at most one edge per ordered pair, regardless of kind. `models.py`'s `Edge` docstring still says "at most one edge per kind." The `UNIQUE (src, dst)` constraint is the correct one. The locked-in stereotype model ([[docs/notes/stereotypes-are-open-vocab-edge-properties.md]]) depends on one edge per pair with stereotypes hung off it as `edge_property` rows, and the doc→doc / doc→URL kinds never collide on a pair anyway. The fix is to correct the `Edge` docstring, not to widen the constraint. The factory is downstream and unaffected.
+- **Keep the SQL contracts above in sync with the queries in `graph.py`.** A mismatch shows up as an `IndexError` in tests, which is good, but the intent is for SQL writers to read the contract before writing the query.
 - **`conn.row_factory = sqlite3.Row` is set in `FileDatabase`** (see [[docs/notes/db-py-design.md]]). A test constructing a connection directly must set it before use.
 
 ### Future considerations — forward-pointers
 
-- **`row_to_edge_with_id`** if edge-property reads arrive — parallel to `row_to_document_with_id`, ~3 lines.
+- **`row_to_edge_with_id`** if edge-property reads arrive. Parallel to `row_to_document_with_id`, about 3 lines.
 - **`parse_tags` → `parse_list_property`** if a second list-property query lands.
 - **`json_group_array` is SQLite-specific.** If portable SQL is ever needed, the tag aggregation changes shape.
 
 ### Editorial / bikeshed
 
 - **`sqlite3.Row` indexing is case-insensitive.** Use lowercase consistently to match the schema.
-- **Naming: `row_to_*` reads procedurally** — kept for module-internal parallelism (every public function starts with the same verb).
-- **`row_to_traversal_hit`'s two-arg signature breaks `map()` symmetry.** Cosmetic — all factories are called inside loops.
+- **Naming: `row_to_*` reads procedurally.** Kept for module-internal parallelism, since every public function starts with the same verb.
+- **`row_to_traversal_hit`'s two-arg signature breaks `map()` symmetry.** Cosmetic, since all factories are called inside loops.

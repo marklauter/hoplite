@@ -15,16 +15,16 @@ One coordinated work cycle delivering the open-vocab stereotype model on the `me
 ## What ships together
 
 - [[docs/notes/stereotypes-are-open-vocab-edge-properties.md]] — parent design. Owns the schema (`edge_property` rows keyed by `"stereotype"`), the dual frontmatter shape (dot-flat and nested-mapping), the inline wikilink syntax, the canonical seed vocabulary, and the open-vocab policy.
-- [[docs/notes/add-contradicts-as-an-authored-edge-kind.md]] — first canonical instance. Rhetorical-negative authored disagreement.
+- [[docs/notes/add-contradicts-as-an-authored-edge-kind.md]] — first canonical instance. Rhetorical-negative asserted disagreement.
 - [[docs/notes/add-not-related-as-a-structural-negative-edge-kind.md]] — second canonical instance. Structural-negative; subtracts from inferred `related` via the existing mention-skip path.
 
 The third and fourth seed stereotypes — `supports` and `supersedes` — surface in the parent design and in `plugins/hoplite/components/hoplite/mcp-reference.md` once the layer lands. They do not need dedicated design notes for v1.
 
 ## Why one shippable unit
 
-[Inference] The parent owns the parser rules — flat frontmatter properties (a node property is a scalar; an edge is a `<stereotype>: "[[target]]"` wikilink value) and inline stereotype comments (`[[target]]<!--stereotype-->`). Without it, neither child can be implemented. The two children prove the model works on different semantic categories (rhetorical-negative and structural-negative), so shipping the parent without at least both instances leaves the seed vocabulary unvalidated.
+The parent owns the parser rules — flat frontmatter properties (a node property is a scalar; an edge is a `<stereotype>: "[[target]]"` wikilink value) and inline stereotype comments (`[[target]]<!--stereotype-->`). Without it, neither child can be implemented. The two children prove the model works on different semantic categories (rhetorical-negative and structural-negative), so shipping the parent without at least both instances leaves the seed vocabulary unvalidated.
 
-[Inference] Splitting the children into separate ships would force premature decisions on the open questions in each — default traversal behavior for stereotyped mentions in particular. One coordinated implementation pass resolves them together.
+Splitting the children into separate ships would force premature decisions on the open questions in each — default traversal behavior for stereotyped mentions in particular. One coordinated implementation pass resolves them together.
 
 ## What is out of scope
 
@@ -36,7 +36,7 @@ Called out in the parent design and worth restating here:
 
 ## Dependencies
 
-[Inference] Independent of the scale-readiness cluster at [[docs/notes/hoplite-scales-to-the-cross-repo-knowledge-graph.md]]. Stereotype semantics work the same regardless of corpus size or pair-similarity scoring function. Ship order between the two clusters is free.
+This is independent of the scale-readiness cluster at [[docs/notes/hoplite-scales-to-the-cross-repo-knowledge-graph.md]]. Stereotype semantics work the same regardless of corpus size or pair-similarity scoring function. Ship order between the two clusters is free.
 
 ## See also
 

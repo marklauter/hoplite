@@ -8,7 +8,7 @@ status: design
 
 # migrations.py — schema lifecycle
 
-`migrations.py` owns the schema-apply path. `apply(conn)` checks `sqlite_master` for the expected tables; if any are absent, runs the full schema script. Idempotent, race-tolerant, no in-place migrations day-one — schema versioning is carried in the filename, not in the database header.
+`migrations.py` owns the schema-apply path. `apply(conn)` checks `sqlite_master` for the expected tables. If any are absent, it runs the full schema script. The path is idempotent and race-tolerant. There are no in-place migrations on day one. Schema versioning is carried in the filename, not in the database header.
 
 Sibling design notes: [[docs/notes/reify-in-memory-graph-as-file-based-sqlite.md]] for the rationale and trigger; [[docs/notes/db-refactor.md]] for the broader refactor plan; [[docs/notes/db-py-design.md]] for the `Database` interface this collaborates with. This note covers `migrations.py` alone.
 
@@ -22,7 +22,7 @@ def apply(conn: sqlite3.Connection) -> None: ...
 SCHEMA: Final[str]  # full DDL, loaded from schema.sql at module import
 ```
 
-`apply` is the only entry point callers use. `SCHEMA` is exposed because future debug tooling may want the canonical DDL string (e.g. a test that applies the schema to a `:memory:` connection directly). It can be made module-private if no consumer remains.
+`apply` is the only entry point callers use. `SCHEMA` is exposed because future debug tooling may want the canonical DDL string, for example a test that applies the schema to a `:memory:` connection directly. It can be made module-private if no consumer remains.
 
 ## Schema source
 
@@ -32,13 +32,13 @@ The canonical DDL lives at `plugins/hoplite/mcp/src/hoplite/schema.sql`. `migrat
 SCHEMA: Final = (Path(__file__).parent / "schema.sql").read_text(encoding="utf-8")
 ```
 
-`migrations.py` is the single owner of `SCHEMA` now. The old `graph.py` loaded its own copy for the in-memory `:memory:` FTS setup and the dump path; that in-memory graph is retired, so there is no second loader. `Graph.refresh` calls `migrations.apply(conn)`; it does not need its own `SCHEMA` constant.
+`migrations.py` is now the single owner of `SCHEMA`. The old `graph.py` loaded its own copy for the in-memory `:memory:` FTS setup and the dump path. That in-memory graph is retired, so there is no second loader. `Graph.refresh` calls `migrations.apply(conn)`. It does not need its own `SCHEMA` constant.
 
-The alternative was lazy loading inside `apply` itself — read `schema.sql` only when first called. Rejected because a packaging error that omits `schema.sql` should fail loudly at import time, not silently survive until the first refresh.
+The alternative was lazy loading inside `apply` itself: read `schema.sql` only when first called. Rejected because a packaging error that omits `schema.sql` should fail loudly at import time, not silently survive until the first refresh.
 
 ## Idempotency strategy
 
-The presence check verifies **every** expected table exists, not just one:
+The presence check verifies that every expected table exists, not just one:
 
 ```python
 _EXPECTED_TABLES: Final = ("node", "node_property", "edge_kind", "edge", "edge_property", "fts")
@@ -53,13 +53,13 @@ def _schema_present(conn: sqlite3.Connection) -> bool:
     return row[0] == len(_EXPECTED_TABLES)
 ```
 
-A single-table marker (e.g., just `node`) would lie about partial-corruption states. If `executescript` crashed after creating `node` but before later tables, the marker would say "present" forever — every subsequent `apply` would no-op on a half-built schema. The multi-table check requires *all* declared tables to exist before treating the schema as applied; a half-built state is correctly seen as "not present" and triggers re-execution, which then surfaces an "already exists" error on the partial tables and aborts loudly.
+A single-table marker, such as just `node`, would lie about partial-corruption states. If `executescript` crashed after creating `node` but before later tables, the marker would say "present" forever. Every subsequent `apply` would no-op on a half-built schema. The multi-table check requires all expected tables to exist before treating the schema as applied. A half-built state is correctly seen as "not present" and triggers re-execution. That then surfaces an "already exists" error on the partial tables and aborts loudly.
 
-We do **not** use `CREATE TABLE IF NOT EXISTS` in the schema script. The argument isn't about partial-corruption detection (the multi-table check handles that). The argument is about silent races: `IF NOT EXISTS` turns the "two processes both try to bootstrap" case into a no-op for the loser, with no error signal. The explicit catchable `OperationalError("table … already exists")` lets us prove via re-check that the desired state was reached before swallowing — `IF NOT EXISTS` gives us no error to verify against.
+We do not use `CREATE TABLE IF NOT EXISTS` in the schema script. The reason isn't partial-corruption detection; the multi-table check handles that. The reason is silent races. `IF NOT EXISTS` turns the "two processes both try to bootstrap" case into a no-op for the loser, with no error signal. The explicit catchable `OperationalError("table … already exists")` lets us prove via re-check that the desired state was reached before swallowing. `IF NOT EXISTS` gives us no error to verify against.
 
 ## Transaction shape and the `executescript` gotcha
 
-Python's `sqlite3.Connection.executescript` issues an implicit `COMMIT` of any pending transaction before running the script — this is unconditional in stdlib `sqlite3`, not specific to autocommit mode or any `isolation_level` setting. That means **`apply` cannot be safely wrapped inside an outer `write_transaction`** — any outer `BEGIN IMMEDIATE` is closed prematurely the moment `executescript` runs.
+Python's `sqlite3.Connection.executescript` issues an implicit `COMMIT` of any pending transaction before running the script. This is unconditional in stdlib `sqlite3`, not specific to autocommit mode or any `isolation_level` setting. So `apply` cannot be safely wrapped inside an outer `write_transaction`. Any outer `BEGIN IMMEDIATE` is closed prematurely the moment `executescript` runs.
 
 Implication: `apply` is called *outside* `write_transaction`. The refresh flow becomes:
 
@@ -75,7 +75,7 @@ def refresh():
 
 ### Race handling
 
-Two processes calling `refresh` on a fresh corpus might both observe "no schema" and both call `executescript`. SQLite serializes the writes, so the second one fails with `OperationalError: table <name> already exists`. We treat that *specific* shape as a benign race — the schema is fully present after the failure; we just weren't the one who created it.
+Two processes calling `refresh` on a fresh corpus might both observe "no schema" and both call `executescript`. SQLite serializes the writes, so the second one fails with `OperationalError: table <name> already exists`. We treat that specific shape as a benign race. The schema is fully present after the failure; we just weren't the one who created it.
 
 ```python
 def apply(conn: sqlite3.Connection) -> None:
@@ -93,7 +93,7 @@ def apply(conn: sqlite3.Connection) -> None:
         raise
 ```
 
-Both filters matter. The text match guards against silently absorbing unrelated failures (disk full, permission denied, malformed SQL during a schema edit) that happen to leave *some* tables behind. The post-state re-check guards against the case where the schema script is mid-edit and an `already exists` error fires *without* the full schema present — partial corruption masquerading as a benign race. Only the intersection — "looks like a race AND state proves it" — gets swallowed.
+Both filters matter. The text match guards against silently absorbing unrelated failures, such as disk full, permission denied, or malformed SQL during a schema edit, that happen to leave some tables behind. The post-state re-check guards against the case where the schema script is mid-edit and an `already exists` error fires without the full schema present. That is partial corruption masquerading as a benign race. Only the intersection gets swallowed: "looks like a race AND state proves it."
 
 ## Future migrations
 
@@ -103,9 +103,9 @@ Day-one has one schema: `hoplite.schema.001.sqlite`. The filename carries the ve
 - The v1 file stays on disk until manually deleted; v1 MCP processes can keep using it.
 - No in-place ALTER, no down migrations, no schema_version table.
 
-This sidesteps the entire class of "running migration N at startup" bugs. The cost is data: a fresh `refresh` against v2 rebuilds the whole graph from the corpus rather than copying rows over from v1. v1 and v2 files coexist on disk but there's **no data continuity** between them — the user can't query v2 to see v1's data without an explicit migration step. At Hoplite's corpus sizes a rewalk is acceptable (seconds to minutes).
+This sidesteps the entire class of "running migration N at startup" bugs. The cost is data. A fresh `refresh` against v2 rebuilds the whole graph from the corpus rather than copying rows over from v1. v1 and v2 files coexist on disk, but there is no data continuity between them. The user can't query v2 to see v1's data without an explicit migration step. At Hoplite's corpus sizes a rewalk is acceptable, on the order of seconds to minutes.
 
-When this becomes painful — corpus too large to rewalk on each schema bump — write a one-shot `migrate_v001_to_v002(src_conn, dst_conn)` script that lives next to `apply` in `migrations.py`. It's not part of the runtime path.
+When this becomes painful, when the corpus is too large to rewalk on each schema bump, write a one-shot `migrate_v001_to_v002(src_conn, dst_conn)` script that lives next to `apply` in `migrations.py`. It's not part of the runtime path.
 
 ## Module skeleton
 
@@ -154,7 +154,7 @@ def _schema_present(conn: sqlite3.Connection) -> bool:
 
 ## Tests
 
-All tests use `:memory:` connections constructed directly — `migrations.py` doesn't need `FileDatabase` to exercise. Full annotations, `pytest.raises(Exc, match=...)` for error cases.
+All tests use `:memory:` connections constructed directly; `migrations.py` doesn't need `FileDatabase` to exercise. Full annotations, `pytest.raises(Exc, match=...)` for error cases.
 
 1. `test_apply_creates_all_expected_tables` — fresh `:memory:` connection; call `apply`; introspect `sqlite_master` for every table in `_EXPECTED_TABLES` and every named index (`idx_node_property_key_value`, `idx_edge_kind_src`, `idx_edge_kind_dst`, `idx_edge_property_key_value`). The `node.uri` and `edge_kind.kind` uniqueness is enforced by `UNIQUE` constraints (auto-indexed), not by named `CREATE INDEX` statements, so they don't appear in this list. The test imports `_EXPECTED_TABLES` from the module to keep the list in one place.
 2. `test_apply_is_idempotent` — call `apply` twice; second call returns without raising; table list unchanged between calls.
@@ -164,11 +164,11 @@ All tests use `:memory:` connections constructed directly — `migrations.py` do
 6. `test_apply_does_not_swallow_non_already_exists_errors` — monkeypatch `executescript` to raise `OperationalError("disk I/O error")` *after* creating `node` (so `_schema_present` could lie if the marker were single-table — but with the multi-table check it correctly returns False). Even if `_schema_present` returned True, the error-text filter would reject this one. Assert the original `OperationalError` propagates.
 7. `test_schema_constant_matches_file` — assert `SCHEMA` equals the contents of `schema.sql` on disk. Catches the case where someone hard-codes the constant in the module and forgets to load.
 
-Tests #3 through #6 are the load-bearing tests for the race-recovery logic — they cover the four-quadrant matrix of `(error text matches | doesn't) × (schema present | absent)` and verify only the "matches AND present" cell swallows.
+Tests #3 through #6 are the load-bearing tests for the race-recovery logic. They cover the four-quadrant matrix of `(error text matches | doesn't) × (schema present | absent)` and verify that only the "matches AND present" cell swallows.
 
 ## Risks for the implementer
 
-- **`executescript` and outer transactions.** The docstring on `apply` calls this out explicitly; the unit test suite doesn't catch it (because `:memory:` tests don't exercise the outer `write_transaction` boundary). The integration test that catches it lands in step 5 (walker) when `refresh` is wired up.
-- **Real two-writer race test.** Tests #4 and #5 cover the translation logic via monkeypatch but don't exercise an actual contention. Add a single integration test in step 5 that opens two real connections to a shared file DB and calls `apply` on each from separate threads; the loser sees an `OperationalError` translated by `apply`'s race handling.
-- **`OperationalError` filter — keep both halves.** The catch checks `"already exists" in str(e)` AND `_schema_present(conn)`. If a future implementer is tempted to drop either filter to "simplify," they will reintroduce one of two failure modes the reviewer flagged. Don't.
-- **Module-level SCHEMA load.** Reading `schema.sql` at import time means the file must ship with the package. `pyproject.toml` already declares `[tool.setuptools.package-data] hoplite = ["schema.sql"]` from the schema-extraction work earlier. Don't undo that.
+- **`executescript` and outer transactions.** The docstring on `apply` calls this out explicitly. The unit test suite doesn't catch it, because `:memory:` tests don't exercise the outer `write_transaction` boundary. The integration test that catches it lands in step 5 (walker) when `refresh` is wired up.
+- **Real two-writer race test.** Tests #4 and #5 cover the translation logic via monkeypatch but don't exercise actual contention. Add a single integration test in step 5 that opens two real connections to a shared file DB and calls `apply` on each from separate threads. The loser sees an `OperationalError` translated by `apply`'s race handling.
+- **`OperationalError` filter — keep both halves.** The catch checks `"already exists" in str(e)` AND `_schema_present(conn)`. A future implementer tempted to drop either filter to "simplify" will reintroduce one of two failure modes the reviewer flagged. Don't.
+- **Module-level SCHEMA load.** Reading `schema.sql` at import time means the file must ship with the package. `pyproject.toml` already declares `[tool.setuptools.package-data] hoplite = ["schema.sql"]` from the earlier schema-extraction work. Don't undo that.

@@ -15,13 +15,13 @@ The full enumeration follows from one observation: every feature space over whic
 
 ## Authored channels
 
-The author asserted the relationship; the signal is simply true — ungraded, it can't be wrong, and it reaches only what was typed.
+The author asserted the relationship, so the signal is simply true. It is ungraded, it can't be wrong, and it reaches only what was typed.
 
 ### Declared linkage
 
 - direct reference — A points to B (directed, binary)
 - backlink — the same edge read in reverse, who points to B (directed, binary)
-- typed edge — the link carries a label like supersedes, derives-from, or contradicts; the kind is itself a feature (directed, binary)
+- typed edge — the link carries a label like supersedes, derives-from, or contradicts; the stereotype is itself a feature (directed, binary)
 - ghost reference — a link whose target doesn't exist yet, relating the citing document to an intended one (directed, binary)
 - transclusion — one document embeds another's content, strictly stronger than reference (directed, binary)
 
@@ -33,7 +33,7 @@ The author asserted the relationship; the signal is simply true — ungraded, it
 
 ## Emergent channels
 
-No one asserted the relationship; it falls out of a feature two documents share — so it is graded, rankable, and fallible, and it reaches connections no author declared.
+No one asserted the relationship; it falls out of a feature two documents share. So it is graded, rankable, and fallible, and it reaches connections no author asserted.
 
 ### Content
 
@@ -98,7 +98,7 @@ Authored versus emergent is the primary division above. Independent of channel, 
 
 ## The unifying statement
 
-There is one relatedness signal — mutual information — observed through many channels. The authored channels deliver it at full confidence and no reach beyond what was typed. Every emergent channel trades confidence for reach: each is a projection of the documents into a feature space where co-occurrence of a rare feature betrays a dependency no author declared.
+There is one relatedness signal — mutual information — observed through many channels. The authored channels deliver it at full confidence and no reach beyond what was typed. Every emergent channel trades confidence for reach: each is a projection of the documents into a feature space where co-occurrence of a rare feature betrays a dependency no author asserted.
 
 ## What Hoplite reaches
 

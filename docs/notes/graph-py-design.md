@@ -8,7 +8,7 @@ status: design
 
 # graph.py — the SQLite-backed Graph
 
-`graph.py` defines `Graph`, the one and only graph implementation. It is a thin class over an injected `Database`: each method opens a connection per call (`open_ro` for queries, `open_rw` for `refresh`/`export`), runs SQL against the `node`/`edge`/`edge_kind`/`fts` schema in [schema.sql](../../plugins/hoplite/mcp/src/hoplite/schema.sql), projects rows through `row_factories.py`, and returns the domain dataclasses. There is no `Graph` Protocol and no in-memory peer: the in-memory dict-backed graph is retired, and SQLite is the only store.
+`graph.py` defines `Graph`, the one and only graph implementation. It is a thin class over an injected `Database`: each method opens a connection per call (`open_ro` for queries, `open_rw` for `refresh`/`export`), runs SQL against the `node`/`edge`/`edge_kind`/`fts` schema in [schema.sql](../../plugins/hoplite/mcp/src/hoplite/schema.sql), projects rows through `row_factories.py`, and returns the domain dataclasses. There is no `Graph` Protocol and no in-memory peer. The in-memory dict-backed graph is retired, and SQLite is the only store.
 
 Sibling design notes: [[docs/notes/reify-in-memory-graph-as-file-based-sqlite.md]] for the rationale; [[docs/notes/db-refactor.md]] for the broader plan; [[docs/notes/db-py-design.md]] (the `Database` this depends on), [[docs/notes/migrations-py-design.md]] (the schema this queries), [[docs/notes/row-factories-py-design.md]] (the projection layer this composes with), and [[docs/notes/walker-py-design.md]] (the writer behind `refresh`). This note covers `graph.py` alone.
 
@@ -16,19 +16,20 @@ Sibling design notes: [[docs/notes/reify-in-memory-graph-as-file-based-sqlite.md
 
 Today's `graph.py` is the in-memory container: dicts for `documents`/`out_edges`/`in_edges`/`aliases`, a `:memory:` FTS connection, the `walk` free function, and the `dump_index` writer. The query logic (`search`/`traverse`/BFS) lives in `tools.py` and reaches into those dicts.
 
+
 The new `graph.py` is a single class with no in-memory state:
 
 - **No adjacency dicts, no aliases map, no `:memory:` FTS connection.** Every lookup is a SQL query against the file-backed DB.
-- **The query logic moves onto the class.** `tools.py`'s `match_nodes`/`traverse_nodes`/`_neighbors`/`_escape_fts5_query` bodies become `Graph.search`/`Graph.traverse` and private helpers here.
-- **`walk` moves to its own module** (`walker.py`, see [[docs/notes/walker-py-design.md]]); `refresh()` calls it. The old `dump_index` writers are replaced by `export()` using `sqlite3`'s online-backup API.
+- **The query logic moves onto the class.** The `match_nodes`/`traverse_nodes`/`_neighbors`/`_escape_fts5_query` bodies from `tools.py` become `Graph.search`/`Graph.traverse` and private helpers here.
+- **`walk` moves to its own module** (`walker.py`, see [[docs/notes/walker-py-design.md]]), and `refresh()` calls it. The old `dump_index` writers are replaced by `export()`, which uses `sqlite3`'s online-backup API.
 
 ## Schema and vocabulary note
 
 The SQL below targets the *current* `schema.sql`: `node(id, uri, resolved, content_hash, minhash)`, `node_property(id, key, value)`, `edge(id, src, dst, kind, confidence)` where `kind` is an integer FK into `edge_kind(id, kind)`, `edge_property`, and the `fts(uri, title, summary, body)` virtual table. `node.uri`, `node_property.key`, and `edge_kind.kind` carry `COLLATE NOCASE`.
 
-The landed `models.py` and `row_factories.py` still use the older `Document`/`path` vocabulary. The queries here project `n.uri AS path` so the existing factories keep working unchanged. The `node`/`uri` ↔ `Document`/`path` drift between `schema.sql` and `models.py` is a known reconcile item tracked in [[docs/notes/db-refactor.md]]; it is *not* resolved in this note.
+The landed `models.py` and `row_factories.py` still use the older `Document`/`path` vocabulary. The queries here project `n.uri AS path` so the existing factories keep working unchanged. The `node`/`uri` ↔ `Document`/`path` drift between `schema.sql` and `models.py` is a known reconcile item tracked in [[docs/notes/db-refactor.md]]. It is not resolved in this note.
 
-**Case-insensitivity is the column's job now.** `node.uri COLLATE NOCASE` means `WHERE uri = ?` already matches case-insensitively. The old "walker casefolds paths before insert, resolver casefolds the input" contract is **deleted** — there is no casefold-on-store anywhere. The walker stores URIs verbatim; matching is the collation's responsibility.
+Case-insensitivity is the column's job now. `node.uri COLLATE NOCASE` means `WHERE uri = ?` already matches case-insensitively. The old "walker casefolds paths before insert, resolver casefolds the input" contract is deleted; there is no casefold-on-store anywhere. The walker stores URIs verbatim, and matching is the collation's responsibility.
 
 ## Class shape
 
@@ -39,7 +40,7 @@ class Graph:
         self._corpus_root = corpus_root
 ```
 
-Two fields: the injected `Database` and the corpus root (load-bearing only for `refresh()`, which dispatches to the walker). No connection caching — every method bounds its connection lifetime to a single `with self._db.open_*()` block.
+Two fields: the injected `Database` and the corpus root (load-bearing only for `refresh()`, which dispatches to the walker). There is no connection caching; every method bounds its connection lifetime to a single `with self._db.open_*()` block.
 
 ```python
 import sqlite3
@@ -73,13 +74,13 @@ class Graph:
     # private: _fts_candidates, _tags_for_paths, _resolve_uri, _traverse_cte, _count_rows
 ```
 
-The four public methods take split scalars, never the Pydantic `MatchPredicate`/`TraversePredicate` from `tools.py`. `tools.py` parses the tag expression at the handler boundary (`parser.parse_predicate`) and passes the `TagExpression` AST (a callable on a tag set, from `hoplite.filtering`) as a primitive. This keeps `graph.py` free of any upward dependency on `tools.py` — no import cycle.
+The four public methods take split scalars, never the Pydantic `MatchPredicate`/`TraversePredicate` from `tools.py`. `tools.py` parses the tag expression at the handler boundary (`parser.parse_predicate`) and passes the `TagExpression` AST (a callable on a tag set, from `hoplite.filtering`) as a primitive. This keeps `graph.py` free of any upward dependency on `tools.py`, so there is no import cycle.
 
 ## `search(text, tag_ast, limit) -> list[Hit]`
 
-Backs the `where` tool. `text` is the BM25 query (`None` for tag-only search); `tag_ast` is the parsed tag predicate (`None` for text-only). Returns up to `limit` documents ranked by BM25, narrowed by the tag predicate.
+Backs the `where` tool. `text` is the BM25 query (`None` for tag-only search); `tag_ast` is the parsed tag predicate (`None` for text-only). Returns up to `limit` documents ranked by BM25 and narrowed by the tag predicate.
 
-Open an ro connection; build the FTS candidate set; apply the tag predicate in Python; truncate to `limit`.
+Open an ro connection, build the FTS candidate set, apply the tag predicate in Python, then truncate to `limit`.
 
 ```python
 def search(self, text, tag_ast, limit):
@@ -109,15 +110,15 @@ ORDER BY score
 LIMIT ?
 ```
 
-When `text` is `None`, there is no FTS row to match — the tag-only branch selects every node (`SELECT n.uri AS path, ... FROM node n`) at score 0 so ghost and URL nodes (which never have FTS rows but carry synthetic `ghost`/`url` tags) are discoverable.
+When `text` is `None`, there is no FTS row to match. The tag-only branch then selects every node (`SELECT n.uri AS path, ... FROM node n`) at score 0, so ghost and URL nodes are discoverable. Those nodes never have FTS rows but carry synthetic `ghost`/`url` tags.
 
-**No over-fetch.** When a tag predicate is present the FTS query fetches the full matched set (no `limit * N` shortcut), Python filters, then truncates to `limit`. The tag predicate is evaluated in Python, not compiled to SQL: the grammar (`!`, `&`, `|`, parens) is small enough to run in microseconds per candidate, and arbitrary boolean composition is messy as `EXISTS` clauses. If profiling on large corpora shows the full fetch dominates, the fix is to push the predicate into SQL — not to over-fetch.
+No over-fetch. When a tag predicate is present, the FTS query fetches the full matched set (no `limit * N` shortcut), Python filters, then truncates to `limit`. The tag predicate is evaluated in Python, not compiled to SQL. The grammar (`!`, `&`, `|`, parens) is small enough to run in microseconds per candidate, and arbitrary boolean composition is messy as `EXISTS` clauses. If profiling on large corpora shows the full fetch dominates, the fix is to push the predicate into SQL, not to over-fetch.
 
-The FTS query string is escaped by `_escape_fts5_query` (moved here from `tools.py`; it was the only caller). Each whitespace token is wrapped in double quotes (internal quotes doubled), which neutralizes FTS5 special chars while preserving the implicit-AND-across-terms semantics.
+The FTS query string is escaped by `_escape_fts5_query` (moved here from `tools.py`, which was the only caller). Each whitespace token is wrapped in double quotes (internal quotes doubled), which neutralizes FTS5 special chars while preserving the implicit-AND-across-terms semantics.
 
 ## `traverse(...) -> list[TraversalHit]`
 
-Backs the `relatives` tool. Breadth-first walk from `from_`, one `TraversalHit` per node reached at distance 1..depth (origin excluded), ordered `(distance, path)` ascending, optionally tag-filtered.
+Backs the `relatives` tool. A breadth-first walk from `from_`, with one `TraversalHit` per node reached at distance 1..depth (origin excluded), ordered `(distance, path)` ascending, optionally tag-filtered.
 
 ```python
 def traverse(self, from_, *, edge_types, direction, top_k_related, tag_ast, depth):
@@ -137,7 +138,7 @@ def traverse(self, from_, *, edge_types, direction, top_k_related, tag_ast, dept
 
 The walk runs in SQL as a recursive CTE over `edge`, not as a Python `deque` loop. The CTE handles depth-bounding, cycle-safety, edge-kind filtering, direction, the `top_k_related` cap, and shortest-distance-per-node in one query.
 
-The hard parts, called out honestly: SQLite forbids aggregates and window functions in the *recursive* term, so the `top_k_related` ranking and the shortest-distance dedupe are done in the **non-recursive** CTEs that feed and consume the recursion. The recursive term only walks and accumulates.
+The hard part: SQLite forbids aggregates and window functions in the recursive term, so the `top_k_related` ranking and the shortest-distance dedupe are done in the non-recursive CTEs that feed and consume the recursion. The recursive term only walks and accumulates.
 
 ```sql
 WITH RECURSIVE
@@ -192,17 +193,17 @@ WHERE rn = 1
 
 Notes on the CTE:
 
-- **`top_k_related` semantics match the old `_neighbors`:** rank a node's outgoing `related` edges by `(confidence DESC, target_uri ASC)`, keep the top K. The cap is per-source-node and independent of the path taken to reach that node — same as before.
+- **`top_k_related` semantics match the old `_neighbors`:** rank a node's outgoing `related` edges by `(confidence DESC, target_uri ASC)` and keep the top K. The cap is per-source-node and independent of the path taken to reach that node, same as before.
 - **`edge_types` filtering** restricts the `step` relation up front (`WHERE k.kind IN (...)`); an empty set means follow all kinds.
 - **Cycle guard** is the `instr` check against the `/id/`-delimited breadcrumb. The shortest-path dedupe (`ROW_NUMBER ... ORDER BY distance, trail`) picks one row per reached node.
 - **`via` is a JSON array of `edge.id` values** along the chosen path. Python expands those ids back into `Edge` objects (one batched `SELECT ... WHERE e.id IN (...)` joined to `node` twice for `src_path`/`dst_path`, projected through `row_to_edge`) and passes the list to `row_to_traversal_hit(row, via_edges)`.
-- **Direction `in`/`both`** flips/UNIONs the `step` relation; everything downstream is identical.
+- **Direction `in`/`both`** flips or UNIONs the `step` relation; everything downstream is identical.
 
-This is more SQL than the old Python BFS, and the trade is deliberate: the walk, the cap, and the shortest-path selection happen in one round-trip instead of one `SELECT` per depth level. If the CTE ever proves slower than a Python loop at realistic depths (1–3), it can be swapped behind `traverse` without changing the public surface — but the default is the CTE, per [[docs/notes/db-refactor.md]].
+This is more SQL than the old Python BFS, and the trade is deliberate: the walk, the cap, and the shortest-path selection happen in one round-trip instead of one `SELECT` per depth level. If the CTE ever proves slower than a Python loop at realistic depths (1–3), it can be swapped behind `traverse` without changing the public surface. The default is the CTE, per [[docs/notes/db-refactor.md]].
 
 ### Per-node projection
 
-Each reached node is projected to a `TraversalHit` via the same shape `row_to_traversal_hit` expects — `path`, `summary`, `tags` (as `json_group_array`), `distance` bound as a literal column — with `via_edges` assembled from the CTE's `via` array:
+Each reached node is projected to a `TraversalHit` via the same shape `row_to_traversal_hit` expects: `path`, `summary`, `tags` (as `json_group_array`), and `distance` bound as a literal column, with `via_edges` assembled from the CTE's `via` array:
 
 ```sql
 SELECT n.uri AS path,
@@ -216,11 +217,11 @@ LEFT JOIN fts ON fts.rowid = n.id
 WHERE n.id = ?
 ```
 
-`LEFT JOIN fts` because traversal reaches ghost/URL nodes that have no FTS row; `summary` comes back `NULL` and `row_to_traversal_hit` falls back to `""`.
+`LEFT JOIN fts` because traversal reaches ghost/URL nodes that have no FTS row. `summary` comes back `NULL`, and `row_to_traversal_hit` falls back to `""`.
 
 ## `refresh() -> WriteResult`
 
-Rebuilds the DB from the corpus. Open an rw connection, apply migrations (idempotent), run the walker inside a `write_transaction`:
+Rebuilds the DB from the corpus. Open an rw connection, apply migrations (idempotent), then run the walker inside a `write_transaction`:
 
 ```python
 def refresh(self):
@@ -230,11 +231,11 @@ def refresh(self):
             return walker.walk(conn, self._corpus_root)
 ```
 
-**Transaction-nesting note.** `migrations.apply(conn)` runs its own `executescript` (which commits any pending transaction) and returns with no open transaction; the outer `write_transaction` then opens a fresh one for the walk. The two run sequentially, not nested — the schema apply commits before the walk's truncate-and-rebuild begins. See [[docs/notes/migrations-py-design.md]].
+Transaction-nesting note: `migrations.apply(conn)` runs its own `executescript` (which commits any pending transaction) and returns with no open transaction. The outer `write_transaction` then opens a fresh one for the walk. The two run sequentially, not nested: the schema apply commits before the walk's truncate-and-rebuild begins. See [[docs/notes/migrations-py-design.md]].
 
 ## `export(path) -> WriteResult`
 
-Backs the `export` tool. Backs the live DB up to `path` (default `.hoplite/<ISO>.index.sqlite`) using `sqlite3`'s online-backup API:
+Backs the `export` tool. Copies the live DB to `path` (default `.hoplite/<ISO>.index.sqlite`) using `sqlite3`'s online-backup API:
 
 ```python
 def export(self, path):
@@ -249,15 +250,15 @@ def export(self, path):
     return WriteResult(path=str(path.resolve()), counts=counts)
 ```
 
-`conn.backup()` is a byte-for-byte page copy holding brief read locks. The export schema is identical to the live schema by construction — the old `DUMP_SCHEMA` source-of-truth promise is now structural. `_count_rows` runs inside the `with src:` block so the counts come from the backed-up snapshot, not a later `open_ro`.
+`conn.backup()` is a byte-for-byte page copy that holds brief read locks. The export schema is identical to the live schema by construction; the old `DUMP_SCHEMA` source-of-truth promise is now structural. `_count_rows` runs inside the `with src:` block, so the counts come from the backed-up snapshot, not a later `open_ro`.
 
 ## Private helpers
 
-Each takes an open connection so one public method's connection covers all its sub-queries.
+Each takes an open connection, so one public method's connection covers all its sub-queries.
 
 ### `_resolve_uri(conn, target) -> int | None`
 
-Resolves a wikilink target to a `node.id`, or `None`. The chain (shorter than the old one — the casefold step is gone, folded into the column collation):
+Resolves a wikilink target to a `node.id`, or `None`. The chain is shorter than the old one because the casefold step is gone, folded into the column collation:
 
 1. Strip `#anchor` and `|alias` suffixes (display syntax, not part of the key).
 2. Exact match: `SELECT id FROM node WHERE uri = ?` — case-insensitive via `node.uri COLLATE NOCASE`.
@@ -268,7 +269,7 @@ The `.md` retry wraps steps 2–3 (not just one of them), matching the old resol
 
 ### `_tags_for_paths(conn, paths) -> dict[str, list[str]]`
 
-One batched query for the `search` tag-filter post-pass: fetch every candidate's tags keyed by `node.uri`, so N candidates cost one round-trip plus a Python hash-group instead of N queries.
+One batched query for the `search` tag-filter post-pass. It fetches every candidate's tags keyed by `node.uri`, so N candidates cost one round-trip plus a Python hash-group instead of N queries.
 
 ```sql
 SELECT n.uri AS path, p.value AS tag
@@ -278,11 +279,11 @@ WHERE p.key = 'tags' AND n.uri IN (?, ?, ...)
 
 ### `_count_rows(conn) -> dict[str, int]`
 
-Row counts for `WriteResult.counts` — `documents`/`ghosts`/`urls`/`edges`. `ghosts`/`urls` partition the `resolved = 0` nodes by whether `uri` is an `http(s)://` URL; `documents` is `resolved = 1`; `edges` is `SELECT COUNT(*) FROM edge`.
+Row counts for `WriteResult.counts`: `documents`/`ghosts`/`urls`/`edges`. `ghosts`/`urls` partition the `resolved = 0` nodes by whether `uri` is an `http(s)://` URL. `documents` is `resolved = 1`, and `edges` is `SELECT COUNT(*) FROM edge`.
 
 ## Tests
 
-`:memory:` connections constructed directly, populated via the shared `_db_fixtures` helpers (the same `_populate_*` helpers `test_row_factories.py` uses, factored into `tests/_db_fixtures.py`), then exercised through the public methods.
+`:memory:` connections are constructed directly, populated via the shared `_db_fixtures` helpers (the same `_populate_*` helpers `test_row_factories.py` uses, factored into `tests/_db_fixtures.py`), then exercised through the public methods.
 
 1. `test_resolve_uri_exact` — node at `docs/notes/foo.md`; resolve it; assert its id.
 2. `test_resolve_uri_case_insensitive` — node at `docs/notes/foo.md`; resolve `DOCS/NOTES/FOO.MD`; assert the same id (collation, not casefold-on-store).
@@ -308,24 +309,24 @@ Row counts for `WriteResult.counts` — `documents`/`ghosts`/`urls`/`edges`. `gh
 
 ### Hard rules — don't violate these
 
-- **Don't cache connections on the instance.** Fresh connection per `open_ro`/`open_rw` call by design (see [[docs/notes/db-py-design.md]]). Caching defeats the per-call concurrency model and the future `PooledDatabase` swap-in.
+- **Don't cache connections on the instance.** A fresh connection per `open_ro`/`open_rw` call is by design (see [[docs/notes/db-py-design.md]]). Caching defeats the per-call concurrency model and the future `PooledDatabase` swap-in.
 - **Don't reintroduce in-memory adjacency.** No dicts of `out_edges`/`in_edges` on `Graph`. If `traverse` feels slow, the answer is a better CTE or an index, not a Python cache.
-- **Don't push the tag predicate into SQL without profiling.** The Python evaluator runs in microseconds per candidate; boolean-tree-to-SQL is real query-plan cost.
-- **Don't casefold URIs anywhere.** `COLLATE NOCASE` on `node.uri` is the entire case-insensitivity mechanism. Storing or matching against a casefolded copy is the deleted contract; reintroducing it is a bug.
+- **Don't push the tag predicate into SQL without profiling.** The Python evaluator runs in microseconds per candidate; boolean-tree-to-SQL is a real query-plan cost.
+- **Don't casefold URIs anywhere.** `COLLATE NOCASE` on `node.uri` is the entire case-insensitivity mechanism. Storing or matching against a casefolded copy is the deleted contract, and reintroducing it is a bug.
 
 ### Known gaps — accepted, documented, not yet fixed
 
-- **`refresh()` depends on `walker.walk` (step 5).** Until the walker lands, `refresh()` is a stub; its tests ship with the walker.
-- **Schema/model vocabulary drift.** `schema.sql` says `node`/`uri`; `models.py`/`row_factories.py` say `Document`/`path`. The queries bridge it with `n.uri AS path`. A future pass should rename the models or accept the alias permanently — tracked in [[docs/notes/db-refactor.md]].
-- **`node_property` is `WITHOUT ROWID`** — there is no `rowid`, so tag aggregation can't `ORDER BY rowid`. Tags are sorted at projection (`row_to_hit`/`row_to_traversal_hit`) regardless, so column order is moot for them; any future order-sensitive property must order by `(key, value)` or carry an explicit ordinal.
+- **`refresh()` depends on `walker.walk` (step 5).** Until the walker lands, `refresh()` is a stub, and its tests ship with the walker.
+- **Schema/model vocabulary drift.** `schema.sql` says `node`/`uri`; `models.py`/`row_factories.py` say `Document`/`path`. The queries bridge it with `n.uri AS path`. A future pass should rename the models or accept the alias permanently, tracked in [[docs/notes/db-refactor.md]].
+- **`node_property` is `WITHOUT ROWID`.** There is no `rowid`, so tag aggregation can't `ORDER BY rowid`. Tags are sorted at projection (`row_to_hit`/`row_to_traversal_hit`) regardless, so column order is moot for them. Any future order-sensitive property must order by `(key, value)` or carry an explicit ordinal.
 
 ### Future considerations — forward-pointers
 
-- **Python BFS fallback** if the recursive CTE underperforms at realistic depths — swap behind `traverse` without touching the public surface.
+- **Python BFS fallback** if the recursive CTE underperforms at realistic depths. Swap it behind `traverse` without touching the public surface.
 - **Pure-SQL tag-predicate compilation** if the Python evaluator becomes the bottleneck on heavy-tag queries.
-- **Connection pooling** lands behind the `Database` interface; no change to `graph.py` (see [[docs/notes/db-refactor.md]] "Connection pooling vs locking").
+- **Connection pooling** lands behind the `Database` interface, with no change to `graph.py` (see [[docs/notes/db-refactor.md]] "Connection pooling vs locking").
 
 ### Editorial
 
-- The class is just `Graph`, in `graph.py`. No Protocol, no `SqliteGraph`/`InMemoryGraph` prefix — there is one implementation. Callers `from hoplite.graph import Graph` and construct `Graph(db, corpus_root)`.
-- Public methods take their argument set keyword-friendly; `tools.py` call sites pass keywords for readability.
+- The class is just `Graph`, in `graph.py`. No Protocol, no `SqliteGraph`/`InMemoryGraph` prefix, because there is one implementation. Callers `from hoplite.graph import Graph` and construct `Graph(db, corpus_root)`.
+- Public methods take their argument set keyword-friendly, and `tools.py` call sites pass keywords for readability.

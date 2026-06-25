@@ -18,7 +18,7 @@ At server startup, FastMCP emits a schema warning naming the `path` field defaul
 
 ## Interpretation
 
-The warning concerns schema metadata, not runtime behavior — inference. Worth a follow-up to silence the warning (likely an explicit default or field annotation on `WriteResult.path`), but no functional defect blocks current work.
+The warning concerns schema metadata, not runtime behavior. Worth a follow-up to silence the warning (likely an explicit default or field annotation on `WriteResult.path`), but no functional defect blocks current work.
 
 ## Follow-up
 

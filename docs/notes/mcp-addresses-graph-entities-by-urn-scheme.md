@@ -8,9 +8,9 @@ status: open
 
 # MCP addresses graph entities by a URN scheme
 
-Refines the addressing forms in [[uris-are-a-tool-layer-projection-over-relational-storage]] (`node/docs/foo.md`, `edge(src,dst)`) into proper URN schemes:
+This refines the addressing forms in [[uris-are-a-tool-layer-projection-over-relational-storage]] (`node/docs/foo.md`, `edge(src,dst)`) into proper URN schemes:
 
-- `node:<uri>` — e.g. `node:docs/hoplite/glossary/property-graphs`.
-- `edge:<src-uri>:<dst-uri>` — keyed by endpoints, the edge's `(src, dst)` identity ([[glossary/src-dst]]).
+- `node:<uri>`, for example `node:docs/hoplite/glossary/property-graphs`.
+- `edge:<src-uri>:<dst-uri>`, keyed by endpoints, the edge's `(src, dst)` identity ([[glossary/src-dst]]).
 
-URN, not URL (`node://…`): an entity is identified, never located — there is no host. The colons parse because uris are colon-free (slashes only). Future work; the MCP is mid-refactor.
+URN, not URL (`node://…`): an entity is identified, never located, so there is no host. The colons parse because uris are colon-free (slashes only). This is future work; the MCP is mid-refactor.

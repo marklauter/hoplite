@@ -12,7 +12,7 @@ status: open
 
 Three regression scenarios for the SessionStart venv bootstrap — cold cache, manifest drift, pip-install failure. Each exercises one branch of the bootstrap design; together they pin the contract.
 
-The SessionStart hook builds a Python venv at `${CLAUDE_PLUGIN_DATA}/venv` on first install and on `pyproject.toml` drift. Three paths need end-to-end runs to lock in the design: cold cache, manifest drift, install failure.
+The SessionStart hook builds a Python venv at `${CLAUDE_PLUGIN_DATA}/venv` on first install and on `pyproject.toml` drift. Three paths need end-to-end runs to lock in the design: cold cache, manifest drift, and install failure.
 
 ## Cold cache happy path
 
@@ -47,6 +47,6 @@ Expected behavior:
 - Snapshot manifest unlinks so the next session retries from scratch.
 - `launch.py` polls for 60s, finds no interpreter, emits its missing-venv error pointing at the `[hoplite-bootstrap]` lines.
 
-What this guards against: a previous failure mode where a freshly-created venv survived a failed pip install, `launch.py` found an empty interpreter, and the server crashed on `import yaml` — the original symptom with extra latency. The fix at `bootstrap-venv.py:79` (rmtree on pip non-zero exit) closes that hole; this scenario is the regression test that keeps it closed.
+What this guards against: a previous failure mode. A freshly-created venv survived a failed pip install. `launch.py` found an empty interpreter, and the server crashed on `import yaml`. The fix at `bootstrap-venv.py:79` (rmtree on pip non-zero exit) closes that hole. This scenario is the regression test that keeps it closed.
 
 Revert the bogus dep, restart, confirm clean rebuild.
