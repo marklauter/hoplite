@@ -4,6 +4,7 @@ summary: "Narrowing the corpus by property-graph and stereotype predicates; one 
 tags: [hoplite, glossary]
 created: 2026-06-19
 status: evolving
+is-a: "[[match]]"
 contrast: "[[semantic-search]]"
 ---
 

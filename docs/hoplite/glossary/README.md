@@ -27,6 +27,7 @@ The Hoplite domain terms, one node per term. This page links them and keeps the 
 - [[fingerprint]]
 - [[frontmatter]]
 - [[ghost]]
+- [[graph]]
 - [[idf]]
 - [[infer]]
 - [[intrinsic]]

@@ -4,6 +4,7 @@ summary: "The strength of an assertion."
 tags: [hoplite, glossary]
 created: 2026-06-19
 status: locked
+has-a: "[[idf]]"
 ---
 
 The strength of an [[assert|assertion]].

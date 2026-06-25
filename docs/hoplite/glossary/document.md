@@ -4,8 +4,6 @@ summary: "A structured markdown file and its representation within the knowledge
 tags: [hoplite, glossary]
 created: 2026-06-19
 status: locked
-is-a:
-    - "[[structured-markdown-file]]"
 has-a: 
     - "[[node]]"
     - "[[frontmatter]]"

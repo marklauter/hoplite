@@ -6,6 +6,7 @@ created: 2026-06-19
 status: locked
 retired: [corpus-graph]
 has-a:
+    - "[[graph]]"
     - "[[document]]"
     - "[[relationship]]"
 ---
