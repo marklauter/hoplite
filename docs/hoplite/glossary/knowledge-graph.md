@@ -1,11 +1,13 @@
 ---
 title: knowledge graph
-summary: "The graph of documents joined by relationships."
+summary: "The set of documents and their relationships."
 tags: [hoplite, glossary]
-aliases: [corpus-graph]
 created: 2026-06-19
-status: evolving
+status: locked
 retired: [corpus-graph]
+has-a:
+    - "[[document]]"
+    - "[[relationship]]"
 ---
 
-The graph of [[document|documents]] joined by [[relationship|relationships]].
+The set of documents and their relationships.
