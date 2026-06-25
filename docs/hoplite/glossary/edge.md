@@ -10,5 +10,3 @@ has-a:
 ---
 
 An attachment between two nodes.
-
-A bare edge is the attachment alone. Give it a [[stereotype]] and it becomes a [[relationship]].
