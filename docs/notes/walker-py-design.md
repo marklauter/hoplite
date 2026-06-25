@@ -1,10 +1,9 @@
 ---
 title: walker.py — corpus → SQLite walker
-summary: `walker.py` exposes `walk(conn, corpus_root) -> WriteResult`. It truncates the persisted tables inside the caller's `BEGIN IMMEDIATE` transaction, then runs a two-pass scan over `*.md` files under `corpus_root` to repopulate `node`, `node_property`, `edge` (with interned `edge_kind`), `edge_property`, and `fts`. The walker is the only writer in the system; every schema invariant the queries rely on is enforced here at insert time.
+summary: "`walker.py` exposes `walk(conn, corpus_root) -> WriteResult`. It truncates the persisted tables inside the caller's `BEGIN IMMEDIATE` transaction, then runs a two-pass scan over `*.md` files under `corpus_root` to repopulate `node`, `node_property`, `edge` (with interned `edge_kind`), `edge_property`, and `fts`. The walker is the only writer in the system; every schema invariant the queries rely on is enforced here at insert time."
 tags: [note, sqlite, design, hoplite, walker]
 created: 2026-05-28
-document:
-  status: design
+status: evolving
 ---
 
 # walker.py — corpus → SQLite walker
@@ -75,8 +74,8 @@ Glob `*.md` recursively under `corpus_root`. For each file:
 2. Skip if `canonical` contains `/.hoplite/` or starts with `.hoplite/`.
 3. Read as UTF-8; on `OSError`/`UnicodeDecodeError`, warn and continue.
 4. Parse YAML frontmatter. Missing/unterminated → warn, skip.
-5. Validate mandatory fields — `title` and `summary` only (bare, first-class). `document.created`, `document.tags`, and `document.aliases` are optional properties. Missing `title`/`summary` → warn, skip. **Note:** today's `graph.py` checks bare `tags`/`created` as mandatory; the prefixed corpus and the reduced mandatory set both require this updated check, so they must land together.
-6. Validate `document.tags` is a list and `document.aliases` (if present) is a list. Otherwise → warn, skip.
+5. Validate mandatory fields — `title` and `summary` only (bare, first-class). `created`, `tags`, and `aliases` are optional. Missing `title`/`summary` → warn, skip. **Note:** today's `graph.py` checks `tags`/`created` as mandatory; the reduced mandatory set requires this updated check, so they must land together.
+6. Validate `tags` is a list and `aliases` (if present) is a list. Otherwise → warn, skip.
 7. Compute `content_hash = sha256(body).hexdigest()`.
 8. Insert into `node`:
 
@@ -160,12 +159,12 @@ The walker is where "FTS vs `node_property`" is enforced:
 | `tags` (list) | `node_property` rows with `key='tags'`, values casefolded |
 | `aliases` (list) | `node_property` rows with `key='aliases'`, values verbatim |
 | `created` (scalar) | `node_property` row with `key='created'` |
-| `document.<anything>` (scalar) | `node_property` row with `key='<anything>'` (prefix stripped) |
-| `document.<anything>` (list) | `node_property` rows with `key='<anything>'`, one row per element |
+| `<any-key>` (scalar) | `node_property` row with `key='<any-key>'` |
+| `<any-key>` (list) | `node_property` rows with `key='<any-key>'`, one row per element |
 
-The `document.` prefix is a corpus convention (see [docs/hoplite/hoplite-architecture.md#eav-decomposition](../hoplite/hoplite-architecture.md#eav-decomposition)); the walker stores the key without it (`document.priority: high` → `(id, 'priority', 'high')`).
+Keys are flat — no `document.` prefix (see [docs/hoplite/hoplite-architecture.md#eav-decomposition](../hoplite/hoplite-architecture.md#eav-decomposition)); the walker stores each non-special key verbatim (`priority: high` → `(id, 'priority', 'high')`).
 
-`edge.<stereotype>` keys are the stereotype layer — a **locked-in design**, see [[docs/notes/stereotypes-are-open-vocab-edge-properties.md]] and [[docs/notes/ship-the-stereotype-edge-annotation-layer.md]]. Each path in an `edge.<stereotype>: [paths]` list (and each inline `[[stereotype:path]]` wikilink) materializes a `mentions` edge plus an `edge_property` row `(edge_id, 'stereotype', '<stereotype>')` keyed by that edge's id. The stereotype layer ships as its own coordinated cycle, independent of this refactor's ship order; this walker is where its emit path lands when the two converge.
+A property whose value is a wikilink is a stereotyped edge — the stereotype layer, a **locked-in design**, see [[docs/notes/stereotypes-are-open-vocab-edge-properties.md]] and [[docs/notes/ship-the-stereotype-edge-annotation-layer.md]]. Each wikilink in a `<stereotype>: ["[[target]]"]` value (and each inline `[[target]]<!--stereotype-->`) materializes a `mentions` edge plus an `edge_property` row `(edge_id, 'stereotype', '<stereotype>')` keyed by that edge's id. The stereotype layer ships as its own coordinated cycle, independent of this refactor's ship order; this walker is where its emit path lands when the two converge.
 
 ## Tests
 
@@ -189,7 +188,7 @@ Test bullets:
 3. `test_walk_populates_fts_with_title_and_summary` — assert `fts` carries the title/summary text.
 4. `test_walk_casefolds_tag_values` — doc with `tags: [Hoplite, NOTE]`; assert `node_property` rows have `value='hoplite'`, `value='note'`.
 5. `test_walk_preserves_alias_case` — doc with `aliases: [Old/Path.MD]`; assert the alias row has `value='Old/Path.MD'` (not casefolded).
-6. `test_walk_strips_document_prefix` — doc with `document.priority: high`; assert `(id, 'priority', 'high')`.
+6. `test_walk_stores_user_property` — doc with `priority: high`; assert `(id, 'priority', 'high')`.
 7. `test_walk_interns_edge_kind` — assert `edge_kind` contains `mentions`/`cites`/`related` and `edge.kind` holds their integer ids.
 8. `test_walk_emits_mentions_edge_for_resolved_wikilink` — two docs, one links the other; assert one `mentions` edge.
 9. `test_walk_resolves_wikilink_case_insensitively` — doc at `docs/notes/foo.md`, another wikilinking `docs/notes/FOO.md`; assert the edge resolves to the existing node (collation), no ghost created.
@@ -216,7 +215,7 @@ Test bullets:
 ### Known gaps — accepted, documented, not yet fixed
 
 - **No reconcile semantics.** Every walk is truncate-and-rebuild. Past ~5k docs this is minutes per refresh; reconcile is the next perf lever (see [[docs/notes/db-refactor.md]] "Held for future").
-- **The stereotype layer is locked-in design, shipped on its own cycle.** Both authoring surfaces (`[[stereotype:path]]` inline, `edge.<stereotype>: [paths]` frontmatter) emit a `mentions` edge plus an `edge_property` stereotype row through this walker (see [[docs/notes/stereotypes-are-open-vocab-edge-properties.md]] and [[docs/notes/ship-the-stereotype-edge-annotation-layer.md]]). Whether it lands in the same pass as this refactor depends on ship order between the two clusters, which is free.
+- **The stereotype layer is locked-in design, shipped on its own cycle.** Both authoring surfaces (`[[target]]<!--stereotype-->` inline, `<stereotype>: "[[target]]"` frontmatter) emit a `mentions` edge plus an `edge_property` stereotype row through this walker (see [[docs/notes/stereotypes-are-open-vocab-edge-properties.md]] and [[docs/notes/ship-the-stereotype-edge-annotation-layer.md]]). Whether it lands in the same pass as this refactor depends on ship order between the two clusters, which is free.
 - **`node_property` is `WITHOUT ROWID`.** No insertion-order column. Tags are sorted at projection, so order is moot for them; any future order-sensitive property needs an explicit ordinal.
 
 ### Future considerations — forward-pointers

@@ -1,10 +1,9 @@
 ---
 title: The canon of governing people is the theory of governing agents
-summary: The book's intellectual lineage is not a flat reading list but three strata — formal (game theory, Hurwicz's mechanism design), political (Hobbes, Montesquieu, Adams), and design (Norman, Cooper) — that converge on one claim: agents are goal-directed, self-interested, error-prone actors, so govern them with the disciplines built for governing people.
+summary: "The book's intellectual lineage is not a flat reading list but three strata — formal (game theory, Hurwicz's mechanism design), political (Hobbes, Montesquieu, Adams), and design (Norman, Cooper) — that converge on one claim: agents are goal-directed, self-interested, error-prone actors, so govern them with the disciplines built for governing people."
 tags: [note, book, agents, mechanism-design, design]
 created: 2026-06-13
-document:
-  status: observation
+status: observation
 ---
 
 # The canon of governing people is the theory of governing agents

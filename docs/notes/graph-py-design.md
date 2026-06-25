@@ -1,10 +1,9 @@
 ---
 title: graph.py — the SQLite-backed Graph
-summary: `graph.py` defines `Graph`, the one and only graph implementation. It is a thin class over an injected `Database`: every method opens a connection per call, runs SQL against the `node`/`edge`/`edge_kind`/`fts` schema, projects rows through `row_factories.py`, and returns the domain dataclasses. There is no Protocol and no in-memory peer — SQLite is the only store. Traversal is a recursive CTE over the `edge` table.
+summary: "`graph.py` defines `Graph`, the one and only graph implementation. It is a thin class over an injected `Database`: every method opens a connection per call, runs SQL against the `node`/`edge`/`edge_kind`/`fts` schema, projects rows through `row_factories.py`, and returns the domain dataclasses. There is no Protocol and no in-memory peer — SQLite is the only store. Traversal is a recursive CTE over the `edge` table."
 tags: [note, sqlite, design, hoplite, graph]
 created: 2026-05-28
-document:
-  status: design
+status: design
 ---
 
 # graph.py — the SQLite-backed Graph

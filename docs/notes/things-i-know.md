@@ -3,8 +3,7 @@ title: things I know
 summary: assertions on the code base
 tags: [note, hoplite, architecture, refactor]
 created: 2026-05-28
-document:
-  status: design
+status: evolving
 ---
 
 # things I know
@@ -71,7 +70,7 @@ semantic graph - good
 i now realized that d, d, and d are properties of edges: declared (wikilinks), described (property graph), discovered (inferred) due to semantic proximity
 
   1. Declared order — authored links (mentions, cites). The structure you wrote by hand.
-  2. Described order — properties (tags, document.<key>). The facts you classified.
+  2. Described order — properties (tags, named axes). The facts you classified.
   3. Discovered order — semantic similarity (related). The adjacency the graph found that you never stated.
 
 ^ intrinsic / asserted / inferred is much better map than declared, describted, discovered because declared and described are really the same thing.
@@ -110,7 +109,7 @@ edges: Declared · Described · Discovered
     Which tells you what the graph actually cares about. Not the author's will — the edge's provenance:
   was the relationship declared or detected?
 
-  - explicit / declared — the author authored the edge itself: a [[wikilink]], an edge.supports. The
+  - explicit / declared — the author authored the edge itself: a [[wikilink]], a `supports` stereotype. The
   relationship is stated.
   - latent / detected — the edge is inferred from shared or proximate values, authored or extracted: tag
   co-membership, date proximity, shingle similarity. The relationship was never stated; the detector
@@ -231,8 +230,8 @@ The set is open and grows as keys earn defined semantics. Each reserved word nam
 
 The model is authored and read through surfaces that map onto it:
 
-- Frontmatter — node properties (`document.<key>`) and edge stereotypes (`edge.<stereotype>: [paths]`). The contract is [[docs/hoplite/hoplite-frontmatter.md]].
-- Inline wikilinks — `[[docs/<path>.md]]` materializes a `declared` edge, `[[ghost/<slug>]]` an open loop, and `[text](https://…)` a `declared` edge to a URL node. The stereotyped form `[[stereotype:path]]` is designed but not yet wired.
+- Frontmatter — node properties (a scalar value) and edge stereotypes (a wikilink value, like `cites: "[[target]]"`). The contract is [[docs/hoplite/frontmatter.md]].
+- Inline wikilinks — `[[docs/<path>.md]]` materializes a `declared` edge, `[[ghost/<slug>]]` an open loop, and `[text](https://…)` a `declared` edge to a URL node. The stereotyped form (a `<!--stereotype-->` comment beside the link) is designed but not yet wired.
 - Queries — `where` (ranked FTS plus property filter) and `relatives` (edge traversal) read the graph back.
 
 ## Storage

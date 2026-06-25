@@ -3,10 +3,9 @@ title: FastMCP WriteResult schema warning is cosmetic
 summary: FastMCP logs a schema warning at startup about `WriteResult`'s `path` field default; functionality is unaffected and the warning is safe to defer.
 tags: [note, todo, hoplite, mcp, fastmcp]
 created: 2026-05-25
-document:
-  priority: low
-  effort: low
-  status: open
+priority: low
+effort: low
+status: open
 ---
 
 # FastMCP WriteResult schema warning is cosmetic

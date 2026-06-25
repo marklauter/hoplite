@@ -3,8 +3,7 @@ title: A review agent's power is its empty context
 summary: A fresh review agent catches what a self-review misses because it lacks the author's prior, not because it is smarter — so withholding the author's reasoning is the feature. Hand the reviewer the generation trace and you reload the author's blindness into it.
 tags: [note, agents, review, orchestration, design]
 created: 2026-06-13
-document:
-  status: observation
+status: observation
 ---
 
 # A review agent's power is its empty context

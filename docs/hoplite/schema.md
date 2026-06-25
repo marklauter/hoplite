@@ -3,7 +3,7 @@ title: Schema
 summary: "The SQLite schema for the Hoplite knowledge graph — nodes, the document facet, edges, the interned vocabularies, FTS, and the namespace view."
 tags: [hoplite, schema, reference]
 created: 2026-06-21
-document.status: evolving
+status: evolving
 ---
 
 # Schema

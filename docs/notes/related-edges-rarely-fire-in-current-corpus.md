@@ -3,10 +3,9 @@ title: Related edges rarely fire in current corpus
 summary: Spot-checks against the spec and journal documents show zero `related` neighbors via `relatives`, despite MinHash running at build time. The connective tissue the `related` edge was meant to provide is largely absent — debugging needed before relying on similarity traversal.
 tags: [note, hoplite, mcp, graph, related-edges, minhash, todo, bug]
 created: 2026-05-26
-document:
-  priority: high
-  effort: medium
-  status: open
+priority: high
+effort: medium
+status: open
 ---
 
 # Related edges rarely fire in current corpus

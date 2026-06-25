@@ -1,21 +1,20 @@
 ---
 title: Master todos track sub-tasks via wikilink
-summary: A master todo that decomposes into sub-tasks needs an explicit hierarchy signal — two candidate shapes (body wikilinks or an `edge.subtask` frontmatter list) both have tradeoffs. Open question; the todo convention does not commit yet.
+summary: A master todo that decomposes into sub-tasks needs an explicit hierarchy signal — two candidate shapes (body wikilinks or a `subtask` frontmatter edge) both have tradeoffs. Open question; the todo convention does not commit yet.
 tags: [note, todo, hoplite, skills, open-question]
 created: 2026-05-27
-document:
-  priority: low
-  effort: medium
-  status: closed
+priority: low
+effort: medium
+status: closed
 ---
 
 # Master todos track sub-tasks via wikilink
 
-A master todo that decomposes into sub-tasks needs an explicit hierarchy signal — two candidate shapes (body wikilinks or an `edge.subtask` frontmatter list) both have tradeoffs. Open question; the todo convention does not commit yet.
+A master todo that decomposes into sub-tasks needs an explicit hierarchy signal — two candidate shapes (body wikilinks or a `subtask` frontmatter edge) both have tradeoffs. Open question; the todo convention does not commit yet.
 
 ## Why it matters
 
-Some todos are atomic — one change, one place, one closure. Others are composite — a milestone that lands when its parts land. Today's convention is flat: both shapes look identical in `where({"tagged": "todo"})`. A composite todo's `document.status` is forced to lie about a partial result — `open` while sub-parts close, `closed` only after the last lands. The corpus has no way to ask "what depends on this master" or "what's the rollup status."
+Some todos are atomic — one change, one place, one closure. Others are composite — a milestone that lands when its parts land. Today's convention is flat: both shapes look identical in `where({"tagged": "todo"})`. A composite todo's `status` is forced to lie about a partial result — `open` while sub-parts close, `closed` only after the last lands. The corpus has no way to ask "what depends on this master" or "what's the rollup status."
 
 ## Candidate shapes
 
@@ -23,7 +22,7 @@ Some todos are atomic — one change, one place, one closure. Others are composi
 
 Cost: the relationship is implicit. A reader has to know that wikilinks in *this* master mean sub-task and not "see also." Not queryable as a stereotype — `where` cannot distinguish a sub-task mention from a casual cross-reference.
 
-**B. `edge.subtask` frontmatter list.** The master carries `edge.subtask: [docs/notes/a.md, docs/notes/b.md]` in frontmatter, parallel to `edge.blocked_by`. The relationship is explicit and queryable as a stereotype.
+**B. `subtask` frontmatter edge.** The master carries `subtask: ["[[a]]", "[[b]]"]` in frontmatter, parallel to `blocked_by`. The relationship is explicit and queryable as a stereotype.
 
 Cost: another stereotype to teach. The frontmatter grows. Two places to author hierarchy (frontmatter for declaration, body for narrative) instead of one.
 
@@ -33,7 +32,7 @@ Cost: another stereotype to teach. The frontmatter grows. Two places to author h
 
 ## Rollup-status semantics
 
-Independent of which shape lands, a master's `document.status` needs an agreed rollup rule:
+Independent of which shape lands, a master's `status` needs an agreed rollup rule:
 
 - `open` while any sub-task is `open` or `deferred`.
 - `closed` when every sub-task is `closed` or `declined`.
@@ -49,11 +48,11 @@ Open until the first composite todo lands and forces the decision. Until then th
 
 Option A wins. A composite (parent) todo carries both the `todo` tag (identity as a todo) and the `epic` tag (composite shape). Children carry `todo` only. The relationship is authored as body wikilinks from the epic to each child — no new frontmatter stereotype. `where({"tagged": "todo & epic"})` lists epics; `relatives({from_: <epic>, edge_types: ["mentions"], tagged: "todo"})` walks the children.
 
-The `edge.subtask` frontmatter shape (Option B) stays unauthored. Adding `epic` as a sibling stereotype to `todo` keeps the convention extending sideways rather than growing a new stereotype namespace prematurely.
+The `subtask` frontmatter shape (Option B) stays unauthored. Adding `epic` as a sibling stereotype to `todo` keeps the convention extending sideways rather than growing a new stereotype namespace prematurely.
 
-Rollup status remains a triager judgment for now — set the epic's `document.status` to reflect the children. A computed-property pass can automate later once enough epics land to make the rule worth executing.
+Rollup status remains a triager judgment for now — set the epic's `status` to reflect the children. A computed-property pass can automate later once enough epics land to make the rule worth executing.
 
 ## See also
 
-- [[docs/notes/add-contradicts-as-an-authored-edge-kind.md]] and [[docs/notes/add-not-related-as-a-structural-negative-edge-kind.md]] — the stereotype precedent. The `edge.<stereotype>` namespace `edge.subtask` would join.
+- [[docs/notes/add-contradicts-as-an-authored-edge-kind.md]] and [[docs/notes/add-not-related-as-a-structural-negative-edge-kind.md]] — the stereotype precedent. The open stereotype vocabulary `subtask` would join.
 - [[docs/notes/hoplite-predicates-are-hql-rewrites-over-typed-relations.md]] — once HQL lands, the rollup rule reads naturally as a computed relation over sub-task status.

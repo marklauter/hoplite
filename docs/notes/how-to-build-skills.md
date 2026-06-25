@@ -3,7 +3,7 @@ title: A skill is comprehended philosophy reduced to trigger→action
 summary: Build a skill by establishing its philosophy, recording the kernel, then reducing that kernel to executable trigger→action. Comprehend first; concision follows.
 tags: [note, skills, design]
 created: 2026-06-19
-document.status: evolving
+status: evolving
 ---
 
 A skill is comprehended philosophy reduced to its executable core. `trigger → action` is not the opposite of philosophy — it is philosophy's irreducible, executable form.

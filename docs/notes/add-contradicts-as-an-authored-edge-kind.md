@@ -3,10 +3,9 @@ title: Contradicts stereotype marks authored disagreement
 summary: contradicts is one of the v1 canonical stereotypes on the mentions edge — it labels a wikilink (or frontmatter edge entry) where the author argues against the target document. The negative-rhetorical signal grep cannot surface.
 tags: [note, hoplite, edges, stereotypes, contradicts, design, todo]
 created: 2026-05-27
-document:
-  priority: low
-  effort: medium
-  status: open
+priority: low
+effort: medium
+status: open
 ---
 
 # Contradicts stereotype marks authored disagreement
@@ -29,8 +28,8 @@ document:
 
 [Inference] Two surfaces, identical storage — see [[docs/notes/stereotypes-are-open-vocab-edge-properties.md]] for the full model:
 
-- Inline wikilink: `[[contradicts:docs/notes/foo.md]]`. Composes with ghost targets and pipe-alias.
-- Frontmatter: `edge.contradicts: [docs/notes/foo.md, docs/notes/bar.md]`. Each path materializes one edge plus one `edge_property` row keyed by `"stereotype"` with value `"contradicts"`. The equivalent nested form (`edge:` then `  contradicts: [...]`) parses identically.
+- Inline wikilink: `[[docs/notes/foo.md]]<!--contradicts-->`. Composes with ghost targets and pipe-alias.
+- Frontmatter: `contradicts: ["[[foo]]", "[[bar]]"]` — the key is the stereotype, each wikilink value a target. Each materializes one edge plus one `edge_property` row keyed by `"stereotype"` with value `"contradicts"`. A scalar `contradicts: "[[foo]]"` declares a single target.
 
 ## Open questions
 

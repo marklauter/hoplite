@@ -3,10 +3,9 @@ title: Verify hoplite bootstrap with a cold-start test
 summary: Three regression scenarios for the SessionStart venv bootstrap — cold cache, manifest drift, pip-install failure. Each exercises one branch of the bootstrap design; together they pin the contract.
 tags: [note, hoplite, todo, mcp, verification]
 created: 2026-05-25
-document:
-  priority: medium
-  effort: low
-  status: open
+priority: medium
+effort: low
+status: open
 ---
 
 # Verify hoplite bootstrap with a cold-start test

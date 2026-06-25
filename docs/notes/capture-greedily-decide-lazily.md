@@ -3,7 +3,7 @@ title: Capture greedily, decide lazily — defer to keep options open
 summary: Good design defers hard-to-reverse decisions until information accrues; greedy capture is what keeps them deferrable.
 tags: [note, architecture, design, hoplite]
 created: 2026-06-19
-document.status: evolving
+status: evolving
 ---
 
 Good design defers hard-to-reverse decisions until information accrues; greedy capture is what keeps them deferrable.
@@ -22,4 +22,4 @@ Not "decide as late as possible" but the last responsible moment (Lean): defer u
 
 ## How hoplite implements it
 
-The `document.status` axis is the deferral mechanism: an `evolving` glossary entry is an option held open, `locked` is a decision spent. The drift sweep is the deadline — accumulating `discovered`-but-not-`declared` overlap signals a deferral that has run past its moment and needs locking. The open-vocabulary edge stereotype is the worked example: the vocabulary is deliberately not fixed into a closed enum, left to real edges to populate. See [[docs/notes/stereotypes-are-open-vocab-edge-properties.md]].
+The `status` axis is the deferral mechanism: an `evolving` glossary entry is an option held open, `locked` is a decision spent. The drift sweep is the deadline — accumulating `discovered`-but-not-`declared` overlap signals a deferral that has run past its moment and needs locking. The open-vocabulary edge stereotype is the worked example: the vocabulary is deliberately not fixed into a closed enum, left to real edges to populate. See [[docs/notes/stereotypes-are-open-vocab-edge-properties.md]].

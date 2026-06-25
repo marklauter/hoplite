@@ -3,7 +3,7 @@ title: Hoplite architecture
 summary: The Hoplite system as it is — corpus, graph, walker, FTS5, MinHash, dump schema, error model. One document covering the day-one shape end to end.
 tags: [hoplite, architecture, spec]
 created: 2026-05-25
-document.status: wip
+status: evolving
 ---
 
 # Hoplite architecture
@@ -75,7 +75,7 @@ Two edge kinds, closed set — by provenance, not meaning. Edges connect documen
 
 A relationship's meaning (`cites`, `contradicts`, `requires`, `see-also`) is an open-vocabulary stereotype on a declared edge, stored in `edge_property` — never a new kind. The destination's nature (document, ghost, URL) is a fact about the node, not the edge.
 
-Edges carry a synthetic integer `id` and are unique per ordered pair — `UNIQUE(src, dst)`, across both kinds. `confidence` is first-class on the edge: `1.0` for `declared`, the inference score for `discovered`. The two-pass build inserts declared first; a declared edge wins the slot over a discovered collision. Edge annotations — stereotype labels via `edge.<stereotype>: [...]` frontmatter — live in the `edge_property` table, the same EAV pattern as node properties (see [EAV decomposition](#eav-decomposition)).
+Edges carry a synthetic integer `id` and are unique per ordered pair — `UNIQUE(src, dst)`, across both kinds. `confidence` is first-class on the edge: `1.0` for `declared`, the inference score for `discovered`. The two-pass build inserts declared first; a declared edge wins the slot over a discovered collision. Edge annotations — stereotype labels via a `<stereotype>: "[[target]]"` frontmatter edge — live in the `edge_property` table, the same EAV pattern as node properties (see [EAV decomposition](#eav-decomposition)).
 
 ## EAV decomposition
 
@@ -83,15 +83,15 @@ List-valued frontmatter fields decompose into multiple EAV rows by the same shap
 
 On the document side, list-valued properties land in `document_property`:
 
-- `document.tags: [hoplite, note]` → `(id, 'tags', 'hoplite')`, `(id, 'tags', 'note')`.
-- `document.aliases: [old/path.md]` → `(id, 'aliases', 'old/path.md')`.
+- `tags: [hoplite, note]` → `(id, 'tags', 'hoplite')`, `(id, 'tags', 'note')`.
+- `aliases: [old/path.md]` → `(id, 'aliases', 'old/path.md')`.
 - Any list-valued user-defined key follows the same fan-out.
 
 The element is the value, stored verbatim. No referential constraint — document-side list-properties accept arbitrary kebab-case strings.
 
-On the edge side, stereotype lists land in `edge` plus `edge_property`. `edge.contradicts: [docs/notes/foo.md, docs/notes/bar.md]` materializes one `edge` row per element (src = this document, dst = resolved target, kind = `declared`), plus one `edge_property` row carrying the stereotype label. Each element must be a document reference — a `docs/...` path or a `ghost/<slug>`. The walker runs each element through the wikilink resolver; a malformed element appends a warning to `WriteResult.warnings` and the element is skipped. A `docs/...` element resolves to a real `document.id`; a `ghost/...` element materializes a ghost document if absent.
+On the edge side, stereotype lists land in `edge` plus `edge_property`. `contradicts: ["[[foo]]", "[[bar]]"]` materializes one `edge` row per element (src = this document, dst = resolved target, kind = `declared`), plus one `edge_property` row carrying the stereotype label. Each element is a wikilink — a slug that resolves to a document, or a `ghost/<slug>`. The walker runs each element through the wikilink resolver; a malformed element appends a warning to `WriteResult.warnings` and the element is skipped. A resolved element points at a real `document.id`; a `ghost/...` element materializes a ghost document if absent.
 
-So the structural shape is identical — list element fans out into one row — but each side carries its own contract on what an element *means*. Document-side list-properties take opaque slugs; edge-side stereotype lists take document references and pay the resolver cost.
+So the structural shape is identical — list element fans out into one row — but each side carries its own contract on what an element *means*. Document-side list-properties take opaque slugs; edge-side stereotype lists take wikilink targets and pay the resolver cost.
 
 ### Materializing back out
 

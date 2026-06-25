@@ -3,7 +3,7 @@ title: Authoring — declare relationships, describe documents
 summary: The write half of the affordances — how an author asserts features by declaring relationships (inline wikilinks) and describing documents and edges (frontmatter properties, summaries, stereotypes). Express-only; the model it expresses lives in the graph canon.
 tags: [hoplite, affordances, authoring, spec]
 created: 2026-05-31
-document.status: stub
+status: stub
 ---
 
 # Authoring — declare relationships, describe documents

@@ -3,12 +3,12 @@ title: The discoverable vocabulary carries each stereotype's algebraic character
 summary: "Hoplite's surveyable vocabulary should record, per stereotype, its OWL-style algebraic characteristics (symmetric, transitive, inverse-of, asymmetric…), not just its name. A small closed set of characteristics governs an open, unbounded stereotype vocabulary — so the agent discovers how a relation behaves, and the reasoner computes edge closure from it instead of the author hand-applying conventions."
 tags: [note, hoplite, vocabulary, design]
 created: 2026-06-20
-document.status: evolving
+status: evolving
 ---
 
 # The discoverable vocabulary carries each stereotype's algebraic characteristics
 
-`docs/hoplite/glossary:stereotype` is open vocabulary — an author coins any verb that reads `<source> <stereotype> <target>`. The surveyable vocabulary in [[docs/hoplite:hoplite]]'s solution section ("the agent discovers the vocabulary… surveys the vocabulary, encoded in the map") today exposes *which* stereotypes exist. It should also expose *how each behaves*.
+`docs/hoplite/glossary/stereotype` is open vocabulary — an author coins any verb that reads `<source> <stereotype> <target>`. The surveyable vocabulary in [[docs/hoplite/hoplite.md]]'s solution section ("the agent discovers the vocabulary… surveys the vocabulary, encoded in the map") today exposes *which* stereotypes exist. It should also expose *how each behaves*.
 
 ## The idea
 
@@ -33,7 +33,7 @@ The glossary skill's edge-stereotype rule — *"direction follows dependency; on
 
 Where a recognized relation already exists, use its name rather than coining:
 
-- **SKOS** (W3C, the standard for exactly this kind of concept vocabulary): `broader`/`narrower` ≈ `is-a`, `related` ≈ associative, `prefLabel`/`altLabel`/`hiddenLabel` ≈ canonical/`aliases`/`document.retired`, `definition`/`scopeNote`/`example` ≈ `summary`/Also/Examples. The glossary is structurally a SKOS concept scheme.
+- **SKOS** (W3C, the standard for exactly this kind of concept vocabulary): `broader`/`narrower` ≈ `is-a`, `related` ≈ associative, `prefLabel`/`altLabel`/`hiddenLabel` ≈ canonical/`aliases`/`retired`, `definition`/`scopeNote`/`example` ≈ `summary`/Also/Examples. The glossary is structurally a SKOS concept scheme.
 - **WordNet**: hypernym/hyponym (is-a), meronym/holonym (part-of), antonym (≈ `contrast`), synonym (≈ aliases).
 - **Winston, Chaffin & Herrmann (1987)**: the named six-way part-whole taxonomy, if `has-a`/part-of needs splitting.
 - **OBO Relation Ontology / BFO**: a curated, reusable by-name relation set.

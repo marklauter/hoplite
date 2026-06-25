@@ -3,7 +3,7 @@ title: Reconcile authoring-mechanism prose to assert
 summary: "The spec prose still names `declare` and `describe` as the two authoring mechanisms, but both have collapsed into `assert` (the single authoring act). Update `hoplite-authoring.md` and the README map line that still split them."
 tags: [note, todo, hoplite]
 created: 2026-06-20
-document.status: evolving
+status: evolving
 ---
 
 # Reconcile authoring-mechanism prose to assert

@@ -3,8 +3,7 @@ title: Abstraction is summary-keyed random-access memory
 summary: The mind compresses a vast concept into a single word and moves up and down abstraction layers at will — not lossy summarization but a compact key over retained content, faulted in on demand. The same architecture is the LLM long-context frontier (landmark attention) and the thing Hoplite implements over a corpus. The hard part is never storage; it is the index, and the index is judgment.
 tags: [note, book, agents, memory, cognition]
 created: 2026-06-13
-document:
-  status: observation
+status: observation
 ---
 
 # Abstraction is summary-keyed random-access memory

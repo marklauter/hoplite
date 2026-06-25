@@ -1,13 +1,14 @@
 ---
 title: Stereotypes are open-vocab edge properties
-summary: A stereotype is an open-vocabulary label attached to an edge (or node property), stored EAV-style in edge_property parallel to how tags work in node_property. Two authoring surfaces — inline wikilink and class-prefixed frontmatter — materialize identical storage; authors pick by whether the assertion is rhetorical-in-context or categorical.
+summary: A stereotype is an open-vocabulary label attached to an edge (or node property), stored EAV-style in edge_property parallel to how tags work in node_property. Two authoring surfaces — inline wikilink and frontmatter property — materialize identical storage; authors pick by whether the assertion is rhetorical-in-context or categorical.
 tags: [note, hoplite, edges, stereotypes, design, todo]
 created: 2026-05-27
+status: evolving
 ---
 
 # Stereotypes are open-vocab edge properties
 
-A stereotype is an open-vocabulary label attached to an edge (or node property), stored EAV-style in `edge_property` parallel to how tags work in `node_property`. Two authoring surfaces — inline wikilink and class-prefixed frontmatter — materialize identical storage; authors pick by whether the assertion is rhetorical-in-context or categorical.
+A stereotype is an open-vocabulary label attached to an edge (or node property), stored EAV-style in `edge_property` parallel to how tags work in `node_property`. Two authoring surfaces — inline wikilink and frontmatter property — materialize identical storage; authors pick by whether the assertion is rhetorical-in-context or categorical.
 
 ## Why this abstraction
 
@@ -26,7 +27,7 @@ A stereotype is an open-vocabulary label attached to an edge (or node property),
 
 [Inference] Stereotypes do not extend the `edge` schema. They live as `edge_property` rows with the shape `(edge_id, "stereotype", <value>)`, where `edge_id` is the integer `edge.id` of the labeled edge. Same EAV layout as node tags, which sit in `node_property` as `(node_id, "tags", <value>)`.
 
-[Inference] The `edge` table has an integer `id` primary key and `UNIQUE (src, dst)` — at most one edge per ordered pair, regardless of kind. Since stereotypes label the single `mentions` edge between a pair, multiple stereotype rows per edge are allowed and expected: an author saying `[[supports:B]]` in one paragraph and `[[questions:B]]` in another produces one `mentions` edge plus two `edge_property` rows keyed by that edge's `id`.
+[Inference] The `edge` table has an integer `id` primary key and `UNIQUE (src, dst)` — at most one edge per ordered pair, regardless of kind. Since stereotypes label the single `mentions` edge between a pair, multiple stereotype rows per edge are allowed and expected: an author writing `[[B]]<!--supports-->` in one paragraph and `[[B]]<!--questions-->` in another produces one `mentions` edge plus two `edge_property` rows keyed by that edge's `id`.
 
 ## Authoring surfaces
 
@@ -34,45 +35,33 @@ Two surfaces inject identical rows. The author picks based on whether the assert
 
 ### Inline wikilink
 
-`[[<stereotype>:<path>]]` — colon-namespace prefix on the wikilink target. Sample shapes (in backticks so the resolver does not emit edges from this note):
+A bare inline link defaults to the `links-to` stereotype. To type it, attach the stereotype in a comment beside the link — an HTML comment is the default form (invisible in every renderer); see [[docs/hoplite/expressing-edges.md]] for all three. Sample shapes (in backticks so the resolver does not emit edges from this note):
 
-- `[[contradicts:docs/notes/foo.md]]` — disagreement with a specific document.
-- `[[supports:docs/notes/foo.md|short reason]]` — endorsement; pipe-alias still works as the human-readable label.
-- `[[not-related:ghost/some-slug]]` — assertion against an unwritten document; composes with ghost targets.
+- `[[docs/notes/foo.md]]<!--contradicts-->` — disagreement with a specific document.
+- `[[docs/notes/foo.md|short reason]]<!--supports-->` — endorsement; pipe-alias still works as the human-readable label.
+- `[[ghost/some-slug]]<!--not-related-->` — assertion against an unwritten document; composes with ghost targets.
 
-[Inference] The change is localized to the wikilink-validation gate in the walker's pass 2 (see [[docs/notes/walker-py-design.md]] "Wikilink mentions edges"), which accepts `docs/` or `ghost/` prefixes. Extending it to recognize `<stereotype>:<path>` shapes and dispatch into the stereotype-emit branch — materialize the `mentions` edge, then add the `edge_property` row — is a localized parser change.
+[Inference] The link itself is untouched, so Obsidian still resolves it and draws the edge; the walker reads the adjacent comment to override the default `links-to` stereotype, then materializes the `mentions` edge plus the `edge_property` row. Parsing the comment beside an already-validated wikilink is a localized change (see [[docs/notes/walker-py-design.md]] "Wikilink mentions edges").
 
-### Frontmatter with class prefix
+### Frontmatter property
 
-Property keys carry a mandatory dot-separated class prefix — `document.` or `edge.` — declaring which side of the property graph the key affects. `title` and `summary` stay bare: they are first-class fields on a node (FTS-indexed, single-valued by construction), not properties. Everything else that lives in `node_property` or `edge_property` is prefixed:
+A frontmatter edge is a property whose value is a wikilink: the key is the stereotype, the value is the target. Keys are a flat, open vocabulary — no `document.` or `edge.` prefix (see [[docs/hoplite/frontmatter.md]]). A scalar or list of plain scalars is a node property; a wikilink value is an edge:
 
 ```yaml
 title: Stereotypes are open-vocab edge properties
 summary: A stereotype is an open-vocabulary label...
-document:
-  tags: [note, hoplite, edges, stereotypes]
-  created: 2026-05-27
-edge.contradicts: [docs/notes/foo.md, docs/notes/bar.md]
-edge.supports: [docs/notes/baz.md]
-edge.not-related: [docs/notes/qux.md]
+tags: [note, hoplite, edges, stereotypes]
+created: 2026-05-27
+contradicts: ["[[foo]]", "[[bar]]"]
+supports: "[[baz]]"
+not-related: "[[qux]]"
 ```
 
-[Observation] The dot separator avoids the YAML escape pain a colon would cause (a colon inside a plain scalar key disagrees across parsers and linters). Authors write the dotted form without quoting.
+[Observation] Quote the wikilink. Obsidian indexes a link in a property only when it is quoted, and a bare `[[ ]]` is not valid YAML. Use a scalar for one target, a list for several.
 
-[Inference] Each path in an `edge.<stereotype>: [paths]` list materializes one edge (`src` = this document, `dst` = path, `kind` = `declared`) plus one stereotype property row in `edge_property`. The inline and frontmatter parsers converge on the same writes.
+[Inference] Each wikilink value materializes one edge (`src` = this document, `dst` = target, `kind` = `declared`) plus one stereotype property row in `edge_property`. The inline and frontmatter parsers converge on the same writes.
 
-The frontmatter parser also accepts the equivalent nested form, which can read better when a document declares many stereotypes under one class:
-
-```yaml
-edge:
-  contradicts: [docs/notes/foo.md]
-  supports: [docs/notes/bar.md]
-  not-related: [docs/notes/baz.md]
-```
-
-[Inference] Both shapes normalize to identical `edge_property` rows. If a document mixes shapes that declare the same `edge.<stereotype>`, the parser merges the path lists; silent overwrite is not the behavior.
-
-[Inference] Inline wikilinks keep the colon (`[[stereotype:path]]`), not the dot. The asymmetry exists because filesystem paths contain dots (`docs/notes/foo.md`) — a dot in the inline form would collide with file extensions. Filesystem paths cannot contain colons (Windows enforces that), so the colon is an unambiguous splitter inside the wikilink.
+[Inference] The two surfaces split the stereotype differently: frontmatter carries it as the property key, while an inline link carries it in an adjacent comment and leaves the link bare. Both reduce to the same `edge_property` row, so an author picks by whether the assertion is a document-level fact (frontmatter) or rhetorical-in-context (inline).
 
 ## Canonical seed vocabulary
 
@@ -96,20 +85,20 @@ edge:
 
 [Inference] The related-edge aggregate pass already excludes any `(src, dst)` pair connected by a `mentions` edge from the inferred-related pass (the mentions skip-set — see [[docs/notes/walker-py-design.md]] "Aggregate pass: related edges"). The logic does not inspect stereotypes — every `mentions` edge counts.
 
-[Inference] `not-related` therefore gets its suppression behavior for free under this model. An author writing `[[not-related:B]]` materializes a `mentions` edge with `stereotype = not-related`, and the existing skip-set logic excludes the pair from the inferred related pass. No code change needed for the suppression mechanism.
+[Inference] `not-related` therefore gets its suppression behavior for free under this model. An author writing `[[B]]<!--not-related-->` materializes a `mentions` edge with `stereotype = not-related`, and the existing skip-set logic excludes the pair from the inferred related pass. No code change needed for the suppression mechanism.
 
 ## Markdown links stay neutral
 
 [Inference] Markdown URL links (`[text](https://...)`) produce un-stereotyped `declared` edges to URL nodes — citation is a stereotype now, not a kind, and a bare link asserts none. Link text remains free-form for readability; reserving canonical stereotype words as link text would collide with descriptive use.
 
-[Inference] For a stereotyped URL reference (an explicit `cites`, say), write a proxy note at `docs/proxies/<slug>.md` carrying the URL plus context, then stereotype an inline wikilink to the proxy or list it under `edge.<stereotype>:` in frontmatter. Reuses the existing proxy pattern.
+[Inference] For a stereotyped URL reference (an explicit `cites`, say), write a proxy note at `docs/proxies/<slug>.md` carrying the URL plus context, then stereotype an inline wikilink to the proxy or list it as a `<stereotype>: "[[proxy]]"` frontmatter edge. Reuses the existing proxy pattern.
 
 ## Out of scope
 
 Two adjacent design problems sit outside the v1 stereotype proposal:
 
-- Migration. **Done 2026-05-29** — the corpus-wide property-key rewrite landed: `tags`/`created`/`aliases` → `document.tags`/`document.created`/`document.aliases` across every `.md` under `docs/`, with `title`/`summary` left bare. The frontmatter hook and the canonical `frontmatter.md` component were flipped to the prefixed contract in the same pass. What remains for this stereotype epic is only the `edge.<stereotype>` *emit path* (parser + walker writing the `edge_property` rows), not the property-key rename.
-- Edge-level properties beyond stereotype. A frontmatter shape like `edge.tags: [important]` runs into an addressing problem — which edge gets the tags? The flat `edge.<key>: [values]` form maps cleanly when `<values>` are target paths (the stereotype case), and breaks down when `<values>` are property values for an already-existing edge. Defer until a concrete use case forces the design.
+- Migration. The corpus-wide property-key rewrites are done — the keys settled on the flat, Obsidian-native contract in [[docs/hoplite/frontmatter.md]] (`tags`/`created` bare, edges as `<stereotype>: "[[target]]"`). What remains for this stereotype epic is only the *emit path* (parser + walker writing the `edge_property` rows), not any key rename.
+- Edge-level properties beyond stereotype. Tagging an existing edge (say, marking it `important`) runs into an addressing problem — which edge gets the property? A stereotype key maps cleanly because its wikilink values name the target documents; a property meant to annotate an already-existing edge has no such handle. Defer until a concrete use case forces the design.
 
 ## Open questions
 
@@ -122,4 +111,4 @@ Two adjacent design problems sit outside the v1 stereotype proposal:
 - [[docs/notes/add-not-related-as-a-structural-negative-edge-kind.md]] — the not-related stereotype, the structural-negative case.
 - [[docs/journal/2026-05-27-1845-related-edges-land-and-rank-replaces-threshold.md]] — the cycle where `confidence` was promoted to a first-class `Edge` column, the precedent for first-class column vs. property treatment.
 - [[docs/notes/rank-related-edges-by-bm25-cosine-not-minhash-jaccard.md]] — adjacent edge-quality work; stereotypes are independent of how `related` confidence gets computed.
-- [[docs/notes:properties-subsume-first-class-columns]] — revisits the "title and summary are first-class fields, not properties" claim above: in the current model summary is a property and title is the slug, and the first-class columns collapse into the property concept.
+- [[docs/notes/properties-subsume-first-class-columns]] — revisits the "title and summary are first-class fields, not properties" claim above: in the current model summary is a property and title is the slug, and the first-class columns collapse into the property concept.

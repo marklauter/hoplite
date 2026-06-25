@@ -1,6 +1,6 @@
 ---
 title: Property keys intern into vocabulary tables that feed Survey
-summary: Interning the corpus vocabulary for the Survey affordance. Node property keys intern into property_key. The edge side began as a mirror (edge_property_key) but the cycle turned — edges carry stereotypes, not key/value properties — so edge_property collapsed to an interned stereotype vocabulary plus an edge_stereotype junction. The through-line is one rule: intern the survey-find namespace (keys, stereotype labels) and walk the rest off the (keyid, value) index.
+summary: "Interning the corpus vocabulary for the Survey affordance. Node property keys intern into property_key. The edge side began as a mirror (edge_property_key) but the cycle turned — edges carry stereotypes, not key/value properties — so edge_property collapsed to an interned stereotype vocabulary plus an edge_stereotype junction. The through-line is one rule: intern the survey-find namespace (keys, stereotype labels) and walk the rest off the (keyid, value) index."
 tags: [journal, hoplite, graph, schema, stereotypes, decision]
 created: 2026-05-31
 ---

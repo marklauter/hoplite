@@ -3,8 +3,7 @@ title: The sovereign constrains the action, not the soul
 summary: Guardrails must constrain the action, never the intent — because intent is corruptible by accident, error, and injection, and only the action reaches the world. A control the constrained actor can edit is not a control. Signal integrity measures how far a check sits outside the actor's reach.
 tags: [note, safety, agents, architecture, design]
 created: 2026-06-13
-document:
-  status: principle
+status: principle
 ---
 
 # The sovereign constrains the action, not the soul

@@ -1,6 +1,6 @@
 ---
 title: Obsidian Properties — frontmatter parity reference
-summary: Obsidian's Properties help page — the canonical syntax for YAML frontmatter properties: supported types, internal links in properties (quoted `[[ ]]`), and the characters invalid in link targets. The reference Hoplite's edge and property model targets for parity.
+summary: "Obsidian's Properties help page — the canonical syntax for YAML frontmatter properties: supported types, internal links in properties (quoted `[[ ]]`), and the characters invalid in link targets. The reference Hoplite's edge and property model targets for parity."
 tags: [note, reference, obsidian, properties, frontmatter]
 created: 2026-06-21
 ---

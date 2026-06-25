@@ -3,8 +3,7 @@ title: A local encoder adds semantic search without leaving the process
 summary: The semantic-similarity channel needs a sentence encoder, and a small one runs fully in-process — fastembed (onnxruntime, no torch) for the model, sqlite-vec or a brute-force numpy scan for storage, fused with the existing BM25 via reciprocal rank fusion. No daemon, no network, no API. The standing cost is re-embedding on every write, not disk.
 tags: [note, hoplite, mcp, python, semantic-search, embeddings, design]
 created: 2026-06-07
-document:
-  status: open
+status: open
 ---
 
 # A local encoder adds semantic search without leaving the process

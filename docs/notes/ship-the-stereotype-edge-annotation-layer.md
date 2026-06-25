@@ -3,10 +3,9 @@ title: Ship the stereotype edge-annotation layer
 summary: One coordinated work cycle delivering the open-vocab stereotype model on the mentions edge plus the two v1 instances (contradicts, not-related). Three child notes collected here as one shippable unit.
 tags: [note, hoplite, edges, stereotypes, design, todo, epic]
 created: 2026-05-27
-document:
-  priority: medium
-  effort: medium
-  status: open
+priority: medium
+effort: medium
+status: open
 ---
 
 # Ship the stereotype edge-annotation layer
@@ -23,7 +22,7 @@ The third and fourth seed stereotypes — `supports` and `supersedes` — surfac
 
 ## Why one shippable unit
 
-[Inference] The parent owns the parser rules — class-prefixed frontmatter (`document.<name>`, `edge.<stereotype>`), inline `[[stereotype:path]]`, and the dot-and-nested dual shape. Without it, neither child can be implemented. The two children prove the model works on different semantic categories (rhetorical-negative and structural-negative), so shipping the parent without at least both instances leaves the seed vocabulary unvalidated.
+[Inference] The parent owns the parser rules — flat frontmatter properties (a node property is a scalar; an edge is a `<stereotype>: "[[target]]"` wikilink value) and inline stereotype comments (`[[target]]<!--stereotype-->`). Without it, neither child can be implemented. The two children prove the model works on different semantic categories (rhetorical-negative and structural-negative), so shipping the parent without at least both instances leaves the seed vocabulary unvalidated.
 
 [Inference] Splitting the children into separate ships would force premature decisions on the open questions in each — default traversal behavior for stereotyped mentions in particular. One coordinated implementation pass resolves them together.
 
@@ -31,8 +30,8 @@ The third and fourth seed stereotypes — `supports` and `supersedes` — surfac
 
 Called out in the parent design and worth restating here:
 
-- Migration of property keys. **Done 2026-05-29** — `tags`/`created`/`aliases` were rewritten to `document.tags`/`document.created`/`document.aliases` across the whole `docs/` corpus, with `title:`/`summary:` left bare (first-class fields). The frontmatter hook and canonical `frontmatter.md` component were flipped to the prefixed contract in the same pass. The `edge.<stereotype>` *emit path* is still part of this epic; the bare→prefixed rename is no longer pending.
-- Edge-level properties beyond stereotype (e.g., `edge.tags:`). The flat-and-nested frontmatter shape addresses stereotype edges cleanly; non-stereotype edge properties have an unsolved addressing problem.
+- Migration of property keys. Done — the property keys settled on the flat, Obsidian-native contract in [[docs/hoplite/frontmatter.md]] (`tags`/`created` bare, edges as `<stereotype>: "[[target]]"`). The stereotype *emit path* is still part of this epic; no key rename is pending.
+- Edge-level properties beyond stereotype (tagging an existing edge). Frontmatter addresses stereotype edges cleanly; non-stereotype edge properties have an unsolved addressing problem.
 - Default traversal behavior for stereotyped mentions in `relatives()`. Deferred to the expression-language redesign — see the parent design's open questions.
 
 ## Dependencies

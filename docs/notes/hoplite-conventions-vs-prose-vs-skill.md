@@ -3,7 +3,7 @@ title: Graph-imposed conventions belong to hoplite, not writing-prose or skills
 summary: Skip-bold/tables, wikilink syntax, and epistemic badges follow from how the hoplite graph ranks, links, and vouches for content — so they belong in the hoplite authoring spec, not in writing-prose (comprehension regenerates that) or in any single skill.
 tags: [note, hoplite, skills, design]
 created: 2026-06-19
-document.status: evolving
+status: evolving
 ---
 
 Skip-bold/tables, wikilink syntax, and epistemic badges follow from how the hoplite graph ranks, links, and vouches for content — so they belong in the hoplite authoring spec, not in writing-prose or any single skill.

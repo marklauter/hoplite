@@ -3,7 +3,7 @@ title: Hoplite spec — document map
 summary: The index and table of contents for the Hoplite spec corpus. Captures the agreed document hierarchy — problem, structure and indexing, write-side and read-side affordances — and tracks which nodes are files, sections, or still planned.
 tags: [hoplite, index, spec]
 created: 2026-06-04
-document.status: wip
+status: wip
 ---
 
 # Hoplite spec — document map
@@ -54,7 +54,7 @@ Hoplite spec outline and index. Each items is a concept; some are their own file
 ## Outside the map
 
 - [[docs/hoplite/hoplite-architecture.md]] — system internals (walker, FTS, minhash, dump). Placement under the map is deferred; it overlaps `indexing`.
-- [[docs/hoplite:schema]] — the canonical SQLite schema (nodes, document facet, edges, interned vocabularies, FTS, namespace view) in a `sql` block. Source of truth the MCP server's `schema.sql` mirrors.
+- [[docs/hoplite/schema.md]] — the canonical SQLite schema (nodes, document facet, edges, interned vocabularies, FTS, namespace view) in a `sql` block. Source of truth the MCP server's `schema.sql` mirrors.
 - [[docs/hoplite/hoplite-roadmap.md]] — features deferred past day one.
 - [[docs/hoplite/glossary/README.md]] — index over the per-term glossary nodes under `docs/hoplite/glossary/`; definitions for every Hoplite domain term, cross-cutting reference over the whole map.
 

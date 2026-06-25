@@ -3,8 +3,7 @@ title: The agent problem is the agency problem
 summary: The book's "formal floor" is really economics, not just game theory. Economics spent fifty years and a dozen Nobels on getting self-interested agents to serve a principal under imperfect monitoring — principal-agent theory, signaling, mechanism design, bounded rationality — and never once meant software. Several of the repo's independently-derived principles are named economic results.
 tags: [note, book, agents, economics, mechanism-design]
 created: 2026-06-13
-document:
-  status: observation
+status: observation
 ---
 
 # The agent problem is the agency problem

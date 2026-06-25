@@ -3,7 +3,7 @@ title: Reduce kind to provenance
 summary: "`kind` exists only to express an edge's provenance — it is redundant with the locked `provenance` term and should be collapsed into it, across the glossary, schema.sql, and the Python loader. Also fixes the `asserted`→`declared` value drift the assert-genus lock introduced."
 tags: [note, todo, hoplite, glossary]
 created: 2026-06-20
-document.status: evolving
+status: evolving
 ---
 
 # Reduce kind to provenance
@@ -37,6 +37,6 @@ Not just schema.sql — a table/column rename cascades into the loader and query
 
 ## Glossary side (smaller, can go first)
 
-- Retire `kind.md` and `edge_kind.md` into `provenance` (`document.retired: [kind, edge_kind]`, `aliases: [kind, edge_kind]` so links resolve).
+- Retire `kind.md` and `edge_kind.md` into `provenance` (`retired: [kind, edge_kind]`, `aliases: [kind, edge_kind]` so links resolve).
 - Fold the closed-enum / never-intrinsic fact into `provenance` as an Also note.
-- `stereotype.md` currently carries `contrast::docs/hoplite/glossary:kind` — re-point that reciprocal to `provenance` (the `kind`↔`stereotype` contrast becomes `provenance`↔`stereotype`: provenance is the edge's origin, stereotype its meaning).
+- `stereotype.md` currently carries `contrast: "[[docs/hoplite/glossary/kind]]"` — re-point that reciprocal to `provenance` (the `kind`↔`stereotype` contrast becomes `provenance`↔`stereotype`: provenance is the edge's origin, stereotype its meaning).

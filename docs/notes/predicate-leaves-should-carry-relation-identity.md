@@ -3,11 +3,10 @@ title: Predicate leaves should carry relation identity
 summary: The tag predicate compiles a Zanzibar-style rewrite expression but strips relation identity at the callsite, leaving the engine able to ask only one question — "value X in tags?" — while node_properties already holds the full property graph.
 tags: [note, todo, hoplite, mcp, design, architecture, open-question]
 created: 2026-05-27
-document:
-  priority: low
-  effort: low
-  status: open
-edge.blocked_by: [docs/notes/hoplite-predicates-are-hql-rewrites-over-typed-relations.md]
+priority: low
+effort: low
+status: open
+blocked_by: ["[[hoplite-predicates-are-hql-rewrites-over-typed-relations]]"]
 ---
 
 # Predicate leaves should carry relation identity
@@ -16,7 +15,7 @@ The tag predicate compiles a Zanzibar-style rewrite expression but strips relati
 
 ## The leak is at the callsite, not the grammar
 
-The predicate parser produces `Callable[[frozenset[str]], bool]` — a flat set-membership check (parser.py:212, filtering.py:18). The expression layer (`!`, `&`, `|` with `direct`, `computed`, `tuple-to-subjectset`) is the rewrite calculus HQL formalizes (inherited from Zanzibar PDL via Kingo) — superpowered, not the limit. The limit is `tools.py`: it materializes one relation's value set (a document's `tags` list) into a `frozenset[str]` and passes that in. By the time `filter_candidates` runs, the rewrite no longer knows the leaves were ever relations. Observation: the `tagged:` field on the predicate input is the choke point. It hard-binds the rewrite to `document.tags` and reduces the leaves to opaque strings.
+The predicate parser produces `Callable[[frozenset[str]], bool]` — a flat set-membership check (parser.py:212, filtering.py:18). The expression layer (`!`, `&`, `|` with `direct`, `computed`, `tuple-to-subjectset`) is the rewrite calculus HQL formalizes (inherited from Zanzibar PDL via Kingo) — superpowered, not the limit. The limit is `tools.py`: it materializes one relation's value set (a document's `tags` list) into a `frozenset[str]` and passes that in. By the time `filter_candidates` runs, the rewrite no longer knows the leaves were ever relations. Observation: the `tagged:` field on the predicate input is the choke point. It hard-binds the rewrite to `tags` and reduces the leaves to opaque strings.
 
 ## What carries relation identity restores
 
