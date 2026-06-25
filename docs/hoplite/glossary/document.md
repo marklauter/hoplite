@@ -1,19 +1,21 @@
 ---
 title: document
-summary: "A structured markdown file."
+summary: "A structured markdown file and its representation within the knowledge graph."
 tags: [hoplite, glossary]
 created: 2026-06-19
 status: locked
-is-a: "[[node]]"
+is-a:
+    - "[[structured-markdown-file]]"
 has-a: 
+    - "[[node]]"
     - "[[frontmatter]]"
     - "[[feature]]"
 ---
 
-A structured markdown file.
+A structured markdown file and its representation within the knowledge graph.
 
 ## Structure
 
-Frontmatter — the YAML block — over a body of markdown prose. Hoplite reads metadata features from the frontmatter and content features from the body.
+Yaml frontmatter over a body of markdown prose. Hoplite reads metadata features from the frontmatter and content features from the body.
 
-In the graph, a document is a [[node]] enriched: the bare node holds identity, and the document is the properties and body hanging off it — a labeled node plus a body of content.
+A document is bound to the graph through a node. Its features — frontmatter metadata and body content — attach to that node but describe the document, not the node.

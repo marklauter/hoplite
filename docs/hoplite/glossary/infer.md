@@ -11,5 +11,4 @@ To derive a [[relationship]] from evidence.
 
 ## Mechanism
 
-Inference feeds [[assert|assertion]]. The engine infers a candidate
-edge and its [[confidence]]. It asserts the edge only when that confidence clears the threshold. Inference is unconditional: the sub-threshold findings are inferred and never asserted.
+Inference feeds [[assert|assertion]]. The engine infers a candidate relationship — its [[stereotype]] and its [[confidence]]. It asserts the relationship as an [[edge]] only when the confidence clears the threshold. Inference is unconditional: the engine infers every candidate but asserts only those above the threshold.

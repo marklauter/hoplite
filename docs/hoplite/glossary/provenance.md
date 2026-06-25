@@ -1,14 +1,14 @@
 ---
 title: provenance
-summary: "A feature's origin."
+summary: "A feature's origin: intrinsic or asserted."
 tags: [hoplite, glossary]
 created: 2026-06-19
 status: locked
+retired: [kind, edge-kind]
 ---
 
-A feature's origin.
+A feature's origin: [[intrinsic]] or [[asserted]].
 
-## Examples
+## Discussion
 
-- A byte-fingerprint — intrinsic; it falls out of the document's own existence.
-- A `tags:` line the author wrote — asserted; someone advanced it.
+Provenance is a domain concept that explains the difference between a fact and a claim. An intrinsic feature is a [[fact]]. An asserted feature is a [[claim]].
