@@ -1,15 +1,15 @@
 ---
 title: affordance
-summary: "An action possibility a feature offers the agent."
+summary: "An action made possible by the presence of a feature."
 tags: [hoplite, glossary]
 created: 2026-06-23
-status: evolving
+status: locked
 ---
 
-An action possibility a [[feature]] offers the agent.
+An action made possible by the presence of a [[feature]].
 
 ## Examples
 
-- the vocabulary affords [[survey]] — discovering what it holds before a predicate is composed.
-- a property affords filtering, ordering, and ranking the corpus by a value.
-- a stereotype affords filtering edges by what a link means, not just that it exists.
+- a stereotype affords the author asserting a relationship (`cites`, `supersedes`) and the researcher filtering edges by what it means.
+- the schema affords the author composing a new axis and the researcher surveying which axes exist.
+- an inferred similarity edge affords the researcher reaching relatives no one linked; only the engine can assert it, not the author.

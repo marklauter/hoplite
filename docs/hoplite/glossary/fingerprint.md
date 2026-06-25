@@ -1,9 +1,15 @@
 ---
 title: fingerprint
-summary: "A node's `content_hash` (exact) and `minhash` (similarity)."
+summary: "A hash of a document's content."
 tags: [hoplite, glossary]
 created: 2026-06-19
-status: evolving
+status: locked
+is-a: "[[fact]]"
 ---
 
-A node's `content_hash` (exact) and `minhash` (similarity).
+A hash of a document's content.
+
+## Examples
+
+- `content_hash` — exact; identical content yields an identical hash, so it detects change.
+- [[minhash]] — similarity; estimates Jaccard relatedness between documents.
