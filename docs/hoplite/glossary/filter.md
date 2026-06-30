@@ -1,11 +1,17 @@
 ---
 title: filter
-summary: "Narrowing the corpus by property-graph and stereotype predicates; one of the two ideas behind match."
+summary: "A crisp predicate: it tests a node or edge for membership — a tag, a property, a stereotype — in or out, with no score."
 tags: [hoplite, glossary]
 created: 2026-06-19
 status: evolving
-is-a: "[[match]]"
+is-a: "[[predicate]]"
 contrast: "[[semantic-search]]"
 ---
 
-Narrowing the corpus by property-graph and stereotype predicates; one of the two ideas behind match.
+A crisp predicate: it tests a node or edge for membership — a tag, a property, a stereotype — in or out, with no score.
+
+## Examples
+
+- `tags contains "todo"` — set membership over a label.
+- `status = "draft"` — a property value.
+- `stereotype/cites` — an edge predicate for a [[walk]].
