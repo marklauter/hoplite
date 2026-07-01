@@ -3,7 +3,7 @@ title: "Every document emits a set of features: intrinsic facts and asserted cla
 summary: "The feature taxonomy that grounds the rest of the spec: features split by origin into intrinsic (recovered from the bytes and their history) and asserted (supplied by the author), crossed by the dimension they measure, with relatedness scored as IDF-weighted Jaccard over the unified set."
 tags: [hoplite, features, spec]
 created: 2026-06-08
-status: wip
+status: evolving
 ---
 
 # Every document emits a set of features: intrinsic facts and asserted claims

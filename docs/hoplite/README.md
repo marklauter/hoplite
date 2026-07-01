@@ -3,7 +3,7 @@ title: Hoplite spec — document map
 summary: The index and table of contents for the Hoplite spec corpus. Captures the agreed document hierarchy — problem, structure and indexing, write-side and read-side affordances — and tracks which nodes are files, sections, or still planned.
 tags: [hoplite, index, spec]
 created: 2026-06-04
-status: wip
+status: evolving
 ---
 
 # Hoplite spec — document map
