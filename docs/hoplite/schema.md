@@ -159,8 +159,8 @@ create table edge (
 --
 --   idx_edge_dst — reverse / "backtrack" traversal: seek dst, read
 --     (src, confidence).
-create index idx_edge_src on edge(src, dst, confidence);
-create index idx_edge_dst on edge(dst, src, confidence);
+create index idx_edge_src on edge(src, dst, id, confidence);
+create index idx_edge_dst on edge(dst, src, id, confidence);
 
 -- The interned vocabulary of edge stereotypes — the open-ended set of labels an
 -- author applies to an asserted edge (cites, supports, supersedes, contradicts,
