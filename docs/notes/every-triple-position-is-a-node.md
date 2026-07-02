@@ -11,12 +11,14 @@ status: evolving
 The graph is triples: `subject — predicate — object`. Subject and object are always [[docs/hoplite/glossary/node.md|nodes]]; the middle is always a [[docs/hoplite/glossary/predicate.md|predicate]]. A [[docs/hoplite/glossary/document.md|document]] is not a node — it binds to one (the locked glossary already says so: a node is "identity, and nothing more"). Tags, property values, and out-of-line content bind to nodes the same way.
 
 ```
-:docs/notes/foo.md  :cites    :docs/notes/bar.md      # document → document
-:docs/notes/foo.md  :tag      :tag/note               # document → shared value node
-:docs/notes/foo.md  :status   :status/locked          # document → shared value node
-:docs/notes/foo.md  :created  :created/2026-06-30     # document → shared value node
-:docs/notes/foo.md  :summary  :summary/docs/notes/foo.md   # document → slot node
+docs/notes/foo.md   cites     docs/notes/bar.md            # document → document
+docs/notes/foo.md   tag       tag:note                     # document → shared value node
+docs/notes/foo.md   status    status:locked                # document → shared value node
+docs/notes/foo.md   created   created:2026-06-30           # document → shared value node
+docs/notes/foo.md   summary   summary:docs/notes/foo.md    # document → slot node
 ```
+
+Two separators split two naming authorities: slash joins path segments (the filesystem's namespace), colon joins a predicate label to its operand (the vocabulary's namespace). The wikilink grammar forbids colons in targets, so the spaces are disjoint by construction — a vocabulary address can never collide with a document uri.
 
 ## Predicates unify
 
@@ -26,14 +28,14 @@ Property keys are predicates. `status`, `tags`, `created`, `summary` sit in the 
 
 ### Shared value node
 
-- Address: the value itself — `status/locked`, `tag/note`, `created/2026-06-30`.
+- Address: the value itself — `status:locked`, `tag:note`, `created:2026-06-30`.
 - Carries: categorical, multi-document, slug-safe values.
 - One node per distinct value, shared by every subject that asserts it — which is what makes values walkable ("who else carries this value").
 - Range queries ride lexicographic uri scans; ISO-8601 dates sort.
 
 ### Slot node
 
-- Address: the subject's uri — `summary/<doc-uri>`, `title/<doc-uri>`, `minhash/<doc-uri>`.
+- Address: the subject's uri behind the predicate label — `summary:<doc-uri>`, `title:<doc-uri>`, `minhash:<doc-uri>`.
 - Carries: functional predicates — one value per document — whose content is freeform text or a blob.
 - A stable citation with live content; dereference returns the current value.
 - The rename hazard is covered by the existing alias machinery.

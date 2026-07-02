@@ -69,7 +69,7 @@ The schema realizes RDF's model with a small set of deliberate divergences. Wher
 
 Where it deliberately diverges:
 
-- **There are no literals.** RDF puts values in a third term kind — the typed literal. Hoplite splits that role in two: an enumerable, slug-safe value becomes a **value node** (`status/locked` — RDF would call this promoting the literal to a SKOS concept), and freeform text or a blob becomes a **slot** (`summary/<doc-uri>` — the long-literal store of a conventional triple store, projected as a node on demand). The datatype an RDF literal carries becomes a per-predicate fact if ever needed — a `datatype` column on `predicate`, matching `owl:DatatypeProperty`'s range — never a per-value tag.
+- **There are no literals.** RDF puts values in a third term kind — the typed literal. Hoplite splits that role in two: an enumerable, slug-safe value becomes a **value node** (`status:locked` — RDF would call this promoting the literal to a SKOS concept, and the address is literally Turtle's `prefix:localname` form), and freeform text or a blob becomes a **slot** (`summary:<doc-uri>` — the long-literal store of a conventional triple store, projected as a node on demand). The datatype an RDF literal carries becomes a per-predicate fact if ever needed — a `datatype` column on `predicate`, matching `owl:DatatypeProperty`'s range — never a per-value tag.
 - **Closed world.** RDF assumes an open world — absent statements are unknown, not false. Hoplite's corpus is the entire world: the graph is a pure function of the files, rebuilt whole, so absence is knowable and the two-pass build can let insertion order settle precedence.
 - **Local names, not IRIs.** Uris are corpus-scoped. The vault segment (`node/<vault>/...` in the cross-repo model) is the growth path toward RDF's global identity — the vault plays the IRI authority, and a vault-qualified graph is the seed of a named graph — without adopting the http machinery.
 
@@ -83,21 +83,22 @@ The graph is rebuilt by drop-and-recreate, never incrementally — so the domina
 
 ## Addressing
 
-Addresses are bare uris — no scheme; the MCP tool layer is the resolver, taking a uri as a parameter. Matching is case-insensitive (`collate nocase` throughout). The uri grammar is slug segments joined by `/`, per [[docs/hoplite/expressing-edges.md]].
+Addresses are bare uris — no scheme; the MCP tool layer is the resolver, taking a uri as a parameter. Matching is case-insensitive (`collate nocase` throughout).
+
+Two separators split two naming authorities: **slash** joins path segments — the filesystem's namespace, per the wikilink grammar in [[docs/hoplite/expressing-edges.md]] — and **colon** joins a predicate label to its operand — the vocabulary's namespace. The wikilink grammar forbids colons in targets, so no document uri can contain one: the two spaces are disjoint by construction, and a vocabulary address can never collide with or shadow a document. (Colon addresses are query-layer addresses, never authored wikilinks; the form is Turtle's `prefix:localname` and the urn separator.)
 
 Four kinds of address, three resolution paths:
 
 - **Corpus and url uris** (`docs/notes/foo.md`, `https://...`) — one dictionary seek on `node.uri`, falling through to `node_alias` on a miss.
-- **Value uris** (`status/locked`, `created/2026-06-30`) — the whole address is a dictionary key; same seek. The value lives in the address, so resolution never touches another table.
-- **Slot uris** (`summary/<doc-uri>`) — never stored, so the dictionary misses; the resolver then splits on the first slash (a predicate label is a single segment, so the parse is unambiguous) and runs three seeks: label → `predicateid`, tail → `nodeid` (aliases apply, so slot addresses survive renames), `(nodeid, predicateid)` → the value.
+- **Value uris** (`status:locked`, `created:2026-06-30`) — the whole address is a dictionary key; same seek. The value lives in the address, so resolution never touches another table.
+- **Slot uris** (`summary:<doc-uri>`) — never stored, so the dictionary misses; the resolver then splits on the **first colon** (the operand keeps its own colons — `created:2026-06-30T21:34` parses fine, and url operands are unreachable here because urls are stored and hit the dictionary) and runs three seeks: label → `predicateid`, tail → `nodeid` (aliases apply, so slot addresses survive renames), `(nodeid, predicateid)` → the value.
 - **Statements** — no uri. A triple is addressed by its three terms, consistent with RDF; nothing in the model points at a statement, and `confidence` rides in-row.
 
 Open questions, held for the importer:
 
-1. **Predicates are not addressable.** In RDF a predicate is an IRI — a resource you can make statements about (`rdfs:domain`, `owl:inverseOf`). Hoplite's predicates live outside the dictionary, so a predicate cannot be a subject, and nothing links `predicate.label` to the glossary document that defines it. If statements about predicates are ever needed, the move is interning predicates into the dictionary (`predicate/<label>` nodes); until then the glossary carries their definitions out-of-band.
-2. **Namespace collision.** Value and slot namespaces are rooted by predicate labels, so a predicate coined with the same label as a top-level corpus folder would collide with document uris. Entity-rooted forms (`node/tag/note`) are the fallback.
-3. **Categorical but not slug-safe values.** `status: in progress` is enumerable but doesn't fit the uri grammar — the value-node/slot line cracks. Slugify, encode, or demote to a slot; undecided.
-4. **Anchors.** The wikilink grammar admits `doc#section` and `doc#^block` targets. Whether an anchored target earns its own node or resolves to the document's node is unresolved.
+1. **Predicates are not addressable.** In RDF a predicate is an IRI — a resource you can make statements about (`rdfs:domain`, `owl:inverseOf`). Hoplite's predicates live outside the dictionary, so a predicate cannot be a subject, and nothing links `predicate.label` to the glossary document that defines it. If statements about predicates are ever needed, the move is interning predicates into the dictionary; until then the glossary carries their definitions out-of-band.
+2. **Categorical but not slug-safe values.** `status: in progress` is enumerable but doesn't fit the uri grammar — the value-node/slot line cracks. Slugify, encode, or demote to a slot; undecided.
+3. **Anchors.** The wikilink grammar admits `doc#section` and `doc#^block` targets. Whether an anchored target earns its own node or resolves to the document's node is unresolved.
 
 ## node
 
@@ -108,11 +109,11 @@ Variants are derived from the uri and the slot store, not flagged:
 - **document** — a corpus uri with [slot](#slot) rows. The witness is `content_hash`: the importer computes it for every real file unconditionally, so bytes exist behind the node exactly when the hash slot does.
 - **ghost** — a corpus uri with no slot rows: a dangling target, named before it is written.
 - **url** — a scheme-carrying uri (`https://...`): an external resource.
-- **value** — a vocabulary uri carrying its value in the address (`tag/note`, `status/locked`, `created/2026-06-30`). Interned at first assertion; shared by every subject that asserts it, which is what makes values walkable.
+- **value** — a vocabulary uri carrying its value in the address (`tag:note`, `status:locked`, `created:2026-06-30`). Interned at first assertion; shared by every subject that asserts it, which is what makes values walkable.
 
-Slot nodes (`summary/<doc-uri>`, `title/<doc-uri>`, `minhash/<doc-uri>`) are **not** stored here. A slot address derives from subject + predicate, so the graph layer projects the node and its statement from the [slot store](#slot) on demand.
+Slot nodes (`summary:<doc-uri>`, `title:<doc-uri>`, `minhash:<doc-uri>`) are **not** stored here. A slot address derives from subject + predicate, so the graph layer projects the node and its statement from the [slot store](#slot) on demand.
 
-The unique uri index doubles as the value-range index: value uris embed their value, and ISO-8601 dates sort lexicographically, so a temporal range (`created > 2026-06`) is an ordinary prefix scan over `created/...` uris.
+The unique uri index doubles as the value-range index: value uris embed their value, and ISO-8601 dates sort lexicographically, so a temporal range (`created > 2026-06`) is an ordinary prefix scan over `created:...` uris.
 
 ## node_alias
 
@@ -145,7 +146,7 @@ A slot predicate is not a schema migration: `title`, `summary`, and any future o
 
 Resolution of a slot uri is specified under [Addressing](#addressing); inside the database, a slot's address is the composite key `(nodeid, predicateid)` — derived from the corpus, stable across rebuilds, no surrogate.
 
-`created` is not a slot: an authored creation date is an ordinary property — a statement to a value node like `created/2026-06-30` — and temporal ordering rides the node dictionary's uri index (see [node](#node)).
+`created` is not a slot: an authored creation date is an ordinary property — a statement to a value node like `created:2026-06-30` — and temporal ordering rides the node dictionary's uri index (see [node](#node)).
 
 ## fts
 

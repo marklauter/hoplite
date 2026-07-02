@@ -14,4 +14,4 @@ A crisp condition: it tests a node or edge for membership — a tag, a property,
 
 - `tags contains "todo"` — set membership over a label.
 - `status = "draft"` — a property value.
-- `predicate/cites` — an edge condition for a [[walk]].
+- `cites` — an edge condition for a [[walk]], naming a predicate by its label.
