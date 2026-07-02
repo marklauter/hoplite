@@ -20,6 +20,10 @@ A directory of `.md` files with Obsidian-compatible YAML frontmatter is bare tex
 
 Provenance runs through the meaning layer. Every feature is a **fact** — intrinsic, read off the bytes — or a **claim** — asserted by the author or inferred by the engine. So the map separates the terrain from what was drawn on it.
 
+Under the hood, the graph is **RDF-shaped**: a triple store where every statement is subject–predicate–object, every subject and object is a named node, and per-statement confidence rides as an RDF-star annotation. Frontmatter keys and link predicates form one open vocabulary. The full model is in [docs/hoplite/schema.md](docs/hoplite/schema.md).
+
+Hoplite natively supports Google's [Open Knowledge Format (OKF)](https://cloud.google.com/blog/products/data-analytics/how-the-open-knowledge-format-can-improve-data-sharing/). OKF and Hoplite share the same substrate — markdown files with YAML frontmatter, linked into a graph — so an OKF bundle is already a valid Hoplite corpus: each concept file becomes a node, its frontmatter becomes properties, and its markdown links become edges. Drop a bundle into the corpus and it comes out queryable as part of the RDF graph.
+
 The corpus of `.md` files is the only persistent state. The graph, the MinHash signatures, and the text index all derive at session start and live in RAM, rebuilt from the files on demand. There is no CRUD surface on hoplite itself: content reads go through the agent's `Read` tool, writes through `Write` and `Edit`.
 
 ## Install
