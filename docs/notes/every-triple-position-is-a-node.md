@@ -58,7 +58,7 @@ A literal node's address is computable from subject + predicate, so its triple c
 - The `namespace` view stops being a projection: vocabulary entries are real nodes. Survey is literally match + walk over them.
 - Addresses are bare uris; the MCP tool layer is the resolver, taking them as parameters. No uri scheme — that would be API packaging in the model (if graph entities are ever exposed as MCP resources, a scheme becomes a wire-format detail of the tool api). The vault segment remains the growth path to cross-repo identity.
 - Multi-valued properties are sets (repeated triples; asserting twice yields one triple) — older notes saying "key/bag" mean key/set.
-- The dictionary stores an address as `(namespace, local)`: a namespace table interns the roots — `document`, `url`, `predicate`, and one row per value-interned label — and the uri is a projection over the pair. No nullable columns: documents and urls belong to structural namespace rows.
+- The dictionary stores an address as `(namespace, uri)`: a namespace table interns the roots — `document`, `url`, `predicate`, and one row per value-interned label — and the presented address is a projection over the pair. No nullable columns: documents and urls belong to structural namespace rows.
 
 The schema realizes this model: [[docs/hoplite/schema.md]] (node, predicate, edge, literal, plus aliases and FTS).
 

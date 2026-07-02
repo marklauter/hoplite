@@ -23,8 +23,8 @@ create table namespace (
 create table node (
   id integer primary key,
   nsid integer not null references namespace(id),
-  local text not null,
-  unique (nsid, local)
+  uri text not null collate nocase,
+  unique (nsid, uri)
 );
 
 create table node_alias (
@@ -89,7 +89,7 @@ A rebuild is deterministic: every namespace, node, statement, and literal key de
 
 Addresses are bare uris; a scheme would be tool-api packaging, kept out of the model. The MCP tool layer is the resolver, taking a uri as a parameter. Matching is case-insensitive (`collate nocase` throughout).
 
-Storage splits an address in two: a [namespace](#namespace) and a local name, `unique (nsid, local)`. The uri is a projection over the pair — a vocabulary namespace presents as `name:local`; the `document` and `url` namespaces present the local name alone.
+Storage splits an address in two: a [namespace](#namespace) and a uri, `unique (nsid, uri)`. The presented address is a projection over the pair — a vocabulary namespace prefixes its name and a colon to the uri; the `document` and `url` namespaces present the uri alone.
 
 Authoring and addressing are separate registers. Authors write bare wikilink targets (`[[docs/tag.md]]`), per the grammar in [[docs/hoplite/expressing-edges.md]]; the forms below are what the query and survey layer speaks. The register split is a standing rule, first drawn (in an older slash-rooted form) in [[docs/notes/one-walk-verb-spans-the-corpus-and-vocabulary-graphs.md]].
 
@@ -97,7 +97,7 @@ Authoring and addressing are separate registers. Authors write bare wikilink tar
 
 Two separators split two naming authorities: **slash** joins path segments — the filesystem's namespace — and **colon** joins a predicate label to its operand — the vocabulary's namespace. The wikilink grammar keeps colons out of targets, so every document uri is colon-free and the two spaces are disjoint by construction. Colon addresses belong to the query layer; the form is Turtle's `prefix:localname` and the urn separator. The decision and its rejected alternatives (reserved roots, validation, `~` `#` `>>` `::` `\`) are recorded in [[docs/notes/colon-separates-vocabulary-addresses-from-paths.md]].
 
-Three names are **reserved**: `document`, `url`, and `predicate` — the structural namespaces. An author-coined key so named would mint value nodes inside them, colliding with paths, urls, or the vocabulary's own entries; the importer refuses or renames it. `namespace.name`'s uniqueness is the tripwire.
+Three names are **reserved**: `document`, `url`, and `predicate` — the structural namespaces. An author-coined key so named would mint value nodes inside them, colliding with paths, urls, or the vocabulary's own entries. Interning is get-or-create, so uniqueness refuses nothing; the importer checks author-coined keys against the reserved list explicitly and refuses or renames — an implementation detail captured here until the importer owns it.
 
 ### Address kinds and resolution
 
@@ -106,7 +106,7 @@ Resolution dispatches on shape. A colon-free address seeks `(document, local)`, 
 - **document** — `docs/notes/foo.md`: `(document, <path>)`.
 - **ghost** — `tag`: `(document, <target>)`, named before its file exists.
 - **url** — `https://...`: `(url, <address>)`, an external reference.
-- **value** — `priority:high`, `tag:note`, `created:2026-06-30`: `(<label>, <value>)` — the value lives in the address, so resolution completes at the dictionary, and the `(nsid, local)` index doubles as a per-namespace range index (`created:2026-06` is an ordered scan; ISO-8601 sorts lexicographically).
+- **value** — `priority:high`, `tag:note`, `created:2026-06-30`: `(<label>, <value>)` — the value lives in the address, so resolution completes at the dictionary, and the `(nsid, uri)` index doubles as a per-namespace range index (`created:2026-06` is an ordered scan; ISO-8601 sorts lexicographically).
 - **predicate** — `predicate:cites`: `(predicate, <label>)`, carrying the [predicate registration](#predicate).
 
 One kind is projected on demand:
@@ -142,7 +142,7 @@ The namespace dictionary: the interned roots of the address space — `document`
 
 ## node
 
-The node dictionary: one row per resource — the terms of every triple's subject and object positions. `id` is identity within the graph; `(nsid, local)` is the external address, projected as the uri (see [Addressing](#addressing)). A node holds identity and nothing more; a resource's facts attach through statements.
+The node dictionary: one row per resource — the terms of every triple's subject and object positions. `id` is identity within the graph; `(nsid, uri)` is the external address, presented by projection (see [Addressing](#addressing)). A node holds identity and nothing more; a resource's facts attach through statements.
 
 Variants derive from the namespace and the facets — the address and the rows carry the kind:
 
@@ -156,7 +156,7 @@ Literal nodes (`summary:<doc-uri>`, `title:<doc-uri>`, `content_hash:<doc-uri>`,
 
 ## node_alias
 
-Alternate identities: additional uris that resolve to a node, asserted by the author — on rename, for example, so old wikilinks still reach the file. A resolution index: an alias is globally unique and maps to one node, so it is the primary key; the reverse index answers "what are node X's aliases?". It differs from the node's own address only in that the address is the canonical identity.
+Alternate identities: additional uris that resolve to a node, asserted by the author — on rename, for example, so old wikilinks still reach the file. A resolution index: an alias is globally unique and maps to one node, so it is the primary key; the reverse index answers "what are node X's aliases?". An alias is a flat authored string where the canonical identity is the `(nsid, uri)` pair — which is why the alias table earns its keep as its own resolution stage.
 
 Literal addresses inherit a document's aliases for free, since they embed its uri.
 
@@ -197,4 +197,4 @@ Full-text search over each document's text projection (title, summary, body), po
 
 ## Survey
 
-Survey is match and walk over the graph proper: the vocabulary is real rows in the dictionary, so surveying predicates is a scan of the `predicate` namespace and surveying a key's values is a scan of its own — ordered seeks on the `(nsid, local)` index, which is what retired the old namespace view.
+Survey is match and walk over the graph proper: the vocabulary is real rows in the dictionary, so surveying predicates is a scan of the `predicate` namespace and surveying a key's values is a scan of its own — ordered seeks on the `(nsid, uri)` index, which is what retired the old namespace view.
