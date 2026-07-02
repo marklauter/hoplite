@@ -69,7 +69,7 @@ The schema realizes RDF's model with a small set of deliberate divergences. Wher
 
 Where it deliberately diverges:
 
-- **There are no literals.** RDF puts values in a third term kind — the typed literal. Hoplite splits that role in two: an enumerable, slug-safe value becomes a **value node** (`status:locked` — RDF would call this promoting the literal to a SKOS concept, and the address is literally Turtle's `prefix:localname` form), and freeform text or a blob becomes a **slot** (`summary:<doc-uri>` — the long-literal store of a conventional triple store, projected as a node on demand). The datatype an RDF literal carries becomes a per-predicate fact if ever needed — a `datatype` column on `predicate`, matching `owl:DatatypeProperty`'s range — never a per-value tag.
+- **There are no literals.** RDF puts values in a third term kind — the typed literal. Hoplite splits that role in two: an enumerable value becomes a **value node** (`status:locked` — RDF would call this promoting the literal to a SKOS concept, and the address is literally Turtle's `prefix:localname` form), and freeform text or a blob becomes a **slot** (`summary:<doc-uri>` — the long-literal store of a conventional triple store, projected as a node on demand). The datatype an RDF literal carries becomes a per-predicate fact if ever needed — a `datatype` column on `predicate`, matching `owl:DatatypeProperty`'s range — never a per-value tag.
 - **Closed world.** RDF assumes an open world — absent statements are unknown, not false. Hoplite's corpus is the entire world: the graph is a pure function of the files, rebuilt whole, so absence is knowable and the two-pass build can let insertion order settle precedence.
 - **Local names, not IRIs.** Uris are corpus-scoped. The vault segment (`node/<vault>/...` in the cross-repo model) is the growth path toward RDF's global identity — the vault plays the IRI authority, and a vault-qualified graph is the seed of a named graph — without adopting the http machinery.
 
@@ -96,11 +96,12 @@ Four kinds of address, three resolution paths:
 - **Slot uris** (`summary:<doc-uri>`) — never stored, so the dictionary misses; the resolver then splits on the **first colon** (the operand keeps its own colons — `created:2026-06-30T21:34` parses fine, and url operands are unreachable here because urls are stored and hit the dictionary) and runs three seeks: label → `predicateid`, tail → `nodeid` (aliases apply, so slot addresses survive renames), `(nodeid, predicateid)` → the value.
 - **Statements** — no uri. A triple is addressed by its three terms, consistent with RDF; nothing in the model points at a statement, and `confidence` rides in-row.
 
+The value-node operand is just a string: `status:in progress` is a legal value-node uri — the dictionary key is text, the first-colon parse is indifferent to what follows, and colon addresses are never authored wikilinks. Spaces and other characters strict Turtle disallows pay the same boundary tax as slashes: encoded at export, raw natively. The value-node/slot line is therefore semantic, not lexical — enumerable values intern as nodes; freeform prose and blobs go out-of-line as slots.
+
 Open questions, held for the importer:
 
 1. **Predicates are not addressable.** In RDF a predicate is an IRI — a resource you can make statements about (`rdfs:domain`, `owl:inverseOf`). Hoplite's predicates live outside the dictionary, so a predicate cannot be a subject, and nothing links `predicate.label` to the glossary document that defines it. If statements about predicates are ever needed, the move is interning predicates into the dictionary; until then the glossary carries their definitions out-of-band.
-2. **Categorical but not slug-safe values.** `status: in progress` is enumerable but doesn't fit the uri grammar — the value-node/slot line cracks. Slugify, encode, or demote to a slot; undecided.
-3. **Anchors.** The wikilink grammar admits `doc#section` and `doc#^block` targets. Whether an anchored target earns its own node or resolves to the document's node is unresolved.
+2. **Anchors.** The wikilink grammar admits `doc#section` and `doc#^block` targets. Whether an anchored target earns its own node or resolves to the document's node is unresolved.
 
 ## node
 

@@ -31,7 +31,7 @@ Property keys are predicates. `status`, `tags`, `created`, `summary` sit in the 
 ### Shared value node
 
 - Address: the value itself — `status:locked`, `tag:note`, `created:2026-06-30`.
-- Carries: categorical, multi-document, slug-safe values.
+- Carries: categorical, multi-document values. The operand is just a string — `status:in progress` is legal; characters strict Turtle disallows pay the export-boundary tax, raw natively.
 - One node per distinct value, shared by every subject that asserts it — which is what makes values walkable ("who else carries this value").
 - Range queries ride lexicographic uri scans; ISO-8601 dates sort.
 
@@ -42,7 +42,7 @@ Property keys are predicates. `status`, `tags`, `created`, `summary` sit in the 
 - A stable citation with live content; dereference returns the current value.
 - The rename hazard is covered by the existing alias machinery.
 
-The line is *slug-safe and enumerable → the value is the address; freeform or binary → the slot is the address*. Surrogate row ids are ruled out as addresses (they regenerate on rebuild — the `edge.id` precedent in [[docs/notes/one-walk-verb-spans-the-corpus-and-vocabulary-graphs.md]]). Content hashes were considered and rejected for slots: a hash names a value, but a citation wants the slot's current content; snapshot-of-record already lives in git history.
+The line is semantic, not lexical: *enumerable → the value is the address; freeform or binary → the slot is the address*. Surrogate row ids are ruled out as addresses (they regenerate on rebuild — the `edge.id` precedent in [[docs/notes/one-walk-verb-spans-the-corpus-and-vocabulary-graphs.md]]). Content hashes were considered and rejected for slots: a hash names a value, but a citation wants the slot's current content; snapshot-of-record already lives in git history.
 
 ## Slot nodes are projections
 
