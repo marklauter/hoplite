@@ -1,14 +1,17 @@
 ---
-title: Stereotypes are open-vocab edge properties
-summary: A stereotype is an open-vocabulary label attached to an edge (or node property), stored EAV-style in edge_property parallel to how tags work in node_property. Two authoring surfaces — inline wikilink and frontmatter property — materialize identical storage; authors pick by whether the assertion is rhetorical-in-context or categorical.
-tags: [note, hoplite, edges, stereotypes, design, todo]
+title: Predicates are an open vocabulary
+summary: "A predicate is an open-vocabulary label naming what an edge asserts — never predefined, never warned on; a new label is a doc change, not a schema migration. Hoplite ships the mechanism and surveys the vocabulary; it does not govern it. Two authoring surfaces — inline wikilink and frontmatter property — materialize identical storage; authors pick by whether the assertion is rhetorical-in-context or categorical. The mechanism sections predate the predicate rename and the triple reversal; read them as history."
+tags: [note, hoplite, edges, predicates, design, todo]
+aliases: [stereotypes-are-open-vocab-edge-properties]
 created: 2026-05-27
 status: evolving
 ---
 
-# Stereotypes are open-vocab edge properties
+# Predicates are an open vocabulary
 
-A stereotype is an open-vocabulary label attached to an edge (or node property), stored EAV-style in `edge_property` parallel to how tags work in `node_property`. Two authoring surfaces — inline wikilink and frontmatter property — materialize identical storage; authors pick by whether the assertion is rhetorical-in-context or categorical.
+A predicate — recorded through most of this note under its retired name, stereotype — is an open-vocabulary label naming what an edge asserts. The vocabulary is never predefined and never warned on: a new predicate is a doc change, not a schema migration. Hoplite ships the mechanism and surveys the vocabulary so an agent can find the labels in use; it does not govern them — label conventions belong to each corpus's own skills and templates. Two authoring surfaces — inline wikilink and frontmatter property — materialize identical storage; authors pick by whether the assertion is rhetorical-in-context or categorical.
+
+The mechanism sections below predate the stereotype→predicate rename and the triple reversal — `edge_property`, edge kinds, and junction storage are historical. The current model is [[docs/notes/every-triple-position-is-a-node.md]] and [[docs/hoplite/schema.md]].
 
 ## Why this abstraction
 

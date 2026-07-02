@@ -33,7 +33,7 @@ There is no `updated` key. Git history is the modification record, and a hand-ma
 
 ## Edges
 
-An edge is a property whose value is a wikilink, and the key is the predicate — `supports`, `contradicts`, `supersedes`. The vocabulary is open, like tags: a new predicate is a doc change, not a schema migration. For the grammar and seed vocabulary, see [[docs/notes/stereotypes-are-open-vocab-edge-properties.md]].
+An edge is a property whose value is a wikilink, and the key is the predicate — `supports`, `contradicts`, `supersedes`. The vocabulary is open, like tags: a new predicate is a doc change, not a schema migration. For the grammar and seed vocabulary, see [[docs/notes/predicates-are-an-open-vocabulary.md]].
 
 ## Obsidian and Dataview
 
@@ -71,5 +71,5 @@ Warnings surface in `WriteResult.warnings`, so the agent is notified while the f
 ## See also
 
 - [[docs/hoplite/expressing-edges.md]] — the edge and wikilink grammar.
-- [[docs/notes/stereotypes-are-open-vocab-edge-properties.md]] — the edge-predicate model, recorded under the retired name (stereotype).
+- [[docs/notes/predicates-are-an-open-vocabulary.md]] — the open-vocabulary predicate model.
 - [[docs/hoplite/hoplite-architecture.md]] — the system this feeds.

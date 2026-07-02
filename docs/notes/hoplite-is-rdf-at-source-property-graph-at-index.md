@@ -38,4 +38,4 @@ The schema is a deliberate hybrid across three axes — node identity and facets
 
 - [[docs/hoplite/hoplite-graph.md]] — the model the schema serves (wip: still describes edge origination, which the bare-graph rework dropped; the locked `edge` glossary and `schema.md` are the source of truth — an edge is `id, src, dst, confidence`, provenance unrecorded).
 - [[docs/notes/one-walk-verb-spans-the-corpus-and-vocabulary-graphs.md]] — vocabulary uris double as condition atoms (that note's older term is "predicate atoms"); vault-prefixed uris answer cross-repo identity without RDF IRIs.
-- [[docs/notes/stereotypes-are-open-vocab-edge-properties.md]] — the open-vocabulary policy for predicates (recorded under the retired name), including the drift concern and the audit affordance as future work.
+- [[docs/notes/predicates-are-an-open-vocabulary.md]] — the open-vocabulary policy for predicates, including the drift concern and the audit affordance as future work.
