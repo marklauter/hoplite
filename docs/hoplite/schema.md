@@ -1,6 +1,6 @@
 ---
 title: Schema
-summary: "The SQLite schema for the Hoplite knowledge graph — an RDF-shaped triple store over a node dictionary: nodes, predicates, statement edges, the literal store backing the literal nodes, and FTS."
+summary: "The SQLite schema for the Hoplite knowledge graph — an RDF-shaped triple store over a node dictionary: namespaces and nodes, the predicate registration, statement edges, the literal store backing the literal nodes, and FTS."
 tags: [hoplite, schema, reference]
 created: 2026-06-21
 status: evolving
@@ -15,9 +15,16 @@ Every triple position holds a node; the middle is typed to the predicate registr
 ## DDL
 
 ```sql
+create table namespace (
+  id integer primary key,
+  name text not null unique collate nocase
+);
+
 create table node (
   id integer primary key,
-  uri text not null unique collate nocase
+  nsid integer not null references namespace(id),
+  local text not null,
+  unique (nsid, local)
 );
 
 create table node_alias (
@@ -76,11 +83,13 @@ The graph is rebuilt by drop-and-recreate — the dominant cost is the bulk load
 - During the rebuild, relax the durability pragmas — `journal_mode` and `synchronous` — since a crash just means re-running the rebuild.
 - `foreign_keys` enforcement is per-connection in SQLite; the importer turns it on, so the `REFERENCES` clauses are live constraints.
 
-A rebuild is deterministic: every uri, statement, and literal key derives from the corpus alone, so rebuilding reproduces the graph byte-identically.
+A rebuild is deterministic: every namespace, node, statement, and literal key derives from the corpus alone, so rebuilding reproduces the graph byte-identically.
 
 ## Addressing
 
 Addresses are bare uris; a scheme would be tool-api packaging, kept out of the model. The MCP tool layer is the resolver, taking a uri as a parameter. Matching is case-insensitive (`collate nocase` throughout).
+
+Storage splits an address in two: a [namespace](#namespace) and a local name, `unique (nsid, local)`. The uri is a projection over the pair — a vocabulary namespace presents as `name:local`; the `document` and `url` namespaces present the local name alone.
 
 Authoring and addressing are separate registers. Authors write bare wikilink targets (`[[docs/tag.md]]`), per the grammar in [[docs/hoplite/expressing-edges.md]]; the forms below are what the query and survey layer speaks. The register split is a standing rule, first drawn (in an older slash-rooted form) in [[docs/notes/one-walk-verb-spans-the-corpus-and-vocabulary-graphs.md]].
 
@@ -88,21 +97,21 @@ Authoring and addressing are separate registers. Authors write bare wikilink tar
 
 Two separators split two naming authorities: **slash** joins path segments — the filesystem's namespace — and **colon** joins a predicate label to its operand — the vocabulary's namespace. The wikilink grammar keeps colons out of targets, so every document uri is colon-free and the two spaces are disjoint by construction. Colon addresses belong to the query layer; the form is Turtle's `prefix:localname` and the urn separator. The decision and its rejected alternatives (reserved roots, validation, `~` `#` `>>` `::` `\`) are recorded in [[docs/notes/colon-separates-vocabulary-addresses-from-paths.md]].
 
-One label is **reserved**: `predicate`. An author-coined key so named would mint value uris (`predicate:tag`) that collide with predicate-node uris; the importer refuses or renames it. It is the vocabulary's only reserved word.
+Three names are **reserved**: `document`, `url`, and `predicate` — the structural namespaces. An author-coined key so named would mint value nodes inside them, colliding with paths, urls, or the vocabulary's own entries; the importer refuses or renames it. `namespace.name`'s uniqueness is the tripwire.
 
 ### Address kinds and resolution
 
-Resolution order is fixed: `node.uri`, then `node_alias`, then the colon parse. An alias is authored under the wikilink grammar, so it never contains a colon — the parse is reached only by vocabulary-shaped addresses. Five stored kinds resolve at the first two stages:
+Resolution dispatches on shape. A colon-free address seeks `(document, local)`, falling through to `node_alias` — an alias is authored under the wikilink grammar, so it never contains a colon. A colon-bearing address seeks `(url, address)` whole, then splits on the **first colon** (operands keep their own colons — `created:2026-06-30T21:34` parses fine) and seeks `(namespace, local)`. Five stored kinds resolve on those seeks:
 
-- **document** — `docs/notes/foo.md`: a corpus path.
-- **ghost** — `tag`: a corpus target named before its file exists.
-- **url** — `https://...`: a scheme-carrying external reference.
-- **value** — `priority:high`, `tag:note`, `created:2026-06-30`: the value lives in the address, so resolution completes at the dictionary — and the unique uri index doubles as a range index (`created:2026-06` is a prefix scan; ISO-8601 sorts lexicographically).
-- **predicate** — `predicate:cites`: the vocabulary's own entries, nodes carrying the [predicate registration](#predicate).
+- **document** — `docs/notes/foo.md`: `(document, <path>)`.
+- **ghost** — `tag`: `(document, <target>)`, named before its file exists.
+- **url** — `https://...`: `(url, <address>)`, an external reference.
+- **value** — `priority:high`, `tag:note`, `created:2026-06-30`: `(<label>, <value>)` — the value lives in the address, so resolution completes at the dictionary, and the `(nsid, local)` index doubles as a per-namespace range index (`created:2026-06` is an ordered scan; ISO-8601 sorts lexicographically).
+- **predicate** — `predicate:cites`: `(predicate, <label>)`, carrying the [predicate registration](#predicate).
 
 One kind is projected on demand:
 
-- **literal** — `summary:<doc-uri>`: both stages miss, so the resolver splits on the **first colon** (operands keep their own colons — `created:2026-06-30T21:34` parses fine; urls are stored, so they resolve earlier) and runs three seeks: label → its `predicate:` node, tail → `nodeid` (aliases apply, so literal addresses survive renames), `(predicateid, nodeid)` → the value in the [literal store](#literal).
+- **literal** — `summary:<doc-uri>`: every stored seek misses (literal-valued labels claim no namespace row), so the resolver runs three seeks: label → `(predicate, <label>)` and its registration, tail → `nodeid` (aliases apply, so literal addresses survive renames), `(predicateid, nodeid)` → the value in the [literal store](#literal).
 
 And one is addressed without a uri:
 
@@ -124,26 +133,30 @@ Held for the importer:
 
 1. **Token-breaking characters in enumerable values.** `topic: property graphs` is categorical and wants to be a walkable value node, but whitespace ends a query-language term. Percent-encode, slugify at import, or a quoted-term form; undecided. Demoting to a literal loses the walkability that makes a categorical value worth interning.
 2. **Anchors.** The wikilink grammar admits `doc#section` and `doc#^block` targets. Whether an anchored target earns its own node or resolves to the document's node is unresolved.
-3. **The register form.** Documents are addressed by bare path today; a uniform kind-rooted register (`document:docs/tag.md`, `url:https://...`) would make every address self-describe its kind and turn resolver probing into pure namespace dispatch, at the cost of verbosity and a longer reserved-word list (`document`, `url` joining `predicate`). Bare-canonical stands until ruled.
+3. **The register presentation.** Kind dispatch landed relationally — the `document` and `url` namespace rows — so what remains of the kind-rooted register question is presentation only: whether the projection ever shows `document:`/`url:` prefixes, or the bare-canonical forms stand permanently.
 4. **One label, two value kinds.** Nothing yet forbids one predicate from both interning value nodes (`summary:draft`) and holding literal rows (`summary:<doc-uri>`) — and dictionary-first resolution would let the value nodes shadow the literal projections. The likely rule is uniform routing — a predicate's objects are all value nodes or all literal rows, never both — but it is unruled; until then the shadowing case is undefined.
+
+## namespace
+
+The namespace dictionary: the interned roots of the address space — `document`, `url`, `predicate`, and one row per value-interned label (`tag`, `priority`, `created`). A namespace row exists exactly when stored nodes live under it; literal-valued labels own no stored nodes, so they claim no row. `name` is unique, which is what enforces the reserved words (see [Addressing](#addressing)).
 
 ## node
 
-The node dictionary: one row per resource — the terms of every triple's subject and object positions. `id` is identity within the graph; `uri` is the external, medium-agnostic address. A node holds identity and nothing more; a resource's facts attach through statements.
+The node dictionary: one row per resource — the terms of every triple's subject and object positions. `id` is identity within the graph; `(nsid, local)` is the external address, projected as the uri (see [Addressing](#addressing)). A node holds identity and nothing more; a resource's facts attach through statements.
 
-Variants derive from the uri and the facets — the address and the rows carry the kind:
+Variants derive from the namespace and the facets — the address and the rows carry the kind:
 
-- **document** — a corpus uri with [literal](#literal) rows. The witness is `content_hash`, computed for every real file: bytes exist behind the node exactly when the hash literal does.
-- **ghost** — a corpus uri named before its file exists; literal rows arrive when the file does.
-- **url** — a scheme-carrying uri: an external resource.
-- **value** — a vocabulary uri carrying its value in the address. Interned at first assertion and shared by every subject that asserts it — the sharing is what makes values walkable.
-- **predicate** — a node under the reserved `predicate:` namespace with a [registration](#predicate) row: the vocabulary's own entries, interned at first use as a key or edge label.
+- **document** — a `document`-namespace node with [literal](#literal) rows. The witness is `content_hash`, computed for every real file: bytes exist behind the node exactly when the hash literal does.
+- **ghost** — a `document`-namespace node named before its file exists; literal rows arrive when the file does.
+- **url** — a `url`-namespace node: an external resource.
+- **value** — a node in its label's namespace, the value as the local name. Interned at first assertion and shared by every subject that asserts it — the sharing is what makes values walkable.
+- **predicate** — a `predicate`-namespace node with a [registration](#predicate) row: the vocabulary's own entries, interned at first use as a predicate — authored as a key or edge label, or computed by the importer.
 
 Literal nodes (`summary:<doc-uri>`, `title:<doc-uri>`, `content_hash:<doc-uri>`, `minhash:<doc-uri>`) are projections: a literal address derives from subject + predicate, so the graph layer projects the node and its statement from the [literal store](#literal) on demand.
 
 ## node_alias
 
-Alternate identities: additional uris that resolve to a node, asserted by the author — on rename, for example, so old wikilinks still reach the file. A resolution index: an alias is globally unique and maps to one node, so it is the primary key; the reverse index answers "what are node X's aliases?". It differs from `node.uri` only in that uri is the canonical identity.
+Alternate identities: additional uris that resolve to a node, asserted by the author — on rename, for example, so old wikilinks still reach the file. A resolution index: an alias is globally unique and maps to one node, so it is the primary key; the reverse index answers "what are node X's aliases?". It differs from the node's own address only in that the address is the canonical identity.
 
 Literal addresses inherit a document's aliases for free, since they embed its uri.
 
@@ -151,7 +164,7 @@ Literal addresses inherit a document's aliases for free, since they embed its ur
 
 The predicate registration: the single-column table that licenses a node for the middle position. A predicate is special by role — a statement needs a relationship in its middle position, so the edge's middle column is typed to this table alone, and the constraint is live under the importer's connection (see [Rebuild](#rebuild)). Everything else about a predicate lives in the dictionary: its uri is `predicate:<label>`, so the label needs no column here, and as a node it also stands as a subject or object — statements about the vocabulary (`cites inverse-of cited-by`, `supersedes defined-by <doc>`) are stored like any triple, never enforced.
 
-One flat open vocabulary: the former property keys (`tag`, `status`, `created`) and the edge labels (`cites`, `supports`, `supersedes`, `links-to`) are the same kind of thing, interned at first use as a key or edge label — a node row plus a registration row. The vocabulary is open and author-coined; surveying it is a `predicate:` prefix scan over the dictionary.
+One flat open vocabulary: the former property keys (`tag`, `status`, `created`) and the edge labels (`cites`, `supports`, `supersedes`, `links-to`) are the same kind of thing, interned at first use as a predicate — a node row plus a registration row, whether authored as a key or edge label or computed by the importer. The vocabulary is open and author-coined; surveying it is a scan of the `predicate` namespace.
 
 The registration repeats the derivation pattern: a document is a node with literal rows; a predicate is a node with a registration row.
 
@@ -184,4 +197,4 @@ Full-text search over each document's text projection (title, summary, body), po
 
 ## Survey
 
-Survey is match and walk over the graph proper: the vocabulary is real rows in the dictionary, so surveying predicates is a `predicate:` prefix scan and surveying a key's values is a `<label>:` prefix scan — which is what retired the old namespace view.
+Survey is match and walk over the graph proper: the vocabulary is real rows in the dictionary, so surveying predicates is a scan of the `predicate` namespace and surveying a key's values is a scan of its own — ordered seeks on the `(nsid, local)` index, which is what retired the old namespace view.
