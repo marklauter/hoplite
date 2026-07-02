@@ -27,13 +27,13 @@ create table node_alias (
 create index idx_node_alias on node_alias(nodeid);
 
 create table predicate (
-  id integer primary key,
+  nodeid integer primary key references node(id),
   label text not null unique collate nocase
 );
 
 create table edge (
   src integer not null references node(id),
-  predicateid integer not null references predicate(id),
+  predicateid integer not null references predicate(nodeid),
   dst integer not null references node(id),
   confidence real not null,
   primary key (src, predicateid, dst)
@@ -43,7 +43,7 @@ create index idx_edge_predicate on edge(predicateid, src, dst, confidence);
 
 create table slot (
   nodeid integer not null references node(id),
-  predicateid integer not null references predicate(id),
+  predicateid integer not null references predicate(nodeid),
   value,
   primary key (nodeid, predicateid)
 ) without rowid;
@@ -63,7 +63,7 @@ create virtual table fts using fts5(
 The schema realizes RDF's model with a small set of deliberate divergences. Where it matches:
 
 - **The graph is a set of triples.** An RDF graph is a set of statements; `edge`'s primary key enforces exactly that — asserting the same triple twice yields one row, and multi-valued properties are repeated assertions, never containers.
-- **Subjects and objects are resources.** Every term in subject or object position is a node in the dictionary, addressed by uri. There are **no blank nodes**: every node's uri derives from the corpus, so every resource is named — a rebuild reproduces the graph byte-identically.
+- **Every term is a resource — predicates included.** Every term in every position is a node in the dictionary, addressed by uri; a predicate is a node carrying the [predicate facet](#predicate), so statements about the vocabulary are representable like any other (stored, never enforced). There are **no blank nodes**: every node's uri derives from the corpus, so every resource is named — a rebuild reproduces the graph byte-identically.
 - **`confidence` is the RDF-star annotation.** A statement about the statement — `<< src p dst >> hoplite:confidence n` — carried in-row because the triple's natural key makes every edge natively reified. No reification quads, no annotation vocabulary.
 - **A statement has no address of its own.** A triple is identified by its three terms, in RDF and here alike (see [Addressing](#addressing)).
 
@@ -100,9 +100,8 @@ The value-node operand is a string, and the dialect relaxation covers any charac
 
 Open questions, held for the importer:
 
-1. **Predicates cannot be subjects or objects.** A predicate is addressable — `predicate.label` is unique, and the resolver can dispatch a bare label to the predicate table — but `edge.src` and `edge.dst` reference `node(id)`, and a predicate has no node id, so no statement can have a predicate at either end. In RDF a predicate is an IRI like any resource, so statements about predicates (`owl:inverseOf`, `rdfs:domain`, `rdfs:subPropertyOf`) come free; here they are unrepresentable. If they are ever needed, the move is interning predicates into the dictionary, giving each a node id; deferred because statement-capable predicates open the ontology question of which predicate-semantics the engine actually honors.
-2. **Token-breaking characters in enumerable values.** `status: in progress` is categorical and wants to be a walkable value node, but whitespace cannot appear in a query-language term. Percent-encode, slugify at import, or a quoted-term form; undecided. (Demoting to a slot loses the walkability that makes a categorical value worth interning.)
-3. **Anchors.** The wikilink grammar admits `doc#section` and `doc#^block` targets. Whether an anchored target earns its own node or resolves to the document's node is unresolved.
+1. **Token-breaking characters in enumerable values.** `status: in progress` is categorical and wants to be a walkable value node, but whitespace cannot appear in a query-language term. Percent-encode, slugify at import, or a quoted-term form; undecided. (Demoting to a slot loses the walkability that makes a categorical value worth interning.)
+2. **Anchors.** The wikilink grammar admits `doc#section` and `doc#^block` targets. Whether an anchored target earns its own node or resolves to the document's node is unresolved.
 
 ## node
 
@@ -114,6 +113,7 @@ Variants are derived from the uri and the slot store, not flagged:
 - **ghost** — a corpus uri with no slot rows: a dangling target, named before it is written.
 - **url** — a scheme-carrying uri (`https://...`): an external resource.
 - **value** — a vocabulary uri carrying its value in the address (`tag:note`, `status:locked`, `created:2026-06-30`). Interned at first assertion; shared by every subject that asserts it, which is what makes values walkable.
+- **predicate** — a node with a [predicate facet](#predicate) row (`predicate:cites`, `predicate:status`): the vocabulary's own entries, interned at first use in the middle position.
 
 Slot nodes (`summary:<doc-uri>`, `title:<doc-uri>`, `minhash:<doc-uri>`) are **not** stored here. A slot address derives from subject + predicate, so the graph layer projects the node and its statement from the [slot store](#slot) on demand.
 
@@ -127,7 +127,11 @@ Slot addresses inherit a document's aliases for free, since they embed its uri.
 
 ## predicate
 
-The interned vocabulary of predicates — the middle position of every triple, naming the relationship a statement asserts; RDF's predicate, kept in its own table rather than the dictionary (see [Addressing](#addressing), open question 1). One flat open vocabulary: the former property keys (`tag`, `status`, `created`) and the edge labels (`cites`, `supports`, `supersedes`, `links-to`) are the same kind of thing. The label is stored once and referenced by id; the vocabulary is open and author-coined, and surveying it is a scan of this table.
+The predicate facet: the registration that licenses a node for the middle position. A predicate is special by *role* — `:doc-1 :doc-2 :doc-3` is not a statement, so the edge's middle column is typed to this table, never to the dictionary at large — but the predicate *term* is a node like any other (uri `predicate:<label>`), so it can also stand as a subject or object: statements about the vocabulary (`cites inverse-of cited-by`, `supersedes defined-by <doc>`) are ordinary statements, stored like any triple and honored by nothing until something deliberately decides otherwise.
+
+One flat open vocabulary: the former property keys (`tag`, `status`, `created`) and the edge labels (`cites`, `supports`, `supersedes`, `links-to`) are the same kind of thing, interned at first use in the middle position — a node row plus this facet row. The vocabulary is open and author-coined, and surveying it is a scan of this table.
+
+The facet is the third instance of the derivation pattern: a document is a corpus node with slot rows; a predicate is a node with a predicate row.
 
 ## edge
 
