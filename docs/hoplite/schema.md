@@ -69,7 +69,7 @@ Where the schema matches RDF:
 
 Where it deliberately diverges:
 
-- **Values are nodes.** RDF puts values in a third term kind, the typed literal. Hoplite splits that role: an enumerable value becomes a **value node** (`status:locked` — a literal promoted to a SKOS-style concept, in Turtle's `prefix:localname` form), and freeform text or a blob becomes a **literal** (`summary:<doc-uri>` — the long-literal store, projected as a node on demand). A literal's datatype becomes a per-predicate fact if ever needed — a `datatype` column on `predicate`, matching `owl:DatatypeProperty`, declared once per predicate.
+- **Values are nodes.** In RDF a value — `locked`, a date, a paragraph — is a literal: a raw value in object position, addressless, undescribable. In Hoplite every value gets a node. A short, repeatable value is its own address (`status:locked`); a paragraph or a blob cannot be an address, so its bytes go in the [literal](#literal) table and the graph presents a node (`summary:<doc-uri>`) that stands for them. If a value's type ever matters, declare it once on the predicate — a `datatype` column, matching `owl:DatatypeProperty`.
 - **Closed world.** RDF assumes an open world, where absence means unknown. Hoplite's corpus is the entire world: the graph is a pure function of the files, rebuilt whole, so absence is knowable and insertion order can settle precedence.
 - **Corpus-scoped names.** Uris are local names; the vault segment is the growth path to global identity (see [Addressing](#addressing)).
 
