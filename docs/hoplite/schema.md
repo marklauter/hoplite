@@ -114,7 +114,7 @@ The slot store: the long-value half of the term dictionary. Where a value node c
 
 A slot predicate is not a schema migration: `title`, `summary`, and any future out-of-line predicate are rows in `predicate` and rows here, never columns.
 
-Addressing — a slot's uri is `<predicate-label>/<subject-uri>` (`summary/docs/notes/foo.md`; fully qualified, `hoplite://summary/docs/notes/foo.md`). The parse is unambiguous: a predicate label is a single slug segment, so the resolver splits on the first slash. Resolution is three index seeks:
+Addressing — a slot's uri is `<predicate-label>/<subject-uri>` (`summary/docs/notes/foo.md`). The parse is unambiguous: a predicate label is a single slug segment, so the resolver splits on the first slash. Resolution is three index seeks:
 
 1. head → `predicate.label` → `predicateid`.
 2. tail → `node.uri` → `nodeid`, falling through to `node_alias` on a miss — so slot addresses survive renames for free.

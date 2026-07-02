@@ -49,7 +49,7 @@ A slot node's address is computable from subject + predicate, so its triple carr
 - `edge` becomes one row per statement `(src, predicate, dst)` — not one per `(src, dst)` pair with a predicate set — and `confidence` is per-statement.
 - `tag`, `node_tag`, `property_key`, `node_property` dissolve into nodes + edges; `document` dissolves into the slot store, with `content_hash`'s slot row as the document/ghost witness.
 - The `namespace` view stops being a projection: vocabulary entries are real nodes. Survey is literally match + walk over them.
-- `hoplite://` is the dereferenceable uri scheme; a resolver interprets `hoplite://summary/<doc-uri>` like any other uri. The vault segment remains the growth path to cross-repo identity.
+- Addresses are bare uris; the MCP tool layer is the resolver, taking them as parameters. No uri scheme — that would be API packaging in the model (if graph entities are ever exposed as MCP resources, a scheme becomes a wire-format detail of the tool api). The vault segment remains the growth path to cross-repo identity.
 - Multi-valued properties are sets (repeated triples; asserting twice yields one triple) — older notes saying "key/bag" mean key/set.
 
 The schema realizes this model: [[docs/hoplite/schema.md]] (node, predicate, edge, slot, plus aliases and FTS).
