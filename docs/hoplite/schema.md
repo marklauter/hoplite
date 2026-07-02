@@ -85,23 +85,49 @@ The graph is rebuilt by drop-and-recreate, never incrementally — so the domina
 
 Addresses are bare uris — no scheme; the MCP tool layer is the resolver, taking a uri as a parameter. Matching is case-insensitive (`collate nocase` throughout).
 
-Two separators split two naming authorities: **slash** joins path segments — the filesystem's namespace, per the wikilink grammar in [[docs/hoplite/expressing-edges.md]] — and **colon** joins a predicate label to its operand — the vocabulary's namespace. The wikilink grammar forbids colons in targets, so no document uri can contain one: the two spaces are disjoint by construction, and a vocabulary address can never collide with or shadow a document. (Colon addresses are query-layer addresses, never authored wikilinks; the form is Turtle's `prefix:localname` and the urn separator.)
+Authoring and addressing are separate registers. Authors write bare wikilink targets (`[[docs/tag.md]]`), per the grammar in [[docs/hoplite/expressing-edges.md]]; the address forms below are what the query and survey layer speaks. The register split is a standing rule of the model — first drawn (in an older slash-rooted form) by [[docs/notes/one-walk-verb-spans-the-corpus-and-vocabulary-graphs.md]].
 
-In Turtle-shaped contexts — the query language — an address always appears namespace-qualified, the leading colon at minimum (`:tag:note`), never bare. Turtle's first colon is the namespace boundary (a prefix cannot contain one), so everything after it is the local name, where Turtle admits raw colons — the separator serializes unescaped. Bare `tag:note` would instead read as prefix `tag`, so the qualification rule is what keeps predicate labels from colliding with declared prefixes. Hoplite's dialect relaxes strict `PN_LOCAL` in one way: raw `/` is allowed in local names — paths are just strings here; a strict-Turtle export escapes them (`\/`) or uses full-IRI form.
+### Separators
 
-Four kinds of address, three resolution paths:
+Two separators split two naming authorities: **slash** joins path segments — the filesystem's namespace — and **colon** joins a predicate label to its operand — the vocabulary's namespace. The wikilink grammar forbids colons in targets, so no document uri can contain one: the two spaces are disjoint by construction, and a vocabulary address can never collide with or shadow a document. Colon addresses are query-layer addresses, never authored wikilinks; the form is Turtle's `prefix:localname` and the urn separator. The decision and its rejected alternatives (reserved roots, validation, `~`/`#`/`>>`/`::`/`\`) are recorded in [[docs/notes/colon-separates-vocabulary-addresses-from-paths.md]].
 
-- **Corpus and url uris** (`docs/notes/foo.md`, `https://...`) — one dictionary seek on `node.uri`, falling through to `node_alias` on a miss.
-- **Value uris** (`status:locked`, `created:2026-06-30`) — the whole address is a dictionary key; same seek. The value lives in the address, so resolution never touches another table.
-- **Slot uris** (`summary:<doc-uri>`) — never stored, so the dictionary misses; the resolver then splits on the **first colon** (the operand keeps its own colons — `created:2026-06-30T21:34` parses fine, and url operands are unreachable here because urls are stored and hit the dictionary) and runs three seeks: label → `predicateid`, tail → `nodeid` (aliases apply, so slot addresses survive renames), `(predicateid, nodeid)` → the value.
-- **Statements** — no uri. A triple is addressed by its three terms, consistent with RDF; nothing in the model points at a statement, and `confidence` rides in-row.
+One label is **reserved**: `predicate`. An author-coined key so named would mint value uris (`predicate:tag`) that collide with predicate-node uris; the importer refuses or renames it. It is the vocabulary's only reserved word.
 
-The value-node operand is a string, and the dialect relaxation covers any character that is unambiguous mid-token — dots, dashes, slashes — because storage is a text key, the first-colon parse is indifferent to what follows, and colon addresses are never authored wikilinks. The relaxation cannot cover token delimiters: whitespace separates terms in every Turtle-shaped context, so `:status:in progress` is unwritable in the query language no matter how permissive the dialect.
+### Address kinds and resolution
 
-Open questions, held for the importer:
+Five stored kinds resolve with one dictionary seek on `node.uri`, falling through to `node_alias` on a miss:
+
+- **document** — `docs/notes/foo.md`: a corpus path.
+- **ghost** — `tag`: a corpus target with no file behind it.
+- **url** — `https://...`: a scheme-carrying external reference.
+- **value** — `status:locked`, `tag:note`, `created:2026-06-30`: the value lives in the address, so resolution never touches another table — and the unique uri index doubles as a range index (`created:2026-06` is a prefix scan; ISO-8601 sorts lexicographically).
+- **predicate** — `predicate:cites`: the vocabulary's own entries, nodes carrying the [predicate facet](#predicate).
+
+One kind is projected, never stored:
+
+- **slot** — `summary:<doc-uri>`: the dictionary misses, so the resolver splits on the **first colon** (operands keep their own colons — `created:2026-06-30T21:34` parses fine; url operands never reach the parse because urls are stored and hit the dictionary) and runs three seeks: label → `predicateid`, tail → `nodeid` (aliases apply, so slot addresses survive renames), `(predicateid, nodeid)` → the value in the [slot store](#slot).
+
+And one has no address at all:
+
+- **statements** — a triple is addressed by its three terms, consistent with RDF; nothing in the model points at a statement, and `confidence` rides in-row.
+
+### In the query language
+
+Turtle-shaped contexts — the query language — qualify every address: the leading colon at minimum (`:tag:note`), never bare. Turtle's first colon is the namespace boundary (a prefix cannot contain one), so everything after it is the local name, where Turtle admits raw colons — the separator serializes unescaped. Bare `tag:note` would instead read as prefix `tag`, so the qualification rule is what keeps predicate labels from colliding with declared prefixes.
+
+Hoplite's dialect relaxes strict `PN_LOCAL` in one way: raw `/` is allowed in local names — paths are just strings here; a strict-Turtle export escapes them (`\/`) or uses full-IRI form. The relaxation covers any character that is unambiguous mid-token — dots, dashes, slashes — but not token delimiters: whitespace separates terms in every Turtle-shaped context, so `:status:in progress` is unwritable no matter how permissive the dialect (open question 1).
+
+### Cross-repo growth path
+
+Uris are corpus-scoped local names. The vault segment (`<vault>/docs/foo.md` in the cross-repo model of [[docs/notes/one-walk-verb-spans-the-corpus-and-vocabulary-graphs.md]]) is the growth path to global identity: the vault plays the IRI authority, and a vault-qualified graph is the seed of an RDF named graph.
+
+### Open questions
+
+Held for the importer:
 
 1. **Token-breaking characters in enumerable values.** `status: in progress` is categorical and wants to be a walkable value node, but whitespace cannot appear in a query-language term. Percent-encode, slugify at import, or a quoted-term form; undecided. (Demoting to a slot loses the walkability that makes a categorical value worth interning.)
 2. **Anchors.** The wikilink grammar admits `doc#section` and `doc#^block` targets. Whether an anchored target earns its own node or resolves to the document's node is unresolved.
+3. **The register form.** Documents are addressed by bare path today; a uniform kind-rooted register (`document:docs/tag.md`, `url:https://...`) would make every address self-describe its kind and turn resolver probing into pure namespace dispatch, at the cost of verbosity and a longer reserved-word list (`document`, `url` joining `predicate`). Bare-canonical stands until ruled.
 
 ## node
 
