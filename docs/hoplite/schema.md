@@ -100,7 +100,7 @@ The value-node operand is a string, and the dialect relaxation covers any charac
 
 Open questions, held for the importer:
 
-1. **Predicates are not addressable.** In RDF a predicate is an IRI — a resource you can make statements about (`rdfs:domain`, `owl:inverseOf`). Hoplite's predicates live outside the dictionary, so a predicate cannot be a subject, and nothing links `predicate.label` to the glossary document that defines it. If statements about predicates are ever needed, the move is interning predicates into the dictionary; until then the glossary carries their definitions out-of-band.
+1. **Predicates are not addressable.** In RDF a predicate is an IRI — a resource you can make statements about (`rdfs:domain`, `owl:inverseOf`, `rdfs:subPropertyOf`). Hoplite's predicates live outside the dictionary, so a predicate cannot be a subject, and statements about predicates — an inverse, a domain, transitivity — are unsayable. If they are ever needed, the move is interning predicates into the dictionary; deferred because addressable predicates open the ontology question of which predicate-semantics the engine actually honors.
 2. **Token-breaking characters in enumerable values.** `status: in progress` is categorical and wants to be a walkable value node, but whitespace cannot appear in a query-language term. Percent-encode, slugify at import, or a quoted-term form; undecided. (Demoting to a slot loses the walkability that makes a categorical value worth interning.)
 3. **Anchors.** The wikilink grammar admits `doc#section` and `doc#^block` targets. Whether an anchored target earns its own node or resolves to the document's node is unresolved.
 
@@ -127,7 +127,7 @@ Slot addresses inherit a document's aliases for free, since they embed its uri.
 
 ## predicate
 
-The interned vocabulary of predicates — the middle position of every triple, naming the relationship a statement asserts; RDF's predicate, kept in its own table rather than the dictionary (see [Addressing](#addressing), open question 1). One flat open vocabulary: the former property keys (`tag`, `status`, `created`) and the edge labels (`cites`, `supports`, `supersedes`, `links-to`) are the same kind of thing. The label is stored once and referenced by id; the vocabulary is glossary-governed, and surveying it is a scan of this table.
+The interned vocabulary of predicates — the middle position of every triple, naming the relationship a statement asserts; RDF's predicate, kept in its own table rather than the dictionary (see [Addressing](#addressing), open question 1). One flat open vocabulary: the former property keys (`tag`, `status`, `created`) and the edge labels (`cites`, `supports`, `supersedes`, `links-to`) are the same kind of thing. The label is stored once and referenced by id; the vocabulary is open and author-coined, and surveying it is a scan of this table.
 
 ## edge
 

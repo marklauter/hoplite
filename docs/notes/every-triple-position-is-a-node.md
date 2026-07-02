@@ -24,7 +24,7 @@ The sample is Hoplite's Turtle dialect. In Turtle-shaped contexts an address alw
 
 ## Predicates unify
 
-Property keys are predicates. `status`, `tags`, `created`, `summary` sit in the same open vocabulary as `cites` and `supersedes` — the middle position is one kind of thing. This supersedes the edges-only scope choice recorded in [[docs/notes/edge-predicates-are-glossary-governed.md]] (its governance is unchanged; every predicate goes through the glossary reduction). The `predicate`↔`property` glossary contrast needs redrawing — held for the read-side lock pass.
+Property keys are predicates. `status`, `tags`, `created`, `summary` sit in the same open vocabulary as `cites` and `supersedes` — the middle position is one kind of thing. This supersedes the edges-only scope choice from the terminology alignment (see the journal entry below). The `predicate`↔`property` glossary contrast needs redrawing — held for the read-side lock pass.
 
 ## Two addressing schemes for value nodes
 
