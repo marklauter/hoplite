@@ -87,6 +87,8 @@ Addresses are bare uris — no scheme; the MCP tool layer is the resolver, takin
 
 Two separators split two naming authorities: **slash** joins path segments — the filesystem's namespace, per the wikilink grammar in [[docs/hoplite/expressing-edges.md]] — and **colon** joins a predicate label to its operand — the vocabulary's namespace. The wikilink grammar forbids colons in targets, so no document uri can contain one: the two spaces are disjoint by construction, and a vocabulary address can never collide with or shadow a document. (Colon addresses are query-layer addresses, never authored wikilinks; the form is Turtle's `prefix:localname` and the urn separator.)
 
+In Turtle-shaped contexts — the query language — an address always appears namespace-qualified, the leading colon at minimum (`:tag:note`), never bare. Turtle's first colon is the namespace boundary (a prefix cannot contain one), so everything after it is the local name, where Turtle admits raw colons — the separator serializes unescaped. Bare `tag:note` would instead read as prefix `tag`, so the qualification rule is what keeps predicate labels from colliding with declared prefixes. Hoplite's dialect relaxes strict `PN_LOCAL` in one way: raw `/` is allowed in local names — paths are just strings here; a strict-Turtle export escapes them (`\/`) or uses full-IRI form.
+
 Four kinds of address, three resolution paths:
 
 - **Corpus and url uris** (`docs/notes/foo.md`, `https://...`) — one dictionary seek on `node.uri`, falling through to `node_alias` on a miss.

@@ -10,15 +10,17 @@ status: evolving
 
 The graph is triples: `subject — predicate — object`. Subject and object are always [[docs/hoplite/glossary/node.md|nodes]]; the middle is always a [[docs/hoplite/glossary/predicate.md|predicate]]. A [[docs/hoplite/glossary/document.md|document]] is not a node — it binds to one (the locked glossary already says so: a node is "identity, and nothing more"). Tags, property values, and out-of-line content bind to nodes the same way.
 
-```
-docs/notes/foo.md   cites     docs/notes/bar.md            # document → document
-docs/notes/foo.md   tag       tag:note                     # document → shared value node
-docs/notes/foo.md   status    status:locked                # document → shared value node
-docs/notes/foo.md   created   created:2026-06-30           # document → shared value node
-docs/notes/foo.md   summary   summary:docs/notes/foo.md    # document → slot node
+```turtle
+:docs/notes/foo.md   :cites     :docs/notes/bar.md            # document → document
+:docs/notes/foo.md   :tag       :tag:note                     # document → shared value node
+:docs/notes/foo.md   :status    :status:locked                # document → shared value node
+:docs/notes/foo.md   :created   :created:2026-06-30           # document → shared value node
+:docs/notes/foo.md   :summary   :summary:docs/notes/foo.md    # document → slot node
 ```
 
 Two separators split two naming authorities: slash joins path segments (the filesystem's namespace), colon joins a predicate label to its operand (the vocabulary's namespace). The wikilink grammar forbids colons in targets, so the spaces are disjoint by construction — a vocabulary address can never collide with a document uri.
+
+The sample is Hoplite's Turtle dialect. In Turtle-shaped contexts an address always appears namespace-qualified — the leading colon at minimum — never bare: Turtle's first colon is the namespace boundary (a prefix cannot contain one), so everything after it is the local name, where our separator colon is legal raw. The dialect relaxes strict `PN_LOCAL` in one way: raw `/` is allowed in local names — paths are just strings here; a strict-Turtle export escapes them (`\/`) or uses full-IRI form.
 
 ## Predicates unify
 
