@@ -64,12 +64,12 @@ Where the schema matches RDF:
 
 - **The graph is a set of triples.** `edge`'s primary key enforces it: asserting the same triple twice yields one row, and multi-valued properties are repeated assertions — the idiom RDF itself prefers over its containers.
 - **Every term is a resource, predicates included.** Every term in every position is a node in the dictionary, addressed by uri; a predicate is a node carrying the [predicate facet](#predicate), so statements about the vocabulary are representable — stored, never enforced. Every node is named (RDF: no blank nodes): every uri derives from the corpus, so a rebuild reproduces the graph byte-identically.
+- **Values are resources.** RDF permits a value to be a resource, and its practice recommends it — "things, not strings." Hoplite makes it the rule: a value interns as a node (`status:locked`), and where a literal may only end a statement, a value node can begin or relate one — described and walked like anything else. Bytes too large for an address live in the [literal](#literal) table behind a projected node (`summary:<doc-uri>`).
 - **`confidence` is the RDF-star annotation.** A statement about the statement — `<< src p dst >> hoplite:confidence n` — carried in-row: the triple's natural key makes every edge natively reified.
 - **A statement is addressed by its terms.** A triple is identified by its three positions, in RDF and here alike (see [Addressing](#addressing)).
 
 Where it deliberately diverges:
 
-- **Values are nodes.** An RDF literal is confined to object position: a value can end a statement, never begin or relate one, so every value is a dead end. Hoplite interns a value as a node (`status:locked`), and a node stands in any position — object, subject, and, carrying the predicate facet, the middle — so values can be described and walked like anything else. Bytes too large for an address live in the [literal](#literal) table behind a projected node (`summary:<doc-uri>`). A value's type, when it matters, is declared once on the predicate — a `datatype` column, matching `owl:DatatypeProperty`.
 - **Closed world.** RDF assumes an open world, where absence means unknown. Hoplite's corpus is the entire world: the graph is a pure function of the files, rebuilt whole, so absence is knowable and insertion order can settle precedence.
 - **Corpus-scoped names.** Uris are local names; the vault segment is the growth path to global identity (see [Addressing](#addressing)).
 
@@ -176,7 +176,7 @@ Traversal indexes — the `WITHOUT ROWID` table is clustered on its primary key,
 
 The literal store: the long-literal half of the term dictionary, where a conventional triple store keeps the literals too large to intern. A value node carries its value in the address; a literal holds the values that outgrow one — freeform text (`title`, `summary`) and blobs (`content_hash`, `minhash`) — one row per subject per literal-valued predicate.
 
-The `PRIMARY KEY (predicateid, nodeid)` mirrors the address (`<predicate-label>:<node-uri>`) and enforces the functional constraint: one value per document per literal. Predicate-first clustering groups each predicate's values contiguously, so bulk sweeps — every `minhash` for near-duplicate inference, every `summary` for the FTS feed — are single range scans, while assembling one document's facet is a few exact seeks over the known literal-valued predicates. The bare `value` column uses SQLite's per-row typing — text and blob coexist; a `datatype` column on `predicate` is the escape hatch if that proves too loose.
+The `PRIMARY KEY (predicateid, nodeid)` mirrors the address (`<predicate-label>:<node-uri>`) and enforces the functional constraint: one value per document per literal. Predicate-first clustering groups each predicate's values contiguously, so bulk sweeps — every `minhash` for near-duplicate inference, every `summary` for the FTS feed — are single range scans, while assembling one document's facet is a few exact seeks over the known literal-valued predicates. The bare `value` column uses SQLite's per-row typing — text and blob coexist; the escape hatch, if that proves too loose, is a `datatype` column on `predicate` — declared once per predicate, matching `owl:DatatypeProperty`.
 
 A new literal-valued predicate is data: `title`, `summary`, and any future out-of-line predicate are rows here and in `predicate`.
 
