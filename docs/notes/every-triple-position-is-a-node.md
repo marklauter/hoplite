@@ -31,7 +31,7 @@ Property keys are predicates. `status`, `tags`, `created`, `summary` sit in the 
 ### Shared value node
 
 - Address: the value itself — `status:locked`, `tag:note`, `created:2026-06-30`.
-- Carries: categorical, multi-document values. The operand is just a string — `status:in progress` is legal; characters strict Turtle disallows pay the export-boundary tax, raw natively.
+- Carries: categorical, multi-document values. The operand is a string; mid-token characters strict Turtle disallows (dots, dashes, slashes) ride the dialect relaxation, but whitespace is a token delimiter — how whitespace-bearing values address is an open question in [[docs/hoplite/schema.md]].
 - One node per distinct value, shared by every subject that asserts it — which is what makes values walkable ("who else carries this value").
 - Range queries ride lexicographic uri scans; ISO-8601 dates sort.
 

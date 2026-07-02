@@ -96,12 +96,13 @@ Four kinds of address, three resolution paths:
 - **Slot uris** (`summary:<doc-uri>`) — never stored, so the dictionary misses; the resolver then splits on the **first colon** (the operand keeps its own colons — `created:2026-06-30T21:34` parses fine, and url operands are unreachable here because urls are stored and hit the dictionary) and runs three seeks: label → `predicateid`, tail → `nodeid` (aliases apply, so slot addresses survive renames), `(nodeid, predicateid)` → the value.
 - **Statements** — no uri. A triple is addressed by its three terms, consistent with RDF; nothing in the model points at a statement, and `confidence` rides in-row.
 
-The value-node operand is just a string: `status:in progress` is a legal value-node uri — the dictionary key is text, the first-colon parse is indifferent to what follows, and colon addresses are never authored wikilinks. Spaces and other characters strict Turtle disallows pay the same boundary tax as slashes: encoded at export, raw natively. The value-node/slot line is therefore semantic, not lexical — enumerable values intern as nodes; freeform prose and blobs go out-of-line as slots.
+The value-node operand is a string, and the dialect relaxation covers any character that is unambiguous mid-token — dots, dashes, slashes — because storage is a text key, the first-colon parse is indifferent to what follows, and colon addresses are never authored wikilinks. The relaxation cannot cover token delimiters: whitespace separates terms in every Turtle-shaped context, so `:status:in progress` is unwritable in the query language no matter how permissive the dialect.
 
 Open questions, held for the importer:
 
 1. **Predicates are not addressable.** In RDF a predicate is an IRI — a resource you can make statements about (`rdfs:domain`, `owl:inverseOf`). Hoplite's predicates live outside the dictionary, so a predicate cannot be a subject, and nothing links `predicate.label` to the glossary document that defines it. If statements about predicates are ever needed, the move is interning predicates into the dictionary; until then the glossary carries their definitions out-of-band.
-2. **Anchors.** The wikilink grammar admits `doc#section` and `doc#^block` targets. Whether an anchored target earns its own node or resolves to the document's node is unresolved.
+2. **Token-breaking characters in enumerable values.** `status: in progress` is categorical and wants to be a walkable value node, but whitespace cannot appear in a query-language term. Percent-encode, slugify at import, or a quoted-term form; undecided. (Demoting to a slot loses the walkability that makes a categorical value worth interning.)
+3. **Anchors.** The wikilink grammar admits `doc#section` and `doc#^block` targets. Whether an anchored target earns its own node or resolves to the document's node is unresolved.
 
 ## node
 
