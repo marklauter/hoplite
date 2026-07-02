@@ -1,6 +1,6 @@
 ---
 title: Schema
-summary: "The SQLite schema for the Hoplite knowledge graph — a triple store over a node dictionary: nodes, predicates, statement edges, the document facet backing the slot nodes, and FTS."
+summary: "The SQLite schema for the Hoplite knowledge graph — a triple store over a node dictionary: nodes, predicates, statement edges, the slot store backing the slot nodes, and FTS."
 tags: [hoplite, schema, reference]
 created: 2026-06-21
 status: evolving
@@ -41,13 +41,12 @@ create table edge (
 create index idx_edge_dst on edge(dst, predicateid, src, confidence);
 create index idx_edge_predicate on edge(predicateid, src, dst, confidence);
 
-create table document (
-  nodeid integer primary key references node(id),
-  title text,
-  summary text,
-  content_hash text,
-  minhash blob
-);
+create table slot (
+  nodeid integer not null references node(id),
+  predicateid integer not null references predicate(id),
+  value,
+  primary key (nodeid, predicateid)
+) without rowid;
 
 create virtual table fts using fts5(
   uri unindexed,
@@ -67,20 +66,20 @@ The graph is rebuilt by drop-and-recreate, never incrementally — so the domina
 - During the rebuild, relax durability pragmas — `journal_mode` and `synchronous` — since a crash just means re-running the rebuild.
 - `foreign_keys` enforcement is OFF by default in SQLite. The `REFERENCES` clauses are free documentation unless enforcement is enabled; if it is, every insert pays a check the builder doesn't need for data it constructs consistently itself. Decide deliberately whether to turn it on.
 
-The graph is a pure function of the corpus: every node uri and every statement derives from file content, never from load order. Nothing carries a surrogate address — a rebuild reproduces the graph byte-identically.
+The graph is a pure function of the corpus: every node uri, every statement, and every slot key derives from file content, never from load order. Nothing carries a surrogate address — a rebuild reproduces the graph byte-identically.
 
 ## node
 
 The node dictionary: one row per addressable resource — the graph's vertices and the terms of every triple's subject and object positions. `id` is identity within the graph; `uri` is the external, medium-agnostic address. A node holds identity and nothing more; a resource's facts attach through statements.
 
-Variants are derived from the uri and the facet, not flagged:
+Variants are derived from the uri and the slot store, not flagged:
 
-- **document** — a corpus uri with a [document facet](#document) row.
-- **ghost** — a corpus uri with no facet row: a dangling target, named before it is written.
+- **document** — a corpus uri with [slot](#slot) rows. The witness is `content_hash`: the importer computes it for every real file unconditionally, so bytes exist behind the node exactly when the hash slot does.
+- **ghost** — a corpus uri with no slot rows: a dangling target, named before it is written.
 - **url** — a scheme-carrying uri (`https://...`): an external resource.
 - **value** — a vocabulary uri carrying its value in the address (`tag/note`, `status/locked`, `created/2026-06-30`). Interned at first assertion; shared by every subject that asserts it, which is what makes values walkable.
 
-Slot nodes (`summary/<doc-uri>`, `title/<doc-uri>`, `minhash/<doc-uri>`) are **not** stored. A slot address derives from subject + predicate, so the graph layer projects the node and its statement from the document facet on demand.
+Slot nodes (`summary/<doc-uri>`, `title/<doc-uri>`, `minhash/<doc-uri>`) are **not** stored here. A slot address derives from subject + predicate, so the graph layer projects the node and its statement from the [slot store](#slot) on demand.
 
 The unique uri index doubles as the value-range index: value uris embed their value, and ISO-8601 dates sort lexicographically, so a temporal range (`created > 2026-06`) is an ordinary prefix scan over `created/...` uris.
 
@@ -109,15 +108,25 @@ Traversal indexes — the `WITHOUT ROWID` table is clustered on its primary key,
 - `idx_edge_dst` — reverse / "backtrack" traversal: seek `dst`, optionally narrowed by predicate, read `(src, confidence)`.
 - `idx_edge_predicate` — predicate-led access: every statement carrying a predicate ("all cites edges", "all docs with a status"), covering `(src, dst, confidence)`.
 
-## document
+## slot
 
-The document facet: the slot-node backing store. One row per resolved document, keyed 1:1 by nodeid — the presence of this row is what makes a corpus node a document rather than a ghost. `title` and `summary` are authored description; `content_hash` and `minhash` are byte fingerprints for change detection and near-duplicate inference. The graph layer projects each column as a slot node — `title/<doc-uri>`, `summary/<doc-uri>`, `minhash/<doc-uri>` — and its statement, on demand; none of it is stored as node or edge rows.
+The slot store: the long-value half of the term dictionary. Where a value node carries its value in the address, a slot holds the values that don't fit one — freeform text (`title`, `summary`) and blobs (`content_hash`, `minhash`) — one row per subject per slot predicate. The `PRIMARY KEY (nodeid, predicateid)` is the functional constraint: one value per document per slot, enforced by the key rather than by column shape. The bare `value` column leans on SQLite's per-row typing — text and blob coexist; a datatype tag column is the escape hatch if that ever proves too loose.
 
-`created` left this table: an authored creation date is an ordinary property now — a statement to a value node like `created/2026-06-30` — and temporal ordering rides the node dictionary's uri index (see [node](#node)).
+A slot predicate is not a schema migration: `title`, `summary`, and any future out-of-line predicate are rows in `predicate` and rows here, never columns.
+
+Addressing — a slot's uri is `<predicate-label>/<subject-uri>` (`summary/docs/notes/foo.md`; fully qualified, `hoplite://summary/docs/notes/foo.md`). The parse is unambiguous: a predicate label is a single slug segment, so the resolver splits on the first slash. Resolution is three index seeks:
+
+1. head → `predicate.label` → `predicateid`.
+2. tail → `node.uri` → `nodeid`, falling through to `node_alias` on a miss — so slot addresses survive renames for free.
+3. `(nodeid, predicateid)` → the clustered primary key here → the value.
+
+Shared value nodes and slot nodes share the `<predicate>/<tail>` surface. The resolver distinguishes them by where they live: value nodes are stored in the dictionary, slot nodes never are — so resolution probes `node.uri` for the whole address first; a hit is a value node, a miss parses the slot. Inside the database, a slot's address is the composite key `(nodeid, predicateid)`: derived from the corpus, stable across rebuilds, no surrogate.
+
+`created` is not a slot: an authored creation date is an ordinary property — a statement to a value node like `created/2026-06-30` — and temporal ordering rides the node dictionary's uri index (see [node](#node)).
 
 ## fts
 
-Full-text search over each node's text projection (title, summary, body), powering ranked lexical search. `uri` is stored `UNINDEXED` only to tie a hit back to its node; the porter/unicode61 tokenizer gives stemmed matching.
+Full-text search over each document's text projection (title, summary, body), powering ranked lexical search. `uri` is stored `UNINDEXED` only to tie a hit back to its node; the porter/unicode61 tokenizer gives stemmed matching. Title and summary feed from the slot store; body comes from the file at index time.
 
 ## No namespace view
 

@@ -55,7 +55,7 @@ Hoplite spec outline and index. Each items is a concept; some are their own file
 ## Outside the map
 
 - [[docs/hoplite/hoplite-architecture.md]] — system internals (walker, FTS, minhash, dump). Placement under the map is deferred; it overlaps `indexing`.
-- [[docs/hoplite/schema.md]] — the canonical SQLite schema in a `sql` block: a triple store over a node dictionary (nodes, predicates, statement edges, the document facet backing the slot nodes, FTS). Source of truth the importer's `schema.sql` mirrors.
+- [[docs/hoplite/schema.md]] — the canonical SQLite schema in a `sql` block: a triple store over a node dictionary (nodes, predicates, statement edges, the slot store backing the slot nodes, FTS). Source of truth the importer's `schema.sql` mirrors.
 - [[docs/hoplite/hoplite-roadmap.md]] — features deferred past day one.
 - [[docs/hoplite/glossary/README.md]] — index over the per-term glossary nodes under `docs/hoplite/glossary/`; definitions for every Hoplite domain term, cross-cutting reference over the whole map.
 
