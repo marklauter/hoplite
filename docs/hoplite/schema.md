@@ -31,7 +31,7 @@ The canonical SQLite schema for the Hoplite knowledge graph: a property graph ov
 --
 -- Every defined attribute earns a first-class home: a scalar fact is a column
 -- (on node, or on the document facet for a resolved document), a label set
--- interns into its own vocabulary plus a junction (tag, stereotype), and an
+-- interns into its own vocabulary plus a junction (tag, predicate), and an
 -- alternate identity resolves through node_alias. That leaves node_property
 -- purely for open vocabulary — author-coined keys with no model-defined meaning.
 
@@ -115,7 +115,7 @@ create index idx_node_property_key_value on node_property(keyid, value);
 
 -- The interned vocabulary of tags — the open-ended set of classification labels a
 -- document carries (note, journal, design, and the synthetic ghost/url the walker
--- injects). tags is the node-side counterpart to stereotype: a label set, not a
+-- injects). tags is the node-side counterpart to predicate: a label set, not a
 -- key/value property, so its labels intern here and attach through a junction
 -- rather than living in node_property. Open vocabulary, the label stored once and
 -- referenced by id.
@@ -126,7 +126,7 @@ create table tag (
 
 -- A node's classification: the tag labels it carries. A node may carry several
 -- (PRIMARY KEY (nodeid, tagid) holds a set and dedupes within it). The node-side
--- mirror of edge_stereotype — an interned label set via a junction.
+-- mirror of edge_predicate — an interned label set via a junction.
 create table node_tag (
   nodeid integer not null references node(id),
   tagid integer not null references tag(id),
@@ -162,31 +162,31 @@ create table edge (
 create index idx_edge_src on edge(src, dst, id, confidence);
 create index idx_edge_dst on edge(dst, src, id, confidence);
 
--- The interned vocabulary of edge stereotypes — the open-ended set of labels an
+-- The interned vocabulary of edge predicates — the open-ended set of labels an
 -- author applies to an asserted edge (cites, supports, supersedes, contradicts,
 -- not-related, ...). The edge-side counterpart to tag: a label set the agent
 -- surveys to learn what link-meanings the corpus uses before filtering edges by
 -- one. Open vocabulary, the label stored once and referenced by id.
-create table stereotype (
+create table predicate (
   id integer primary key,
   label text not null unique collate nocase
 );
 
--- An edge's description: the stereotype labels it carries, classifying what kind
--- of link it is. An edge may carry several (PRIMARY KEY (edgeid, stereotypeid)
+-- An edge's description: the predicate labels it carries, classifying what kind
+-- of link it is. An edge may carry several (PRIMARY KEY (edgeid, predicateid)
 -- holds a set and dedupes within it). Unlike a node, an edge has no open
--- key/value vocabulary — its only authored description is the stereotype — so
+-- key/value vocabulary — its only authored description is the predicate — so
 -- this is a junction table, the edge-side mirror of node_tag, and the label
--- interns through `stereotype` rather than repeating on every row.
-create table edge_stereotype (
+-- interns through `predicate` rather than repeating on every row.
+create table edge_predicate (
   edgeid integer not null references edge(id),
-  stereotypeid integer not null references stereotype(id),
-  primary key (edgeid, stereotypeid)
+  predicateid integer not null references predicate(id),
+  primary key (edgeid, predicateid)
 ) without rowid;
--- Reverse lookup: which edges carry a given stereotype (WHERE stereotypeid = ?).
--- The PRIMARY KEY leads with edgeid ("what are edge X's stereotypes?"); this
--- index leads with stereotypeid for the reverse — edges filtered by stereotype.
-create index idx_edge_stereotype on edge_stereotype(stereotypeid, edgeid);
+-- Reverse lookup: which edges carry a given predicate (WHERE predicateid = ?).
+-- The PRIMARY KEY leads with edgeid ("what are edge X's predicates?"); this
+-- index leads with predicateid for the reverse — edges filtered by predicate.
+create index idx_edge_predicate on edge_predicate(predicateid, edgeid);
 
 -- Full-text search over each node's text projection (title, summary, body),
 -- powering ranked lexical search. uri is stored UNINDEXED only to tie a hit
@@ -202,9 +202,9 @@ create virtual table fts using fts5(
 
 -- The surveyable namespaces as a derived view, not a base table: the union of the
 -- interning vocabularies, each entry projected as a uri-style path rooted under
--- its owning entity (edge/stereotype/cites, node/property/status, node/tag/note)
+-- its owning entity (edge/predicate/cites, node/property/status, node/tag/note)
 -- — so a namespace is addressable in the same segmented form as a node uri. tag,
--- property_key, and stereotype are the open vocabularies whose labels and keys
+-- property_key, and predicate are the open vocabularies whose labels and keys
 -- authors coin. No denormalized table to keep in sync — the view runs a handful
 -- of index scans over tiny tables on demand and rides the drop-and-recreate
 -- rebuild for free. order by 1 groups by entity, then source, then value; the
@@ -214,7 +214,7 @@ create virtual table fts using fts5(
 -- query, not a view: the survey tool parses the namespace and seeks WHERE
 -- keyid = ? on idx_node_property_key_value.
 create view namespace as
-select 'edge/stereotype/' || label as namespace from stereotype
+select 'edge/predicate/' || label as namespace from predicate
 union all
 select 'node/property/' || key from property_key
 union all
