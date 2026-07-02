@@ -15,7 +15,7 @@ Predicates were never ruled out of the dictionary — "not a node" was *edge's* 
 ```turtle
 :docs/notes/foo.md   :cites     :docs/notes/bar.md            # document → document
 :docs/notes/foo.md   :tag       :tag:note                     # document → shared value node
-:docs/notes/foo.md   :status    :status:locked                # document → shared value node
+:docs/notes/foo.md   :priority  :priority:high                # document → shared value node
 :docs/notes/foo.md   :created   :created:2026-06-30           # document → shared value node
 :docs/notes/foo.md   :summary   :summary:docs/notes/foo.md    # document → literal node
 ```
@@ -32,7 +32,7 @@ Property keys are predicates. `status`, `tags`, `created`, `summary` sit in the 
 
 ### Shared value node
 
-- Address: the value itself — `status:locked`, `tag:note`, `created:2026-06-30`.
+- Address: the value itself — `priority:high`, `tag:note`, `created:2026-06-30`.
 - Carries: categorical, multi-document values. The operand is a string; mid-token characters strict Turtle disallows (dots, dashes, slashes) ride the dialect relaxation, but whitespace is a token delimiter — how whitespace-bearing values address is an open question in [[docs/hoplite/schema.md]].
 - One node per distinct value, shared by every subject that asserts it — which is what makes values walkable ("who else carries this value").
 - Range queries ride lexicographic uri scans; ISO-8601 dates sort.

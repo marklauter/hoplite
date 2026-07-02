@@ -64,7 +64,7 @@ Where the schema matches RDF:
 
 - **The graph is a set of triples.** `edge`'s primary key enforces it: asserting the same triple twice yields one row, and multi-valued properties are repeated assertions — the idiom RDF itself prefers over its containers.
 - **Every term is a resource, predicates included.** Every term in every position is a node in the dictionary, addressed by uri; a predicate is a node carrying the [predicate facet](#predicate), so statements about the vocabulary are representable — stored, never enforced. Every node is named (RDF: no blank nodes): every uri derives from the corpus, so a rebuild reproduces the graph byte-identically.
-- **Values are resources.** RDF permits a value to be a resource, and its practice recommends it — "things, not strings." Hoplite makes it the rule: a value interns as a node (`status:locked`), and where a literal may only end a statement, a value node can begin or relate one — described and walked like anything else. Bytes too large for an address live in the [literal](#literal) table behind a projected node (`summary:<doc-uri>`).
+- **Values are resources.** RDF permits a value to be a resource, and its practice recommends it — "things, not strings." Hoplite makes it the rule: a value interns as a node (`priority:high`), and where a literal may only end a statement, a value node can begin or relate one — described and walked like anything else. Bytes too large for an address live in the [literal](#literal) table behind a projected node (`summary:<doc-uri>`).
 - **`confidence` is the RDF-star annotation.** A statement about the statement — `<< src p dst >> hoplite:confidence n` — carried in-row: the triple's natural key makes every edge natively reified.
 - **A statement is addressed by its terms.** A triple is identified by its three positions, in RDF and here alike (see [Addressing](#addressing)).
 
@@ -102,7 +102,7 @@ Five stored kinds resolve with one dictionary seek on `node.uri`, falling throug
 - **document** — `docs/notes/foo.md`: a corpus path.
 - **ghost** — `tag`: a corpus target named before its file exists.
 - **url** — `https://...`: a scheme-carrying external reference.
-- **value** — `status:locked`, `tag:note`, `created:2026-06-30`: the value lives in the address, so resolution completes at the dictionary — and the unique uri index doubles as a range index (`created:2026-06` is a prefix scan; ISO-8601 sorts lexicographically).
+- **value** — `priority:high`, `tag:note`, `created:2026-06-30`: the value lives in the address, so resolution completes at the dictionary — and the unique uri index doubles as a range index (`created:2026-06` is a prefix scan; ISO-8601 sorts lexicographically).
 - **predicate** — `predicate:cites`: the vocabulary's own entries, nodes carrying the [predicate facet](#predicate).
 
 One kind is projected on demand:
@@ -117,7 +117,7 @@ And one is addressed without a uri:
 
 Turtle-shaped contexts — the query language — qualify every address: the leading colon at minimum (`:tag:note`). Turtle's first colon is the namespace boundary (a prefix cannot contain a colon), so everything after it is the local name, where Turtle admits raw colons — the separator serializes unescaped. Qualification keeps predicate labels clear of declared prefixes: bare `tag:note` would read as prefix `tag`.
 
-Hoplite's dialect relaxes strict `PN_LOCAL` in one way: raw `/` is allowed in local names — paths are just strings here; a strict-Turtle export escapes them (`\/`) or uses full-IRI form. The relaxation covers any character that is unambiguous mid-token — dots, dashes, slashes. Token delimiters stay out of reach: whitespace separates terms in every Turtle-shaped context, so `:status:in progress` is unwritable however permissive the dialect (open question 1).
+Hoplite's dialect relaxes strict `PN_LOCAL` in one way: raw `/` is allowed in local names — paths are just strings here; a strict-Turtle export escapes them (`\/`) or uses full-IRI form. The relaxation covers any character that is unambiguous mid-token — dots, dashes, slashes. Token delimiters stay out of reach: whitespace separates terms in every Turtle-shaped context, so `:topic:property graphs` is unwritable however permissive the dialect (open question 1).
 
 ### Cross-repo growth path
 
@@ -127,7 +127,7 @@ Uris are corpus-scoped local names. The vault segment (`<vault>/docs/foo.md` in 
 
 Held for the importer:
 
-1. **Token-breaking characters in enumerable values.** `status: in progress` is categorical and wants to be a walkable value node, but whitespace ends a query-language term. Percent-encode, slugify at import, or a quoted-term form; undecided. Demoting to a literal loses the walkability that makes a categorical value worth interning.
+1. **Token-breaking characters in enumerable values.** `topic: property graphs` is categorical and wants to be a walkable value node, but whitespace ends a query-language term. Percent-encode, slugify at import, or a quoted-term form; undecided. Demoting to a literal loses the walkability that makes a categorical value worth interning.
 2. **Anchors.** The wikilink grammar admits `doc#section` and `doc#^block` targets. Whether an anchored target earns its own node or resolves to the document's node is unresolved.
 3. **The register form.** Documents are addressed by bare path today; a uniform kind-rooted register (`document:docs/tag.md`, `url:https://...`) would make every address self-describe its kind and turn resolver probing into pure namespace dispatch, at the cost of verbosity and a longer reserved-word list (`document`, `url` joining `predicate`). Bare-canonical stands until ruled.
 
