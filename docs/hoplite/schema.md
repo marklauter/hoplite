@@ -62,8 +62,8 @@ create virtual table fts using fts5(
 
 Where the schema matches RDF:
 
-- **The graph is a set of triples.** `edge`'s primary key enforces it: asserting the same triple twice yields one row, and multi-valued properties are repeated assertions.
-- **Every term is a resource, predicates included.** Every term in every position is a node in the dictionary, addressed by uri; a predicate is a node carrying the [predicate facet](#predicate), so statements about the vocabulary are representable — stored as data, treated as data. Every node is named (RDF: no blank nodes): every uri derives from the corpus, so a rebuild reproduces the graph byte-identically.
+- **The graph is a set of triples.** `edge`'s primary key enforces it: asserting the same triple twice yields one row, and multi-valued properties are repeated assertions — the idiom RDF itself prefers over its containers.
+- **Every term is a resource, predicates included.** Every term in every position is a node in the dictionary, addressed by uri; a predicate is a node carrying the [predicate facet](#predicate), so statements about the vocabulary are representable — stored, never enforced. Every node is named (RDF: no blank nodes): every uri derives from the corpus, so a rebuild reproduces the graph byte-identically.
 - **`confidence` is the RDF-star annotation.** A statement about the statement — `<< src p dst >> hoplite:confidence n` — carried in-row: the triple's natural key makes every edge natively reified.
 - **A statement is addressed by its terms.** A triple is identified by its three positions, in RDF and here alike (see [Addressing](#addressing)).
 
@@ -81,9 +81,11 @@ The graph is rebuilt by drop-and-recreate — the dominant cost is the bulk load
 - During the rebuild, relax the durability pragmas — `journal_mode` and `synchronous` — since a crash just means re-running the rebuild.
 - `foreign_keys` enforcement is OFF by default in SQLite. The `REFERENCES` clauses are free documentation unless enforcement is on; if it is, every insert pays a check the builder covers by constructing its data consistently. Decide deliberately.
 
+A rebuild is deterministic: every uri, statement, and slot key derives from the corpus alone, so rebuilding reproduces the graph byte-identically.
+
 ## Addressing
 
-Addresses are bare uris; the MCP tool layer is the resolver, taking a uri as a parameter. Matching is case-insensitive (`collate nocase` throughout).
+Addresses are bare uris; a scheme would be tool-api packaging, kept out of the model. The MCP tool layer is the resolver, taking a uri as a parameter. Matching is case-insensitive (`collate nocase` throughout).
 
 Authoring and addressing are separate registers. Authors write bare wikilink targets (`[[docs/tag.md]]`), per the grammar in [[docs/hoplite/expressing-edges.md]]; the forms below are what the query and survey layer speaks. The register split is a standing rule, first drawn (in an older slash-rooted form) in [[docs/notes/one-walk-verb-spans-the-corpus-and-vocabulary-graphs.md]].
 
@@ -113,7 +115,7 @@ And one is addressed without a uri:
 
 ### In the query language
 
-Turtle-shaped contexts — the query language — qualify every address: the leading colon at minimum (`:tag:note`). Turtle's first colon is the namespace boundary (a prefix contains letters only), so everything after it is the local name, where Turtle admits raw colons — the separator serializes unescaped. Qualification keeps predicate labels clear of declared prefixes: bare `tag:note` would read as prefix `tag`.
+Turtle-shaped contexts — the query language — qualify every address: the leading colon at minimum (`:tag:note`). Turtle's first colon is the namespace boundary (a prefix cannot contain a colon), so everything after it is the local name, where Turtle admits raw colons — the separator serializes unescaped. Qualification keeps predicate labels clear of declared prefixes: bare `tag:note` would read as prefix `tag`.
 
 Hoplite's dialect relaxes strict `PN_LOCAL` in one way: raw `/` is allowed in local names — paths are just strings here; a strict-Turtle export escapes them (`\/`) or uses full-IRI form. The relaxation covers any character that is unambiguous mid-token — dots, dashes, slashes. Token delimiters stay out of reach: whitespace separates terms in every Turtle-shaped context, so `:status:in progress` is unwritable however permissive the dialect (open question 1).
 
@@ -151,7 +153,7 @@ Slot addresses inherit a document's aliases for free, since they embed its uri.
 
 ## predicate
 
-The predicate facet: the registration that licenses a node for the middle position. A predicate is special by role — a statement needs a relationship in its middle position, so the edge's middle column is typed to this table alone. The predicate term is a node like any other (uri `predicate:<label>`), so it also stands as a subject or object: statements about the vocabulary (`cites inverse-of cited-by`, `supersedes defined-by <doc>`) are stored as data and treated as data.
+The predicate facet: the registration that licenses a node for the middle position. A predicate is special by role — a statement needs a relationship in its middle position, so the edge's middle column is typed to this table alone. The predicate term is a node like any other (uri `predicate:<label>`), so it also stands as a subject or object: statements about the vocabulary (`cites inverse-of cited-by`, `supersedes defined-by <doc>`) are stored like any triple, never enforced.
 
 One flat open vocabulary: the former property keys (`tag`, `status`, `created`) and the edge labels (`cites`, `supports`, `supersedes`, `links-to`) are the same kind of thing, interned at first use in the middle position — a node row plus this facet row. The vocabulary is open and author-coined; surveying it is a scan of this table.
 
