@@ -60,18 +60,14 @@ create virtual table fts using fts5(
 
 ## The RDF reading
 
-Where the schema matches RDF:
+How the schema realizes RDF:
 
 - **The graph is a set of triples.** `edge`'s primary key enforces it: asserting the same triple twice yields one row, and multi-valued properties are repeated assertions — the idiom RDF itself prefers over its containers.
 - **Every term is a resource, predicates included.** Every term in every position is a node in the dictionary, addressed by uri; a predicate is a node carrying the [predicate facet](#predicate), so statements about the vocabulary are representable — stored, never enforced. Every node is named (RDF: no blank nodes): every uri derives from the corpus, so a rebuild reproduces the graph byte-identically.
 - **Values are resources.** RDF permits a value to be a resource, and its practice recommends it — "things, not strings." Hoplite makes it the rule: a value interns as a node (`priority:high`), and where a literal may only end a statement, a value node can begin or relate one — described and walked like anything else. Bytes too large for an address live in the [literal](#literal) table behind a projected node (`summary:<doc-uri>`).
 - **`confidence` is the RDF-star annotation.** A statement about the statement — `<< src p dst >> hoplite:confidence n` — carried in-row: the triple's natural key makes every edge natively reified.
 - **A statement is addressed by its terms.** A triple is identified by its three positions, in RDF and here alike (see [Addressing](#addressing)).
-
-Where it deliberately diverges:
-
-- **Closed world.** RDF assumes an open world, where absence means unknown. Hoplite's corpus is the entire world: the graph is a pure function of the files, rebuilt whole, so absence is knowable and insertion order can settle precedence.
-- **Corpus-scoped names.** Uris are local names; the vault segment is the growth path to global identity (see [Addressing](#addressing)).
+- **Names are relative references.** Corpus and vocabulary uris are relative names — url nodes are already absolute — and RDF resolves relative references against a base. Assigning one (the vault, in the cross-repo model) makes identity global (see [Addressing](#addressing)).
 
 ## Rebuild
 
@@ -121,7 +117,7 @@ Hoplite's dialect relaxes strict `PN_LOCAL` in one way: raw `/` is allowed in lo
 
 ### Cross-repo growth path
 
-Uris are corpus-scoped local names. The vault segment (`<vault>/docs/foo.md` in the cross-repo model of [[docs/notes/one-walk-verb-spans-the-corpus-and-vocabulary-graphs.md]]) is the growth path to global identity: the vault plays the IRI authority, and a vault-qualified graph is the seed of an RDF named graph.
+Corpus and vocabulary uris are relative names; url nodes are absolute. The vault segment (`<vault>/docs/foo.md` in the cross-repo model of [[docs/notes/one-walk-verb-spans-the-corpus-and-vocabulary-graphs.md]]) is the base that makes identity global: the vault plays the IRI authority, and a vault-qualified graph is the seed of an RDF named graph.
 
 ### Open questions
 
