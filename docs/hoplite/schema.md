@@ -151,7 +151,7 @@ Slot addresses inherit a document's aliases for free, since they embed its uri.
 
 ## predicate
 
-The predicate facet: the registration that licenses a node for the middle position. A predicate is special by role — `doc-1 doc-2 doc-3` is three subjects in search of a verb, so the edge's middle column is typed to this table alone. The predicate term is a node like any other (uri `predicate:<label>`), so it also stands as a subject or object: statements about the vocabulary (`cites inverse-of cited-by`, `supersedes defined-by <doc>`) are stored as data and treated as data.
+The predicate facet: the registration that licenses a node for the middle position. A predicate is special by role — a statement needs a relationship in its middle position, so the edge's middle column is typed to this table alone. The predicate term is a node like any other (uri `predicate:<label>`), so it also stands as a subject or object: statements about the vocabulary (`cites inverse-of cited-by`, `supersedes defined-by <doc>`) are stored as data and treated as data.
 
 One flat open vocabulary: the former property keys (`tag`, `status`, `created`) and the edge labels (`cites`, `supports`, `supersedes`, `links-to`) are the same kind of thing, interned at first use in the middle position — a node row plus this facet row. The vocabulary is open and author-coined; surveying it is a scan of this table.
 
