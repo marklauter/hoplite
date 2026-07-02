@@ -10,7 +10,7 @@ status: evolving
 
 The canonical SQLite schema for the Hoplite knowledge graph: an RDF-shaped triple store over a node dictionary, plus an FTS5 lexical index, rebuilt by drop-and-recreate. This spec is the source of truth; the importer's `schema.sql` mirrors it.
 
-Every triple position holds a node; the middle is typed to the predicate facet. The model is [[docs/notes/every-triple-position-is-a-node.md]]; how it settled is [[docs/journal/2026-07-02-0139-the-reversal-every-triple-position-is-a-node.md]]; the term crosswalk is in [[docs/hoplite/glossary/README.md]]. The pre-reversal property-graph schema is preserved in git history.
+Every triple position holds a node; the middle is typed to the predicate registration. The model is [[docs/notes/every-triple-position-is-a-node.md]]; how it settled is [[docs/journal/2026-07-02-0139-the-reversal-every-triple-position-is-a-node.md]]; the term crosswalk is in [[docs/hoplite/glossary/README.md]]. The pre-reversal property-graph schema is preserved in git history.
 
 ## DDL
 
@@ -27,8 +27,7 @@ create table node_alias (
 create index idx_node_alias on node_alias(nodeid);
 
 create table predicate (
-  nodeid integer primary key references node(id),
-  label text not null unique collate nocase
+  nodeid integer primary key references node(id)
 );
 
 create table edge (
@@ -63,8 +62,8 @@ create virtual table fts using fts5(
 How the schema realizes RDF:
 
 - **The graph is a set of triples.** `edge`'s primary key enforces it: asserting the same triple twice yields one row, and multi-valued properties are repeated assertions — the idiom RDF itself prefers over its containers.
-- **Every term is a resource, predicates included.** Every term in every position is a node in the dictionary, addressed by uri; a predicate is a node carrying the [predicate facet](#predicate), so statements about the vocabulary are representable — stored, never enforced. Every node is named (RDF: no blank nodes): every uri derives from the corpus, so a rebuild reproduces the graph byte-identically.
-- **Values are resources.** RDF permits a value to be a resource, and its practice recommends it — "things, not strings." Hoplite makes it the rule: a value interns as a node (`priority:high`), and where a literal may only end a statement, a value node can begin or relate one — described and walked like anything else. Bytes too large for an address live in the [literal](#literal) table behind a projected node (`summary:<doc-uri>`).
+- **Every term is a resource, predicates included.** Every term in every position is a node in the dictionary, addressed by uri; a predicate is a node carrying the [predicate registration](#predicate), so statements about the vocabulary are representable — stored, never enforced. Every uri derives from the corpus, so every node is named (RDF: no blank nodes).
+- **Values are resources.** RDF permits a value to be a resource, and its practice recommends it — "things, not strings." Hoplite makes it the rule: a value interns as a node (`priority:high`), and where a literal may only end a statement, a value node can begin one as well — described and walked like anything else. Bytes too large for an address live in the [literal](#literal) table behind a projected node (`summary:<doc-uri>`).
 - **`confidence` is the RDF-star annotation.** A statement about the statement — `<< src p dst >> hoplite:confidence n` — carried in-row: the triple's natural key makes every edge natively reified.
 - **A statement is addressed by its terms.** A triple is identified by its three positions, in RDF and here alike (see [Addressing](#addressing)).
 - **Names are relative references.** Corpus and vocabulary uris are relative names — url nodes are already absolute — and RDF resolves relative references against a base. Assigning one (the vault, in the cross-repo model) makes identity global (see [Addressing](#addressing)).
@@ -75,7 +74,7 @@ The graph is rebuilt by drop-and-recreate — the dominant cost is the bulk load
 
 - Load the whole rebuild inside a single transaction.
 - During the rebuild, relax the durability pragmas — `journal_mode` and `synchronous` — since a crash just means re-running the rebuild.
-- `foreign_keys` enforcement is OFF by default in SQLite. The `REFERENCES` clauses are free documentation unless enforcement is on; if it is, every insert pays a check the builder covers by constructing its data consistently. Decide deliberately.
+- `foreign_keys` enforcement is per-connection in SQLite; the importer turns it on, so the `REFERENCES` clauses are live constraints.
 
 A rebuild is deterministic: every uri, statement, and literal key derives from the corpus alone, so rebuilding reproduces the graph byte-identically.
 
@@ -93,17 +92,17 @@ One label is **reserved**: `predicate`. An author-coined key so named would mint
 
 ### Address kinds and resolution
 
-Five stored kinds resolve with one dictionary seek on `node.uri`, falling through to `node_alias` on a miss:
+Resolution order is fixed: `node.uri`, then `node_alias`, then the colon parse. An alias is authored under the wikilink grammar, so it never contains a colon — the parse is reached only by vocabulary-shaped addresses. Five stored kinds resolve at the first two stages:
 
 - **document** — `docs/notes/foo.md`: a corpus path.
 - **ghost** — `tag`: a corpus target named before its file exists.
 - **url** — `https://...`: a scheme-carrying external reference.
 - **value** — `priority:high`, `tag:note`, `created:2026-06-30`: the value lives in the address, so resolution completes at the dictionary — and the unique uri index doubles as a range index (`created:2026-06` is a prefix scan; ISO-8601 sorts lexicographically).
-- **predicate** — `predicate:cites`: the vocabulary's own entries, nodes carrying the [predicate facet](#predicate).
+- **predicate** — `predicate:cites`: the vocabulary's own entries, nodes carrying the [predicate registration](#predicate).
 
 One kind is projected on demand:
 
-- **literal** — `summary:<doc-uri>`: the dictionary misses, so the resolver splits on the **first colon** (operands keep their own colons — `created:2026-06-30T21:34` parses fine; urls are stored, so they resolve at the dictionary before the parse) and runs three seeks: label → `predicateid`, tail → `nodeid` (aliases apply, so literal addresses survive renames), `(predicateid, nodeid)` → the value in the [literal store](#literal).
+- **literal** — `summary:<doc-uri>`: both stages miss, so the resolver splits on the **first colon** (operands keep their own colons — `created:2026-06-30T21:34` parses fine; urls are stored, so they resolve earlier) and runs three seeks: label → its `predicate:` node, tail → `nodeid` (aliases apply, so literal addresses survive renames), `(predicateid, nodeid)` → the value in the [literal store](#literal).
 
 And one is addressed without a uri:
 
@@ -126,6 +125,7 @@ Held for the importer:
 1. **Token-breaking characters in enumerable values.** `topic: property graphs` is categorical and wants to be a walkable value node, but whitespace ends a query-language term. Percent-encode, slugify at import, or a quoted-term form; undecided. Demoting to a literal loses the walkability that makes a categorical value worth interning.
 2. **Anchors.** The wikilink grammar admits `doc#section` and `doc#^block` targets. Whether an anchored target earns its own node or resolves to the document's node is unresolved.
 3. **The register form.** Documents are addressed by bare path today; a uniform kind-rooted register (`document:docs/tag.md`, `url:https://...`) would make every address self-describe its kind and turn resolver probing into pure namespace dispatch, at the cost of verbosity and a longer reserved-word list (`document`, `url` joining `predicate`). Bare-canonical stands until ruled.
+4. **One label, two value kinds.** Nothing yet forbids one predicate from both interning value nodes (`summary:draft`) and holding literal rows (`summary:<doc-uri>`) — and dictionary-first resolution would let the value nodes shadow the literal projections. The likely rule is uniform routing — a predicate's objects are all value nodes or all literal rows, never both — but it is unruled; until then the shadowing case is undefined.
 
 ## node
 
@@ -137,9 +137,9 @@ Variants derive from the uri and the facets — the address and the rows carry t
 - **ghost** — a corpus uri named before its file exists; literal rows arrive when the file does.
 - **url** — a scheme-carrying uri: an external resource.
 - **value** — a vocabulary uri carrying its value in the address. Interned at first assertion and shared by every subject that asserts it — the sharing is what makes values walkable.
-- **predicate** — a node with a [predicate facet](#predicate) row: the vocabulary's own entries, interned at first use in the middle position.
+- **predicate** — a node under the reserved `predicate:` namespace with a [registration](#predicate) row: the vocabulary's own entries, interned at first use as a key or edge label.
 
-Literal nodes (`summary:<doc-uri>`, `title:<doc-uri>`, `minhash:<doc-uri>`) are projections: a literal address derives from subject + predicate, so the graph layer projects the node and its statement from the [literal store](#literal) on demand.
+Literal nodes (`summary:<doc-uri>`, `title:<doc-uri>`, `content_hash:<doc-uri>`, `minhash:<doc-uri>`) are projections: a literal address derives from subject + predicate, so the graph layer projects the node and its statement from the [literal store](#literal) on demand.
 
 ## node_alias
 
@@ -149,11 +149,11 @@ Literal addresses inherit a document's aliases for free, since they embed its ur
 
 ## predicate
 
-The predicate facet: the registration that licenses a node for the middle position. A predicate is special by role — a statement needs a relationship in its middle position, so the edge's middle column is typed to this table alone. The predicate term is a node like any other (uri `predicate:<label>`), so it also stands as a subject or object: statements about the vocabulary (`cites inverse-of cited-by`, `supersedes defined-by <doc>`) are stored like any triple, never enforced.
+The predicate registration: the single-column table that licenses a node for the middle position. A predicate is special by role — a statement needs a relationship in its middle position, so the edge's middle column is typed to this table alone, and the constraint is live under the importer's connection (see [Rebuild](#rebuild)). Everything else about a predicate lives in the dictionary: its uri is `predicate:<label>`, so the label needs no column here, and as a node it also stands as a subject or object — statements about the vocabulary (`cites inverse-of cited-by`, `supersedes defined-by <doc>`) are stored like any triple, never enforced.
 
-One flat open vocabulary: the former property keys (`tag`, `status`, `created`) and the edge labels (`cites`, `supports`, `supersedes`, `links-to`) are the same kind of thing, interned at first use in the middle position — a node row plus this facet row. The vocabulary is open and author-coined; surveying it is a scan of this table.
+One flat open vocabulary: the former property keys (`tag`, `status`, `created`) and the edge labels (`cites`, `supports`, `supersedes`, `links-to`) are the same kind of thing, interned at first use as a key or edge label — a node row plus a registration row. The vocabulary is open and author-coined; surveying it is a `predicate:` prefix scan over the dictionary.
 
-The facet repeats the derivation pattern: a document is a node with literal rows; a predicate is a node with a predicate row.
+The registration repeats the derivation pattern: a document is a node with literal rows; a predicate is a node with a registration row.
 
 ## edge
 
@@ -170,15 +170,13 @@ Traversal indexes — the `WITHOUT ROWID` table is clustered on its primary key,
 
 ## literal
 
-The literal store: the long-literal half of the term dictionary, where a conventional triple store keeps the literals too large to intern. A value node carries its value in the address; a literal holds the values that outgrow one — freeform text (`title`, `summary`) and blobs (`content_hash`, `minhash`) — one row per subject per literal-valued predicate.
+The literal store: the long-literal half of the term dictionary, where a conventional triple store keeps the literals too large to intern. A value node carries its value in the address; a literal holds the values that outgrow one — freeform text (`title`, `summary`) and blobs (`content_hash`, `minhash`) — one row per subject per literal-valued predicate. (`created` sits on the value-node side of that line: the date rides the address, `created:2026-06-30`, and temporal ordering rides the dictionary's uri index — see [Addressing](#addressing).)
 
 The `PRIMARY KEY (predicateid, nodeid)` mirrors the address (`<predicate-label>:<node-uri>`) and enforces the functional constraint: one value per document per literal. Predicate-first clustering groups each predicate's values contiguously, so bulk sweeps — every `minhash` for near-duplicate inference, every `summary` for the FTS feed — are single range scans, while assembling one document's facet is a few exact seeks over the known literal-valued predicates. The bare `value` column uses SQLite's per-row typing — text and blob coexist; the escape hatch, if that proves too loose, is a `datatype` column on `predicate` — declared once per predicate, matching `owl:DatatypeProperty`.
 
-A new literal-valued predicate is data: `title`, `summary`, and any future out-of-line predicate are rows here and in `predicate`.
+A new literal-valued predicate is data: `title`, `summary`, and any future out-of-line predicate are rows here, plus a node and its registration.
 
 Resolution of a literal uri is specified under [Addressing](#addressing); inside the database, a literal's address is the composite key `(predicateid, nodeid)` — derived from the corpus and stable across rebuilds.
-
-`created` is an ordinary property — a statement to a value node like `created:2026-06-30` — so temporal ordering rides the node dictionary's uri index (see [Addressing](#addressing)).
 
 ## fts
 
@@ -186,4 +184,4 @@ Full-text search over each document's text projection (title, summary, body), po
 
 ## Survey
 
-Survey is match and walk over the graph proper: value nodes live in the dictionary and predicates in the facet, so surveying the vocabulary is a uri prefix scan plus a facet scan. The vocabulary is real rows — which is what retired the old namespace view.
+Survey is match and walk over the graph proper: the vocabulary is real rows in the dictionary, so surveying predicates is a `predicate:` prefix scan and surveying a key's values is a `<label>:` prefix scan — which is what retired the old namespace view.
