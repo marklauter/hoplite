@@ -31,6 +31,10 @@ Pair each trigger with a concrete example, a quoted utterance. It lets the next 
 
 The skill is neither. It is reduced philosophy, executable, example-calibrated.
 
+## Skills reference the model; they don't restate it
+
+Keep the domain lexicon out of the skill. State the mechanics in ordinary words ("the key names the relationship") and let the glossary own the vocabulary; a skill that carries a domain term duplicates the model into a second home, and the copies drift — the 2026-07 stereotype→predicate rename churned two skills for exactly this reason. Same rule for worked examples: build them from generic domains (invoices, sofas), not live model terms, so they survive the model moving.
+
 ## Form
 
 - Lead with the governing verb. A cold reader headlines the first verb they meet, so the description and the opening line both carry it.

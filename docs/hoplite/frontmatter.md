@@ -14,7 +14,7 @@ Every document opens with a YAML frontmatter block. These are Obsidian [Properti
 Keys are a flat, open vocabulary — no `document.` or `edge.` prefix. A few keys are special; the rest are yours to coin. A key's value decides what it is:
 
 - A scalar or list of scalars is a node property — a claim on the document, like `status: draft`.
-- A wikilink is an edge to another document, and the key is the stereotype, like `cites: ["[[shape]]"]`. For the wikilink grammar, see [[docs/hoplite/expressing-edges.md]].
+- A wikilink is an edge to another document, and the key is the predicate, like `cites: ["[[shape]]"]`. For the wikilink grammar, see [[docs/hoplite/expressing-edges.md]].
 
 Frontmatter is optional. A document without it is still valid; Hoplite derives what it needs.
 
@@ -33,7 +33,7 @@ There is no `updated` key. Git history is the modification record, and a hand-ma
 
 ## Edges
 
-An edge is a property whose value is a wikilink, and the key is the stereotype — `supports`, `contradicts`, `supersedes`. The vocabulary is open, like tags: a new stereotype is a doc change, not a schema migration. For the grammar and seed vocabulary, see [[docs/notes/stereotypes-are-open-vocab-edge-properties.md]].
+An edge is a property whose value is a wikilink, and the key is the predicate — `supports`, `contradicts`, `supersedes`. The vocabulary is open, like tags: a new predicate is a doc change, not a schema migration. For the grammar and seed vocabulary, see [[docs/notes/stereotypes-are-open-vocab-edge-properties.md]].
 
 ## Obsidian and Dataview
 
@@ -71,5 +71,5 @@ Warnings surface in `WriteResult.warnings`, so the agent is notified while the f
 ## See also
 
 - [[docs/hoplite/expressing-edges.md]] — the edge and wikilink grammar.
-- [[docs/notes/stereotypes-are-open-vocab-edge-properties.md]] — the edge-stereotype model.
+- [[docs/notes/stereotypes-are-open-vocab-edge-properties.md]] — the edge-predicate model, recorded under the retired name (stereotype).
 - [[docs/hoplite/hoplite-architecture.md]] — the system this feeds.

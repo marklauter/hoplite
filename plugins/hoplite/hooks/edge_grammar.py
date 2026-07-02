@@ -164,7 +164,7 @@ def inline_wikilinks(body: str) -> list[tuple[str, int]]:
     return out
 
 
-# Inline stereotype forms, beside a wikilink — see expressing-edges.md ### Inline stereotypes.
+# Inline predicate forms, beside a wikilink — see expressing-edges.md ### Inline predicates.
 _TRAILING_STEREOTYPE_RE = re.compile(
     r"[^\S\n]*(?:<!--\s*([A-Za-z0-9._-]+)\s*-->|%%\s*([A-Za-z0-9._-]+)\s*%%)"
 )

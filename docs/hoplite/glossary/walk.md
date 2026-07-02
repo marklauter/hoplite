@@ -11,5 +11,5 @@ To traverse chosen edges from seed nodes, gathering a [[neighborhood]] to a give
 ## Notes
 
 - Seeds come from a [[match]]; a further match picks the subset to walk from.
-- Walk follows an edge [[predicate]] — only the chosen stereotypes or kinds, not every edge. Depth zero is no walk.
+- Walk follows an edge [[condition]] — only the chosen predicates, not every edge. Depth zero is no walk.
 - Walk is polymorphic over both graphs: the corpus graph and the vocabulary graph. [[survey]] is walk over the vocabulary graph.

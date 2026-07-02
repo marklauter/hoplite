@@ -5,7 +5,7 @@ description: Use when designing hoplite itself — reducing a term, concept, or 
 
 # Domain modeling
 
-Actively build and sharpen hoplite's domain model by reducing each term, concept, or decision to its irreducible kernel during design — challenging terms and inventing edge cases until only one reading survives — then write it down the moment it crystallises. A term reduces to a glossary entry: the word plus the smallest phrase that unpacks it in the domain. A concept reduces to a spec document built from those terms. A decision reduces to a note recording the trade-off. (Merely *reading* the corpus is not this skill — that's a one-line habit any skill can do. This skill is for when you're changing the model, not just consuming it.)
+Actively build and sharpen hoplite's domain model by reducing each term, concept, or decision to its irreducible kernel during design — challenging terms and inventing edge cases until only one reading survives — then write it down the moment it crystallises. A term reduces to a glossary entry: the word plus the smallest phrase that unpacks it in the domain. A concept reduces to a spec document built from those terms. A decision reduces to a note recording the trade-off. (Reading the corpus for vocabulary is not this skill; this is for changing the model.)
 
 The model lives in the corpus, addressed by path:
 
@@ -32,7 +32,7 @@ If a question can be answered by exploring the corpus or codebase, then explore 
 
 ### Challenge the term
 
-Conflicts with a glossary entry or its `aliases` → call it out. "You said *kind*, but the glossary locks `kind` and `stereotype` as distinct — which do you mean?"
+Conflicts with a glossary entry or its `aliases` → call it out. "You said *bill*, but the glossary locks `invoice` (the request for payment) and `receipt` (the proof of it) as distinct — which do you mean?"
 
 ### Sharpen fuzzy language
 
@@ -52,16 +52,16 @@ More than one definition survives → apply the next constraint — a scenario, 
 
 ### Defer the decision
 
-A term or boundary being pinned before the information exists to decide well → hold it open as `evolving` and name the trigger that will force the choice. "We won't lock the stereotype vocabulary into an enum yet — keep it open, and let real edges show which stereotypes earn a definition."
+A term or boundary being pinned before the information exists to decide well → hold it open as `evolving` and name the trigger that will force the choice. "We won't lock the edge vocabulary into an enum yet — keep it open, and let real edges show which relationships earn a definition."
 
 ### Sweep for drift
 
-Reread the glossary for two entries that name the same idea or contradict each other — unreconciled overlap. Merge, alias, or draw the contrast. This is the deadline on deferral: when staying open costs more than deciding, lock it.
+Reread the glossary for two entries that name the same idea or contradict each other — unreconciled overlap. Merge, alias, or draw the contrast. When staying open costs more than deciding, lock it.
 
 ## Record
 
 To record a kernel, hand it to the skill that owns its form:
 
-- **Term** — a word plus its smallest phrase → the `/glossary` skill.
-- **Concept** — composed from locked terms → the `/spec` skill.
-- **Decision** — a hard-to-reverse trade-off → the `/decision` skill.
+- Term — a word plus its smallest phrase → the `/glossary` skill.
+- Concept — composed from locked terms → the `/spec` skill.
+- Decision — a hard-to-reverse trade-off → the `/decision` skill.

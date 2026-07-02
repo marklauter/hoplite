@@ -1,16 +1,21 @@
 ---
 title: predicate
-summary: "A condition true or false of a node or edge; the corpus narrows to those it holds for."
+summary: "A semantic label naming the relationship expressed by an edge."
 tags: [hoplite, glossary]
-created: 2026-06-30
-status: evolving
+aliases: [stereotype]
+created: 2026-06-19
+status: locked
+retired: [stereotype]
+contrast: "[[property]]"
 ---
 
-A condition true or false of a node or edge; the corpus narrows to those it holds for.
+A semantic label naming the [[relationship]] expressed by an [[edge]].
 
-## Kinds
+## Examples
 
-- a crisp [[filter]] predicate — in or out, no score.
-- a scoring [[semantic-search]] predicate — also attaches a relevance score, which [[projection]] orders by.
+- `is-a`, `has-a`, `contrast` — common structural relationships between glossary terms.
+- `cites`, `supports`, `supersedes`, `contradicts` — authored relationships between documents.
 
-A predicate is built from one or more [[predicate-atom]]s, each a single [[vocabulary]] uri.
+## Contrasts
+
+- `property` — a predicate relates a node to another node; a property claims a value on the node itself.

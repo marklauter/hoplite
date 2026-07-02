@@ -1,13 +1,13 @@
 ---
 title: semantic search
-summary: "A scoring predicate: it matches a field by meaning and attaches a relevance score to each hit."
+summary: "A scoring condition: it matches a field by meaning and attaches a relevance score to each hit."
 tags: [hoplite, glossary]
 created: 2026-06-19
 status: evolving
-is-a: "[[predicate]]"
+is-a: "[[condition]]"
 ---
 
-A scoring predicate: it matches a field by meaning, not literal text, and attaches a relevance score to each hit.
+A scoring condition: it matches a field by meaning, not literal text, and attaches a relevance score to each hit.
 
 ## Phases
 

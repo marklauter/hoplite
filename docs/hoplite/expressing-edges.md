@@ -1,6 +1,6 @@
 ---
 title: Expressing edges
-summary: "The ways to express an edge — an inline link (wikilink or markdown) or a frontmatter property whose value is a wikilink — Obsidian-native. Any inline link is an edge: an adjacent comment types it, otherwise it defaults to the `links-to` stereotype."
+summary: "The ways to express an edge — an inline link (wikilink or markdown) or a frontmatter property whose value is a wikilink — Obsidian-native. Any inline link is an edge: an adjacent comment types it, otherwise it defaults to the `links-to` predicate."
 tags: [hoplite, edges, spec]
 created: 2026-06-20
 status: locked
@@ -12,10 +12,10 @@ Hoplite supports the full Obsidian wikilink and property grammar.
 
 There are two places to express edges within a markdown document — the body and the frontmatter:
 
-- In the body, an inline link: a wikilink like `[[circle]]`, or a markdown link like `[circle](circle)`. Either is an edge. A stereotype comment beside it types the edge; without one, the edge defaults to the `links-to` stereotype (see Inline stereotypes below).
-- In frontmatter, a property whose value is a wikilink, like `cites: "[[circle]]"`. This is a typed edge, and the key (`cites`) is the stereotype.
+- In the body, an inline link: a wikilink like `[[circle]]`, or a markdown link like `[circle](circle)`. Either is an edge. A predicate comment beside it types the edge; without one, the edge defaults to the `links-to` predicate (see Inline predicates below).
+- In frontmatter, a property whose value is a wikilink, like `cites: "[[circle]]"`. This is a typed edge, and the key (`cites`) is the predicate.
 
-Every inline link is an edge — there is no plain-hypertext link in a Hoplite corpus. `links-to` is what an untyped link means; an explicit stereotype overrides it.
+Every inline link is an edge — there is no plain-hypertext link in a Hoplite corpus. `links-to` is what an untyped link means; an explicit predicate overrides it.
 
 ## Wikilinks
 
@@ -40,9 +40,9 @@ Slug and path segments use the characters `A-Z a-z 0-9 . _ -`. The `.md` extensi
 - Display text — `[[circle|shown text]]`: target first, display text second.
 - Embedding — `![[circle]]`: transcludes the target's content in place.
 
-### Inline stereotypes
+### Inline predicates
 
-A bare inline link defaults to the `links-to` stereotype. To type it, attach a stereotype in a comment beside the link. Hoplite reads three forms:
+A bare inline link defaults to the `links-to` predicate. To type it, attach a predicate in a comment beside the link. Hoplite reads three forms:
 
 - HTML comment — `[[circle]]<!--refines-->`. The default: invisible in Obsidian, on GitHub, and in any renderer.
 - Obsidian comment — `[[circle]]%%refines%%`. Invisible in Obsidian only.
@@ -50,7 +50,7 @@ A bare inline link defaults to the `links-to` stereotype. To type it, attach a s
 
 The same comment forms attach to a markdown link: `[circle](circle)<!--refines-->`.
 
-The stereotype is a slug (`[A-Za-z0-9._-]`), and the comment sits on the same line, immediately beside the link. The link is untouched in every form, so Obsidian still resolves it and draws the edge — `links-to` by default — while Hoplite reads the stereotype. The parser accepts all three; authors emit the HTML comment. (A future setting will choose the emitted form.)
+The predicate is a slug (`[A-Za-z0-9._-]`), and the comment sits on the same line, immediately beside the link. The link is untouched in every form, so Obsidian still resolves it and draws the edge — `links-to` by default — while Hoplite reads the predicate. The parser accepts all three; authors emit the HTML comment. (A future setting will choose the emitted form.)
 
 ### Ghosts
 
@@ -86,19 +86,19 @@ $
 
 - `TARGET_RE` — the regex above.
 - `validate_target` — validates a single target.
-- Frontmatter and inline extractors — pull edge targets and inline stereotypes from a document.
+- Frontmatter and inline extractors — pull edge targets and inline predicates from a document.
 
 `test_edge_grammar.py` tests the regex directly. The `check-frontmatter` hook runs the validator on every body wikilink and every frontmatter wikilink value at write time.
 
 ## Markdown links
 
-A markdown link `[text](target)` is an edge, the same as a wikilink. It defaults to the `links-to` stereotype and accepts the same inline stereotype comments (`[text](target)<!--cites-->`). A markdown link is just another link syntax.
+A markdown link `[text](target)` is an edge, the same as a wikilink. It defaults to the `links-to` predicate and accepts the same inline predicate comments (`[text](target)<!--cites-->`). A markdown link is just another link syntax.
 
 A markdown target is a CommonMark link destination. An external URL resolves to a `url` node, a relative path to a `document`, and a fragment like `#section` to a same-page anchor.
 
 ## Frontmatter edges
 
-A frontmatter edge is a property whose value is a wikilink — the key is the stereotype, the value is the target:
+A frontmatter edge is a property whose value is a wikilink — the key is the predicate, the value is the target:
 
 ```yaml
 refines: "[[pi]]"               # scalar — one edge
@@ -108,7 +108,7 @@ contrast:                       # block list — several, one per line
   - "[[triangle]]"
 ```
 
-- Key — the stereotype, like `cites` or `refines`. Keys are one flat open vocabulary: a few are special (read by meaning), and any other key is a stereotype.
+- Key — the predicate, like `cites` or `refines`. Keys are one flat open vocabulary: a few are special (read by meaning), and any other key is a predicate.
 - Value — a quoted wikilink. Quote it: Obsidian indexes the link only when it's quoted, and unquoted `[[ ]]` isn't valid YAML. Use a scalar for one edge, a list for several.
 - Edge or property, decided by value. A wikilink value makes the property an edge; a scalar value like `status: draft` makes it a node property.
 - No rendering. Display text (`|`) and embedding (`!`) work only in the body; a frontmatter edge is data.

@@ -5,6 +5,11 @@ tags: [hoplite, glossary]
 created: 2026-06-19
 status: locked
 is-a: "[[claim]]"
+contrast: "[[predicate]]"
 ---
 
 A claim expressed as a key-value pair in [[frontmatter]].
+
+## Contrasts
+
+- `predicate` — a property claims a value on the node itself; a predicate relates the node to another node.

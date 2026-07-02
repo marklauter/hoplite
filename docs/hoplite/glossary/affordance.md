@@ -10,6 +10,6 @@ An action made possible by the presence of a [[feature]].
 
 ## Examples
 
-- a stereotype affords the author asserting a relationship (`cites`, `supersedes`) and the researcher filtering edges by what it means.
+- a predicate affords the author asserting a relationship (`cites`, `supersedes`) and the researcher filtering edges by what it means.
 - the schema affords the author composing a new axis and the researcher surveying which axes exist.
 - an inferred similarity edge affords the researcher reaching relatives no one linked; only the engine can assert it, not the author.

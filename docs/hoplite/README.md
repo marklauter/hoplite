@@ -48,7 +48,7 @@ Hoplite spec outline and index. Each items is a concept; some are their own file
 - [[docs/hoplite/frontmatter.md]] — the frontmatter standard: flat Obsidian Properties, special keys, and edges as wikilink-valued properties. *Exists.*
 - [[docs/hoplite/hoplite-affordances.md]] — the affordances concept: features give rise to affordances, the write/read split, and signifiers (MCP descriptions, ambient skills). The verbs over the feature nouns; sibling of feature-taxonomy. *Exists (wip).*
 - [[docs/hoplite/hoplite-navigation.md]] — navigation: the read-side query surface — the five moves (survey, filter, walk, project, read). The read half of the affordances. *Exists (wip).*
-- [[docs/hoplite/hoplite-read-model.md]] — the read model reduced to structure: the operations (match, walk, projection, survey) and their shared predicate input (filter and semantic-search as predicate kinds). The spec that navigation's move taxonomy will reconcile against. *Exists (evolving).*
+- [[docs/hoplite/hoplite-read-model.md]] — the read model reduced to structure: the operations (match, walk, projection, survey) and their shared condition input (filter and semantic-search as condition kinds, composed into search expressions). The spec that navigation's move taxonomy will reconcile against. *Exists (evolving).*
 - [[docs/hoplite/hoplite-graph.md]] — the structure (nodes, edges, property and stereotype graph, vocabulary, BM25 FTS, minhash edges) plus **indexing**, the ETL that builds the graph from the corpus (walking the corpus → building minhash-ranked edges). Indexing is a section here, breakable into its own file if it grows. *Exists; indexing section pending.*
 - [[docs/hoplite/hoplite-tool-api.md]] — the MCP endpoint surface: survey, match, walk, reindex. Realizes the read-operations (survey/match/walk) plus the reindex trigger for indexing, so it spans graph and navigation. *Exists.*
 
@@ -63,4 +63,4 @@ Hoplite spec outline and index. Each items is a concept; some are their own file
 
 - The tree is the contract; the files trail it. A node marked *section* lives inside its parent file until it earns its own.
 - `survey` is the read-operation; `vocabulary` is its structural counterpart in graph.
-- `match` is one operation expressing two ideas — property/stereotype predicates and semantic FTS search.
+- `match` is one operation evaluating a search expression — crisp filter conditions and scoring semantic search, composed.

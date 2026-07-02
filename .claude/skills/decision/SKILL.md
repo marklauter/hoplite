@@ -7,9 +7,9 @@ description: Record a hard-to-reverse design decision as an ADR-equivalent note 
 
 A decision note records a choice hard enough to reverse that it earns a durable home. Record one only when all three hold — absent any, it's noise:
 
-- **Hard to reverse.** Changing your mind later costs.
-- **Surprising without context.** A future reader asks "why this way?"
-- **A real trade-off.** Genuine alternatives, one chosen for reasons.
+- Hard to reverse. Changing your mind later costs.
+- Surprising without context. A future reader asks "why this way?"
+- A real trade-off. Genuine alternatives, one chosen for reasons.
 
 **Offer before you write.** A decision is consequential — name the choice and the alternatives, and write only on the user's agreement.
 
@@ -41,4 +41,4 @@ status: <evolving | locked>
 
 Wikilink the terms and concepts the decision turns on, so it sits beside what it affects (link/edge syntax: `docs/hoplite/expressing-edges.md`).
 
-**Recoverable from the note alone.** Name the alternatives and the trade-off in full — the *why* must hold up without the conversation; never "the thing we discussed."
+Recoverable from the note alone: name the alternatives and the trade-off in full — the *why* must hold up without the conversation; never "the thing we discussed."
