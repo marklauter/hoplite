@@ -48,7 +48,7 @@ The line is semantic, not lexical: *enumerable → the value is the address; fre
 
 ## Slot nodes are projections
 
-A slot node's address is computable from subject + predicate, so its triple carries no new information. Storage keeps a generic slot store — `slot(nodeid, predicateid, value)`, the long-value half of the term dictionary — and the graph layer projects the nodes on demand: the pattern in [[docs/notes/uris-are-a-tool-layer-projection-over-relational-storage.md]]. The document facet dissolves into it: `title`, `summary`, and fingerprints are slot rows, not columns, so a new slot predicate is data, never a migration. The model is uniformly triples; the physics stays a keyed lookup where a keyed lookup wins.
+A slot node's address is computable from subject + predicate, so its triple carries no new information. Storage keeps a generic slot store — `slot(predicateid, nodeid, value)`, keyed in address order, the long-value half of the term dictionary — and the graph layer projects the nodes on demand: the pattern in [[docs/notes/uris-are-a-tool-layer-projection-over-relational-storage.md]]. The document facet dissolves into it: `title`, `summary`, and fingerprints are slot rows, not columns, so a new slot predicate is data, never a migration. The model is uniformly triples; the physics stays a keyed lookup where a keyed lookup wins.
 
 ## Consequences for the schema
 

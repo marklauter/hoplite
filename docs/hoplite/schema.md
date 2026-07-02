@@ -42,10 +42,10 @@ create index idx_edge_dst on edge(dst, predicateid, src, confidence);
 create index idx_edge_predicate on edge(predicateid, src, dst, confidence);
 
 create table slot (
-  nodeid integer not null references node(id),
   predicateid integer not null references predicate(nodeid),
+  nodeid integer not null references node(id),
   value,
-  primary key (nodeid, predicateid)
+  primary key (predicateid, nodeid)
 ) without rowid;
 
 create virtual table fts using fts5(
@@ -93,7 +93,7 @@ Four kinds of address, three resolution paths:
 
 - **Corpus and url uris** (`docs/notes/foo.md`, `https://...`) — one dictionary seek on `node.uri`, falling through to `node_alias` on a miss.
 - **Value uris** (`status:locked`, `created:2026-06-30`) — the whole address is a dictionary key; same seek. The value lives in the address, so resolution never touches another table.
-- **Slot uris** (`summary:<doc-uri>`) — never stored, so the dictionary misses; the resolver then splits on the **first colon** (the operand keeps its own colons — `created:2026-06-30T21:34` parses fine, and url operands are unreachable here because urls are stored and hit the dictionary) and runs three seeks: label → `predicateid`, tail → `nodeid` (aliases apply, so slot addresses survive renames), `(nodeid, predicateid)` → the value.
+- **Slot uris** (`summary:<doc-uri>`) — never stored, so the dictionary misses; the resolver then splits on the **first colon** (the operand keeps its own colons — `created:2026-06-30T21:34` parses fine, and url operands are unreachable here because urls are stored and hit the dictionary) and runs three seeks: label → `predicateid`, tail → `nodeid` (aliases apply, so slot addresses survive renames), `(predicateid, nodeid)` → the value.
 - **Statements** — no uri. A triple is addressed by its three terms, consistent with RDF; nothing in the model points at a statement, and `confidence` rides in-row.
 
 The value-node operand is a string, and the dialect relaxation covers any character that is unambiguous mid-token — dots, dashes, slashes — because storage is a text key, the first-colon parse is indifferent to what follows, and colon addresses are never authored wikilinks. The relaxation cannot cover token delimiters: whitespace separates terms in every Turtle-shaped context, so `:status:in progress` is unwritable in the query language no matter how permissive the dialect.
@@ -148,11 +148,11 @@ Traversal indexes — the `WITHOUT ROWID` table is clustered on its primary key,
 
 ## slot
 
-The slot store: the long-literal half of the term dictionary — where a conventional triple store keeps the literals too large to intern. A value node carries its value in the address; a slot holds the values that don't fit one — freeform text (`title`, `summary`) and blobs (`content_hash`, `minhash`) — one row per subject per slot predicate. The `PRIMARY KEY (nodeid, predicateid)` is the functional constraint: one value per document per slot, enforced by the key rather than by column shape. The bare `value` column leans on SQLite's per-row typing — text and blob coexist; a `datatype` column on `predicate` is the escape hatch if that ever proves too loose.
+The slot store: the long-literal half of the term dictionary — where a conventional triple store keeps the literals too large to intern. A value node carries its value in the address; a slot holds the values that don't fit one — freeform text (`title`, `summary`) and blobs (`content_hash`, `minhash`) — one row per subject per slot predicate. The `PRIMARY KEY (predicateid, nodeid)` mirrors the address (`<predicate-label>:<node-uri>`) and is the functional constraint: one value per document per slot, enforced by the key rather than by column shape. Predicate-first clustering groups each predicate's values contiguously, so bulk sweeps — every `minhash` for near-duplicate inference, every `summary` for the FTS feed — are single range scans, while assembling one document's facet is a handful of exact seeks over the few known slot predicates. The bare `value` column leans on SQLite's per-row typing — text and blob coexist; a `datatype` column on `predicate` is the escape hatch if that ever proves too loose.
 
 A slot predicate is not a schema migration: `title`, `summary`, and any future out-of-line predicate are rows in `predicate` and rows here, never columns.
 
-Resolution of a slot uri is specified under [Addressing](#addressing); inside the database, a slot's address is the composite key `(nodeid, predicateid)` — derived from the corpus, stable across rebuilds, no surrogate.
+Resolution of a slot uri is specified under [Addressing](#addressing); inside the database, a slot's address is the composite key `(predicateid, nodeid)` — derived from the corpus, stable across rebuilds, no surrogate.
 
 `created` is not a slot: an authored creation date is an ordinary property — a statement to a value node like `created:2026-06-30` — and temporal ordering rides the node dictionary's uri index (see [node](#node)).
 
