@@ -1,6 +1,6 @@
 ---
 title: Schema
-summary: "The SQLite schema for the Hoplite knowledge graph — a triple store over a node dictionary: nodes, predicates, statement edges, the slot store backing the slot nodes, and FTS."
+summary: "The SQLite schema for the Hoplite knowledge graph — an RDF-shaped triple store over a node dictionary: nodes, predicates, statement edges, the slot store backing the slot nodes, and FTS."
 tags: [hoplite, schema, reference]
 created: 2026-06-21
 status: evolving
@@ -8,9 +8,9 @@ status: evolving
 
 # Schema
 
-The canonical SQLite schema for the Hoplite knowledge graph: a triple store over a node dictionary, plus an FTS5 lexical index, rebuilt by drop-and-recreate. This spec is the source of truth — the importer's `schema.sql` mirrors it, never the other way around.
+The canonical SQLite schema for the Hoplite knowledge graph: an RDF-shaped triple store over a node dictionary, plus an FTS5 lexical index, rebuilt by drop-and-recreate. This spec is the source of truth — the importer's `schema.sql` mirrors it, never the other way around.
 
-Every triple position is a node or a predicate: subject and object are nodes; the middle is a predicate. The model is [[docs/notes/every-triple-position-is-a-node.md]]; how it settled is [[docs/journal/2026-07-02-0139-the-reversal-every-triple-position-is-a-node.md]]. The pre-reversal property-graph-shaped schema is preserved in git history.
+Every triple position is a node or a predicate: subject and object are nodes; the middle is a predicate. The model is [[docs/notes/every-triple-position-is-a-node.md]]; how it settled is [[docs/journal/2026-07-02-0139-the-reversal-every-triple-position-is-a-node.md]]; the term crosswalk is in [[docs/hoplite/glossary/README.md]]. The pre-reversal property-graph-shaped schema is preserved in git history.
 
 ## DDL
 
@@ -58,6 +58,21 @@ create virtual table fts using fts5(
 );
 ```
 
+## The RDF reading
+
+The schema realizes RDF's model with a small set of deliberate divergences. Where it matches:
+
+- **The graph is a set of triples.** An RDF graph is a set of statements; `edge`'s primary key enforces exactly that — asserting the same triple twice yields one row, and multi-valued properties are repeated assertions, never containers.
+- **Subjects and objects are resources.** Every term in subject or object position is a node in the dictionary, addressed by uri. There are **no blank nodes**: every node's uri derives from the corpus, so every resource is named — a rebuild reproduces the graph byte-identically.
+- **`confidence` is the RDF-star annotation.** A statement about the statement — `<< src p dst >> hoplite:confidence n` — carried in-row because the triple's natural key makes every edge natively reified. No reification quads, no annotation vocabulary.
+- **A statement has no address of its own.** A triple is identified by its three terms, in RDF and here alike (see [Addressing](#addressing)).
+
+Where it deliberately diverges:
+
+- **There are no literals.** RDF puts values in a third term kind — the typed literal. Hoplite splits that role in two: an enumerable, slug-safe value becomes a **value node** (`status/locked` — RDF would call this promoting the literal to a SKOS concept), and freeform text or a blob becomes a **slot** (`summary/<doc-uri>` — the long-literal store of a conventional triple store, projected as a node on demand). The datatype an RDF literal carries becomes a per-predicate fact if ever needed — a `datatype` column on `predicate`, matching `owl:DatatypeProperty`'s range — never a per-value tag.
+- **Closed world.** RDF assumes an open world — absent statements are unknown, not false. Hoplite's corpus is the entire world: the graph is a pure function of the files, rebuilt whole, so absence is knowable and the two-pass build can let insertion order settle precedence.
+- **Local names, not IRIs.** Uris are corpus-scoped. The vault segment (`node/<vault>/...` in the cross-repo model) is the growth path toward RDF's global identity — the vault plays the IRI authority, and a vault-qualified graph is the seed of a named graph — without adopting the http machinery.
+
 ## Rebuild
 
 The graph is rebuilt by drop-and-recreate, never incrementally — so the dominant cost is the bulk load, and the biggest performance levers live in the loader, not the DDL:
@@ -66,11 +81,27 @@ The graph is rebuilt by drop-and-recreate, never incrementally — so the domina
 - During the rebuild, relax durability pragmas — `journal_mode` and `synchronous` — since a crash just means re-running the rebuild.
 - `foreign_keys` enforcement is OFF by default in SQLite. The `REFERENCES` clauses are free documentation unless enforcement is enabled; if it is, every insert pays a check the builder doesn't need for data it constructs consistently itself. Decide deliberately whether to turn it on.
 
-The graph is a pure function of the corpus: every node uri, every statement, and every slot key derives from file content, never from load order. Nothing carries a surrogate address — a rebuild reproduces the graph byte-identically.
+## Addressing
+
+Addresses are bare uris — no scheme; the MCP tool layer is the resolver, taking a uri as a parameter. Matching is case-insensitive (`collate nocase` throughout). The uri grammar is slug segments joined by `/`, per [[docs/hoplite/expressing-edges.md]].
+
+Four kinds of address, three resolution paths:
+
+- **Corpus and url uris** (`docs/notes/foo.md`, `https://...`) — one dictionary seek on `node.uri`, falling through to `node_alias` on a miss.
+- **Value uris** (`status/locked`, `created/2026-06-30`) — the whole address is a dictionary key; same seek. The value lives in the address, so resolution never touches another table.
+- **Slot uris** (`summary/<doc-uri>`) — never stored, so the dictionary misses; the resolver then splits on the first slash (a predicate label is a single segment, so the parse is unambiguous) and runs three seeks: label → `predicateid`, tail → `nodeid` (aliases apply, so slot addresses survive renames), `(nodeid, predicateid)` → the value.
+- **Statements** — no uri. A triple is addressed by its three terms, consistent with RDF; nothing in the model points at a statement, and `confidence` rides in-row.
+
+Open questions, held for the importer:
+
+1. **Predicates are not addressable.** In RDF a predicate is an IRI — a resource you can make statements about (`rdfs:domain`, `owl:inverseOf`). Hoplite's predicates live outside the dictionary, so a predicate cannot be a subject, and nothing links `predicate.label` to the glossary document that defines it. If statements about predicates are ever needed, the move is interning predicates into the dictionary (`predicate/<label>` nodes); until then the glossary carries their definitions out-of-band.
+2. **Namespace collision.** Value and slot namespaces are rooted by predicate labels, so a predicate coined with the same label as a top-level corpus folder would collide with document uris. Entity-rooted forms (`node/tag/note`) are the fallback.
+3. **Categorical but not slug-safe values.** `status: in progress` is enumerable but doesn't fit the uri grammar — the value-node/slot line cracks. Slugify, encode, or demote to a slot; undecided.
+4. **Anchors.** The wikilink grammar admits `doc#section` and `doc#^block` targets. Whether an anchored target earns its own node or resolves to the document's node is unresolved.
 
 ## node
 
-The node dictionary: one row per addressable resource — the graph's vertices and the terms of every triple's subject and object positions. `id` is identity within the graph; `uri` is the external, medium-agnostic address. A node holds identity and nothing more; a resource's facts attach through statements.
+The node dictionary: one row per resource — the terms of every triple's subject and object positions. `id` is identity within the graph; `uri` is the external, medium-agnostic address. A node holds identity and nothing more; a resource's facts attach through statements.
 
 Variants are derived from the uri and the slot store, not flagged:
 
@@ -83,8 +114,6 @@ Slot nodes (`summary/<doc-uri>`, `title/<doc-uri>`, `minhash/<doc-uri>`) are **n
 
 The unique uri index doubles as the value-range index: value uris embed their value, and ISO-8601 dates sort lexicographically, so a temporal range (`created > 2026-06`) is an ordinary prefix scan over `created/...` uris.
 
-Open question: value namespaces are rooted by predicate labels, so a predicate coined with the same label as a top-level corpus folder would collide with document uris. Resolve when the importer lands; entity-rooted forms (`node/tag/note`) are the fallback.
-
 ## node_alias
 
 Alternate identities: additional uris that resolve to a node, asserted by the author (e.g. on rename, so old wikilinks still reach the file). A resolution index, not a description — an alias is globally unique and maps to one node, so it is the primary key; the reverse index answers "what are node X's aliases?". It differs from `node.uri` only in that uri is the canonical identity.
@@ -93,13 +122,13 @@ Slot addresses inherit a document's aliases for free, since they embed its uri.
 
 ## predicate
 
-The interned vocabulary of predicates — the middle position of every triple, naming the relationship a statement asserts. One flat open vocabulary: the former property keys (`tag`, `status`, `created`) and the edge labels (`cites`, `supports`, `supersedes`, `links-to`) are the same kind of thing. The label is stored once and referenced by id; the vocabulary is glossary-governed, and surveying it is a scan of this table.
+The interned vocabulary of predicates — the middle position of every triple, naming the relationship a statement asserts; RDF's predicate, kept in its own table rather than the dictionary (see [Addressing](#addressing), open question 1). One flat open vocabulary: the former property keys (`tag`, `status`, `created`) and the edge labels (`cites`, `supports`, `supersedes`, `links-to`) are the same kind of thing. The label is stored once and referenced by id; the vocabulary is glossary-governed, and surveying it is a scan of this table.
 
 ## edge
 
-A statement: subject — predicate — object, weighted by confidence. One row per triple; what the old model stored as one edge carrying a set of labels is several statements here. `confidence` is per-statement — the natively reified "statement about the statement" (RDF-star: `<< src p dst >> hoplite:confidence n`). An authored statement carries 1.0; an inferred one carries its inference score.
+A statement — an RDF triple: subject, predicate, object, weighted by confidence. One row per triple; what the old model stored as one edge carrying a set of labels is several statements here. `confidence` is per-statement — the RDF-star annotation `<< src p dst >> hoplite:confidence n`, carried in-row. An authored statement carries 1.0; an inferred one carries its inference score.
 
-No surrogate id: with the predicate in-row there is no junction left to key, and the natural key is the triple itself.
+No surrogate id: the natural key is the triple itself, which is also what makes every edge natively reified — the statement's identity is its terms.
 
 Two-pass build: asserted statements load first; inferred ones follow and collide out against the primary key. The author's word wins by insertion order, so no per-statement provenance need be recorded.
 
@@ -110,17 +139,11 @@ Traversal indexes — the `WITHOUT ROWID` table is clustered on its primary key,
 
 ## slot
 
-The slot store: the long-value half of the term dictionary. Where a value node carries its value in the address, a slot holds the values that don't fit one — freeform text (`title`, `summary`) and blobs (`content_hash`, `minhash`) — one row per subject per slot predicate. The `PRIMARY KEY (nodeid, predicateid)` is the functional constraint: one value per document per slot, enforced by the key rather than by column shape. The bare `value` column leans on SQLite's per-row typing — text and blob coexist; a datatype tag column is the escape hatch if that ever proves too loose.
+The slot store: the long-literal half of the term dictionary — where a conventional triple store keeps the literals too large to intern. A value node carries its value in the address; a slot holds the values that don't fit one — freeform text (`title`, `summary`) and blobs (`content_hash`, `minhash`) — one row per subject per slot predicate. The `PRIMARY KEY (nodeid, predicateid)` is the functional constraint: one value per document per slot, enforced by the key rather than by column shape. The bare `value` column leans on SQLite's per-row typing — text and blob coexist; a `datatype` column on `predicate` is the escape hatch if that ever proves too loose.
 
 A slot predicate is not a schema migration: `title`, `summary`, and any future out-of-line predicate are rows in `predicate` and rows here, never columns.
 
-Addressing — a slot's uri is `<predicate-label>/<subject-uri>` (`summary/docs/notes/foo.md`). The parse is unambiguous: a predicate label is a single slug segment, so the resolver splits on the first slash. Resolution is three index seeks:
-
-1. head → `predicate.label` → `predicateid`.
-2. tail → `node.uri` → `nodeid`, falling through to `node_alias` on a miss — so slot addresses survive renames for free.
-3. `(nodeid, predicateid)` → the clustered primary key here → the value.
-
-Shared value nodes and slot nodes share the `<predicate>/<tail>` surface. The resolver distinguishes them by where they live: value nodes are stored in the dictionary, slot nodes never are — so resolution probes `node.uri` for the whole address first; a hit is a value node, a miss parses the slot. Inside the database, a slot's address is the composite key `(nodeid, predicateid)`: derived from the corpus, stable across rebuilds, no surrogate.
+Resolution of a slot uri is specified under [Addressing](#addressing); inside the database, a slot's address is the composite key `(nodeid, predicateid)` — derived from the corpus, stable across rebuilds, no surrogate.
 
 `created` is not a slot: an authored creation date is an ordinary property — a statement to a value node like `created/2026-06-30` — and temporal ordering rides the node dictionary's uri index (see [node](#node)).
 
