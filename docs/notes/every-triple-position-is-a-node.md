@@ -1,6 +1,6 @@
 ---
 title: Every triple position is a node
-summary: "The graph is triples over a node dictionary. Subject and object are always nodes — documents bind to nodes, and tags, property values, and out-of-line content get nodes too; the middle is always a predicate, and property keys are predicates. Value nodes come in two addressing schemes: value-carrying uris for categorical values, slot uris for functional per-document content. Slot nodes are derivable, so the document facet dissolves into a generic slot store projected into the graph."
+summary: "The graph is triples over a node dictionary. Subject and object are always nodes — documents bind to nodes, and tags, property values, and out-of-line content get nodes too; the middle is always a predicate, and property keys are predicates. Value nodes come in two addressing schemes: value-carrying uris for categorical values, literal uris for functional per-document content. Literal nodes are derivable, so the document facet dissolves into a generic literal store projected into the graph."
 tags: [note, hoplite, graph, schema, design]
 created: 2026-07-02
 status: evolving
@@ -17,7 +17,7 @@ Predicates were never ruled out of the dictionary — "not a node" was *edge's* 
 :docs/notes/foo.md   :tag       :tag:note                     # document → shared value node
 :docs/notes/foo.md   :status    :status:locked                # document → shared value node
 :docs/notes/foo.md   :created   :created:2026-06-30           # document → shared value node
-:docs/notes/foo.md   :summary   :summary:docs/notes/foo.md    # document → slot node
+:docs/notes/foo.md   :summary   :summary:docs/notes/foo.md    # document → literal node
 ```
 
 Two separators split two naming authorities: slash joins path segments (the filesystem's namespace), colon joins a predicate label to its operand (the vocabulary's namespace). The wikilink grammar forbids colons in targets, so the spaces are disjoint by construction — a vocabulary address can never collide with a document uri.
@@ -37,29 +37,29 @@ Property keys are predicates. `status`, `tags`, `created`, `summary` sit in the 
 - One node per distinct value, shared by every subject that asserts it — which is what makes values walkable ("who else carries this value").
 - Range queries ride lexicographic uri scans; ISO-8601 dates sort.
 
-### Slot node
+### Literal node
 
 - Address: the subject's uri behind the predicate label — `summary:<doc-uri>`, `title:<doc-uri>`, `minhash:<doc-uri>`.
 - Carries: functional predicates — one value per document — whose content is freeform text or a blob.
 - A stable citation with live content; dereference returns the current value.
 - The rename hazard is covered by the existing alias machinery.
 
-The line is semantic, not lexical: *enumerable → the value is the address; freeform or binary → the slot is the address*. Surrogate row ids are ruled out as addresses (they regenerate on rebuild — the `edge.id` precedent in [[docs/notes/one-walk-verb-spans-the-corpus-and-vocabulary-graphs.md]]). Content hashes were considered and rejected for slots: a hash names a value, but a citation wants the slot's current content; snapshot-of-record already lives in git history.
+The line is semantic, not lexical: *enumerable → the value is the address; freeform or binary → the subject is the address*. Surrogate row ids are ruled out as addresses (they regenerate on rebuild — the `edge.id` precedent in [[docs/notes/one-walk-verb-spans-the-corpus-and-vocabulary-graphs.md]]). Content hashes were considered and rejected for literals: a hash names a value, but a citation wants the literal's current content; snapshot-of-record already lives in git history.
 
-## Slot nodes are projections
+## Literal nodes are projections
 
-A slot node's address is computable from subject + predicate, so its triple carries no new information. Storage keeps a generic slot store — `slot(predicateid, nodeid, value)`, keyed in address order, the long-value half of the term dictionary — and the graph layer projects the nodes on demand: the pattern in [[docs/notes/uris-are-a-tool-layer-projection-over-relational-storage.md]]. The document facet dissolves into it: `title`, `summary`, and fingerprints are slot rows, not columns, so a new slot predicate is data, never a migration. The model is uniformly triples; the physics stays a keyed lookup where a keyed lookup wins.
+A literal node's address is computable from subject + predicate, so its triple carries no new information. Storage keeps a generic literal store — `literal(predicateid, nodeid, value)`, keyed in address order, the long-value half of the term dictionary — and the graph layer projects the nodes on demand: the pattern in [[docs/notes/uris-are-a-tool-layer-projection-over-relational-storage.md]]. The document facet dissolves into it: `title`, `summary`, and fingerprints are literal rows, not columns, so a new literal-valued predicate is data, never a migration. The model is uniformly triples; the physics stays a keyed lookup where a keyed lookup wins.
 
 ## Consequences for the schema
 
 - `edge` becomes one row per statement `(src, predicate, dst)` — not one per `(src, dst)` pair with a predicate set — and `confidence` is per-statement.
-- `tag`, `node_tag`, `property_key`, `node_property` dissolve into nodes + edges; `document` dissolves into the slot store, with `content_hash`'s slot row as the document/ghost witness.
+- `tag`, `node_tag`, `property_key`, `node_property` dissolve into nodes + edges; `document` dissolves into the literal store, with `content_hash`'s literal row as the document/ghost witness.
 - `predicate` becomes a facet keyed by nodeid — a predicate is a node (`predicate:cites`) with a registration row, interned at first use in the middle position. The edge's middle column is typed to the facet, holding the role apart; the node identity makes predicates subjects and objects, so `cites inverse-of cited-by` is representable — stored like any triple, enforced by nothing.
 - The `namespace` view stops being a projection: vocabulary entries are real nodes. Survey is literally match + walk over them.
 - Addresses are bare uris; the MCP tool layer is the resolver, taking them as parameters. No uri scheme — that would be API packaging in the model (if graph entities are ever exposed as MCP resources, a scheme becomes a wire-format detail of the tool api). The vault segment remains the growth path to cross-repo identity.
 - Multi-valued properties are sets (repeated triples; asserting twice yields one triple) — older notes saying "key/bag" mean key/set.
 
-The schema realizes this model: [[docs/hoplite/schema.md]] (node, predicate, edge, slot, plus aliases and FTS).
+The schema realizes this model: [[docs/hoplite/schema.md]] (node, predicate, edge, literal, plus aliases and FTS).
 
 ## Supersedes
 
