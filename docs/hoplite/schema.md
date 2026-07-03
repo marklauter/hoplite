@@ -166,7 +166,7 @@ A statement — an RDF triple: subject, predicate, object, weighted by confidenc
 
 The triple is its own key: the primary key is the statement's identity, derived from the corpus and stable across rebuilds.
 
-Two-pass build: asserted statements load first; inferred ones follow and collide out against the primary key. The author's word wins by insertion order, which is the whole provenance record.
+Two-pass build: asserted statements load first; inferred ones follow and collide out against the primary key. The author's word wins by insertion order — the only record of who said what.
 
 Traversal indexes — the `WITHOUT ROWID` table is clustered on its primary key, so forward traversal (seek `src`, optionally narrowed by predicate, read `dst` and `confidence`) is covered by the table itself:
 

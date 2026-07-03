@@ -9,12 +9,11 @@ has-a:
     - "[[resource]]"
     - "[[predicate]]"
     - "[[confidence]]"
-    - "[[provenance]]"
 ---
 
 A triple asserted into the graph — subject, predicate, object — weighted by [[confidence]].
 
-Every statement is an assertion; provenance names whose. A statement about one document is a [[claim]]; the retired *fact* was the importer's claim, named by its provenance. A document's body is not a statement: content stays text behind the search index, with the fingerprint as the importer's claim standing in. The retired *feature* — anything knowable about a document — was the statement before the model had the word.
+Every statement is an assertion; [[confidence]] carries the trust — the author's and importer's word at 1.0, the engine's guess graded below. A statement about one document is a [[claim]]; the retired *fact* was the importer's claim. A document's body is not a statement: content stays text behind the search index, with the fingerprint as the importer's claim standing in. The retired *feature* — anything knowable about a document — was the statement before the model had the word.
 
 ## Examples
 

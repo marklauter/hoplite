@@ -14,7 +14,6 @@ The Hoplite domain terms, one entry per term. This page links them and keeps the
 
 - [[affordance]]
 - [[assert]]
-- [[asserted]]
 - [[bm25]]
 - [[claim]]
 - [[condition]]
@@ -30,7 +29,6 @@ The Hoplite domain terms, one entry per term. This page links them and keeps the
 - [[graph]]
 - [[idf]]
 - [[infer]]
-- [[intrinsic]]
 - [[jaccard]]
 - [[knowledge-graph]]
 - [[match]]
@@ -38,7 +36,6 @@ The Hoplite domain terms, one entry per term. This page links them and keeps the
 - [[neighborhood]]
 - [[predicate]]
 - [[projection]]
-- [[provenance]]
 - [[ranking-function]]
 - [[relationship]]
 - [[resource]]
@@ -62,7 +59,7 @@ Where a Hoplite term maps onto an external standard. A mapping is listed only wh
 - [[predicate]] ≈ the RDF predicate — the middle *position* of a statement, which an edge or a claim key fills. UML calls the edge-label sense a stereotype — the retired name.
 - [[edge]] ≈ OWL `ObjectProperty`: a pure relation, one of the two kinds licensed for the predicate position.
 - [[claim]] ≈ OWL `DatatypeProperty`: a statement about a document, its key the other licensed kind. RDF names these *properties* — the retired name here; Hoplite names the statement by what it does.
-- [[statement]] ≈ the RDF statement: [[assert]] is the act, the statement is the artifact it leaves, and `confidence` is the degree of attestation. The retired *fact* and *claim* were statements named by provenance.
+- [[statement]] ≈ the RDF statement: [[assert]] is the act, the statement is the artifact it leaves, and `confidence` is the degree of attestation — the retired provenance trinity collapsed into that one weight.
 - [[condition]] ≈ the leaf of a SQL `<search condition>`. SQL's grammar calls the leaf a predicate; Hoplite cedes that word to RDF.
 - [[search-expression]] ≈ the SQL `<search condition>` — the whole boolean expression a `WHERE` clause holds.
 

@@ -1,13 +1,16 @@
 ---
 title: confidence
-summary: "The strength of an assertion."
+summary: "The strength of an assertion — how likely a statement is to be real."
 tags: [hoplite, glossary]
 created: 2026-06-19
 status: locked
+retired: [provenance, intrinsic, asserted]
 has-a: "[[idf]]"
 ---
 
-The strength of an [[assert|assertion]].
+The strength of an [[assert|assertion]] — how likely a [[statement]] is to be real.
+
+Confidence absorbs the retired provenance trinity: an authored or computed statement carries `1.0` — a word vouched in full — and an inferred, algorithmically derived one carries its likelihood. Build precedence follows the weight: full-confidence statements load first and the engine's guesses collide out.
 
 ## Mechanism
 
