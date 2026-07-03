@@ -60,10 +60,11 @@ The Hoplite domain terms, one node per term. This page links them and keeps the 
 
 Where a Hoplite term maps onto an external standard. A mapping is listed only where it is exact; near-fits import confusion instead of leverage.
 
-- [[node]] ≈ an RDF resource — a subject or object.
-- [[predicate]] ≈ the RDF predicate; OWL `ObjectProperty`. UML calls it a stereotype — the retired name.
-- [[property]] ≈ OWL `DatatypeProperty`. RDF's own schema layer names the literal-valued predicates *properties*, so Hoplite's predicate/property split mirrors the standard's.
-- [[edge]] ≈ a reified RDF statement: the subject–object pair with its weight; one triple per predicate the edge carries.
+- [[node]] ≈ an RDF resource — a term in any position of a statement.
+- [[predicate]] ≈ the RDF predicate — the middle *position* of a statement, which an edge or a property fills. UML calls the edge-label sense a stereotype — the retired name.
+- [[edge]] ≈ OWL `ObjectProperty`: a pure relation, one of the two kinds licensed for the predicate position.
+- [[property]] ≈ OWL `DatatypeProperty`: a key, the other licensed kind. RDF's own schema layer names the literal-valued predicates *properties*, so Hoplite's edge/property split mirrors the standard's.
+- [[statement]] ≈ the RDF statement: the reified [[claim]] — [[assert]] is the act, the statement is the artifact it leaves, and `confidence` is the degree of attestation.
 - [[condition]] ≈ the leaf of a SQL `<search condition>`. SQL's grammar calls the leaf a predicate; Hoplite cedes that word to RDF.
 - [[search-expression]] ≈ the SQL `<search condition>` — the whole boolean expression a `WHERE` clause holds.
 
