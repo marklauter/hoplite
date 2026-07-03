@@ -13,7 +13,7 @@ has-a:
 
 A triple asserted into the graph — subject, predicate, object — weighted by [[confidence]].
 
-Every statement is an assertion; provenance names whose. The retired *fact* — an intrinsic feature — was a statement named by its provenance; a frontmatter statement about a document is a [[claim]].
+Every statement is an assertion; provenance names whose. A statement about one document is a [[claim]]; the retired *fact* was the importer's claim, named by its provenance.
 
 ## Examples
 
