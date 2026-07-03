@@ -2,11 +2,10 @@
 title: predicate
 summary: "A semantic label naming the relationship expressed by an edge."
 tags: [hoplite, glossary]
-aliases: [stereotype]
 created: 2026-06-19
 status: locked
 retired: [stereotype]
-contrast: "[[property]]"
+contrast: "[[claim]]"
 ---
 
 A semantic label naming the [[relationship]] expressed by an [[edge]].
@@ -18,4 +17,4 @@ A semantic label naming the [[relationship]] expressed by an [[edge]].
 
 ## Contrasts
 
-- `property` — a predicate relates a resource to another resource; a property claims a value on the resource itself.
+- `claim` — a predicate relates a resource to another resource; a claim states a value about the resource itself.

@@ -10,7 +10,7 @@ status: evolving
 
 The canonical SQLite schema for the Hoplite knowledge graph: an RDF-shaped triple store over a self-describing resource dictionary, plus an FTS5 lexical index, rebuilt by drop-and-recreate. This spec is the source of truth; the importer's `schema.sql` mirrors it.
 
-Every position of a statement holds a resource. Addresses are namespace chains grounded at `meta:meta`; edges and properties are the kinds licensed for the predicate position. The model is [[docs/notes/every-triple-position-is-a-resource.md]]; how it settled is [[docs/journal/2026-07-02-0139-the-reversal-every-triple-position-is-a-node.md]] (recorded under the old title); the term crosswalk is in [[docs/hoplite/glossary/README.md]]. The pre-reversal property-graph schema is preserved in git history.
+Every position of a statement holds a resource. Addresses are namespace chains grounded at `meta:meta`; edges and claims are the kinds licensed for the predicate position. The model is [[docs/notes/every-triple-position-is-a-resource.md]]; how it settled is [[docs/journal/2026-07-02-0139-the-reversal-every-triple-position-is-a-node.md]] (recorded under the old title); the term crosswalk is in [[docs/hoplite/glossary/README.md]]. The pre-reversal property-graph schema is preserved in git history.
 
 ## DDL
 
@@ -61,7 +61,7 @@ create virtual table fts using fts5(
 How the schema realizes RDF:
 
 - **The graph is a set of triples.** `statement`'s primary key enforces it: asserting the same triple twice yields one row, and multi-valued properties are repeated assertions — the idiom RDF itself prefers over its containers.
-- **Every term is a resource.** Every term in every position is a row in the dictionary, addressed by its namespace chain. The predicate position is filled by an edge or property, so statements about the vocabulary are representable — stored, never enforced. Every uri derives from the corpus, so every resource is named (RDF: no blank nodes).
+- **Every term is a resource.** Every term in every position is a row in the dictionary, addressed by its namespace chain. The predicate position is filled by an edge or claim, so statements about the vocabulary are representable — stored, never enforced. Every uri derives from the corpus, so every resource is named (RDF: no blank nodes).
 - **Values are resources.** RDF permits a value to be a resource, and its practice recommends it — "things, not strings." Hoplite makes it the rule: a value interns as a resource (`priority:high`), and where an RDF literal may only end a statement, a value can begin one as well — described and walked like anything else. Bytes too large for an address live in the [literal](#literal) table behind a projection (`summary:<doc-uri>`).
 - **`confidence` is the RDF-star annotation.** A statement about the statement — `<< src p dst >> hoplite:confidence n` — carried in-row: the triple's natural key makes every statement natively reified.
 - **A statement is addressed by its terms.** A triple is identified by its three positions, in RDF and here alike (see [Addressing](#addressing)).
@@ -77,11 +77,11 @@ The graph is rebuilt by drop-and-recreate — the dominant cost is the bulk load
 
 A rebuild is deterministic: every chain, resource, statement, and literal key derives from the corpus alone, so rebuilding reproduces the graph byte-identically.
 
-Two invariants live in the importer rather than the DDL, which cannot express them: only members of `edge` and `property` fill the predicate position (predicate-licensing is namespace-derived), and the namespace tree stays a tree grounded at `meta:meta`.
+Two invariants live in the importer rather than the DDL, which cannot express them: only members of `edge` and `claim` fill the predicate position (predicate-licensing is namespace-derived), and the namespace tree stays a tree grounded at `meta:meta`.
 
 ## Addressing
 
-An address is a **namespace chain**: colon-joined names walking down from the root — `meta:property:priority:high` names the value `high` under the key `priority` under `property` under `meta`. Short forms abbreviate: any unique suffix resolves — `priority:high`, even bare `high` — the same shortest-unique discipline the wikilink grammar gives slugs. An ambiguous short form demands qualification; the importer warns when a newly coined name makes existing short forms ambiguous.
+An address is a **namespace chain**: colon-joined names walking down from the root — `meta:claim:priority:high` names the value `high` under the key `priority` under `claim` under `meta`. Short forms abbreviate: any unique suffix resolves — `priority:high`, even bare `high` — the same shortest-unique discipline the wikilink grammar gives slugs. An ambiguous short form demands qualification; the importer warns when a newly coined name makes existing short forms ambiguous.
 
 Addresses are bare strings — a scheme would be tool-api packaging, kept out of the model. The MCP tool layer is the resolver, taking an address as a parameter. Matching is case-insensitive (`collate nocase` throughout).
 
@@ -103,12 +103,12 @@ The stored kinds:
 - **ghost** — `document:tag`: identical in form to a document — the kind is the missing literal rows, not the address.
 - **url** — `url:https://...`: an external reference, absolute already.
 - **edge** — `edge:cites`: a pure relation, licensed for the predicate position.
-- **property** — `property:priority`: a key, licensed for the predicate position; a value-routed key parents its values.
+- **claim** — `claim:priority`: a key, licensed for the predicate position; a value-routed key parents its values.
 - **value** — `priority:high`, `tag:note`, `created:2026-06-30`: the value under its key. The `(nsid, uri)` index doubles as a per-key range index (`created:2026-06` is an ordered scan; ISO-8601 sorts lexicographically).
 
 One kind is projected on demand:
 
-- **literal** — `summary:<doc-uri>`: a literal-routed key parents no stored resources, so the chain's last seek misses and the resolver projects instead — key → its `property` resource, tail → `resourceid` (aliases apply, so literal addresses survive renames), `(predicateid, resourceid)` → the value in the [literal store](#literal).
+- **literal** — `summary:<doc-uri>`: a literal-routed key parents no stored resources, so the chain's last seek misses and the resolver projects instead — key → its `claim` resource, tail → `resourceid` (aliases apply, so literal addresses survive renames), `(predicateid, resourceid)` → the value in the [literal store](#literal).
 
 And one is addressed without a name:
 
@@ -139,7 +139,7 @@ Held for the importer:
 
 The resource dictionary: one row per resource — every term of every statement. `id` is identity within the graph; `(nsid, uri)` is the address, presented by projection as the chain (see [Addressing](#addressing)). A row holds identity and nothing more; a resource's facts attach through statements.
 
-The dictionary is self-describing: `nsid` references `resource`, so namespaces are resources, and a resource is a namespace exactly when resources live under it. The recursion grounds at one fixed point — `meta:meta`, whose `nsid` is its own id — and `meta` parents the four structural namespaces: `edge`, `property`, `document`, `url`. Keys parent their values; there is no namespace table and no name stored twice. Projection walks up and stops at the self-parented row, emitting its name once: a canonical chain carries a single leading `meta` (`meta:property:priority:high`), while `meta:meta` names the fixed point and resolves, as does any stack of leading `meta`s.
+The dictionary is self-describing: `nsid` references `resource`, so namespaces are resources, and a resource is a namespace exactly when resources live under it. The recursion grounds at one fixed point — `meta:meta`, whose `nsid` is its own id — and `meta` parents the four structural namespaces: `edge`, `claim`, `document`, `url`. Keys parent their values; there is no namespace table and no name stored twice. Projection walks up and stops at the self-parented row, emitting its name once: a canonical chain carries a single leading `meta` (`meta:claim:priority:high`), while `meta:meta` names the fixed point and resolves, as does any stack of leading `meta`s.
 
 Kinds derive from namespace membership and the literal store — the chain and the rows carry the kind:
 
@@ -147,7 +147,7 @@ Kinds derive from namespace membership and the literal store — the chain and t
 - **ghost** — a `document`-namespace resource named before its file exists.
 - **url** — a `url`-namespace resource: an external reference.
 - **edge** — an `edge`-namespace resource: a pure relation.
-- **property** — a `property`-namespace resource: a key. Value-routed keys parent their values; literal-routed keys parent projections.
+- **claim** — a `claim`-namespace resource: a key. Value-routed keys parent their values; literal-routed keys parent projections.
 - **value** — a resource under its key, the value as its uri. Interned at first assertion and shared by every subject that asserts it — the sharing is what makes values walkable.
 
 Literal projections (`summary:<doc-uri>`, `title:<doc-uri>`, `content_hash:<doc-uri>`, `minhash:<doc-uri>`) are not stored: a literal address derives from key + subject, so the graph layer projects the resource and its statement from the [literal store](#literal) on demand.
@@ -162,7 +162,7 @@ Literal addresses inherit a document's aliases for free, since they embed its ur
 
 A statement — an RDF triple: subject, predicate, object, weighted by confidence. One row per triple; what the old model stored as one edge carrying a set of labels is several statements here. `confidence` is per-statement — the RDF-star annotation, carried in-row. An authored statement carries 1.0; an inferred one carries its inference score.
 
-`predicateid` holds an edge or property — predicate-licensing is namespace-derived, maintained by the importer (see [Rebuild](#rebuild)); `src` and `dst` hold any resource.
+`predicateid` holds an edge or claim — predicate-licensing is namespace-derived, maintained by the importer (see [Rebuild](#rebuild)); `src` and `dst` hold any resource.
 
 The triple is its own key: the primary key is the statement's identity, derived from the corpus and stable across rebuilds.
 
@@ -179,7 +179,7 @@ The literal store: the long-literal half of the term dictionary, where a convent
 
 The `PRIMARY KEY (predicateid, resourceid)` mirrors the address (`<key>:<doc-uri>`) and enforces the functional constraint: one value per document per key. Predicate-first clustering groups each key's values contiguously, so bulk sweeps — every `minhash` for near-duplicate inference, every `summary` for the FTS feed — are single range scans, while assembling one document's facet is a few exact seeks over the known literal-routed keys. The bare `value` column uses SQLite's per-row typing — text and blob coexist; the escape hatch, if that proves too loose, is a per-key datatype fact.
 
-A new literal-routed key is data: `title`, `summary`, and any future out-of-line key are rows here, plus the key's resource under `property`.
+A new literal-routed key is data: `title`, `summary`, and any future out-of-line key are rows here, plus the key's resource under `claim`.
 
 Resolution of a literal address is specified under [Addressing](#addressing); inside the database, a literal's address is the composite key `(predicateid, resourceid)` — derived from the corpus and stable across rebuilds.
 
@@ -189,4 +189,4 @@ Full-text search over each document's text projection (title, summary, body), po
 
 ## Survey
 
-Survey is match and walk over the graph proper: the vocabulary is real rows in the dictionary, so surveying keys and relations is a scan under `property` and `edge`, and surveying a key's values is a scan under the key — ordered seeks on the `(nsid, uri)` index, real interned rows where the old schema computed a view.
+Survey is match and walk over the graph proper: the vocabulary is real rows in the dictionary, so surveying keys and relations is a scan under `claim` and `edge`, and surveying a key's values is a scan under the key — ordered seeks on the `(nsid, uri)` index, real interned rows where the old schema computed a view.

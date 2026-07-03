@@ -16,6 +16,7 @@ The Hoplite domain terms, one entry per term. This page links them and keeps the
 - [[assert]]
 - [[asserted]]
 - [[bm25]]
+- [[claim]]
 - [[condition]]
 - [[condition-atom]]
 - [[confidence]]
@@ -38,7 +39,6 @@ The Hoplite domain terms, one entry per term. This page links them and keeps the
 - [[neighborhood]]
 - [[predicate]]
 - [[projection]]
-- [[property]]
 - [[provenance]]
 - [[ranking-function]]
 - [[relationship]]
@@ -60,9 +60,9 @@ The Hoplite domain terms, one entry per term. This page links them and keeps the
 Where a Hoplite term maps onto an external standard. A mapping is listed only where it is exact; near-fits import confusion instead of leverage.
 
 - [[resource]] — RDF's universal term, adopted outright: a term in any position of a statement. RDF's "node" is merely positional (a subject or object), so the property-graph word retired into resource.
-- [[predicate]] ≈ the RDF predicate — the middle *position* of a statement, which an edge or a property fills. UML calls the edge-label sense a stereotype — the retired name.
+- [[predicate]] ≈ the RDF predicate — the middle *position* of a statement, which an edge or a claim key fills. UML calls the edge-label sense a stereotype — the retired name.
 - [[edge]] ≈ OWL `ObjectProperty`: a pure relation, one of the two kinds licensed for the predicate position.
-- [[property]] ≈ OWL `DatatypeProperty`: a key, the other licensed kind. RDF's own schema layer names the literal-valued predicates *properties*, so Hoplite's edge/property split mirrors the standard's.
+- [[claim]] ≈ OWL `DatatypeProperty`: a frontmatter statement about a document, its key the other licensed kind. RDF names these *properties* — the retired name here; Hoplite names the statement by what it does.
 - [[statement]] ≈ the RDF statement: [[assert]] is the act, the statement is the artifact it leaves, and `confidence` is the degree of attestation. The retired *fact* and *claim* were statements named by provenance.
 - [[condition]] ≈ the leaf of a SQL `<search condition>`. SQL's grammar calls the leaf a predicate; Hoplite cedes that word to RDF.
 - [[search-expression]] ≈ the SQL `<search condition>` — the whole boolean expression a `WHERE` clause holds.
@@ -72,6 +72,6 @@ Where a Hoplite term maps onto an external standard. A mapping is listed only wh
 - [[docs/hoplite/hoplite]] — problem statement and scope.
 - [[docs/hoplite/hoplite-feature-taxonomy]] — the feature taxonomy: the two origins (intrinsic, asserted) and the IDF-weighted Jaccard relatedness over the unified feature set.
 - [[docs/hoplite/hoplite-affordances]] — the affordances concept: features give rise to affordances; the write/read split; signifiers.
-- [[docs/hoplite/hoplite-graph]] — the structure: resources, edges, properties, predicates, vocabulary.
+- [[docs/hoplite/hoplite-graph]] — the structure: resources, edges, claims, predicates, vocabulary.
 - [[docs/notes/one-walk-verb-spans-the-corpus-and-vocabulary-graphs]] — the two-graph and namespace-address model.
 - [[docs/hoplite/README]] — the document map.

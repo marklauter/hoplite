@@ -1,6 +1,6 @@
 ---
 title: Expressing edges
-summary: "The ways to express an edge — an inline link (wikilink or markdown) or a frontmatter property whose value is a wikilink — Obsidian-native. Any inline link is an edge: an adjacent comment types it, otherwise it defaults to the `links-to` predicate."
+summary: "The ways to express an edge — an inline link (wikilink or markdown) or a frontmatter key whose value is a wikilink — Obsidian-native. Any inline link is an edge: an adjacent comment types it, otherwise it defaults to the `links-to` predicate."
 tags: [hoplite, edges, spec]
 created: 2026-06-20
 status: locked
@@ -13,7 +13,7 @@ Hoplite supports the full Obsidian wikilink and property grammar.
 There are two places to express edges within a markdown document — the body and the frontmatter:
 
 - In the body, an inline link: a wikilink like `[[circle]]`, or a markdown link like `[circle](circle)`. Either is an edge. A predicate comment beside it types the edge; without one, the edge defaults to the `links-to` predicate (see Inline predicates below).
-- In frontmatter, a property whose value is a wikilink, like `cites: "[[circle]]"`. This is a typed edge, and the key (`cites`) is the predicate.
+- In frontmatter, a key whose value is a wikilink, like `cites: "[[circle]]"`. This is a typed edge, and the key (`cites`) is the predicate.
 
 Every inline link is an edge — there is no plain-hypertext link in a Hoplite corpus. `links-to` is what an untyped link means; an explicit predicate overrides it.
 
@@ -98,7 +98,7 @@ A markdown target is a CommonMark link destination. An external URL resolves to 
 
 ## Frontmatter edges
 
-A frontmatter edge is a property whose value is a wikilink — the key is the predicate, the value is the target:
+A frontmatter edge is a key whose value is a wikilink — the key is the predicate, the value is the target:
 
 ```yaml
 refines: "[[pi]]"               # scalar — one edge
@@ -110,7 +110,7 @@ contrast:                       # block list — several, one per line
 
 - Key — the predicate, like `cites` or `refines`. Keys are one flat open vocabulary: a few are special (read by meaning), and any other key is a predicate.
 - Value — a quoted wikilink. Quote it: Obsidian indexes the link only when it's quoted, and unquoted `[[ ]]` isn't valid YAML. Use a scalar for one edge, a list for several.
-- Edge or property, decided by value. A wikilink value makes the property an edge; a scalar value like `status: draft` makes it a property.
+- Edge or claim, decided by value. A wikilink value makes the key an edge; a scalar value like `status: draft` makes it a claim.
 - No rendering. Display text (`|`) and embedding (`!`) work only in the body; a frontmatter edge is data.
 
 ## Portability

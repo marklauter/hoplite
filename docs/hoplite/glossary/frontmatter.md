@@ -4,7 +4,7 @@ summary: "The YAML block at the top of a document."
 tags: [hoplite, glossary]
 created: 2026-06-19
 status: locked
-has-a: "[[property]]"
+has-a: "[[claim]]"
 ---
 
 The YAML block at the top of a [[document]].

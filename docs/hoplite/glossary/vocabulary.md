@@ -1,22 +1,22 @@
 ---
 title: vocabulary
-summary: "The meta labels (property keys and edge predicates) and bounded property values mapped within the knowledge graph."
+summary: "The meta labels (claim keys and edge predicates) and bounded claim values mapped within the knowledge graph."
 tags: [hoplite, glossary]
 created: 2026-06-19
 status: locked
 ---
 
-The meta labels ([[property]] keys and [[edge]] [[predicate|predicates]]) and bounded property values mapped within the knowledge graph.
+The meta labels ([[claim]] keys and [[edge]] [[predicate|predicates]]) and bounded claim values mapped within the knowledge graph.
 
 ## Examples
 
-- a property key — `status`, `created`.
+- a claim key — `status`, `created`.
 - a value expressed under a key — `locked`, or the tag `hoplite` under `tags`.
 - a predicate — `is-a`, `cites`.
 
 ## Discussion
 
-A property key partitions the corpus. Asserting `status` on a document places it
+A claim key partitions the corpus. Asserting `status` on a document places it
 in the class of documents that carry a status; a journal entry, which asserts no
 `status`, stays outside that class. A key is not a slot a document fills — its
 presence is a claim of class membership.

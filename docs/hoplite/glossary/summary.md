@@ -4,7 +4,7 @@ summary: "A document's main points in one line."
 tags: [hoplite, glossary]
 created: 2026-06-19
 status: locked
-is-a: "[[property]]"
+is-a: "[[claim]]"
 ---
 
 A document's main points in one line.

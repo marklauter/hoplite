@@ -1,6 +1,6 @@
 ---
 title: Frontmatter
-summary: "Hoplite's frontmatter standard: flat Obsidian Properties. Four special keys (all optional); every other key is open vocabulary, where a wikilink value is an edge and anything else is a property."
+summary: "Hoplite's frontmatter standard: flat Obsidian Properties. Four special keys (all optional); every other key is open vocabulary, where a wikilink value is an edge and anything else is a claim."
 tags: [hoplite, frontmatter, spec]
 created: 2026-05-29
 status: locked
@@ -13,7 +13,7 @@ Every document opens with a YAML frontmatter block. These are Obsidian [Properti
 
 Keys are a flat, open vocabulary — no `document.` or `edge.` prefix. A few keys are special; the rest are yours to coin. A key's value decides what it is:
 
-- A scalar or list of scalars is a property — a claim on the document, like `status: draft`.
+- A scalar or list of scalars is a claim on the document, like `status: draft`.
 - A wikilink is an edge to another document, and the key is the predicate, like `cites: ["[[shape]]"]`. For the wikilink grammar, see [[docs/hoplite/expressing-edges.md]].
 
 Frontmatter is optional. A document without it is still valid; Hoplite derives what it needs.
@@ -33,7 +33,7 @@ There is no `updated` key. Git history is the modification record, and a hand-ma
 
 ## Edges
 
-An edge is a property whose value is a wikilink, and the key is the predicate — `supports`, `contradicts`, `supersedes`. The vocabulary is open, like tags: a new predicate is a doc change, not a schema migration. For the grammar and seed vocabulary, see [[docs/notes/predicates-are-an-open-vocabulary.md]].
+An edge is a key whose value is a wikilink, and the key is the predicate — `supports`, `contradicts`, `supersedes`. The vocabulary is open, like tags: a new predicate is a doc change, not a schema migration. For the grammar and seed vocabulary, see [[docs/notes/predicates-are-an-open-vocabulary.md]].
 
 ## Obsidian and Dataview
 
@@ -63,8 +63,8 @@ cites: ["[[sqlite-hybrid]]"]
 
 Nothing is required, so little is fatal.
 
-- Unparseable YAML — Hoplite can't read the block, so it warns and indexes the document without properties, using the slug-derived title and a body-excerpt summary.
-- A single bad property, like a dangling `-` or a non-list where a list belongs — Hoplite drops that property and warns.
+- Unparseable YAML — Hoplite can't read the block, so it warns and indexes the document without its claims, using the slug-derived title and a body-excerpt summary.
+- A single bad key, like a dangling `-` or a non-list where a list belongs — Hoplite drops that key and warns.
 
 Warnings surface in `WriteResult.warnings`, so the agent is notified while the file stays indexed. Implementation: `plugins/hoplite/mcp/src/hoplite/frontmatter.py`.
 

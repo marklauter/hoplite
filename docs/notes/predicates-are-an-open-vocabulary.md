@@ -2,7 +2,6 @@
 title: Predicates are an open vocabulary
 summary: "A predicate is an open-vocabulary label naming what an edge asserts — never predefined, never warned on; a new label is a doc change, not a schema migration. Hoplite ships the mechanism and surveys the vocabulary; it does not govern it. Two authoring surfaces — inline wikilink and frontmatter property — materialize identical storage; authors pick by whether the assertion is rhetorical-in-context or categorical. The mechanism sections predate the predicate rename and the triple reversal; read them as history."
 tags: [note, hoplite, edges, predicates, design, todo]
-aliases: [stereotypes-are-open-vocab-edge-properties]
 created: 2026-05-27
 status: evolving
 ---
