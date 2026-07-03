@@ -4,16 +4,17 @@ summary: "A triple asserted into the graph — subject, predicate, object — we
 tags: [hoplite, glossary]
 created: 2026-07-03
 status: evolving
-retired: [fact]
+retired: [fact, feature]
 has-a:
     - "[[resource]]"
     - "[[predicate]]"
     - "[[confidence]]"
+    - "[[provenance]]"
 ---
 
 A triple asserted into the graph — subject, predicate, object — weighted by [[confidence]].
 
-Every statement is an assertion; provenance names whose. A statement about one document is a [[claim]]; the retired *fact* was the importer's claim, named by its provenance.
+Every statement is an assertion; provenance names whose. A statement about one document is a [[claim]]; the retired *fact* was the importer's claim, named by its provenance. A document's body is not a statement: content stays text behind the search index, with the fingerprint as the importer's claim standing in. The retired *feature* — anything knowable about a document — was the statement before the model had the word.
 
 ## Examples
 

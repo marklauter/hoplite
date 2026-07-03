@@ -1,12 +1,12 @@
 ---
 title: affordance
-summary: "An action made possible by the presence of a feature."
+summary: "An action made possible by the presence of a statement."
 tags: [hoplite, glossary]
 created: 2026-06-23
 status: locked
 ---
 
-An action made possible by the presence of a [[feature]].
+An action made possible by the presence of a [[statement]].
 
 ## Examples
 

@@ -13,4 +13,4 @@ Provenance given by an act of [[assert|assertion]].
 
 ## Contrasts
 
-- `intrinsic` — asserted is advanced by someone; intrinsic is given by the document's own existence. A feature is one or the other.
+- `intrinsic` — asserted is advanced by someone; intrinsic is given by the document's own existence. A statement is one or the other.

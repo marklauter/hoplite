@@ -12,4 +12,4 @@ Provenance given by the document's own existence.
 
 ## Contrasts
 
-- `asserted` — intrinsic is given by the document's own existence; asserted is advanced by someone. A feature is one or the other.
+- `asserted` — intrinsic is given by the document's own existence; asserted is advanced by someone. A statement is one or the other.

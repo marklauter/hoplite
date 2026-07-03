@@ -1,14 +1,14 @@
 ---
 title: provenance
-summary: "A feature's origin: intrinsic or asserted."
+summary: "A statement's origin: intrinsic or asserted."
 tags: [hoplite, glossary]
 created: 2026-06-19
 status: locked
 retired: [kind, edge-kind]
 ---
 
-A feature's origin: [[intrinsic]] or [[asserted]].
+A statement's origin: [[intrinsic]] or [[asserted]].
 
 ## Discussion
 
-Provenance is a domain concept that explains the difference between a fact and a claim. An intrinsic feature is a [[fact]]. An asserted feature is a [[claim]].
+Provenance explains how far to trust a statement: an intrinsic statement is computed from the document's own existence; an asserted one is advanced by someone — the author or the engine. Confidence and build precedence carry it; the graph stores no provenance column.

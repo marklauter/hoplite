@@ -4,7 +4,7 @@ summary: "A semantic association between two documents expressed by an edge."
 tags: [hoplite, glossary]
 created: 2026-06-21
 status: locked
-is-a: "[[claim]]"
+is-a: "[[statement]]"
 has-a:
     - "[[predicate]]"
     - "[[edge]]"

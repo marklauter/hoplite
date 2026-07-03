@@ -1,15 +1,15 @@
 ---
 title: assert
-summary: "To attest a feature as true."
+summary: "To make a statement."
 tags: [hoplite, glossary]
 created: 2026-06-19
 status: locked
 retired: [author, declare, describe]
 ---
 
-To attest a [[feature]] as true.
+To make a [[statement]].
 
 ## Examples
 
-- The author asserts a feature by writing a `[[wikilink]]` or a frontmatter property.
-- The engine asserts a feature by writing an edge row into the database.
+- The author asserts by writing a `[[wikilink]]` or a frontmatter key.
+- The engine asserts by writing a statement row into the database.

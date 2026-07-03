@@ -4,7 +4,7 @@ summary: "A hash of a document's content."
 tags: [hoplite, glossary]
 created: 2026-06-19
 status: locked
-is-a: "[[fact]]"
+is-a: "[[claim]]"
 ---
 
 A hash of a document's content.

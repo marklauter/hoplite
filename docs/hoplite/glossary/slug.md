@@ -4,7 +4,6 @@ summary: "A document's filename."
 tags: [hoplite, glossary]
 created: 2026-06-21
 status: locked
-is-a: "[[fact]]"
 ---
 
 A document's filename.
