@@ -7,4 +7,4 @@ status: locked
 has-a: "[[resource]]"
 ---
 
-An attachment between two [[resource|resources]].
+An attachment between two [[resource]]s.
