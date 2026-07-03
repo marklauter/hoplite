@@ -89,16 +89,18 @@ Authoring and addressing are separate registers. Authors write bare wikilink tar
 
 ### Separators
 
-Two separators split two naming authorities: **slash** joins path segments inside a document uri — the filesystem's namespace — and **colon** joins the links of a chain — the vocabulary's. The wikilink grammar keeps colons out of targets, so a path can never collide with a chain. Colon addresses belong to the query layer; the form is Turtle's `prefix:localname` and the urn separator. The decision and its rejected alternatives are recorded in [[docs/notes/colon-separates-vocabulary-addresses-from-paths.md]].
+Two separators split two naming authorities: **slash** joins path segments inside a document uri — the filesystem's namespace — and **colon** joins the links of a chain — the vocabulary's. The wikilink grammar keeps colons out of targets, so a path can never collide with a colon-bearing chain (bare single-name short forms share the path space — see [resolution](#address-kinds-and-resolution)). Colon addresses belong to the query layer; the form is Turtle's `prefix:localname` and the urn separator. The decision and its rejected alternatives are recorded in [[docs/notes/colon-separates-vocabulary-addresses-from-paths.md]].
 
 ### Address kinds and resolution
 
-A fully qualified chain resolves link by link: each step is a seek on `unique (nsid, uri)`, starting from the `meta:meta` fixed point. A short form resolves on `idx_resource_uri`: seek the final name, verify the given links upward, and a unique survivor wins. A colon-free address tries the document namespace first, falling through to `resource_alias` — an alias is a flat authored string, colon-free by the wikilink grammar.
+A fully qualified chain resolves from the fixed point down, and **the leaf is greedy**: at each namespace, the resolver first seeks the entire remainder as one uri — `unique (nsid, uri)` — and splits at the first colon only on a miss. Leaves keep their own colons: `created:2026-06-30T21:34` resolves whole under `created`, and `url:https://example.com:8080/x` whole under `url` — descent happens only through names that are namespaces, which values and urls never are.
+
+A short form resolves on `idx_resource_uri`: seek the final name, verify the given links upward, and a unique survivor wins; ties demand qualification. A colon-free address runs three stages: the document namespace, then `resource_alias` (an alias is a flat authored string, colon-free by the wikilink grammar), then the same short-form seek — bare `high` resolves when unique. One caveat comes with the bare register: single names share the string space with document targets, and the document register wins — an authored `[[high]]` mints the ghost `document:high` and shadows the bare form of `priority:high`, which then needs one link of qualification.
 
 The stored kinds:
 
 - **document** — `document:docs/notes/foo.md`, presented bare: a corpus path.
-- **ghost** — a `document`-namespace resource named before its file exists; literal rows arrive when the file does.
+- **ghost** — `document:tag`: identical in form to a document — the kind is the missing literal rows, not the address.
 - **url** — `url:https://...`: an external reference, absolute already.
 - **edge** — `edge:cites`: a pure relation, licensed for the predicate position.
 - **property** — `property:priority`: a key, licensed for the predicate position; a value-routed key parents its values.
@@ -118,7 +120,7 @@ Turtle-shaped contexts — the query language — qualify every address: the lea
 
 Hoplite's dialect relaxes strict `PN_LOCAL` in one way: raw `/` is allowed in local names — paths are just strings here; a strict-Turtle export escapes them (`\/`) or uses full-IRI form. The relaxation covers any character that is unambiguous mid-token — dots, dashes, slashes. Token delimiters stay out of reach: whitespace separates terms in every Turtle-shaped context, so `:topic:property graphs` is unwritable however permissive the dialect (open question 1).
 
-A query is a triple pattern that binds positions by chain address — `subject`, `predicate`, and `object` name the positions, not namespaces — and the unbound positions are the result: `(:predicate:status :object:todo)` returns every subject whose `status` is `todo`. The sketch is [[docs/notes/query-patterns-bind-positions-by-chain-address.md]].
+A query is a triple pattern that binds positions by chain address — `subject`, `predicate`, and `object` name the positions, not namespaces — and the unbound positions are the result: `(:predicate:status :object:todo)` returns every subject whose `status` is `todo`. The position names occupy the short-form token space, so a key coined `subject`, `predicate`, or `object` would make bindings ambiguous: the pattern grammar either reserves the three names in query context or must mark positions distinctly — held with the sketch, [[docs/notes/query-patterns-bind-positions-by-chain-address.md]].
 
 ### Cross-repo growth path
 
@@ -137,7 +139,7 @@ Held for the importer:
 
 The resource dictionary: one row per resource — every term of every statement. `id` is identity within the graph; `(nsid, uri)` is the address, presented by projection as the chain (see [Addressing](#addressing)). A row holds identity and nothing more; a resource's facts attach through statements.
 
-The dictionary is self-describing: `nsid` references `resource`, so namespaces are resources, and a resource is a namespace exactly when resources live under it. The recursion grounds at one fixed point — `meta:meta`, whose `nsid` is its own id — and `meta` parents the four structural namespaces: `edge`, `property`, `document`, `url`. Keys parent their values; there is no namespace table and no name stored twice.
+The dictionary is self-describing: `nsid` references `resource`, so namespaces are resources, and a resource is a namespace exactly when resources live under it. The recursion grounds at one fixed point — `meta:meta`, whose `nsid` is its own id — and `meta` parents the four structural namespaces: `edge`, `property`, `document`, `url`. Keys parent their values; there is no namespace table and no name stored twice. Projection walks up and stops at the self-parented row, emitting its name once: a canonical chain carries a single leading `meta` (`meta:property:priority:high`), while `meta:meta` names the fixed point and resolves, as does any stack of leading `meta`s.
 
 Kinds derive from namespace membership and the literal store — the chain and the rows carry the kind:
 
