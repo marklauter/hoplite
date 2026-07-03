@@ -1,12 +1,12 @@
 ---
 title: neighborhood
-summary: "The connected subgraph a walk returns: the seed nodes plus the nodes and edges reachable within its depth."
+summary: "The connected subgraph a walk returns: the seed resources plus the resources and edges reachable within its depth."
 tags: [hoplite, glossary]
 created: 2026-06-30
 status: evolving
 ---
 
-The connected subgraph a [[walk]] returns: the seed nodes plus the nodes and edges reachable within its depth.
+The connected subgraph a [[walk]] returns: the seed resources plus the resources and edges reachable within its depth.
 
 ## Notes
 

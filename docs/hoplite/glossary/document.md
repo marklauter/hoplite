@@ -5,7 +5,7 @@ tags: [hoplite, glossary]
 created: 2026-06-19
 status: locked
 has-a: 
-    - "[[node]]"
+    - "[[resource]]"
     - "[[frontmatter]]"
     - "[[feature]]"
 ---
@@ -16,4 +16,4 @@ A structured markdown file and its representation within the knowledge graph.
 
 Yaml frontmatter over a body of markdown prose. Hoplite reads metadata features from the frontmatter and content features from the body.
 
-A document is bound to the graph through a node. Its features — frontmatter metadata and body content — attach to that node but describe the document, not the node.
+A document is bound to the graph through a [[resource]]. Its features — frontmatter metadata and body content — attach to that resource but describe the document, not the resource.

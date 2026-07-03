@@ -10,7 +10,7 @@ status: evolving
 
 The canonical SQLite schema for the Hoplite knowledge graph: an RDF-shaped triple store over a self-describing resource dictionary, plus an FTS5 lexical index, rebuilt by drop-and-recreate. This spec is the source of truth; the importer's `schema.sql` mirrors it.
 
-Every position of a statement holds a resource. Addresses are namespace chains grounded at `meta:meta`; edges and properties are the kinds licensed for the predicate position. The model is [[docs/notes/every-triple-position-is-a-node.md]]; how it settled is [[docs/journal/2026-07-02-0139-the-reversal-every-triple-position-is-a-node.md]]; the term crosswalk is in [[docs/hoplite/glossary/README.md]]. The pre-reversal property-graph schema is preserved in git history.
+Every position of a statement holds a resource. Addresses are namespace chains grounded at `meta:meta`; edges and properties are the kinds licensed for the predicate position. The model is [[docs/notes/every-triple-position-is-a-resource.md]]; how it settled is [[docs/journal/2026-07-02-0139-the-reversal-every-triple-position-is-a-node.md]] (recorded under the old title); the term crosswalk is in [[docs/hoplite/glossary/README.md]]. The pre-reversal property-graph schema is preserved in git history.
 
 ## DDL
 

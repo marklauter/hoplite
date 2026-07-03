@@ -38,13 +38,13 @@ The Hoplite domain terms, one node per term. This page links them and keeps the 
 - [[match]]
 - [[minhash]]
 - [[neighborhood]]
-- [[node]]
 - [[predicate]]
 - [[projection]]
 - [[property]]
 - [[provenance]]
 - [[ranking-function]]
 - [[relationship]]
+- [[resource]]
 - [[search-expression]]
 - [[semantic-search]]
 - [[slug]]
@@ -60,7 +60,7 @@ The Hoplite domain terms, one node per term. This page links them and keeps the 
 
 Where a Hoplite term maps onto an external standard. A mapping is listed only where it is exact; near-fits import confusion instead of leverage.
 
-- [[node]] ≈ an RDF resource — a term in any position of a statement.
+- [[resource]] — RDF's universal term, adopted outright: a term in any position of a statement. RDF's "node" is merely positional (a subject or object), so the property-graph word retired into resource.
 - [[predicate]] ≈ the RDF predicate — the middle *position* of a statement, which an edge or a property fills. UML calls the edge-label sense a stereotype — the retired name.
 - [[edge]] ≈ OWL `ObjectProperty`: a pure relation, one of the two kinds licensed for the predicate position.
 - [[property]] ≈ OWL `DatatypeProperty`: a key, the other licensed kind. RDF's own schema layer names the literal-valued predicates *properties*, so Hoplite's edge/property split mirrors the standard's.

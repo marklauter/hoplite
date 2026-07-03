@@ -1,12 +1,12 @@
 ---
 title: walk
-summary: "To traverse chosen edges from seed nodes, gathering a neighborhood to a given depth."
+summary: "To traverse chosen edges from seed resources, gathering a neighborhood to a given depth."
 tags: [hoplite, glossary]
 created: 2026-06-19
 status: evolving
 ---
 
-To traverse chosen edges from seed nodes, gathering a [[neighborhood]] to a given depth.
+To traverse chosen edges from seed resources, gathering a [[neighborhood]] to a given depth.
 
 ## Notes
 
