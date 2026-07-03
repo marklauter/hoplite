@@ -1,6 +1,6 @@
 ---
 title: Frontmatter
-summary: "Hoplite's frontmatter standard: flat Obsidian Properties. Four special keys (all optional); every other key is open vocabulary, where a wikilink value is an edge and anything else is a node property."
+summary: "Hoplite's frontmatter standard: flat Obsidian Properties. Four special keys (all optional); every other key is open vocabulary, where a wikilink value is an edge and anything else is a property."
 tags: [hoplite, frontmatter, spec]
 created: 2026-05-29
 status: locked
@@ -13,7 +13,7 @@ Every document opens with a YAML frontmatter block. These are Obsidian [Properti
 
 Keys are a flat, open vocabulary — no `document.` or `edge.` prefix. A few keys are special; the rest are yours to coin. A key's value decides what it is:
 
-- A scalar or list of scalars is a node property — a claim on the document, like `status: draft`.
+- A scalar or list of scalars is a property — a claim on the document, like `status: draft`.
 - A wikilink is an edge to another document, and the key is the predicate, like `cites: ["[[shape]]"]`. For the wikilink grammar, see [[docs/hoplite/expressing-edges.md]].
 
 Frontmatter is optional. A document without it is still valid; Hoplite derives what it needs.

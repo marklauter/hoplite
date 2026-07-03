@@ -15,4 +15,4 @@ A semantic association between two [[document]]s expressed by an [[edge]].
 
 ## Structure
 
-A relationship has three parts. The [[edge]] — a bare attachment between two nodes — binds it to the graph. The [[predicate]] names the kind of association: `cites`, `supports`, `contradicts`. The [[confidence]] measures how far to trust it: an authored relationship carries 1.0, an inferred one less.
+A relationship has three parts. The [[edge]] — a bare attachment between two resources — binds it to the graph. The [[predicate]] names the kind of association: `cites`, `supports`, `contradicts`. The [[confidence]] measures how far to trust it: an authored relationship carries 1.0, an inferred one less.

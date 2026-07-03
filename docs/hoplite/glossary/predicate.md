@@ -18,4 +18,4 @@ A semantic label naming the [[relationship]] expressed by an [[edge]].
 
 ## Contrasts
 
-- `property` — a predicate relates a node to another node; a property claims a value on the node itself.
+- `property` — a predicate relates a resource to another resource; a property claims a value on the resource itself.

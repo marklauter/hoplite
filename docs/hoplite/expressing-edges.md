@@ -94,7 +94,7 @@ $
 
 A markdown link `[text](target)` is an edge, the same as a wikilink. It defaults to the `links-to` predicate and accepts the same inline predicate comments (`[text](target)<!--cites-->`). A markdown link is just another link syntax.
 
-A markdown target is a CommonMark link destination. An external URL resolves to a `url` node, a relative path to a `document`, and a fragment like `#section` to a same-page anchor.
+A markdown target is a CommonMark link destination. An external URL resolves to a `url` resource, a relative path to a `document`, and a fragment like `#section` to a same-page anchor.
 
 ## Frontmatter edges
 
@@ -110,7 +110,7 @@ contrast:                       # block list — several, one per line
 
 - Key — the predicate, like `cites` or `refines`. Keys are one flat open vocabulary: a few are special (read by meaning), and any other key is a predicate.
 - Value — a quoted wikilink. Quote it: Obsidian indexes the link only when it's quoted, and unquoted `[[ ]]` isn't valid YAML. Use a scalar for one edge, a list for several.
-- Edge or property, decided by value. A wikilink value makes the property an edge; a scalar value like `status: draft` makes it a node property.
+- Edge or property, decided by value. A wikilink value makes the property an edge; a scalar value like `status: draft` makes it a property.
 - No rendering. Display text (`|`) and embedding (`!`) work only in the body; a frontmatter edge is data.
 
 ## Portability

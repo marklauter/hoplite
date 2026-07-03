@@ -12,4 +12,4 @@ A claim expressed as a key-value pair in [[frontmatter]].
 
 ## Contrasts
 
-- `predicate` — a property claims a value on the node itself; a predicate relates the node to another node.
+- `predicate` — a property claims a value on the resource itself; a predicate relates the resource to another resource.

@@ -1,6 +1,6 @@
 ---
 title: edge
-summary: "An attachment between two nodes."
+summary: "An attachment between two resources."
 tags: [hoplite, glossary]
 created: 2026-06-19
 status: locked

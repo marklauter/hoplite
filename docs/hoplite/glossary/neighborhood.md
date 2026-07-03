@@ -10,4 +10,4 @@ The connected subgraph a [[walk]] returns: the seed resources plus the resources
 
 ## Notes
 
-Unlike a flat result set, a neighborhood carries topology — the edges traversed and the paths to each node. Depth zero is the degenerate case: the seeds alone, the same shape a [[match]] returns.
+Unlike a flat result set, a neighborhood carries topology — the edges traversed and the paths to each resource. Depth zero is the degenerate case: the seeds alone, the same shape a [[match]] returns.
