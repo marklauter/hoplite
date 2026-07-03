@@ -8,7 +8,7 @@ status: evolving
 
 # Every triple position is a node
 
-The graph is triples: `subject — predicate — object`, and every position holds a [[docs/hoplite/glossary/node.md|node]]. The middle is special by *role*, not by kind: a [[docs/hoplite/glossary/predicate.md|predicate]] is a node carrying the predicate facet — the registration that licenses it for the middle position, so `doc-1 doc-2 doc-3` is unwritable — but as a node it stands as subject or object like any resource, so statements about the vocabulary are ordinary statements. A [[docs/hoplite/glossary/document.md|document]] is not a node — it binds to one (the locked glossary already says so: a node is "identity, and nothing more"). Tags, property values, predicates, and out-of-line content bind to nodes the same way.
+The graph is triples: `subject — predicate — object`, and every position holds a [[docs/hoplite/glossary/node.md|node]]. The middle is special by *role*, not by kind: the [[docs/hoplite/glossary/predicate.md|predicate]] position is filled by an edge or property node — predicate-licensing is namespace-derived, so `doc-1 doc-2 doc-3` is invalid — and those nodes stand as subject or object like any resource, so statements about the vocabulary are ordinary statements. A [[docs/hoplite/glossary/document.md|document]] is not a node — it binds to one (the locked glossary already says so: a node is "identity, and nothing more"). Tags, property values, predicates, and out-of-line content bind to nodes the same way.
 
 Predicates were never ruled out of the dictionary — "not a node" was *edge's* property in the old model, and predicates inherited it by succession, not by argument, when they took over edge's core-concept role.
 
@@ -52,13 +52,13 @@ A literal node's address is computable from subject + predicate, so its triple c
 
 ## Consequences for the schema
 
-- `edge` becomes one row per statement `(src, predicate, dst)` — not one per `(src, dst)` pair with a predicate set — and `confidence` is per-statement.
+- The statement table (né edge) holds one row per triple `(src, predicate, dst)` — not one per `(src, dst)` pair with a predicate set — and `confidence` is per-statement.
 - `tag`, `node_tag`, `property_key`, `node_property` dissolve into nodes + edges; `document` dissolves into the literal store, with `content_hash`'s literal row as the document/ghost witness.
-- `predicate` becomes a facet keyed by nodeid — a predicate is a node (`predicate:cites`) with a registration row, interned at first use in the middle position. The edge's middle column is typed to the facet, holding the role apart; the node identity makes predicates subjects and objects, so `cites inverse-of cited-by` is representable — stored like any triple, enforced by nothing.
+- Predicate-licensing is namespace-derived: edges (`edge:cites`) and properties (`property:priority`) are the two kinds licensed for the predicate position; there is no registration table. `cites inverse-of cited-by` is representable — stored like any triple, enforced by nothing.
 - The `namespace` view stops being a projection: vocabulary entries are real nodes. Survey is literally match + walk over them.
 - Addresses are bare uris; the MCP tool layer is the resolver, taking them as parameters. No uri scheme — that would be API packaging in the model (if graph entities are ever exposed as MCP resources, a scheme becomes a wire-format detail of the tool api). The vault segment remains the growth path to cross-repo identity.
 - Multi-valued properties are sets (repeated triples; asserting twice yields one triple) — older notes saying "key/bag" mean key/set.
-- The dictionary stores an address as `(namespace, uri)`: a namespace table interns the roots — `document`, `url`, `predicate`, and one row per value-interned label — and the presented address is a projection over the pair. No nullable columns: documents and urls belong to structural namespace rows.
+- The dictionary is self-describing: `nsid` references `node`, addresses are namespace chains grounded at the `meta:meta` fixed point, and `meta` parents `edge`, `property`, `document`, `url`. Short forms resolve shortest-unique, like wikilink slugs. No namespace table, no nullable columns, no name stored twice.
 
 The schema realizes this model: [[docs/hoplite/schema.md]] (node, predicate, edge, literal, plus aliases and FTS).
 
