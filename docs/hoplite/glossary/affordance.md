@@ -10,6 +10,6 @@ An action made possible by the presence of a [[statement]].
 
 ## Examples
 
-- a predicate affords the author asserting a relationship (`cites`, `supersedes`) and the researcher filtering edges by what it means.
+- a relationship label affords the author asserting a relationship (`cites`, `supersedes`) and the researcher filtering by what it means.
 - the schema affords the author composing a new axis and the researcher surveying which axes exist.
-- an inferred similarity edge affords the researcher reaching relatives no one linked; only the engine can assert it, not the author.
+- an inferred similarity relationship affords the researcher reaching relatives no one linked; only the engine can assert it, not the author.

@@ -1,20 +1,14 @@
 ---
 title: predicate
-summary: "A semantic label naming the relationship expressed by an edge."
+summary: "The middle position of a statement, filled by a relationship or a claim key."
 tags: [hoplite, glossary]
 created: 2026-06-19
-status: locked
+status: evolving
 retired: [stereotype]
-contrast: "[[claim]]"
 ---
 
-A semantic label naming the [[relationship]] expressed by an [[edge]].
+The middle position of a statement, filled by a [[relationship]] or a [[claim]] key.
 
-## Examples
+## Structure
 
-- `is-a`, `has-a`, `contrast` — common structural relationships between glossary terms.
-- `cites`, `supports`, `supersedes`, `contradicts` — authored relationships between documents.
-
-## Contrasts
-
-- `claim` — a predicate relates a resource to another resource; a claim states a value about the resource itself.
+`subject`, `predicate`, `object` name a statement's three positions. Predicate-licensing is namespace-derived: members of the `relationship` and `claim` namespaces stand in the middle, and every licensed member is a resource, so statements about the vocabulary are ordinary statements. In RDF both kinds are predicates — `ObjectProperty` and `DatatypeProperty`; the crosswalk carries the mapping.

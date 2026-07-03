@@ -1,6 +1,6 @@
 ---
 title: Every triple position is a resource
-summary: "The graph is triples over a resource dictionary. Every position holds a resource — documents, tags, claim values, predicates, and out-of-line content alike; the middle is filled by an edge or claim. Values come in two addressing schemes: value-carrying uris for categorical values, literal uris for functional per-document content. Literal projections are derivable, so the document facet dissolves into a generic literal store projected into the graph."
+summary: "The graph is triples over a resource dictionary. Every position holds a resource — documents, tags, claim values, predicates, and out-of-line content alike; the middle is filled by a relationship or claim. Values come in two addressing schemes: value-carrying uris for categorical values, literal uris for functional per-document content. Literal projections are derivable, so the document facet dissolves into a generic literal store projected into the graph."
 tags: [note, hoplite, graph, schema, design]
 created: 2026-07-02
 status: evolving
@@ -8,7 +8,7 @@ status: evolving
 
 # Every triple position is a resource
 
-The graph is triples: `subject — predicate — object`, and every position holds a [[docs/hoplite/glossary/resource.md|resource]]. The middle is special by *role*, not by kind: the [[docs/hoplite/glossary/predicate.md|predicate]] position is filled by an edge or claim — predicate-licensing is namespace-derived, so `doc-1 doc-2 doc-3` is invalid — and those resources stand as subject or object like any other, so statements about the vocabulary are ordinary statements. A [[docs/hoplite/glossary/document.md|document]] binds to its resource — identity and nothing more; its facts attach through statements. Tags, claim values, predicates, and out-of-line content bind to resources the same way.
+The graph is triples: `subject — predicate — object`, and every position holds a [[docs/hoplite/glossary/resource.md|resource]]. The middle is special by *role*, not by kind: the [[docs/hoplite/glossary/predicate.md|predicate]] position is filled by a relationship or claim — predicate-licensing is namespace-derived, so `doc-1 doc-2 doc-3` is invalid — and those resources stand as subject or object like any other, so statements about the vocabulary are ordinary statements. A [[docs/hoplite/glossary/document.md|document]] binds to its resource — identity and nothing more; its facts attach through statements. Tags, claim values, predicates, and out-of-line content bind to resources the same way.
 
 Predicates were never ruled out of the dictionary — "not addressable" was *edge's* property in the old model, and predicates inherited it by succession, not by argument, when they took over edge's core-concept role.
 
@@ -54,11 +54,11 @@ A literal's address is computable from subject + predicate, so its triple carrie
 
 - The statement table (né edge) holds one row per triple `(src, predicate, dst)` — not one per `(src, dst)` pair with a predicate set — and `confidence` is per-statement.
 - `tag`, `node_tag`, `property_key`, `node_property` dissolve into resources + statements; `document` dissolves into the literal store, with `content_hash`'s literal row as the document/ghost witness.
-- Predicate-licensing is namespace-derived: edges (`edge:cites`) and claims (`claim:priority`) are the two kinds licensed for the predicate position; there is no registration table. `cites inverse-of cited-by` is representable — stored like any triple, enforced by nothing.
+- Predicate-licensing is namespace-derived: relationships (`relationship:cites`) and claims (`claim:priority`) are the two kinds licensed for the predicate position; there is no registration table. `cites inverse-of cited-by` is representable — stored like any triple, enforced by nothing.
 - The `namespace` view stops being a projection: vocabulary entries are real resources. Survey is literally match + walk over them.
 - Addresses are bare uris; the MCP tool layer is the resolver, taking them as parameters. No uri scheme — that would be API packaging in the model (if graph entities are ever exposed as MCP resources, a scheme becomes a wire-format detail of the tool api). The vault segment remains the growth path to cross-repo identity.
 - Multi-valued properties are sets (repeated triples; asserting twice yields one triple) — older notes saying "key/bag" mean key/set.
-- The dictionary is self-describing: `nsid` references `resource`, addresses are namespace chains grounded at the `meta:meta` fixed point, and `meta` parents `edge`, `claim`, `document`, `url`. Short forms resolve shortest-unique, like wikilink slugs. No namespace table, no nullable columns, no name stored twice.
+- The dictionary is self-describing: `nsid` references `resource`, addresses are namespace chains grounded at the `meta:meta` fixed point, and `meta` parents `relationship`, `claim`, `document`, `url`. Short forms resolve shortest-unique, like wikilink slugs. No namespace table, no nullable columns, no name stored twice.
 
 The schema realizes this model: [[docs/hoplite/schema.md]] (resource, statement, literal, plus aliases and FTS).
 

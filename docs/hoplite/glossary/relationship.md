@@ -1,18 +1,21 @@
 ---
 title: relationship
-summary: "A semantic association between two documents expressed by an edge."
+summary: "A semantic association between two resources."
 tags: [hoplite, glossary]
 created: 2026-06-21
-status: locked
+status: evolving
+retired: [edge]
 is-a: "[[statement]]"
-has-a:
-    - "[[predicate]]"
-    - "[[edge]]"
-    - "[[confidence]]"
+has-a: "[[confidence]]"
+contrast: "[[claim]]"
 ---
 
-A semantic association between two [[document]]s expressed by an [[edge]].
+A semantic association between two resources.
 
 ## Structure
 
-A relationship has three parts. The [[edge]] — a bare attachment between two resources — binds it to the graph. The [[predicate]] names the kind of association: `cites`, `supports`, `contradicts`. The [[confidence]] measures how far to trust it: an authored relationship carries 1.0, an inferred one less.
+A relationship's label names the kind of association — `cites`, `supports`, `contradicts` — a member of the `relationship` namespace (`relationship:cites`), licensed for the predicate position. The [[confidence]] measures how far to trust it: an authored relationship carries 1.0, an inferred one less.
+
+## Contrasts
+
+- `claim` — a relationship relates two resources; a claim states a value about one document.

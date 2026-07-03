@@ -1,18 +1,18 @@
 ---
 title: vocabulary
-summary: "The meta labels (claim keys and edge predicates) and bounded claim values mapped within the knowledge graph."
+summary: "The meta labels (claim keys and relationship labels) and bounded claim values mapped within the knowledge graph."
 tags: [hoplite, glossary]
 created: 2026-06-19
 status: locked
 ---
 
-The meta labels ([[claim]] keys and [[edge]] [[predicate|predicates]]) and bounded claim values mapped within the knowledge graph.
+The meta labels ([[claim]] keys and [[relationship]] labels) and bounded claim values mapped within the knowledge graph.
 
 ## Examples
 
 - a claim key — `status`, `created`.
 - a value expressed under a key — `locked`, or the tag `hoplite` under `tags`.
-- a predicate — `is-a`, `cites`.
+- a relationship label — `is-a`, `cites`.
 
 ## Discussion
 

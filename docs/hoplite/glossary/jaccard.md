@@ -12,7 +12,7 @@ The ratio of two sets' intersection to their union.
 
 ## Examples
 
-- Hoplite scores two documents' relatedness by the Jaccard overlap of their feature bags — the inferred similarity edge.
+- Hoplite scores two documents' relatedness by the Jaccard overlap of their feature bags — the inferred similarity relationship.
 
 ## Contrasts
 

@@ -1,12 +1,12 @@
 ---
 title: condition
-summary: "A test of a resource or edge, true or false; the corpus narrows to those it holds for."
+summary: "A test of a resource or statement, true or false; the corpus narrows to those it holds for."
 tags: [hoplite, glossary]
 created: 2026-06-30
 status: evolving
 ---
 
-A test of a resource or edge, true or false; the corpus narrows to those it holds for.
+A test of a resource or statement, true or false; the corpus narrows to those it holds for.
 
 ## Kinds
 

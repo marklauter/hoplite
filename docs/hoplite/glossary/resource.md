@@ -12,4 +12,4 @@ Anything the graph can address — identity, and nothing more.
 
 ## Structure
 
-A resource is a term of statements, identified by a [[uri]] within its namespace. It holds identity only; its facts attach through statements, never to the row. A resource exists for every addressable thing, written or not: a [[document]], a [[ghost]], a url, an edge, a claim key, a value.
+A resource is a term of statements, identified by a [[uri]] within its namespace. It holds identity only; its facts attach through statements, never to the row. A resource exists for every addressable thing, written or not: a [[document]], a [[ghost]], a url, a relationship, a claim key, a value.

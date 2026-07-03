@@ -18,7 +18,7 @@ returns every `:subject` whose `status` is `todo`.
 
 The moving parts:
 
-- **Position names** — `subject`, `predicate`, `object` — name the three statement positions. They are query grammar, not namespaces: `predicate` names the middle *position*, which an [[docs/hoplite/glossary/edge.md|edge]] label or a claim key may fill.
+- **Position names** — `subject`, `predicate`, `object` — name the three statement positions. They are query grammar, not namespaces: `predicate` names the middle *position*, which a [[docs/hoplite/glossary/relationship.md|relationship]] label or a claim key may fill.
 - **Bound positions filter; unbound positions are the result.** The pattern above binds predicate and object; the subject is what comes back.
 - **Bindings are chain addresses** resolved shortest-unique — `status` reaches `meta:claim:status`, `todo` reaches `status:todo` — the same discipline the wikilink grammar uses for slugs (a bare slug resolves anywhere; the shortest unique path disambiguates).
 

@@ -23,4 +23,4 @@ A lone signature is meaningless — similarity is the pairwise match-fraction of
 ## Examples
 
 - Hoplite stores one signature per document (the `document.minhash` blob) and compares signatures to estimate Jaccard cheaply, never materializing the full set intersection.
-- The inferred similarity edges come from MinHash-estimated Jaccard, not exact overlap.
+- The inferred similarity relationships come from MinHash-estimated Jaccard, not exact overlap.
