@@ -17,7 +17,6 @@ The Hoplite domain terms, one entry per term. This page links them and keeps the
 - [[bm25]]
 - [[claim]]
 - [[condition]]
-- [[condition-atom]]
 - [[confidence]]
 - [[corpus]]
 - [[document]]
@@ -29,10 +28,12 @@ The Hoplite domain terms, one entry per term. This page links them and keeps the
 - [[idf]]
 - [[infer]]
 - [[jaccard]]
-- [[knowledge-graph]]
+- [[literal]]
 - [[match]]
 - [[minhash]]
+- [[namespace]]
 - [[neighborhood]]
+- [[object]]
 - [[predicate]]
 - [[projection]]
 - [[ranking-function]]
@@ -42,11 +43,11 @@ The Hoplite domain terms, one entry per term. This page links them and keeps the
 - [[semantic-search]]
 - [[slug]]
 - [[statement]]
+- [[subject]]
 - [[summary]]
-- [[survey]]
-- [[tags]]
 - [[title]]
 - [[uri]]
+- [[value]]
 - [[vocabulary]]
 - [[walk]]
 
@@ -61,6 +62,9 @@ Where a Hoplite term maps onto an external standard. A mapping is listed only wh
 - [[statement]] ≈ the RDF statement: [[assert]] is the act, the statement is the artifact it leaves, and `confidence` is the degree of attestation — the retired provenance trinity collapsed into that one weight.
 - [[condition]] ≈ the leaf of a SQL `<search condition>`. SQL's grammar calls the leaf a predicate; Hoplite cedes that word to RDF.
 - [[search-expression]] ≈ the SQL `<search condition>` — the whole boolean expression a `WHERE` clause holds.
+- [[graph]] ≈ the RDF graph: a set of statements.
+- [[corpus]] ≈ the RDF dataset, loosely — the documents behind the graph.
+- [[vocabulary]] — RDF's own word: the interned claim keys and relationship labels.
 
 ## See also
 

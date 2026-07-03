@@ -11,4 +11,4 @@ A resource's identity.
 
 ## Details
 
-A case-insensitive identifier. For a document, a folder path and a slug: `docs/hoplite/glossary/property-graphs`. For an unresolved target, a `ghost/<slug>`. The MCP addresses a resource by the URN `node:<uri>` — see [[mcp-addresses-graph-entities-by-urn-scheme]].
+A case-insensitive name, unique within its namespace; the presented address is the namespace chain, resolved shortest-unique (see [[docs/hoplite/schema.md]]). Corpus and vocabulary uris are relative references — RDF resolves relative references against a base, the vault in the cross-repo model; url resources are absolute. For a document, the uri is its folder path and [[slug]]: `docs/hoplite/glossary/uri`.
