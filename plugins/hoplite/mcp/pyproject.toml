@@ -17,7 +17,7 @@ dev = [
     "pytest>=9.1.1",
     "ruff>=0.15.20",
     "pyright>=1.1.411",
-    "hypothesis>=6.156.1",
+    "hypothesis>=6.156.6",
     "types-PyYAML>=6.0.12.20260518",
 ]
 
