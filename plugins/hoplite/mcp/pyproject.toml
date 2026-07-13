@@ -15,7 +15,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "pytest>=9.1.1",
-    "ruff>=0.15.20",
+    "ruff>=0.15.21",
     "pyright>=1.1.411",
     "hypothesis>=6.156.1",
     "types-PyYAML>=6.0.12.20260518",
