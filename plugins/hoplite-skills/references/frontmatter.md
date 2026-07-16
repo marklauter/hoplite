@@ -66,7 +66,7 @@ Nothing is required, so little is fatal.
 - Unparseable YAML — Hoplite can't read the block, so it warns and indexes the document without its claims, using the slug-derived title and a body-excerpt summary.
 - A single bad key, like a dangling `-` or a non-list where a list belongs — Hoplite drops that key and warns.
 
-Warnings surface in `WriteResult.warnings`, so the agent is notified while the file stays indexed. Implementation: `plugins/hoplite/mcp/src/hoplite/frontmatter.py`.
+Warnings surface in `WriteResult.warnings`, so the agent is notified while the file stays indexed.
 
 ## See also
 
