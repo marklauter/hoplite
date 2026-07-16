@@ -2,7 +2,7 @@
 
 Obsidian-native grammar: a target is a slug, an optional folder-path prefix, and an
 optional anchor. No colons; the folder path is the namespace. In frontmatter an edge
-is a property whose value is a quoted wikilink, and the key is the stereotype.
+is a property whose value is a quoted wikilink, and the key is the predicate.
 
 Run: ``python -m pytest plugins/hoplite/hooks/test_edge_grammar.py``
 """
@@ -58,7 +58,7 @@ INVALID = [
     ("   ", "empty"),
     ("docs/hoplite:term", "colon"),     # no colons — the folder path is the namespace
     ("a:b:c", "colon"),
-    ("refines::circle", "stereotype"),  # stereotypes are frontmatter keys, not targets
+    ("refines::circle", "predicate"),   # predicates are frontmatter keys, not targets
     ("circle|shown", "body-only"),      # display is body-only
     ("foo!bar", "body-only"),           # embed is body-only
     ("café", "does not match"),         # non-ASCII is outside the strict segment set
@@ -75,9 +75,9 @@ def test_invalid_reports_specific(target: str, needle: str) -> None:
     assert needle in msg, f"{target!r} -> {msg!r}"
 
 
-def test_stereotype_colon_points_to_frontmatter_key() -> None:
+def test_predicate_colon_points_to_frontmatter_key() -> None:
     msg = validate_target("cites::circle")
-    assert msg is not None and "stereotype" in msg
+    assert msg is not None and "predicate" in msg
 
 
 def test_display_text_rejected_in_frontmatter() -> None:
@@ -110,7 +110,7 @@ REGEX_MATCHES = [
 REGEX_REJECTS = [
     "",                         # no page
     "docs/hoplite:term",        # colons are gone
-    "refines::circle",          # stereotype colons are gone
+    "refines::circle",          # predicate colons are gone
     "a:b:c:d",                  # any colon
     "circle|shown",             # `|` is not a segment char
     "foo!bar",                  # `!` is not a segment char
@@ -168,6 +168,17 @@ def test_fm_block_list() -> None:
     assert frontmatter_wikilink_targets(lines) == [("x", True, 1), ("y", True, 2)]
 
 
+def test_fm_block_list_zero_indent() -> None:
+    # a block-list item at column 0 is valid YAML and still belongs to the key above
+    lines = ["contrast:", '- "[[x]]"', '- "[[y]]"']
+    assert frontmatter_wikilink_targets(lines) == [("x", True, 1), ("y", True, 2)]
+
+
+def test_fm_block_list_zero_indent_under_special_key_skipped() -> None:
+    lines = ["aliases:", '- "[[old]]"']
+    assert frontmatter_wikilink_targets(lines) == []
+
+
 def test_fm_unquoted_is_flagged() -> None:
     assert frontmatter_wikilink_targets(["cites: [[circle]]"]) == [("circle", False, 0)]
 
@@ -222,6 +233,11 @@ def test_inline_skips_fenced_block() -> None:
     assert inline_wikilinks(body) == [("square", 4)]
 
 
+def test_inline_skips_unclosed_fence_to_end() -> None:
+    body = "see [[square]]\n```\n[[circle]] never closed"
+    assert inline_wikilinks(body) == [("square", 1)]
+
+
 def test_inline_dedupes_keeping_first_line() -> None:
     assert inline_wikilinks("[[circle]]\nand [[circle]]") == [("circle", 1)]
 
@@ -252,7 +268,7 @@ def test_anchor_only_is_valid_not_a_false_positive() -> None:
     assert validate_target("#^block") is None
 
 
-# --- inline stereotypes (typed inline edges) ----------------------------------
+# --- inline predicates (typed inline edges) ------------------------------------
 
 
 def test_inline_edges_bare_is_untyped() -> None:
@@ -290,11 +306,11 @@ def test_inline_edges_tab_before_comment_binds() -> None:
     assert inline_edges("[[circle]]\t<!--refines-->") == [("circle", "refines", 1)]
 
 
-def test_inline_edges_embed_marker_with_stereotype() -> None:
+def test_inline_edges_embed_marker_with_predicate() -> None:
     assert inline_edges("![[circle]]<!--refines-->") == [("circle", "refines", 1)]
 
 
-def test_inline_edges_anchored_target_with_stereotype() -> None:
+def test_inline_edges_anchored_target_with_predicate() -> None:
     assert inline_edges("[[circle#properties]]<!--refines-->") == [("circle#properties", "refines", 1)]
 
 
@@ -308,7 +324,7 @@ def test_inline_edges_multiple_in_order() -> None:
 
 
 def test_inline_edges_extracts_target_for_validation() -> None:
-    # the stereotype wrapper never affects which target is extracted or its validity
+    # the predicate wrapper never affects which target is extracted or its validity
     edges = inline_edges("[[circle]]<!--refines-->\n[bad:: [[x/]]]")
     assert edges == [("circle", "refines", 1), ("x/", "bad", 2)]
     assert validate_target("circle") is None

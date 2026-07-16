@@ -7,7 +7,7 @@ executable form of the locked spec at ``docs/hoplite/expressing-edges.md``.
 A *target* is the document a wikilink points to: a slug, an optional folder-path
 prefix, and an optional ``#section`` / ``#^block`` anchor. There are no colons — the
 folder path is the namespace. In frontmatter an *edge* is a property whose value is a
-wikilink, and the key is the stereotype; the special keys (title, summary, aliases,
+wikilink, and the key is the predicate; the special keys (title, summary, aliases,
 tags) are read by meaning, never as edges.
 """
 
@@ -70,7 +70,7 @@ def validate_target(target: str, *, inline: bool = False) -> str | None:
         return "empty edge target"
     if "::" in t:
         return (
-            f"`{target}`: a stereotype is the property key, not part of the target — "
+            f"`{target}`: a predicate is the property key, not part of the target — "
             'write `cites: "[[target]]"`, not `[[cites::target]]`'
         )
     if ":" in t:
@@ -110,14 +110,17 @@ def frontmatter_wikilink_targets(fm_lines: list[str]) -> list[tuple[str, bool, i
     ``fm_lines`` is the block between the ``---`` fences. Returns ``(target, quoted,
     line_index)`` per ``[[wikilink]]``, ``line_index`` 0-based within ``fm_lines``. A
     wikilink under a special key (title, summary, aliases, tags) is skipped — those are
-    read by meaning, not as edges. Handles scalar, flow-list, and block-list values.
+    read by meaning, not as edges. Handles scalar, flow-list, and block-list values;
+    a block-list item counts whether indented or at column 0 (both are valid YAML).
     """
     out: list[tuple[str, bool, int]] = []
     key_is_edge = False  # inside a non-special top-level key's value (and its block list)
     for idx, line in enumerate(fm_lines):
-        if not line.strip() or line.lstrip().startswith("#"):
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
             continue
-        if line[:1].isspace():  # continuation or block-list item under the current key
+        # A continuation: an indented line, or a block-list item at any indent.
+        if line[:1].isspace() or stripped == "-" or stripped.startswith("- "):
             if key_is_edge:
                 out.extend((t, q, idx) for t, q in _value_wikilinks(line))
             continue
@@ -131,7 +134,8 @@ def frontmatter_wikilink_targets(fm_lines: list[str]) -> list[tuple[str, bool, i
     return out
 
 
-_FENCE_RE = re.compile(r"```[\s\S]*?```")
+# `\Z` masks an unclosed trailing fence to end of text rather than leaving it live.
+_FENCE_RE = re.compile(r"```[\s\S]*?(?:```|\Z)")
 _INLINE_CODE_RE = re.compile(r"`+[^`\n]+?`+")
 
 
@@ -165,17 +169,17 @@ def inline_wikilinks(body: str) -> list[tuple[str, int]]:
 
 
 # Inline predicate forms, beside a wikilink — see expressing-edges.md ### Inline predicates.
-_TRAILING_STEREOTYPE_RE = re.compile(
+_TRAILING_PREDICATE_RE = re.compile(
     r"[^\S\n]*(?:<!--\s*([A-Za-z0-9._-]+)\s*-->|%%\s*([A-Za-z0-9._-]+)\s*%%)"
 )
 _LEADING_FIELD_RE = re.compile(r"\[\s*([A-Za-z0-9._-]+)\s*::\s*$")
 
 
 def inline_edges(body: str) -> list[tuple[str, str | None, int]]:
-    """Each in-body ``[[target]]`` as ``(target, stereotype | None, line)``.
+    """Each in-body ``[[target]]`` as ``(target, predicate | None, line)``.
 
-    A bare ``[[target]]`` is untyped (``stereotype`` is None). Three forms attach a
-    stereotype beside the link, all read here; the HTML comment is the emit default::
+    A bare ``[[target]]`` is untyped (``predicate`` is None). Three forms attach a
+    predicate beside the link, all read here; the HTML comment is the emit default::
 
         [[target]]<!--refines-->    HTML comment
         [[target]]%%refines%%        Obsidian comment
@@ -192,14 +196,14 @@ def inline_edges(body: str) -> list[tuple[str, str | None, int]]:
         target = m.group(1).strip()
         if not target:
             continue
-        stereotype: str | None = None
-        trail = _TRAILING_STEREOTYPE_RE.match(masked, m.end())
+        predicate: str | None = None
+        trail = _TRAILING_PREDICATE_RE.match(masked, m.end())
         if trail:
-            stereotype = trail.group(1) or trail.group(2)
+            predicate = trail.group(1) or trail.group(2)
         else:
             lead = _LEADING_FIELD_RE.search(masked, 0, m.start())
             if lead and masked[m.end() :].lstrip().startswith("]"):
-                stereotype = lead.group(1)
+                predicate = lead.group(1)
         line = masked.count("\n", 0, m.start()) + 1
-        out.append((target, stereotype, line))
+        out.append((target, predicate, line))
     return out
