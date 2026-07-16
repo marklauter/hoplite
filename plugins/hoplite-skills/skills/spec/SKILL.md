@@ -19,7 +19,7 @@ Write `docs/specs/<concept>.md` to the frontmatter standard (`${CLAUDE_PLUGIN_RO
 ---
 title: <concept>
 summary: "<one line — what the concept is, built from its terms>"
-tags: [hoplite, <domain>]
+tags: [spec, <domain>]
 created: YYYY-MM-DD
 status: <evolving | locked>
 cites:
