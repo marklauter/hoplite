@@ -3,7 +3,6 @@ title: Python toolchain and the writing-python skill
 summary: After spec wraps in the morning, the afternoon stands up the Python side — writing-python skill, writing-code component, ruff + pyright gate, src/tests layout for the MCP package. Tooling discipline locks in before any real code lands.
 tags: [journal, hoplite, mcp, python, tooling, milestone]
 created: 2026-05-24
-aliases: []
 ---
 
 # Python toolchain and the writing-python skill
@@ -12,7 +11,7 @@ After spec wraps in the morning, the afternoon stands up the Python side — `wr
 
 ## Intent
 
-The data-model and the SQLite-hybrid storage decision settled overnight. Implementation needs to land next, and Python is the chosen language ([[prototype-the-plugin-mcp-server-in-python]] settled this). Before writing actual hoplite logic, the toolchain needs to be in place — linter, type-checker, layout, skill body teaching how to author Python here.
+The data-model and the SQLite-hybrid storage decision settled overnight. Implementation needs to land next, and Python is the chosen language ([[docs/notes/prototype-the-plugin-mcp-server-in-python.md]] settled this). Before writing actual hoplite logic, the toolchain needs to be in place — linter, type-checker, layout, skill body teaching how to author Python here.
 
 Doing the toolchain first is deliberate. The bash plugin established that fail-fast posture matters; the Python side should ship with the same discipline from line one.
 
@@ -42,8 +41,8 @@ Doing the toolchain first is deliberate. The bash plugin established that fail-f
 
 ## What this set up
 
-The next several hours produce the first real hoplite modules — label-expression parser, candidate-filter, MinHash, IDs, wikilinks — all built against this toolchain from line one. Every commit in that run goes through ruff + pyright clean. See `[[2026-05-24-1918-first-hoplite-modules]]`.
+The next several hours produce the first real hoplite modules — label-expression parser, candidate-filter, MinHash, IDs, wikilinks — all built against this toolchain from line one. Every commit in that run goes through ruff + pyright clean. See `[[journal/2026-05-24-1918-first-hoplite-modules]]`.
 
 ## Next
 
-Label-expression parser, candidate-filter wrapper, MCP stub surface, MinHash, IDs module, wikilinks module — the building blocks land in sequence over the rest of the day. See `[[2026-05-24-1918-first-hoplite-modules]]`.
+Label-expression parser, candidate-filter wrapper, MCP stub surface, MinHash, IDs module, wikilinks module — the building blocks land in sequence over the rest of the day. See `[[journal/2026-05-24-1918-first-hoplite-modules]]`.

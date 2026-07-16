@@ -8,15 +8,23 @@
 
 *Another weapon from the MSL Armory*
 
-A knowledge graph over markdown documents. Claude Code MCP plugin that organizes your agent's thoughts.
+A knowledge graph over a markdown corpus — a **map of meaning** your agent can read, traverse, and act on. A Claude Code MCP plugin that organizes your agent's thoughts.
 
 ## What hoplite is
 
-The corpus is a directory of `.md` files with structured headers — Obsidian-compatible YAML frontmatter. Hoplite builds an in-memory graph from the corpus during Claude session start and exposes four query tools so agents can discover documents, traverse the graph, refresh after writing, and dump state as SQLite for debugging.
+A directory of `.md` files with Obsidian-compatible YAML frontmatter is bare text on disk. Hoplite reads it as a layered map:
 
-Content reads happen through the agent's built-in `Read` tool; writes happen through `Write` and `Edit`. There is no CRUD surface on hoplite itself.
+- **Substrate** — the bare graph. Every document is a `node`, every link an `edge`. Structure, no meaning.
+- **Meaning** — the knowledge graph. A `document` is what a node holds: its frontmatter and content. A `relationship` is a stereotyped link that says *how* two documents relate, not merely that they do. This is the map drawn on the structure.
+- **Use** — `affordances`. What the map makes possible for an agent: search it, walk a neighborhood, filter edges by what a link means, rank by relatedness.
 
-The corpus of `.md` files is the only persistent state in the system. Everything else — edges, MinHash signatures, the FTS5 text index, alias and casefold lookup tables — derives at startup and lives in RAM.
+Provenance runs through the meaning layer. Every feature is a **fact** — intrinsic, read off the bytes — or a **claim** — asserted by the author or inferred by the engine. So the map separates the terrain from what was drawn on it.
+
+Under the hood, the graph is **RDF-shaped**: a triple store where every statement is subject–predicate–object, every subject and object is a named node, and per-statement confidence rides as an RDF-star annotation. Frontmatter keys and link predicates form one open vocabulary. The full model is in [docs/hoplite/schema.md](docs/hoplite/schema.md).
+
+Hoplite natively supports Google's [Open Knowledge Format (OKF)](https://cloud.google.com/blog/products/data-analytics/how-the-open-knowledge-format-can-improve-data-sharing/). OKF and Hoplite share the same substrate — markdown files with YAML frontmatter, linked into a graph — so an OKF bundle is already a valid Hoplite corpus: each concept file becomes a node, its frontmatter becomes properties, and its markdown links become edges. Drop a bundle into the corpus and it comes out queryable as part of the RDF graph.
+
+The corpus of `.md` files is the only persistent state. The graph, the MinHash signatures, and the text index all derive at session start and live in RAM, rebuilt from the files on demand. There is no CRUD surface on hoplite itself: content reads go through the agent's `Read` tool, writes through `Write` and `Edit`.
 
 ## Install
 
@@ -56,20 +64,20 @@ Linux distributions vary — `python3` resolves out of the box on most. If your 
 
 Three agent-facing skills compose with the knowledge graph:
 
-- `graph-reference` — query the graph. Loads the tool reference and edge vocabulary only; use this when you want to search, traverse, reindex, or dump without loading the authoring workflow.
+- `research` — query the graph. Loads the tool reference and edge vocabulary only; use this when you want to search, traverse, reindex, or dump without loading the authoring workflow.
 - `taking-notes` — author atomic notes under `docs/notes/`, each capturing the current state of one idea.
 - `journaling` — author dated, append-only entries under `docs/journal/`.
 
-The `graph-reference` skill is a thin wrapper over `components/hoplite/mcp-reference.md`. The authoring skills (`taking-notes`, `journaling`) inject that same reference alongside `shape/artifact-structure.md`, `shape/frontmatter.md`, and `prose/writing-prose.md` — covering structure, frontmatter, query surface, and prose virtues. One canonical source per component; multiple invocation paths.
+The `research` skill is a thin wrapper over `components/hoplite/mcp-reference.md`. The authoring skills (`taking-notes`, `journaling`) inject that same reference alongside `shape/artifact-structure.md`, `shape/frontmatter.md`, and `prose/writing-prose.md` — covering structure, frontmatter, query surface, and prose virtues. One canonical source per component; multiple invocation paths.
 
 ### MCP tools
 
-Four tools register under the `plugin:hoplite:graph_mcp` server:
+Four tools register under the `plugin:hoplite:catalog` server:
 
-- `hoplite_match_nodes(predicate, k=5)` — search. BM25 over title, summary, and body; optional tag-expression post-filter (`notes & mcp`, `(plan | journal) & !draft`).
-- `hoplite_traverse_nodes(from_, predicate=None, depth=1)` — breadth-first walk from a starting document. Filters by edge kind, direction, similarity confidence, and tag predicate on reached nodes.
-- `hoplite_reindex()` — rebuild the in-memory graph from the current corpus. Call after writing or editing `.md` files.
-- `hoplite_dump_index(path=None)` — snapshot the in-memory graph to a SQLite file. Default destination is `.hoplite/<ISO-timestamp>.index.sqlite`.
+- `where(predicate, k=5)` — search. BM25 over title, summary, and body; optional tag-expression post-filter (`notes & mcp`, `(plan | journal) & !draft`).
+- `relatives(from_, predicate=None, depth=1)` — breadth-first walk from a starting document. Filters by edge kind, direction, similarity confidence, and tag predicate on reached nodes.
+- `refresh()` — rebuild the in-memory graph from the current corpus. Call after writing or editing `.md` files.
+- `export(path=None)` — snapshot the in-memory graph to a SQLite file. Default destination is `.hoplite/<ISO-timestamp>.index.sqlite`.
 
 ### Hooks
 
@@ -86,7 +94,6 @@ Four tools register under the `plugin:hoplite:graph_mcp` server:
    summary: Notes on brewing and beans.
    tags: [note, beverage]
    created: 2026-05-25
-   aliases: []
    ---
 
    Beans roast in three colors. Light, medium, dark. See [[notes/brewing-methods.md]] for extraction.
@@ -98,15 +105,15 @@ Four tools register under the `plugin:hoplite:graph_mcp` server:
    /reload-plugins
    ```
 
-3. Ask the agent to query the graph. The agent calls `hoplite_match_nodes({"text": "coffee"})` and gets back hits with summary and tags. Following the wikilink resolves through `hoplite_traverse_nodes(from_="notes/coffee.md")` — the unwritten `notes/brewing-methods.md` appears as a ghost node, queryable as an open loop.
+3. Ask the agent to query the graph. The agent calls `where({"text": "coffee"})` and gets back hits with summary and tags. Following the wikilink resolves through `relatives(from_="notes/coffee.md")` — the unwritten `notes/brewing-methods.md` appears as a ghost node, queryable as an open loop.
 
-4. (Optional) Dump the index for SQL exploration. Call `hoplite_dump_index()` — the tool writes `.hoplite/<timestamp>.index.sqlite`. Open it:
+4. (Optional) Dump the index for SQL exploration. Call `export()` — the tool writes `.hoplite/<timestamp>.index.sqlite`. Open it:
 
    ```bash
    sqlite3 .hoplite/<timestamp>.index.sqlite
    .tables
-   SELECT d.path, p.value FROM documents d
-     JOIN node_properties p ON p.node_id = d.id
+   SELECT d.path, p.value FROM document d
+     JOIN document_property p ON p.path = d.path
      WHERE p.key = 'title';
    ```
 
@@ -114,11 +121,11 @@ Four tools register under the `plugin:hoplite:graph_mcp` server:
 
 The markdown files on disk are the source of truth. Hoplite holds no canonical state of its own — every reindex rebuilds the in-memory graph from scratch by walking the corpus, parsing frontmatter, extracting wikilinks, and computing MinHash signatures.
 
-The in-memory graph carries five surfaces: documents (file-level identity, `resolved` flag, content hash, MinHash bytes), node properties (everything from frontmatter, in EAV form), edges (`mentions` from wikilinks, `related` from MinHash similarity), edge properties (currently `confidence` on `related` edges), and an in-memory SQLite FTS5 index for BM25 ranking. Tag membership is a node property, not an edge.
+The in-memory graph carries four surfaces: documents (file-level identity, `resolved` flag, content hash, MinHash bytes), document properties (everything from frontmatter, in EAV form), edges (`mentions` from wikilinks, `cites` from inline markdown URLs, `related` from MinHash similarity), and edge properties (currently `confidence` on `related` edges). An in-memory SQLite FTS5 index supports BM25 ranking. Tag membership is a document property, not an edge.
 
-The dump renders this state as a property-graph projection. A `nodes(id, kind)` table assigns each document an integer id; `documents`, `node_properties`, `edges`, and `edge_properties` foreign-key into it. The FTS5 index ships in contentless mode — the inverted index survives the dump for `MATCH` queries, but bodies live only in the source markdown.
+The dump renders this state as a property-graph projection that mirrors the in-memory shape one-to-one: `document` keyed by path, `document_property` and `edge` and `edge_property` keyed on the same natural keys their in-memory dicts use. The FTS5 index ships in contentless mode — the inverted index survives the dump for `MATCH` queries, but bodies live only in the source markdown.
 
-For depth on the architecture, see [docs/hoplite/architecture.md](docs/hoplite/architecture.md).
+For depth on the architecture, see [docs/hoplite/hoplite-architecture.md](docs/hoplite/hoplite-architecture.md).
 
 ## Troubleshooting
 
@@ -144,7 +151,7 @@ If the MCP server times out on first install on Windows, the most common cause i
 Layout:
 
 - `plugins/hoplite/mcp/` — the MCP server (Python). `src/hoplite/` holds the package; `tests/` holds the unit and smoke tests.
-- `plugins/hoplite/skills/` — `graph-reference`, `taking-notes`, and `journaling`, each with a `SKILL.md`.
+- `plugins/hoplite/skills/` — `research`, `taking-notes`, and `journaling`, each with a `SKILL.md`.
 - `plugins/hoplite/components/shape/` — `artifact-structure.md` (document composition + template) and `frontmatter.md` (the YAML contract).
 - `plugins/hoplite/components/hoplite/` — `mcp-reference.md` (the MCP tools, edges, vocabulary).
 - `plugins/hoplite/components/prose/` — `writing-prose.md` (title/summary/body virtues, composition, grammar, validation).
@@ -164,10 +171,9 @@ Adding a skill: create `plugins/hoplite/skills/<skill-name>/SKILL.md`, then `/pl
 
 ## Reference
 
-- [docs/hoplite/readme.md](docs/hoplite/readme.md) — spec index.
-- [docs/hoplite/architecture.md](docs/hoplite/architecture.md) — corpus, graph, walker, FTS5, MinHash, dump schema, error model.
-- [docs/hoplite/tool-api.md](docs/hoplite/tool-api.md) — MCP tool signatures and semantics.
-- [docs/hoplite/roadmap.md](docs/hoplite/roadmap.md) — features deferred past day one.
+- [docs/hoplite/hoplite-architecture.md](docs/hoplite/hoplite-architecture.md) — corpus, graph, walker, FTS5, MinHash, dump schema, error model.
+- [docs/hoplite/hoplite-tool-api.md](docs/hoplite/hoplite-tool-api.md) — MCP tool signatures and semantics.
+- [docs/hoplite/hoplite-roadmap.md](docs/hoplite/hoplite-roadmap.md) — features deferred past day one.
 - [plugins/hoplite/components/shape/artifact-structure.md](plugins/hoplite/components/shape/artifact-structure.md) — document composition and template, injected by the authoring skills.
 - [plugins/hoplite/components/shape/frontmatter.md](plugins/hoplite/components/shape/frontmatter.md) — the frontmatter contract, injected by the authoring skills.
 - [plugins/hoplite/components/hoplite/mcp-reference.md](plugins/hoplite/components/hoplite/mcp-reference.md) — the MCP tool reference, injected by all three skills.

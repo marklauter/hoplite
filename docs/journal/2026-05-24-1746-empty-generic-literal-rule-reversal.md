@@ -3,7 +3,6 @@ title: Empty-generic-literal rule reversal
 summary: A semgrep rule against `frozenset[str]()` and similar empty-generic-with-explicit-type-param literals added at 17:34 and reverted at 17:46. The rule was right about a real pattern; the cost of reading the rule's diagnostic was higher than the cost of letting the pattern exist.
 tags: [journal, hoplite, python, tooling, dead-end]
 created: 2026-05-24
-aliases: []
 ---
 
 # Empty-generic-literal rule reversal
@@ -46,5 +45,5 @@ The original pattern stays. `test_filtering.py` continues to use `frozenset[str]
 
 ## Cross-references
 
-- `[[2026-05-24-1918-first-hoplite-modules]]` — the broader Python module work this commit lived inside.
-- `[[2026-05-24-1701-python-toolchain-and-writing-python-skill]]` — the toolchain that the rule was being added to.
+- `[[journal/2026-05-24-1918-first-hoplite-modules]]` — the broader Python module work this commit lived inside.
+- `[[journal/2026-05-24-1701-python-toolchain-and-writing-python-skill]]` — the toolchain that the rule was being added to.

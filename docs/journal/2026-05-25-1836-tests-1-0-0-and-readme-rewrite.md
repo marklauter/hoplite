@@ -3,7 +3,6 @@ title: Traverse tests, version bump to 1.0.0, README rewrite
 summary: Focused unit tests for tools.traverse_nodes land; self-loop and mid-graph cycle coverage close gaps in the BFS path; armory and hoplite both bump 0.1.0 → 1.0.0; README rewrites around hoplite as agentic note-taking and knowledge graph.
 tags: [journal, hoplite, tests, release, readme, milestone]
 created: 2026-05-25
-aliases: []
 ---
 
 # Traverse tests, version bump to 1.0.0, README rewrite
@@ -35,9 +34,9 @@ README rewrite: the existing README still framed the package as a skills plugin 
 
 ## Cross-references
 
-- `[[2026-05-25-1137-eav-property-graph-refactor]]` — the EAV shape these tests cover.
-- `[[2026-05-25-1724-fts5-rowid-bug-and-timestamped-dumps]]` — the bug fix that preceded this.
+- `[[journal/2026-05-25-1137-eav-property-graph-refactor]]` — the EAV shape these tests cover.
+- `[[journal/2026-05-25-1724-fts5-rowid-bug-and-timestamped-dumps]]` — the bug fix that preceded this.
 
 ## Next
 
-The hoplite SKILL.md extracts to a component injected into the authoring skills; armory renames to hoplite as the project starts to spin out of the Claude repo into its own home. See `[[2026-05-25-1934-skill-md-to-component-and-the-repo-split]]`.
+The hoplite SKILL.md extracts to a component injected into the authoring skills; armory renames to hoplite as the project starts to spin out of the Claude repo into its own home. See `[[journal/2026-05-25-1934-skill-md-to-component-and-the-repo-split]]`.

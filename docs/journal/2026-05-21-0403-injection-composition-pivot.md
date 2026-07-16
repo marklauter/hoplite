@@ -3,7 +3,6 @@ title: Injection composition — the !`cat` pivot
 summary: SKILL.md learns it can inject other markdown files via `!`cat <path>`` at load time; editorial-principles becomes a component injected by writing-prose, taking-notes, and journaling; foundation/downstream coupling stops being convention and becomes mechanism.
 tags: [journal, skills, composition, injection, decision, milestone]
 created: 2026-05-21
-aliases: []
 ---
 
 # Injection composition — the !`cat` pivot
@@ -20,7 +19,7 @@ The session opened with two skill-composition notes that had drifted apart in sc
 
 - 2026-05-21 01:32 — Discoveries. Working through the merge surfaced that Claude Code's skill loader expands backtick-cat constructions in SKILL.md at load time. A skill that writes `` !`cat path/to/component.md` `` gets the file inlined into its body before the agent ever sees it.
 - 2026-05-21 02:01 — Merged skill-composition notes; absorbed v1 design plus the injection discovery into one canonical note.
-- 2026-05-21 04:01 — MCP hello-world server added to the plugin (see `[[2026-05-21-0401-mcp-runtime-thesis-and-hello-world]]`).
+- 2026-05-21 04:01 — MCP hello-world server added to the plugin (see `[[journal/2026-05-21-0401-mcp-runtime-thesis-and-hello-world]]`).
 - 2026-05-21 04:03 — Adopt inject-composition. Extracted editorial-principles into a shared component. Refactored `writing-prose`, `taking-notes`, and `journaling` as injecting consumers.
 - 2026-05-21 17:15 — Notes burst capturing follow-ups.
 - 2026-05-21 21:37 — Refactored skills (further alignment).
@@ -59,12 +58,12 @@ The coupling is one-way through the component, not through the foundation skill.
 
 Components became the canonical pattern for the next month. Every editorial concern, every frontmatter contract, every cross-skill reference now gets factored into a component. The taking-notes and journaling SKILL.md files of today inject editorial-principles plus frontmatter plus (later) the hoplite tool reference.
 
-The pattern also reframed what later became the hoplite skill / hoplite component split: the `using-graph` skill ends up as a thin wrapper over a `components/hoplite/mcp-reference.md` component that the authoring skills also inject. See `[[2026-05-25-1849-skill-md-to-component-and-the-repo-split]]`.
+The pattern also reframed what later became the hoplite skill / hoplite component split: the `using-graph` skill ends up as a thin wrapper over a `components/hoplite/mcp-reference.md` component that the authoring skills also inject. See `[[journal/2026-05-25-1934-skill-md-to-component-and-the-repo-split]]`.
 
 ## Open question carried forward
 
-`${CLAUDE_PLUGIN_ROOT}` and the bare-cat injection have a permission-gate interaction: `!cat $VAR/file` triggers a different prompt than `!cat /literal/path/file`. This bites later when components themselves try to use `${CLAUDE_PLUGIN_ROOT}` internally. The eventual rule lands a week later: components contain no cat injections and no `${CLAUDE_PLUGIN_ROOT}` references; the host SKILL.md resolves the path before passing it. See `[[2026-05-25-2247-post-1-0-hygiene]]`.
+`${CLAUDE_PLUGIN_ROOT}` and the bare-cat injection have a permission-gate interaction: `!cat $VAR/file` triggers a different prompt than `!cat /literal/path/file`. This bites later when components themselves try to use `${CLAUDE_PLUGIN_ROOT}` internally. The eventual rule lands a week later: components contain no cat injections and no `${CLAUDE_PLUGIN_ROOT}` references; the host SKILL.md resolves the path before passing it. See `[[journal/2026-05-25-2247-post-1-0-hygiene]]`.
 
 ## Next
 
-The bash heredoc apostrophe trap bites later in the week while composing notes about why bash needs replacing — concrete evidence the runtime thesis was right. See `[[2026-05-22-2300-bash-heredoc-bites-the-bash-fragility-note]]`.
+The bash heredoc apostrophe trap bites later in the week while composing notes about why bash needs replacing — concrete evidence the runtime thesis was right. See `[[journal/2026-05-22-2300-bash-heredoc-bites-the-bash-fragility-note]]`.

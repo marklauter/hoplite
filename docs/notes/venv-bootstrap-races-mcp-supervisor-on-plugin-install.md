@@ -1,20 +1,26 @@
 ---
 title: Venv bootstrap races MCP supervisor on plugin install
 summary: SessionStart hooks don't fire on /plugin install. The MCP launcher polls for the bootstrapped venv and times out before the venv can be built — first install of any hoplite-shaped plugin fails until a session restart or manual bootstrap.
-tags: [note, hoplite, bootstrap, mcp, lifecycle, bug]
+tags: [note, todo, hoplite, bootstrap, mcp, lifecycle, bug]
 created: 2026-05-25
-aliases: []
+priority: medium
+effort: medium
+status: open
 ---
+
+# Venv bootstrap races MCP supervisor on plugin install
+
+SessionStart hooks don't fire on `/plugin install`. The MCP launcher polls for the bootstrapped venv and times out before the venv can be built — first install of any hoplite-shaped plugin fails until a session restart or manual bootstrap.
 
 ## Symptom
 
-After `/plugin install hoplite@msl.hoplite` (or any rename or reinstall flow that produces a fresh `${CLAUDE_PLUGIN_DATA}` directory), the MCP supervisor reports `Failed to reconnect to plugin:hoplite:graph_mcp: MCP server connection timed out after 30000ms`. The data directory at `~/.claude/plugins/data/hoplite-msl-hoplite/` exists but is empty — no `venv/`, no `pyproject.toml` snapshot.
+After `/plugin install hoplite@msl.hoplite` (or any rename or reinstall flow that produces a fresh `${CLAUDE_PLUGIN_DATA}` directory), the MCP supervisor reports `Failed to reconnect to plugin:hoplite:catalog: MCP server connection timed out after 30000ms`. The data directory at `~/.claude/plugins/data/hoplite-msl-hoplite/` exists but is empty — no `venv/`, no `pyproject.toml` snapshot.
 
 `/reload-plugins` doesn't help; the supervisor reattempts the launcher and times out again on the same gap.
 
 ## Cause
 
-[Observation] The venv is built by `hooks/bootstrap-venv.py`, registered as a SessionStart hook in `hooks.json`. SessionStart fires on Claude Code session start — not on `/plugin install`. The install sequence:
+The venv is built by `hooks/bootstrap-venv.py`, registered as a SessionStart hook in `hooks.json`. SessionStart fires on Claude Code session start, not on `/plugin install`. The install sequence:
 
 1. Cache populates at `~/.claude/plugins/cache/<marketplace>/<plugin>/<version>/`.
 2. `installed_plugins.json` records the install.
@@ -23,9 +29,9 @@ After `/plugin install hoplite@msl.hoplite` (or any rename or reinstall flow tha
 5. No venv exists. The launcher times out and exits non-zero.
 6. Supervisor reports the connection timeout.
 
-[Observation] The venv only builds on the next session start, when SessionStart finally fires. Meanwhile the user sees a broken plugin and has no obvious next step.
+The venv only builds on the next session start, when SessionStart finally fires. Meanwhile the user sees a broken plugin and has no obvious next step.
 
-[Observation] Hit at least three times during the rename storm this session: skills → hoplite, hoplite → armory, and the fresh install of `hoplite@msl.hoplite` in the new repo.
+Hit at least three times during the rename storm this session: skills → hoplite, hoplite → armory, and the fresh install of `hoplite@msl.hoplite` in the new repo.
 
 ## Workaround
 
@@ -45,13 +51,13 @@ Alternative: restart Claude Code entirely. SessionStart fires on startup, builds
 
 Three approaches that close the gap without an upstream change in Claude Code:
 
-1. **Inline bootstrap in `launch.py`.** When the venv interpreter is missing, the launcher builds the venv itself instead of polling and failing. Drops the SessionStart hook entirely. [Inference] Risk: the MCP supervisor expects an MCP handshake within its timeout window; a cold-start pip install takes 30-60s and would starve the handshake. Would need a way to signal "still loading" to the supervisor, or to background the install and have the supervisor retry.
+1. Inline bootstrap in `launch.py`. When the venv interpreter is missing, the launcher builds the venv itself instead of polling and failing. This drops the SessionStart hook entirely. The risk: the MCP supervisor expects an MCP handshake within its timeout window, and a cold-start pip install takes 30-60s, which would starve the handshake. This would need a way to signal "still loading" to the supervisor, or to background the install and have the supervisor retry.
 
-2. **Pre-build at install time.** If Claude Code's plugin lifecycle exposes a post-install hook (separate from SessionStart), wire the bootstrap there. [Guess] As of today, no such hook documented in the plugins reference. Worth checking the docs again after any Claude Code update.
+2. Pre-build at install time. If Claude Code's plugin lifecycle exposes a post-install hook separate from SessionStart, wire the bootstrap there. No such hook is documented in the plugins reference today. Worth checking the docs again after any Claude Code update.
 
-3. **Bigger launcher poll window + clear stderr.** Keep SessionStart, extend `launch.py`'s poll from 60s to (say) 180s, emit a stderr line explaining "first install waits for SessionStart on next session restart." Doesn't fix the underlying race but makes the symptom less mysterious.
+3. Bigger launcher poll window plus clear stderr. Keep SessionStart, extend `launch.py`'s poll from 60s to (say) 180s, and emit a stderr line explaining "first install waits for SessionStart on next session restart." This does not fix the underlying race, but it makes the symptom less mysterious.
 
-[Inference] Option 1 is the most user-friendly if the supervisor-starvation problem is solvable. Option 3 is the cheapest stopgap.
+Option 1 is the most user-friendly if the supervisor-starvation problem is solvable. Option 3 is the cheapest stopgap.
 
 ## Day-one mitigation
 

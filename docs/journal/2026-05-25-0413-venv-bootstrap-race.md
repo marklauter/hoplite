@@ -3,7 +3,6 @@ title: Venv bootstrap race on plugin install
 summary: SessionStart hook bootstraps a venv and pip-installs the MCP server; launch.py dispatches to it; subprocess.run replaces os.execv; poll-with-timeout defends against the MCP supervisor starting before the venv exists; venv tears down on pip failure so a half-installed state cannot wedge a session.
 tags: [journal, hoplite, mcp, bootstrap, venv, plugin, milestone]
 created: 2026-05-25
-aliases: []
 ---
 
 # Venv bootstrap race on plugin install
@@ -51,8 +50,8 @@ The number of operating-system-level details a "Python package" install touches.
 
 - `docs/notes/debug-the-venv-bootstrap-race-on-plugin-install.md` — open TODO for the actual fix.
 - `docs/notes/venv-bootstrap-races-mcp-supervisor-on-plugin-install.md` — captured during this work as a longer write-up of the race shape.
-- `[[2026-05-25-2252-venv-bootstrap-follows-the-canonical-pattern]]` — later same evening, a design-review pass confirmed the bootstrap layer matches Anthropic's documented pattern verbatim and the race is inherent to that pattern, not our adaptation. The design holds; the workaround is documented.
+- `[[journal/2026-05-25-2252-venv-bootstrap-follows-the-canonical-pattern]]` — later same evening, a design-review pass confirmed the bootstrap layer matches Anthropic's documented pattern verbatim and the race is inherent to that pattern, not our adaptation. The design holds; the workaround is documented.
 
 ## Next
 
-The plugin rename dance starts: skills → hoplite → armory across the next few commits. See `[[2026-05-25-0618-plugin-renames-skills-hoplite-armory]]`.
+The plugin rename dance starts: skills → hoplite → armory across the next few commits. See `[[journal/2026-05-25-0618-plugin-renames-skills-hoplite-armory]]`.

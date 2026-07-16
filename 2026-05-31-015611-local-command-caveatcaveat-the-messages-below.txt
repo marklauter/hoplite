@@ -1,0 +1,176 @@
+ ▐▛███▜▌   Claude Code v2.1.158
+▝▜█████▛▘  Opus 4.8 · Claude Max
+  ▘▘ ▝▝    D:\hoplite\hoplite
+
+❯ /clear                                                                        
+  ⎿  (no content)
+
+❯ read @docs/hoplite/hoplite.md and, from information theory, enumerate the     
+  ways documents may be found to be related. these would be signals. we         
+  differentiate explicit and latent signals in the document, but for this       
+  discussion I want a full enumeration.                                         
+  ⎿  Read docs\hoplite\hoplite.md (81 lines)
+
+● The information-theoretic frame
+
+  Two documents are related exactly when they are not independent: knowing
+  something about one reduces your uncertainty about the other. Relatedness is
+  mutual information between documents along some channel, and the unit of
+  relatedness is a shared (or linked) feature.
+
+  The single most important consequence — and the thing that should govern every
+  score in Hoplite — is that signal strength is the self-information of the 
+  shared feature, not the fact of sharing. Two docs sharing the term "the" carry
+  ~0 bits; two docs sharing "recursive-CTE traversal" carry many. This is
+  pointwise mutual information: a co-occurrence is surprising (informative) in
+  proportion to how improbable the shared feature is on its own. Every latent
+  signal below is really "co-occurrence of a high-entropy feature," and the
+  threshold knob your doc mentions is, formally, a cut on PMI.
+
+  So the full enumeration is: every feature space over which documents are 
+  statistically non-independent is a relatedness channel. Here they are.
+
+  The enumeration
+
+  I'll group by the feature space that carries the signal, and tag each:
+  Explicit (authored) vs Latent (emergent); directed vs undirected; binary vs
+  graded.
+
+  1. Declared linkage — the link graph's values
+
+  The author asserted the relationship; the signal is simply true.
+  - Direct reference — A points to B. (E, directed, binary)
+  - Backlink — the same edge read in reverse; who points to B. (E, directed, 
+  binary) — one assertion, two readings.
+  - Typed/stereotyped edge — the link carries a label (supersedes, derives-from,
+  contradicts, refutes). The kind is itself a feature. (E, directed, binary)
+  - Ghost reference — a link whose target doesn't exist yet; relates the citing
+  doc to an intended one. (E, directed, binary)
+  - Transclusion/embedding — one doc includes another's content; strictly
+  stronger than reference. (E, directed, binary)
+
+  2. Declared classification — metadata values
+
+  - Shared tag — classification kinship; relate by kind even when topics
+  diverge. (E, undirected, graded by tag rarity)
+  - Shared structured property — same project, status, author frontmatter
+  field/value. (E, undirected, graded by value rarity)
+  - Title/identifier overlap — shared distinctive name tokens. (E/L, undirected,
+  graded)
+
+  3. Content — the words themselves
+
+  - Lexical overlap (FTS/TF-IDF) — shared rare terms, exact n-gram coincidence.
+  (L, undirected, graded) — this is PMI made literal: IDF is self-information.
+  - Semantic/embedding similarity — closeness in distributional-meaning space;
+  catches paraphrase the words miss. (L, undirected, graded by distance)
+  - Topic-model kinship — share a latent topic distribution (LDA-style). (L, 
+  undirected, graded)
+  - Named-entity co-mention — reference the same person, system, file,
+  identifier, ticket. (L, undirected, graded by entity rarity)
+  - Near-duplication / quotation — verbatim or near-verbatim passages; the
+  redundancy your "corpus repeats itself" problem describes. (L, undirected, 
+  graded)
+  - Shared external citation — both cite the same outside URL/source
+  (bibliographic coupling on external refs). (L, undirected, graded)
+
+  4. Graph topology — the link graph's structure (read off the edges, not the 
+  values)
+
+  This is the family your doc calls structural kinship; it has more members than
+  co-citation.
+  - Co-citation — both pointed to by the same third doc. (L, undirected, graded 
+  by count)
+  - Bibliographic coupling — both point to the same third doc. (L, undirected, 
+  graded by count)
+  - Common-neighbor / Jaccard — overlap of full neighborhoods, undirected. (L, 
+  undirected, graded)
+  - Geodesic proximity — short path between them in the graph. (L, undirected, 
+  graded by distance)
+  - Community co-membership — fall in the same densely-connected cluster. (L, 
+  undirected, graded)
+  - Hub/authority role — a doc many point to is central; relatedness to the 
+  corpus, not to one peer. (L, directed-derived, graded) — a node property, but
+  it conditions every edge's weight.
+
+  5. Temporal — the timestamps
+
+  - Creation proximity (arcs) — made close in time, sharing the intent then
+  underway. (L, undirected, graded by Δt)
+  - Modification co-occurrence — edited in the same window/session. (L, 
+  undirected, graded)
+  - Lifecycle-phase alignment — both in genesis vs build vs refactor of the same
+  arc. (L, undirected, graded)
+  - Sequence/ordering — explicit "next/prev" or implicit succession. (E or L, 
+  directed)
+
+  6. Provenance — version control and authorship
+
+  The corpus is under git; this channel is sitting unused.
+  - Change coupling (co-commit) — changed together in the same commit. This is
+  logical coupling from software-repository mining and is often a stronger
+  relatedness predictor than content. (L, undirected, graded by co-change 
+  frequency)
+  - Same author — (L, undirected, graded by author prolificacy)
+  - Commit-message reference — a commit ties two docs in prose. (L/E, 
+  undirected)
+  - Branch co-membership — born or living on the same branch. (L, undirected)
+
+  7. Spatial — the filesystem
+
+  The thing your doc argues against as an ontology is still a weak relatedness
+  signal.
+  - Same directory / sibling — (L, undirected, binary)
+  - Path-name token overlap — (L, undirected, graded)
+  - Tree distance — (L, undirected, graded)
+
+  8. Behavioral — usage, if you ever log it
+
+  Not present today, but it's a real channel and worth naming for completeness.
+  - Co-retrieval — surfaced together by the same query. (L, undirected, graded)
+  - Co-access — read together in the same agent session (access coupling). (L, 
+  undirected, graded)
+
+  The cross-cutting axes
+
+  Independent of channel, every signal varies along axes worth making explicit,
+  because they determine how the graph may use it:
+
+  - Authored vs emergent — your explicit/latent split. Authored = truth,
+  ungraded, can't be "wrong," can't be discovered. Emergent = graded, rankable,
+  falsifiable.
+  - Directed vs undirected — directionality is itself information (reference vs
+  co-citation); collapsing it loses bits.
+  - Binary vs graded — only graded signals have a threshold knob and a
+  recall/precision tradeoff.
+  - Symmetric vs asymmetric — embedding distance is symmetric; "supersedes" is
+  not; PMI is symmetric but conditional probability isn't.
+  - Transitive vs not — similarity is roughly transitive (enables clustering);
+  typed edges usually aren't.
+  - Value-borne vs structure-borne — does the signal live in the
+  content/metadata (§1–3,5–7) or in the shape of the graph (§4)? Your doc's
+  sharpest line — "signal read off the links themselves, not the values" —
+  generalizes: §4 is the only family that needs no document content at all.
+
+  The unifying statement
+
+  There is one relatedness signal — mutual information — observed through many
+  channels. The explicit channels (§1–2) deliver it at full confidence and zero
+  recall beyond what was typed. Every other channel trades confidence for reach,
+  and each is a different projection of the documents into a feature space
+  where co-occurrence of rare features betrays a dependency the author never
+  declared. The differentiator your doc claims for the graph holds and can be
+  stated precisely: grep/FTS/LLM-reading can only harvest channels §1–3; 
+  channels §4 (topology), §5 (time), §6 (provenance), and §8 (usage) exist only 
+  once the corpus is a graph with history. That's the unique territory.
+
+  One note for the doc as it stands: your "structural kinship" bullet currently
+  names co-citation and hubs but folds in bibliographic coupling loosely — those
+  are two distinct couplings (shared inbound vs shared outbound), and §6
+  change-coupling is entirely absent. Both are worth their own lines if this
+  enumeration feeds the spec.
+
+  Want me to fold this into hoplite.md under Latent signal, or keep it as a
+  working note in docs/notes/?
+
+✻ Cooked for 1m 6s

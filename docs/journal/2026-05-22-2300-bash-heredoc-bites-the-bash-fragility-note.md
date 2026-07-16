@@ -3,7 +3,6 @@ title: Bash heredoc bites the bash-fragility note
 summary: While composing the runtime-thesis note arguing for replacing bash on the write path, record-note.sh failed on body apostrophes through a heredoc-quoting collision. The note arguing bash needs replacing triggered the exact failure mode that motivates the replacement.
 tags: [journal, bash, mcp, dead-end]
 created: 2026-05-22
-aliases: []
 ---
 
 # Bash heredoc bites the bash-fragility note
@@ -12,7 +11,7 @@ While composing the runtime-thesis note arguing for replacing bash on the write 
 
 ## Context
 
-The session was composing `mcp-server-as-skill-system-runtime.md`, the note that extends `[[prototype-the-plugin-mcp-server-in-python]]` with the indexer architecture and the thesis that MCP is the skill-system runtime. The body carried natural English — `agent's`, `link's semantic context`, others. Apostrophes in prose.
+The session was composing `mcp-server-as-skill-system-runtime.md`, the note that extends `[[notes/prototype-the-plugin-mcp-server-in-python]]` with the indexer architecture and the thesis that MCP is the skill-system runtime. The body carried natural English — `agent's`, `link's semantic context`, others. Apostrophes in prose.
 
 The write path was `record-note.sh` via the Bash tool, body delivered through a `<<'EOF'` heredoc.
 
@@ -40,10 +39,10 @@ This is not a one-off worth a defensive comment in the script. It is a recurring
 
 ## Cross-references
 
-- `[[prototype-the-plugin-mcp-server-in-python]]` — the original motivation. Bash write-path scripts choke on quoting edge cases.
+- `[[notes/prototype-the-plugin-mcp-server-in-python]]` — the original motivation. Bash write-path scripts choke on quoting edge cases.
 - `[[mcp-server-as-skill-system-runtime]]` — the thesis note whose composition triggered this incident.
 - `[[bash-write-path-tripped-its-own-replacement-argument]]` — the full observation note.
 
 ## Next
 
-The runtime thesis lands as the parent note for the MCP graph runtime data-model spec the following day. See `[[2026-05-23-1807-data-model-spec-and-cold-review-iteration]]`.
+The runtime thesis lands as the parent note for the MCP graph runtime data-model spec the following day. See `[[journal/2026-05-23-1807-data-model-spec-and-cold-review-iteration]]`.

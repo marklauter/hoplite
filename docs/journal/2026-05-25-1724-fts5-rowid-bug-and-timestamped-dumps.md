@@ -3,7 +3,6 @@ title: FTS5 rowid bug and timestamped dump filenames
 summary: hoplite_dump_index returned wrong paths because FTS5's rowid was independent of documents.id; binding rowid to documents.id fixed the path resolution. Default dump filename gains an ISO timestamp so prior dumps survive on disk.
 tags: [journal, hoplite, mcp, fts5, bug-fix]
 created: 2026-05-25
-aliases: []
 ---
 
 # FTS5 rowid bug and timestamped dump filenames
@@ -42,8 +41,8 @@ A test for the dump's row-resolution would have caught it. The test suite at thi
 
 ## Cross-references
 
-- `[[2026-05-25-1137-eav-property-graph-refactor]]` — the EAV refactor that introduced the contentless FTS5 pattern this bug lived in.
+- `[[journal/2026-05-25-1137-eav-property-graph-refactor]]` — the EAV refactor that introduced the contentless FTS5 pattern this bug lived in.
 
 ## Next
 
-Traverse-tool tests, version bump to 1.0.0, README rewrite. See `[[2026-05-25-1836-tests-1-0-0-and-readme-rewrite]]`.
+Traverse-tool tests, version bump to 1.0.0, README rewrite. See `[[journal/2026-05-25-1836-tests-1-0-0-and-readme-rewrite]]`.

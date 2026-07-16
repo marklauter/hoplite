@@ -1,0 +1,10 @@
+---
+title: ghost
+summary: "A document that doesn't exist yet."
+tags: [hoplite, glossary]
+created: 2026-06-19
+status: locked
+is-a: "[[document]]"
+---
+
+A document that doesn't exist yet.

@@ -1,9 +1,8 @@
 ---
 title: First hoplite modules — parser, filter, stubs, MinHash, ids, wikilinks
-summary: Five afternoon hours land the pure-compute pieces: label-expression parser with ruff/pyright gating, candidate-filter wrapper, MCP tool-surface stubs with echo-style fakes, MinHash + jaccard module, ids module with validator and resolver, wikilinks parser. The skeleton hoplite needs before any real graph wiring.
+summary: "Five afternoon hours land the pure-compute pieces: label-expression parser with ruff/pyright gating, candidate-filter wrapper, MCP tool-surface stubs with echo-style fakes, MinHash + jaccard module, ids module with validator and resolver, wikilinks parser. The skeleton hoplite needs before any real graph wiring."
 tags: [journal, hoplite, mcp, python, milestone]
 created: 2026-05-24
-aliases: []
 ---
 
 # First hoplite modules — parser, filter, stubs, MinHash, ids, wikilinks
@@ -57,9 +56,9 @@ Each module is a leaf, tested in isolation:
 
 ## Cross-references
 
-- `[[2026-05-24-1701-python-toolchain-and-writing-python-skill]]` — the toolchain these modules built against.
-- `[[2026-05-24-0411-sqlite-hybrid-wins-file-based-dropped]]` — the spec these modules implement against (mostly).
+- `[[journal/2026-05-24-1701-python-toolchain-and-writing-python-skill]]` — the toolchain these modules built against.
+- `[[journal/2026-05-24-0411-sqlite-hybrid-wins-file-based-dropped]]` — the spec these modules implement against (mostly).
 
 ## Next
 
-The ids module gets deleted overnight when identity collapses to path and the surrogate-key work retires. The MinHash, wikilinks, parser, and filtering modules survive the redesign mostly unchanged. See `[[2026-05-25-0202-dead-then-redesign-in-memory-graph-and-four-tools]]`.
+The ids module gets deleted overnight when identity collapses to path and the surrogate-key work retires. The MinHash, wikilinks, parser, and filtering modules survive the redesign mostly unchanged. See `[[journal/2026-05-25-0202-dead-then-redesign-in-memory-graph-and-four-tools]]`.

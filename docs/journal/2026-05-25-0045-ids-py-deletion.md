@@ -3,7 +3,6 @@ title: ids.py deletion — 91 lines retired in one commit
 summary: The ids module — path-as-id validator, wikilink resolver, slugify_text — built the previous afternoon and committed at 19:15. Deleted at 00:45 the next morning when identity collapsed from three-tier (ULID + filename + integer-PK) to single-tier (path). 128 lines of tests retired alongside.
 tags: [journal, hoplite, refactor, identity, dead-end]
 created: 2026-05-25
-aliases: []
 ---
 
 # ids.py deletion — 91 lines retired in one commit
@@ -12,7 +11,7 @@ The `ids` module — path-as-id validator, wikilink resolver, `slugify_text` —
 
 ## What ids.py did
 
-Built across the late-afternoon module work ([[2026-05-24-1918-first-hoplite-modules]]):
+Built across the late-afternoon module work ([[docs/journal/2026-05-24-1918-first-hoplite-modules.md]]):
 
 - A validator confirming a path was well-shaped for use as an id (no leading slash, no parent-directory traversal, length bounds).
 - A resolver mapping wikilink text to an id. Handled aliases (an explicit alias in frontmatter took precedence) and the shortest-unique-prefix rule for ambiguous matches.
@@ -24,7 +23,7 @@ The total surface was a clean leaf module — pure functions, no I/O, full test 
 
 ## What killed it
 
-The morning redesign ([[2026-05-25-0202-dead-then-redesign-in-memory-graph-and-four-tools]]) collapsed identity. The previous shape:
+The morning redesign ([[docs/journal/2026-05-25-0202-dead-then-redesign-in-memory-graph-and-four-tools.md]]) collapsed identity. The previous shape:
 
 - ULID — domain identifier. Edges store ULIDs. Wikilinks resolve to ULIDs.
 - Filename — presentation property. Mutable.
@@ -64,6 +63,6 @@ The accompanying `[[refactor-ids-and-metadata]]` note captured the intermediate 
 
 ## Cross-references
 
-- `[[2026-05-24-1918-first-hoplite-modules]]` — where ids.py was built.
-- `[[2026-05-25-0202-dead-then-redesign-in-memory-graph-and-four-tools]]` — the redesign that retired it.
+- `[[journal/2026-05-24-1918-first-hoplite-modules]]` — where ids.py was built.
+- `[[journal/2026-05-25-0202-dead-then-redesign-in-memory-graph-and-four-tools]]` — the redesign that retired it.
 - `[[refactor-ids-and-metadata]]` — the intermediate-snapshot note.

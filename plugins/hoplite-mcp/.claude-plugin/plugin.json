@@ -1,0 +1,15 @@
+{
+  "name": "hoplite-mcp",
+  "version": "0.0.1",
+  "description": "The Hoplite knowledge-graph MCP server. Stub — under design; no server is shipped yet.",
+  "author": {
+    "name": "MSL"
+  },
+  "license": "MIT",
+  "keywords": [
+    "claude-code",
+    "mcp",
+    "knowledge-graph",
+    "markdown"
+  ]
+}

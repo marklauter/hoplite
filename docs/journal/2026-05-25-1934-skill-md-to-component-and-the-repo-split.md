@@ -3,7 +3,6 @@ title: SKILL.md to component, and the repo split
 summary: The hoplite SKILL.md body extracts to a component injected by taking-notes and journaling; non-hoplite content prunes; armory renames to hoplite for the new repo; the skill restores as a thin wrapper; the standalone skill renames to using-graph. Tag discipline backfills the corpus with the `note` tag. PowerShell rewrite leaves a UTF-8 BOM that strips off on a follow-up pass.
 tags: [journal, hoplite, skill, component, repo-split, milestone]
 created: 2026-05-25
-aliases: []
 ---
 
 # SKILL.md to component, and the repo split
@@ -47,13 +46,13 @@ The hoplite repo is now self-contained. The armory plugin in the Claude repo con
 
 ## What this didn't fix
 
-The plugin's marketplace manifest and the README in the hoplite repo still carry some armory-era language. The recompose / triage pass that follows in the same session cleans this up. See `[[2026-05-25-2247-post-1-0-hygiene]]`.
+The plugin's marketplace manifest and the README in the hoplite repo still carry some armory-era language. The recompose / triage pass that follows in the same session cleans this up. See `[[journal/2026-05-25-2247-post-1-0-hygiene]]`.
 
 ## Cross-references
 
-- `[[2026-05-21-0403-injection-composition-pivot]]` — the original injection pattern this extraction reuses.
-- `[[2026-05-25-0202-dead-then-redesign-in-memory-graph-and-four-tools]]` — the design that produced the four-tool surface this skill references.
+- `[[journal/2026-05-21-0403-injection-composition-pivot]]` — the original injection pattern this extraction reuses.
+- `[[journal/2026-05-25-0202-dead-then-redesign-in-memory-graph-and-four-tools]]` — the design that produced the four-tool surface this skill references.
 
 ## Next
 
-Post-1.0 hygiene: README dev layout updates, editorial-principles slim, component injection rules tighten, docs/mcp recomposes into docs/hoplite. See `[[2026-05-25-2247-post-1-0-hygiene]]`.
+Post-1.0 hygiene: README dev layout updates, editorial-principles slim, component injection rules tighten, docs/mcp recomposes into docs/hoplite. See `[[journal/2026-05-25-2247-post-1-0-hygiene]]`.

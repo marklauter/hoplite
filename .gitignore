@@ -6,3 +6,5 @@ __pycache__/
 *.egg-info/
 .pytest_cache/
 .ruff_cache/
+.obsidian/
+docs/Graph_Databases_2e_Neo4j.pdf

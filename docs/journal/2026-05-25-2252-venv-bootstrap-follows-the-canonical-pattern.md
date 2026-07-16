@@ -3,7 +3,6 @@ title: Venv bootstrap follows the canonical pattern; the race is upstream's
 summary: Opened the session suspecting our venv-bootstrap layer was over-engineered or wrong. After tracing the design back through git, reading the official plugins reference end-to-end, and ruling out workarounds, the answer is the opposite — we adapted Anthropic's documented npm pattern verbatim, and the first-install race is inherent to that pattern, not our adaptation. Keep the design; document the restart-after-install ritual.
 tags: [journal, hoplite, mcp, python, claude-code, decision]
 created: 2026-05-25
-aliases: []
 ---
 
 # Venv bootstrap follows the canonical pattern; the race is upstream's
@@ -87,6 +86,6 @@ A `windows-release` Git branch that swaps `python3` for `python` — Rejected: p
 
 ## See also
 
-- [[venv-bootstrap-races-mcp-supervisor-on-plugin-install]] — symptom-and-cause note from earlier in the session.
-- [[debug-the-venv-bootstrap-race-on-plugin-install]] — investigation TODO this cycle closes.
-- [[python-bootstrap/ideas]] — the design doc capturing the proposed-but-rejected workaround and the Option A decision.
+- [[docs/notes/venv-bootstrap-races-mcp-supervisor-on-plugin-install.md]] — symptom-and-cause note from earlier in the session.
+- [[ghost/debug-the-venv-bootstrap-race-on-plugin-install]] — investigation TODO this cycle closes.
+- [[ghost/python-bootstrap/ideas]] — the design doc capturing the proposed-but-rejected workaround and the Option A decision.

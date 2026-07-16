@@ -1,0 +1,9 @@
+# Build manifest. One entry per line: <src> -> <dst>, paths relative to the repo root.
+# build.py reads each src, expands every {{<rel-path>}} marker by inlining the file at
+# templates/<rel-path>, and writes the result to dst. Markers inside an inlined component
+# are an error — composition is one level deep.
+#
+# Files not listed here are not built. Anything under plugins/hoplite/ that is not a dst
+# in this manifest is committed source.
+
+templates/skills/research/SKILL.md   -> plugins/hoplite/skills/research/SKILL.md

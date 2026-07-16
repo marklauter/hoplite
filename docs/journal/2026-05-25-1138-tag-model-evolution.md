@@ -3,7 +3,6 @@ title: Tag model evolution — edges then virtual nodes then properties
 summary: Three acts on what tags are in the graph. Act one — tags as edges from documents to tag-things. Act two — tags as first-class virtual nodes with their own identity and outbound edges. Act three — tags as property values on documents, no separate entity. Each step solved the prior step's problem and surfaced the next.
 tags: [journal, hoplite, tags, ontology, decision]
 created: 2026-05-25
-aliases: []
 ---
 
 # Tag model evolution — edges then virtual nodes then properties
@@ -12,7 +11,7 @@ Three acts on what tags are in the graph. Act one — tags as edges from documen
 
 ## Act one — tags as edges
 
-Going into the runtime thesis ([[2026-05-21-0401-mcp-runtime-thesis-and-hello-world]]), tags lived in document frontmatter as a list: `tags: [skills, mcp, design]`. The indexer's job was to make that list queryable across the corpus. The first instinct: emit an edge for each tag occurrence. A document carrying `tags: [skills]` produces an edge from the document to a node identified by `skills`.
+Going into the runtime thesis ([[docs/journal/2026-05-21-0401-mcp-runtime-thesis-and-hello-world.md]]), tags lived in document frontmatter as a list: `tags: [skills, mcp, design]`. The indexer's job was to make that list queryable across the corpus. The first instinct: emit an edge for each tag occurrence. A document carrying `tags: [skills]` produces an edge from the document to a node identified by `skills`.
 
 This worked for membership queries — "all documents tagged X" becomes "all sources of edges into the X node." But the tag-side was thin. The X node carried no content, no metadata, no identity beyond its name. It existed as an edge endpoint, nothing more. Two questions immediately surfaced:
 
@@ -34,9 +33,9 @@ Tags now had:
 - Outbound edges. The tag held `:contains` edges (later `member` edges) outward to its member documents. Adding a doc to a tag created an edge from the tag-node side; removing dropped it.
 - Optional content. A tag could carry a markdown body — a landing page explaining what the tag covered.
 
-This model survived the data-model spec drafting and the cold-review iteration ([[2026-05-23-1807-data-model-spec-and-cold-review-iteration]]). The spec at one point spent ~50 lines on tag-node sidecar shape, label envelopes, members-folder structure as a filesystem-based inverted index — every detail of how a tag-as-node would live on disk and how the indexer would maintain it.
+This model survived the data-model spec drafting and the cold-review iteration ([[docs/journal/2026-05-23-1807-data-model-spec-and-cold-review-iteration.md]]). The spec at one point spent ~50 lines on tag-node sidecar shape, label envelopes, members-folder structure as a filesystem-based inverted index — every detail of how a tag-as-node would live on disk and how the indexer would maintain it.
 
-The model also acquired a second job: envelope framing. Three "framing-axis labels" — `instruction`, `reference`, `observation` — became tag-nodes whose body content was the prose envelope the MCP server applied on `invoke` retrieval. See [[2026-05-25-0046-label-as-envelope-death]] for that thread's separate fate.
+The model also acquired a second job: envelope framing. Three "framing-axis labels" — `instruction`, `reference`, `observation` — became tag-nodes whose body content was the prose envelope the MCP server applied on `invoke` retrieval. See [[docs/journal/2026-05-25-0046-label-as-envelope-death.md]] for that thread's separate fate.
 
 The problems that accumulated:
 
@@ -49,11 +48,11 @@ The first signal that the model was over-committed: the cold-review pass on the 
 
 ## Act three — tags as properties
 
-The redesign on the morning of 2026-05-25 ([[2026-05-25-0202-dead-then-redesign-in-memory-graph-and-four-tools]]) collapsed the retrieval tools and made Hoplite "dataview over documents." Tags survived this pass as virtual nodes; the `Tag` dataclass stayed in the in-memory graph; the `member` edge type from doc to tag stayed.
+The redesign on the morning of 2026-05-25 ([[docs/journal/2026-05-25-0202-dead-then-redesign-in-memory-graph-and-four-tools.md]]) collapsed the retrieval tools and made Hoplite "dataview over documents." Tags survived this pass as virtual nodes; the `Tag` dataclass stayed in the in-memory graph; the `member` edge type from doc to tag stayed.
 
 But the redesign had killed the envelope-framing rationale for the special tag subset. With `invoke_node` and `read_node` retired, the framing-axis labels lost their special behavior. They became regular tags. And once they were regular tags, the question came back: what does a tag-as-node actually buy?
 
-The EAV refactor ([[2026-05-25-1137-eav-property-graph-refactor]]) answered: not enough to justify the complexity. The new shape:
+The EAV refactor ([[docs/journal/2026-05-25-1137-eav-property-graph-refactor.md]]) answered: not enough to justify the complexity. The new shape:
 
 - `documents` table holds identity and immutable bookkeeping.
 - `node_properties(node_id, key, value)` holds every frontmatter field.
@@ -91,8 +90,8 @@ The cost of getting the model wrong was internal — every model change touched 
 
 ## Cross-references
 
-- `[[2026-05-21-0401-mcp-runtime-thesis-and-hello-world]]` — where act one and act two crystallized.
-- `[[2026-05-23-1807-data-model-spec-and-cold-review-iteration]]` — peak commitment to act two.
-- `[[2026-05-25-0202-dead-then-redesign-in-memory-graph-and-four-tools]]` — the redesign that kept act two alive but stripped its envelope-framing rationale.
-- `[[2026-05-25-1137-eav-property-graph-refactor]]` — act three lands.
-- `[[2026-05-25-0046-label-as-envelope-death]]` — the parallel collapse of envelope framings that ran adjacent to this tag-model arc.
+- `[[journal/2026-05-21-0401-mcp-runtime-thesis-and-hello-world]]` — where act one and act two crystallized.
+- `[[journal/2026-05-23-1807-data-model-spec-and-cold-review-iteration]]` — peak commitment to act two.
+- `[[journal/2026-05-25-0202-dead-then-redesign-in-memory-graph-and-four-tools]]` — the redesign that kept act two alive but stripped its envelope-framing rationale.
+- `[[journal/2026-05-25-1137-eav-property-graph-refactor]]` — act three lands.
+- `[[journal/2026-05-25-0046-label-as-envelope-death]]` — the parallel collapse of envelope framings that ran adjacent to this tag-model arc.

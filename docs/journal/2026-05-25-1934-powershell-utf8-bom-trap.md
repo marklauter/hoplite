@@ -3,7 +3,6 @@ title: PowerShell UTF-8 BOM trap
 summary: Windows PowerShell 5.1's Out-File with -Encoding utf8 writes a byte-order mark; YAML parser sees the BOM as content and the frontmatter fails to parse. Sweep pass strips BOMs from notes rewritten through PowerShell.
 tags: [journal, hoplite, windows, powershell, encoding, bug-fix]
 created: 2026-05-25
-aliases: []
 ---
 
 # PowerShell UTF-8 BOM trap
@@ -12,7 +11,7 @@ Windows PowerShell 5.1's `Out-File` with `-Encoding utf8` writes a byte-order ma
 
 ## What happened
 
-The tag-discipline backfill ([[2026-05-25-1934-skill-md-to-component-and-the-repo-split]]) needed to walk every doc under `docs/notes/`, add the `note` tag if missing, and rewrite the file. The backfill ran from a PowerShell session — the natural Windows shell for this repo. PowerShell's idiomatic write-file shape is `Set-Content` or `Out-File`. Both produce a BOM by default on Windows PowerShell 5.1.
+The tag-discipline backfill ([[docs/journal/2026-05-25-1934-skill-md-to-component-and-the-repo-split.md]]) needed to walk every doc under `docs/notes/`, add the `note` tag if missing, and rewrite the file. The backfill ran from a PowerShell session — the natural Windows shell for this repo. PowerShell's idiomatic write-file shape is `Set-Content` or `Out-File`. Both produce a BOM by default on Windows PowerShell 5.1.
 
 After the backfill, the indexer started failing on every touched note. The `---` opening fence had a `﻿` byte sitting in front of it, invisible in most editors but a real byte to the YAML parser. The parser saw the file as starting with `﻿---` and concluded the frontmatter fence was missing.
 
@@ -40,9 +39,9 @@ The fix used the first option — `WriteAllText` with explicit BOM-less encoding
 
 The broader Windows-tooling caution: PowerShell's defaults reflect a different era and a different consumer model than the agentic-tool stack expects. UTF-16 LE for text files, CRLF for line endings, BOM for "explicit" UTF-8 — each is a default that survives because changing it would break Windows tooling that depends on it. The cost lands on cross-platform tooling reading the files PowerShell writes.
 
-See also `[[2026-05-25-0202-crlf-frontmatter-parse-bug]]` — the CRLF-frontmatter defect from earlier in the same day. Same defect family: a Windows-default that breaks a parser expecting Unix shape.
+See also `[[journal/2026-05-25-0202-crlf-frontmatter-parse-bug]]` — the CRLF-frontmatter defect from earlier in the same day. Same defect family: a Windows-default that breaks a parser expecting Unix shape.
 
 ## Cross-references
 
-- `[[2026-05-25-1934-skill-md-to-component-and-the-repo-split]]` — the backfill that triggered the BOM problem.
-- `[[2026-05-25-0202-crlf-frontmatter-parse-bug]]` — the parallel CRLF defect.
+- `[[journal/2026-05-25-1934-skill-md-to-component-and-the-repo-split]]` — the backfill that triggered the BOM problem.
+- `[[journal/2026-05-25-0202-crlf-frontmatter-parse-bug]]` — the parallel CRLF defect.

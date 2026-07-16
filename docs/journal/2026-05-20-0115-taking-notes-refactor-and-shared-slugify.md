@@ -3,7 +3,6 @@ title: Taking-notes refactor and the shared slugify
 summary: Taking-notes refactors as a writing-prose downstream; the script set gets reorganized; slugify gets shared across notes and journal so two skills converge on one canonical kebab-case rule.
 tags: [journal, skills, taking-notes, slugify, milestone]
 created: 2026-05-20
-aliases: []
 ---
 
 # Taking-notes refactor and the shared slugify
@@ -39,7 +38,7 @@ aliases: []
 
 The refactor surfaced a problem that the inject-composition pivot resolves the next day. `taking-notes` declared its rhetorical-context override per the foundation contract — but the editorial principles from `writing-prose` still had to be duplicated, restated, or referenced by hand. The foundation/downstream coupling was conceptual; the mechanism was still "read the foundation alongside the downstream." A real injection mechanism was missing.
 
-The discoveries note about skill composition lands the following evening (2026-05-21), and the `!cat` injection adoption follows hours later. See `[[2026-05-21-0403-injection-composition-pivot]]`.
+The discoveries note about skill composition lands the following evening (2026-05-21), and the `!cat` injection adoption follows hours later. See `[[journal/2026-05-21-0403-injection-composition-pivot]]`.
 
 ## Next
 
