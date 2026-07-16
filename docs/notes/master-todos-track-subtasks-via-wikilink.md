@@ -22,7 +22,7 @@ Some todos are atomic — one change, one place, one closure. Others are composi
 
 Cost: the relationship is implicit. A reader has to know that wikilinks in *this* master mean sub-task and not "see also." Not queryable as a stereotype — `where` cannot distinguish a sub-task mention from a casual cross-reference.
 
-**B. `subtask` frontmatter edge.** The master carries `subtask: ["[[a]]", "[[b]]"]` in frontmatter, parallel to `blocked_by`. The relationship is explicit and queryable as a stereotype.
+**B. `subtask` frontmatter edge.** The master carries `subtask: ["[[a]]", "[[b]]"]` in frontmatter, parallel to `blocked-by`. The relationship is explicit and queryable as a stereotype.
 
 Cost: another stereotype to teach. The frontmatter grows. Two places to author hierarchy (frontmatter for declaration, body for narrative) instead of one.
 

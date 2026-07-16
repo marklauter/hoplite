@@ -6,7 +6,7 @@ created: 2026-05-27
 priority: medium
 effort: high
 status: open
-blocked_by: ["[[related-edges-rarely-fire-in-current-corpus]]"]
+blocked-by: ["[[related-edges-rarely-fire-in-current-corpus]]"]
 ---
 
 # Rerank BM25 candidates with graph signals

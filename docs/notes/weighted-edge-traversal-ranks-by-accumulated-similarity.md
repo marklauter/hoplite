@@ -6,7 +6,7 @@ created: 2026-05-27
 priority: low
 effort: medium
 status: open
-blocked_by: ["[[related-edges-rarely-fire-in-current-corpus]]"]
+blocked-by: ["[[related-edges-rarely-fire-in-current-corpus]]"]
 ---
 
 # Weighted-edge traversal ranks by accumulated similarity

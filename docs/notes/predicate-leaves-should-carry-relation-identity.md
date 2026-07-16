@@ -6,7 +6,7 @@ created: 2026-05-27
 priority: low
 effort: low
 status: open
-blocked_by: ["[[hoplite-predicates-are-hql-rewrites-over-typed-relations]]"]
+blocked-by: ["[[hoplite-predicates-are-hql-rewrites-over-typed-relations]]"]
 ---
 
 # Predicate leaves should carry relation identity

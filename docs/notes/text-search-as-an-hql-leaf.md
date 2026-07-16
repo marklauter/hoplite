@@ -6,7 +6,7 @@ created: 2026-05-27
 priority: low
 effort: medium
 status: open
-blocked_by: ["[[hoplite-predicates-are-hql-rewrites-over-typed-relations]]"]
+blocked-by: ["[[hoplite-predicates-are-hql-rewrites-over-typed-relations]]"]
 ---
 
 # Text search as an HQL leaf
