@@ -37,20 +37,20 @@ From inside Claude Code, with `<repo>` as the absolute path to your clone (the d
 
 ```text
 /plugin marketplace add <repo>
-/plugin install hoplite-skills@hoplite
+/plugin install hoplite-skills@marklauter/hoplite
 ```
 
 Or straight from GitHub, no clone:
 
 ```text
 /plugin marketplace add marklauter/hoplite
-/plugin install hoplite-skills@hoplite
+/plugin install hoplite-skills@marklauter/hoplite
 ```
 
 After source changes, update the marketplace, then the plugin:
 
 ```text
-/plugin marketplace update marklauter/hoplite
+/plugin marketplace update hoplite
 /plugin update hoplite-skills@hoplite
 ```
 
