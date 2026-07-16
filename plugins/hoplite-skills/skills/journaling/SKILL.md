@@ -18,3 +18,10 @@ Record one event in the project's path as a dated entry under `docs/journal/` �
 Write to the [Microsoft Writing Style Guide](https://learn.microsoft.com/style-guide/welcome/) — plain and scannable; say what a thing is before how to use it.
 
 Write `docs/journal/<YYYY-MM-DD>-<HHMM>-<slug>.md` to the frontmatter standard (`${CLAUDE_PLUGIN_ROOT}/references/frontmatter.md`): `title`, `summary`, `tags: [journal, <domain>]`, `created`. No `status` — entries don't evolve. Open with the context going in, then what you tried, expected, and learned.
+
+## Done when
+
+- The entry lives at `docs/journal/<YYYY-MM-DD>-<HHMM>-<slug>.md`, no `status` key, and no existing entry was edited.
+- It records one cycle: the context going in, what was tried, what was expected, what was learned — hypothesis before outcome, wrong turns kept.
+- Frontmatter meets the standard and the hook passes: quoted wikilinks, valid targets.
+- A reader with no conversation context can follow it.

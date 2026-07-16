@@ -17,3 +17,10 @@ A todo is a note tagged `todo` — an action item the corpus tracks. The tag is 
 - Epic → decompose. A `todo` tagged `epic` → wikilink its child todos; its status rolls up: `open` while any child is `open` or `deferred`, `closed` once every child is `closed` or `declined`.
 
 `closed`/`resolved` as tags duplicate `status` and rot — keep state in the property. Triage operates on existing notes (`taking-notes` authors them) and tracks work shape, not who or when — no deadlines, calendars, or assignment.
+
+## Done when
+
+- Every touched todo carries `priority`, `effort`, and `status` — and no state rides in tags.
+- Effort was judged from the code the note points at, not from the note's own claim.
+- Blockers are `blocked-by` edges with quoted wikilink values.
+- Every `closed` note has a `## Resolution` and every `declined` note a reason — concrete enough to verify without the conversation.

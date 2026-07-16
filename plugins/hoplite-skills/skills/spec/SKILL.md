@@ -35,3 +35,10 @@ cites:
 
 - Cross-reference adjacent specs where the connection is durable.
 - Add the doc to the glossary README `## See also` when it anchors a cluster of terms.
+
+## Done when
+
+- The doc lives at `docs/hoplite/<concept>.md`, meets the standard, and `cites` its terms.
+- Every glossary term the concept composes is wikilinked at first use and not re-explained.
+- No prose the concept doesn't need survives.
+- `status: locked` only when the concept stops moving; otherwise `evolving`.

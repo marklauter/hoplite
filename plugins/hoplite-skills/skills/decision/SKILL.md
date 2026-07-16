@@ -37,9 +37,15 @@ status: <evolving | locked>
 
 ## Why
 
-<what this costs, and what it buys>
+<the trade-off: what this costs, and what it buys>
 ```
 
 Wikilink the terms and concepts the decision turns on, so it sits beside what it affects (link/edge syntax: `${CLAUDE_PLUGIN_ROOT}/references/expressing-edges.md`).
 
 Recoverable from the note alone: name the alternatives and the trade-off in full — the *why* must hold up without the conversation; never "the thing we discussed."
+
+## Done when
+
+- The user explicitly agreed to record it, and all three gate conditions hold.
+- The alternatives and the trade-off are named in full — the why holds up without the conversation.
+- The note lives at `docs/notes/<slug>.md`, meets the standard, passes the hook, and wikilinks the terms it turns on.
