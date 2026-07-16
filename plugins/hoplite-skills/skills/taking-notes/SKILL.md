@@ -1,7 +1,6 @@
 ---
 name: taking-notes
-description: Capture the current state of one idea as a note under docs/notes/.
-disable-model-invocation: true
+description: Capture an idea, problem, todo, or finding as a note under docs/notes/ — the mutable, current-state memory answering "where are we now?". Use whenever something worth keeping surfaces; rewrite the note freely as understanding moves.
 ---
 
 # Taking notes
