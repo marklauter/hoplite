@@ -1,19 +1,28 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
-  "name": "msl.hoplite",
+  "name": "hoplite",
   "description": "Hoplite — agentic note-taking with a knowledge graph over markdown",
   "owner": {
     "name": "MSL"
   },
   "plugins": [
     {
-      "name": "hoplite",
-      "description": "A knowledge graph over markdown documents. Claude Code MCP plugin that organizes your agent's thoughts.",
+      "name": "hoplite-skills",
+      "description": "The Hoplite authoring skills — glossary, spec, decision, notes, journal, todo, domain modeling — plus the frontmatter-validation hook and the locked specs they enforce.",
       "author": {
         "name": "MSL"
       },
       "category": "productivity",
-      "source": "./plugins/hoplite"
+      "source": "./plugins/hoplite-skills"
+    },
+    {
+      "name": "hoplite-mcp",
+      "description": "The Hoplite knowledge-graph MCP server. Stub — under design.",
+      "author": {
+        "name": "MSL"
+      },
+      "category": "productivity",
+      "source": "./plugins/hoplite-mcp"
     }
   ]
 }
