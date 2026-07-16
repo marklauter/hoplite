@@ -1,7 +1,7 @@
 ---
 title: Triage convention crystallizes into a todo skill
 summary: A list-the-open-todos request opened a triage pass that landed an ad-hoc frontmatter shape, then a verification pass that exposed three already-resolved items and one closure that was wrong. The corrections crystallized into a real convention — `document.priority`, `document.effort`, `document.status`, immutable `todo` tag — and a new skill at `plugins/hoplite/skills/todo/` that codifies it.
-tags: [journal, hoplite, skills, todo, milestone]
+tags: [journal, skills, todo, milestone]
 created: 2026-05-27
 ---
 

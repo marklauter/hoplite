@@ -1,7 +1,7 @@
 ---
 title: tools.py — MCP handlers over the Graph
 summary: "`tools.py` keeps its four-handler surface (`where`, `relatives`, `refresh`, `export`) but the bodies shrink to predicate parsing plus a single call into a `Graph`. The module-level `_graph` singleton is replaced by a `FileDatabase` singleton; each handler constructs a per-call `Graph(db, corpus_root)` and lets `with db.open_*()` blocks own connection lifetime. Wire-format and tool semantics are unchanged."
-tags: [note, sqlite, design, hoplite, mcp]
+tags: [note, sqlite, design, mcp]
 created: 2026-05-28
 status: design
 ---

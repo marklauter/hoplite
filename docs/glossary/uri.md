@@ -1,7 +1,7 @@
 ---
 title: uri
 summary: "A resource's identity."
-tags: [hoplite, glossary]
+tags: [glossary]
 created: 2026-06-19
 status: locked
 has-a: "[[slug]]"

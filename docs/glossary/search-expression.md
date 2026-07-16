@@ -1,7 +1,7 @@
 ---
 title: search expression
 summary: "A boolean composition of conditions; the input match evaluates over the corpus."
-tags: [hoplite, glossary]
+tags: [glossary]
 created: 2026-07-01
 status: evolving
 has-a: "[[condition]]"

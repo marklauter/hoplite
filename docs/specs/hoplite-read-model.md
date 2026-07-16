@@ -1,7 +1,7 @@
 ---
 title: Read model — match, walk, projection
 summary: The read side reduced to structure — a few operations over the corpus and one input they share. Match evaluates a search expression; walk expands its result into a neighborhood; projection shapes a result set; surveying the vocabulary is match and walk over its namespaces. Filter and semantic-search are kinds of condition, not operations. Sparse by intent; mechanism and expression structure are deferred.
-tags: [hoplite, navigation, spec]
+tags: [spec, navigation]
 created: 2026-06-30
 status: evolving
 ---

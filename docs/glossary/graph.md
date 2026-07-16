@@ -1,7 +1,7 @@
 ---
 title: graph
 summary: "The set of resources and statements."
-tags: [hoplite, glossary]
+tags: [glossary]
 created: 2026-06-25
 status: evolving
 retired: [knowledge-graph, corpus-graph]

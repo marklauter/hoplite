@@ -1,7 +1,7 @@
 ---
 title: Reconcile hoplite-navigation to the read model
 summary: "hoplite-navigation.md still teaches the five-move taxonomy (survey, filter, walk, project, read) and pre-rename vocabulary. Reconcile it against hoplite-read-model.md after the RDF-aligned terms are reviewed and locked."
-tags: [note, hoplite, todo]
+tags: [todo]
 created: 2026-07-02
 status: open
 priority: medium

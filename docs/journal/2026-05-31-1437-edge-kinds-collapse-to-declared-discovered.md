@@ -1,7 +1,7 @@
 ---
 title: Edge kinds collapse to declared and discovered
 summary: The three-kind edge enum (mentions, cites, related) conflated provenance, relationship-meaning, and target-type. Collapsed to two kinds by provenance — declared and discovered — moving meaning to open-vocab stereotypes and target-type to the destination node. Supersedes the cites-as-kind decision.
-tags: [journal, hoplite, graph, edges, decision]
+tags: [journal, graph, edges, decision]
 created: 2026-05-31
 ---
 

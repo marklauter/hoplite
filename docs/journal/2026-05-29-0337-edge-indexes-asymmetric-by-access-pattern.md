@@ -1,7 +1,7 @@
 ---
 title: Edge indexes are asymmetric by access pattern
 summary: The SQLite edge traversal indexes lead with different columns by direction — kind-leading forward for by-kind enumeration, dst-leading reverse for backtrack — because seeking by kind-alone and by node-alone need different leading columns. A symmetric anchor-leading pair was tried and reverted; EXPLAIN QUERY PLAN confirms every access pattern seeks.
-tags: [journal, hoplite, sqlite, schema, decision]
+tags: [journal, sqlite, schema, decision]
 created: 2026-05-29
 ---
 

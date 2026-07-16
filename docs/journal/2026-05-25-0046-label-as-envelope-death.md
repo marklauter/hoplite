@@ -1,7 +1,7 @@
 ---
 title: Label-as-envelope concept's death
 summary: The framing-axis labels (instruction, reference, observation) had carried envelope prose the MCP server applied on retrieval — telling the agent how to read the payload. When retrieval tools died and Claude's Read tool took over content fetching, the labels' framing role lost its consumer. Three labels lost their special status the same morning.
-tags: [journal, hoplite, mcp, framing, decision, dead-end]
+tags: [journal, mcp, framing, decision, dead-end]
 created: 2026-05-25
 ---
 

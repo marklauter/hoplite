@@ -1,7 +1,7 @@
 ---
 title: Properties subsume first-class columns
 summary: "One domain concept — property — covers all frontmatter (title, summary, tags, created included); the schema's first-class columns are storage optimization, not a domain distinction."
-tags: [note, hoplite, schema, glossary]
+tags: [note, schema, glossary]
 created: 2026-06-21
 status: evolving
 ---

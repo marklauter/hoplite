@@ -1,7 +1,7 @@
 ---
 title: Wikilink resolver leaves alias and anchor in the target
 summary: Anchor and alias syntax survive wikilink capture and resolution, producing ghost paths like `hoplite/roadmap|roadmap.md` for documents that already exist.
-tags: [note, todo, hoplite, mcp, wikilinks, bug]
+tags: [todo, mcp, wikilinks, bug]
 created: 2026-05-27
 priority: medium
 effort: low

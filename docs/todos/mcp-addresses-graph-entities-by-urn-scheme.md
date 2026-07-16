@@ -1,7 +1,7 @@
 ---
 title: MCP addresses graph entities by a URN scheme
 summary: "The tool-layer uri projection should address entities with URN-style schemes — node:<uri> and edge:<src-uri>:<dst-uri> — not URLs, since an entity is identified, never located."
-tags: [note, todo, hoplite, mcp]
+tags: [todo, mcp]
 created: 2026-06-22
 status: open
 ---

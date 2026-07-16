@@ -1,7 +1,7 @@
 ---
 title: predicate
 summary: "The middle position of a statement, filled by a relationship or a claim key."
-tags: [hoplite, glossary]
+tags: [glossary]
 created: 2026-06-19
 status: evolving
 retired: [stereotype]

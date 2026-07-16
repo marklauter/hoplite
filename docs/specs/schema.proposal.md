@@ -1,7 +1,7 @@
 ---
 title: Schema proposal — flat scoping replaces recursive namespaces
 summary: "Resource identity is one structural level — (kind, key, name) — not a recursive chain. Keys collide by design (same name, same resource); values scope per key; an edge is any statement whose object is a document. One parse rule replaces the resolver: the first colon splits key from value."
-tags: [note, hoplite, schema, design]
+tags: [spec, schema, design]
 created: 2026-07-08
 status: evolving
 refines: "[[docs/specs/schema.md]]"

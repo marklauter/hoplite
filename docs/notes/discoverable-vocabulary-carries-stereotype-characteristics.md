@@ -1,7 +1,7 @@
 ---
 title: The discoverable vocabulary carries each stereotype's algebraic characteristics
 summary: "Hoplite's surveyable vocabulary should record, per stereotype, its OWL-style algebraic characteristics (symmetric, transitive, inverse-of, asymmetric…), not just its name. A small closed set of characteristics governs an open, unbounded stereotype vocabulary — so the agent discovers how a relation behaves, and the reasoner computes edge closure from it instead of the author hand-applying conventions."
-tags: [note, hoplite, vocabulary, design]
+tags: [note, vocabulary, design]
 created: 2026-06-20
 status: evolving
 ---

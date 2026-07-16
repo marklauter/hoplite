@@ -1,7 +1,7 @@
 ---
 title: Text search as an HQL leaf
 summary: BM25 is orthogonal to predicate evaluation today — rewrite produces a candidate set, BM25 ranks within. A `text(query)` leaf in HQL folds text into the calculus but breaks set semantics — relations produce sets, BM25 produces rankings. Two paths if you want it in — top-k projection (lose rank) or carry scores through every operator (extend the calculus).
-tags: [note, hoplite, mcp, design, architecture, hql, open-question, todo]
+tags: [todo, mcp, design, architecture, hql, open-question]
 created: 2026-05-27
 priority: low
 effort: medium

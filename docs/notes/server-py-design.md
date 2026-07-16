@@ -1,7 +1,7 @@
 ---
 title: server.py — MCP wiring with zero startup work
 summary: "`server.py` constructs the FastMCP app, calls `tools.set_root(Path.cwd())` to compute the DB path and stash a `FileDatabase` singleton, and registers the four tool handlers. No connection opens, no schema applies, no walk runs at import. First `refresh()` call is the bootstrap; queries before refresh return an actionable error."
-tags: [note, sqlite, design, hoplite, mcp]
+tags: [note, sqlite, design, mcp]
 created: 2026-05-28
 status: design
 ---

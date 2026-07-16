@@ -1,7 +1,7 @@
 ---
 title: namespace
 summary: "A resource that parents other resources — the structure of the address space."
-tags: [hoplite, glossary]
+tags: [glossary]
 created: 2026-07-03
 status: evolving
 ---

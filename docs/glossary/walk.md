@@ -1,7 +1,7 @@
 ---
 title: walk
 summary: "To traverse chosen relationships from seed resources, gathering a neighborhood to a given depth."
-tags: [hoplite, glossary]
+tags: [glossary]
 created: 2026-06-19
 status: evolving
 retired: [survey]

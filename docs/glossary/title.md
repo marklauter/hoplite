@@ -1,7 +1,7 @@
 ---
 title: title
 summary: "A document's name."
-tags: [hoplite, glossary]
+tags: [glossary]
 created: 2026-06-19
 status: locked
 is-a: "[[claim]]"

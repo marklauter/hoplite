@@ -1,7 +1,7 @@
 ---
 title: Navigation — survey, filter, walk, project, read
 summary: The five read moves the graph affords an agent — survey the vocabulary, filter the corpus by predicate, walk the edges, project the result, read the survivors. The read half of the affordances, and the query surface that replaces the glob-grep-read loop.
-tags: [hoplite, affordances, navigation, spec]
+tags: [spec, affordances, navigation]
 created: 2026-06-12
 status: evolving
 ---

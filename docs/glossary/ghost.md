@@ -1,7 +1,7 @@
 ---
 title: ghost
 summary: "A document that doesn't exist yet."
-tags: [hoplite, glossary]
+tags: [glossary]
 created: 2026-06-19
 status: locked
 is-a: "[[document]]"

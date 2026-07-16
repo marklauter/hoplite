@@ -1,7 +1,7 @@
 ---
 title: idf
 summary: "A feature's rarity, scored as the inverse of its document frequency."
-tags: [hoplite, glossary]
+tags: [glossary]
 created: 2026-06-20
 status: locked
 ---

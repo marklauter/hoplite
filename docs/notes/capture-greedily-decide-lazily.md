@@ -1,7 +1,7 @@
 ---
 title: Capture greedily, decide lazily — defer to keep options open
 summary: Good design defers hard-to-reverse decisions until information accrues; greedy capture is what keeps them deferrable.
-tags: [note, architecture, design, hoplite]
+tags: [note, architecture, design]
 created: 2026-06-19
 status: evolving
 ---

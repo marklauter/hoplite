@@ -1,7 +1,7 @@
 ---
 title: Rerank BM25 candidates with graph signals
 summary: Hoplite's categorical differentiator over off-the-shelf retrievers — let BM25 pull top-N candidates, then rerank by edge proximity, centrality, and recency. The graph is data no general retriever has for this corpus. Pairs naturally with a cross-encoder reranker for the lexical-semantic gap.
-tags: [note, hoplite, mcp, retrieval, design, todo]
+tags: [todo, mcp, retrieval, design]
 created: 2026-05-27
 priority: medium
 effort: high

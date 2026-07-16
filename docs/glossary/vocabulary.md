@@ -1,7 +1,7 @@
 ---
 title: vocabulary
 summary: "The meta labels (claim keys and relationship labels) and bounded claim values mapped within the knowledge graph."
-tags: [hoplite, glossary]
+tags: [glossary]
 created: 2026-06-19
 status: locked
 ---

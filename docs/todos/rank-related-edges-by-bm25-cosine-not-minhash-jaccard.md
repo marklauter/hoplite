@@ -1,7 +1,7 @@
 ---
 title: Rank related edges by BM25 cosine, not MinHash Jaccard
 summary: MinHash Jaccard over shingles weights every shingle equally, suppressing the rare-term signal that identifies topical adjacency. Compute pair similarity with BM25 cosine over the FTS5 tokens already indexed, and keep MinHash only as a sub-quadratic candidate filter once n² rerank gets expensive.
-tags: [note, hoplite, mcp, related-edges, bm25, ranking, design, todo]
+tags: [todo, mcp, related-edges, bm25, ranking, design]
 created: 2026-05-27
 priority: high
 effort: high

@@ -1,7 +1,7 @@
 ---
 title: slug
 summary: "A document's filename."
-tags: [hoplite, glossary]
+tags: [glossary]
 created: 2026-06-21
 status: locked
 ---

@@ -1,7 +1,7 @@
 ---
 title: literal
 summary: "An out-of-line value — freeform text or a blob — stored in the literal table and projected as a resource on demand."
-tags: [hoplite, glossary]
+tags: [glossary]
 created: 2026-07-03
 status: evolving
 ---

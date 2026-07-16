@@ -1,7 +1,7 @@
 ---
 title: relationship
 summary: "A semantic association between two resources."
-tags: [hoplite, glossary]
+tags: [glossary]
 created: 2026-06-21
 status: evolving
 retired: [edge]

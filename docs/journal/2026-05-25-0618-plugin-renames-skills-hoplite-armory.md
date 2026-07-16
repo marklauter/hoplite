@@ -1,7 +1,7 @@
 ---
 title: Plugin renames — skills → hoplite → armory; frontmatter on the corpus
 summary: The plugin name churns from skills to hoplite to armory in three commits over two hours while the skill and the MCP package stay named hoplite. Reindex gets labeled destructive. hoplite_dump_index default extension changes index.db → index.sqlite. Frontmatter gets added to 30 corpus docs so the new graph can index them.
-tags: [journal, hoplite, plugin, naming]
+tags: [journal, plugin, naming]
 created: 2026-05-25
 ---
 
