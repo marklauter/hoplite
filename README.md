@@ -50,7 +50,7 @@ Or straight from GitHub, no clone:
 After source changes, update the marketplace, then the plugin:
 
 ```text
-/plugin marketplace update hoplite
+/plugin marketplace update marklauter/hoplite
 /plugin update hoplite-skills@hoplite
 ```
 
