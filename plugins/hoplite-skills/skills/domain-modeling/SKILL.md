@@ -66,9 +66,3 @@ To record a kernel, hand it to the skill that owns its form:
 - Term — a word plus its smallest phrase → the `/glossary` skill.
 - Concept — composed from locked terms → the `/spec` skill.
 - Decision — a hard-to-reverse trade-off → the `/decision` skill.
-
-## Done when
-
-- Questions went one at a time, each with a recommended answer, and none asked what the corpus or code could answer.
-- Every kernel that crystallised was handed to the skill that owns its form — nothing recorded inline.
-- Contested terms were captured as `evolving`; nothing locked before it resolved.
