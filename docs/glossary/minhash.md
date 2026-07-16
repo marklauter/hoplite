@@ -1,7 +1,7 @@
 ---
 title: MinHash
 summary: "A compact sketch of a set that estimates its Jaccard similarity to another."
-tags: [hoplite, glossary]
+tags: [glossary]
 created: 2026-06-19
 status: locked
 is-a: "[[fingerprint]]"

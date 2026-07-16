@@ -1,7 +1,7 @@
 ---
 title: Jaccard
 summary: "The ratio of two sets' intersection to their union."
-tags: [hoplite, glossary]
+tags: [glossary]
 created: 2026-06-19
 status: locked
 is-a: "[[ranking-function]]"

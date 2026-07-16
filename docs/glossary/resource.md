@@ -1,7 +1,7 @@
 ---
 title: resource
 summary: "Anything the graph can address — identity, and nothing more."
-tags: [hoplite, glossary]
+tags: [glossary]
 created: 2026-06-19
 status: locked
 retired: [node]

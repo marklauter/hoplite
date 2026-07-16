@@ -1,7 +1,7 @@
 ---
 title: Provenance is a tree — fact vs claim, split by assertion
 summary: "Feature provenance is a two-level tree, not a flat axis. The top split is fact vs claim, decided by whether anyone asserts the feature; claims split again by originator into declared (author) and inferred (engine). `assert` is the genus both author and engine perform."
-tags: [note, hoplite, glossary, features]
+tags: [note, glossary, features]
 created: 2026-06-19
 status: evolving
 ---

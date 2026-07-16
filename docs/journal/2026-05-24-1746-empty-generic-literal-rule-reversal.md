@@ -1,7 +1,7 @@
 ---
 title: Empty-generic-literal rule reversal
 summary: A semgrep rule against `frozenset[str]()` and similar empty-generic-with-explicit-type-param literals added at 17:34 and reverted at 17:46. The rule was right about a real pattern; the cost of reading the rule's diagnostic was higher than the cost of letting the pattern exist.
-tags: [journal, hoplite, python, tooling, dead-end]
+tags: [journal, python, tooling, dead-end]
 created: 2026-05-24
 ---
 

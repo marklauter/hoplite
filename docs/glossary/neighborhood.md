@@ -1,7 +1,7 @@
 ---
 title: neighborhood
 summary: "The connected subgraph a walk returns: the seed resources plus the resources and relationships reachable within its depth."
-tags: [hoplite, glossary]
+tags: [glossary]
 created: 2026-06-30
 status: evolving
 ---

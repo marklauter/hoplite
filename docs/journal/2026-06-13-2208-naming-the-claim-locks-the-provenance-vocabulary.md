@@ -1,7 +1,7 @@
 ---
 title: Naming the claim locks the provenance vocabulary
 summary: The feature-provenance vocabulary collapses to a five-term spine — claim, assert, infer, intrinsic, provenance — once naming the noun the model had been circling resolved the long-running declared/discovered-versus-authored/inferred friction.
-tags: [journal, hoplite, affordances, glossary, decision]
+tags: [journal, affordances, glossary, decision]
 created: 2026-06-13
 ---
 

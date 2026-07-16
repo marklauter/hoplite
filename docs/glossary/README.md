@@ -1,7 +1,7 @@
 ---
 title: Hoplite glossary
 summary: Index of the Hoplite domain-term entries under docs/glossary/. Links every term and keeps the synonym crosswalk.
-tags: [hoplite, glossary, reference]
+tags: [glossary, reference]
 created: 2026-06-05
 status: evolving
 ---

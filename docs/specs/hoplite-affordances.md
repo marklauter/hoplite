@@ -1,7 +1,7 @@
 ---
 title: Features give rise to affordances
 summary: "The concept layer over the write and read surfaces, and the enumeration of every affordance the corpus offers the agent — the build's todo list. An affordance is an action possibility a document offers the agent in one of two roles: the author who asserts features, the researcher who queries them. Features give rise to affordances; the doc lists them all, write and read; a signifier — an MCP description or an ambient skill — advertises an affordance and trails its mechanism, since one the agent cannot perceive is dead."
-tags: [hoplite, affordances, spec]
+tags: [spec, affordances]
 created: 2026-06-04
 status: evolving
 ---

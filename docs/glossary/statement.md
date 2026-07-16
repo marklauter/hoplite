@@ -1,7 +1,7 @@
 ---
 title: statement
 summary: "A triple asserted into the graph — subject, predicate, object — weighted by confidence."
-tags: [hoplite, glossary]
+tags: [glossary]
 created: 2026-07-03
 status: evolving
 retired: [fact, feature]

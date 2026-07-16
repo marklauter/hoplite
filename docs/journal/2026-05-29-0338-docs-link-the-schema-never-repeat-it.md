@@ -1,7 +1,7 @@
 ---
 title: Docs link the schema, never repeat it
 summary: Documentation references driftable content by file, never reproduces it. The architecture spec had pasted the schema DDL inline and drifted to describe a renamed table; both DDL blocks now link schema.sql, whose comments carry the rationale.
-tags: [journal, hoplite, documentation, schema, decision]
+tags: [journal, documentation, schema, decision]
 created: 2026-05-29
 ---
 

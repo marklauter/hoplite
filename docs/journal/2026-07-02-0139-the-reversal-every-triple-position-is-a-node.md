@@ -1,7 +1,7 @@
 ---
 title: The reversal — every triple position is a node
 summary: "Working the RDF alignment past the stereotype→predicate rename, the model reversed: documents aren't nodes, they bind to nodes; tags, property values, and out-of-line content get nodes too. Subject and object are always nodes, the middle is always a predicate. Property keys join the predicate vocabulary, flipping the day-old edges-only scope decision. Value nodes split into two addressing schemes: value-carrying uris (status/locked) and slot uris (summary/<doc-uri>), after surrogate ids and content hashes were each rejected."
-tags: [journal, hoplite]
+tags: [journal]
 created: 2026-07-02
 ---
 

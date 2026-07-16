@@ -1,7 +1,7 @@
 ---
 title: EAV property graph refactor — properties replace per-column metadata
 summary: Schema flattens to nodes + node_properties + edges + edge_properties; member edges abolished and tags become properties on documents; the walker, the tool surface, and the skill prose all migrate to the EAV shape; FTS5 stays contentless. Single-day refactor of the graph's internal shape after the previous evening's redesign settled.
-tags: [journal, hoplite, mcp, schema, eav, architecture, milestone]
+tags: [journal, mcp, schema, eav, architecture, milestone]
 created: 2026-05-25
 ---
 

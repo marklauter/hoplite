@@ -1,7 +1,7 @@
 ---
 title: filter
 summary: "A crisp condition: it tests a resource or statement for membership — a tag, a claim, a relationship — in or out, with no score."
-tags: [hoplite, glossary]
+tags: [glossary]
 created: 2026-06-19
 status: evolving
 is-a: "[[condition]]"

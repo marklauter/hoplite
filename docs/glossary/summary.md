@@ -1,7 +1,7 @@
 ---
 title: summary
 summary: "A document's main points in one line."
-tags: [hoplite, glossary]
+tags: [glossary]
 created: 2026-06-19
 status: locked
 is-a: "[[claim]]"

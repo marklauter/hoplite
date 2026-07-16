@@ -1,7 +1,7 @@
 ---
 title: semantic search
 summary: "A scoring condition: it matches a field by meaning and attaches a relevance score to each hit."
-tags: [hoplite, glossary]
+tags: [glossary]
 created: 2026-06-19
 status: evolving
 is-a: "[[condition]]"

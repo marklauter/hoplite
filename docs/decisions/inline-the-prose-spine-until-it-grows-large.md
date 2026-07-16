@@ -1,7 +1,7 @@
 ---
 title: Inline the prose spine until it grows large
 summary: Markdown-authoring skills mail-merge the shared prose spine into each skill (the template model) rather than shipping it modular or behind a referenced file, because every deferred load is unreliable — inline is the only model that guarantees the spine is present once the skill loads. Revisit the inlining only if spine size times co-load count grows large; never revisit it toward lazy loading.
-tags: [note, decision, skills, architecture, hoplite]
+tags: [decision, skills, architecture]
 created: 2026-06-13
 status: decided
 ---

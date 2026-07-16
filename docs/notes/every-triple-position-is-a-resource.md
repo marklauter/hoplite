@@ -1,7 +1,7 @@
 ---
 title: Every triple position is a resource
 summary: "The graph is triples over a resource dictionary. Every position holds a resource — documents, tags, claim values, predicates, and out-of-line content alike; the middle is filled by a relationship or claim. Values come in two addressing schemes: value-carrying uris for categorical values, literal uris for functional per-document content. Literal projections are derivable, so the document facet dissolves into a generic literal store projected into the graph."
-tags: [note, hoplite, graph, schema, design]
+tags: [note, graph, schema, design]
 created: 2026-07-02
 status: evolving
 ---

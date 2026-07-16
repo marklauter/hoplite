@@ -1,7 +1,7 @@
 ---
 title: match
 summary: "To evaluate a search expression over the corpus, returning the documents that satisfy it."
-tags: [hoplite, glossary]
+tags: [glossary]
 created: 2026-06-30
 status: evolving
 ---

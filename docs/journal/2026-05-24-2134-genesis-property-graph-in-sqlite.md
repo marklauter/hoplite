@@ -1,7 +1,7 @@
 ---
 title: Genesis — modeling a property graph in SQLite
 summary: A verbatim Claude Code transcript from 2026-05-24, before Hoplite had a name. An engineer-to-engineer intro to property graphs — model, native storage, traversal — that lands on the edges-are-just-nodes argument and on rolling a two-table node/edge schema over SQLite with recursive-CTE traversal. The design seed the specs and glossary later grew from.
-tags: [journal, hoplite]
+tags: [journal]
 created: 2026-05-24
 ---
 

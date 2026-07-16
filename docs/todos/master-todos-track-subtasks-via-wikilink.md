@@ -1,7 +1,7 @@
 ---
 title: Master todos track sub-tasks via wikilink
 summary: A master todo that decomposes into sub-tasks needs an explicit hierarchy signal — two candidate shapes (body wikilinks or a `subtask` frontmatter edge) both have tradeoffs. Open question; the todo convention does not commit yet.
-tags: [note, todo, hoplite, skills, open-question]
+tags: [todo, skills, open-question]
 created: 2026-05-27
 priority: low
 effort: medium

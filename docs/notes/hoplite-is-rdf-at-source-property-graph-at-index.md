@@ -1,7 +1,7 @@
 ---
 title: Hoplite is RDF at the source, weighted triples in a property-graph store at the index
 summary: "The corpus is a triple store at the authoring surface (note = subject, predicate/property-key = predicate, wikilink/value = object). The index stores the same triples in a property-graph storage layout — edges are first-class rows walked by covering index, but carry no property bag: only an intrinsic confidence weight and interned predicate labels. One triple abstraction, shapes tuned to two object types; not collapsible to a single EAV table."
-tags: [note, hoplite, schema, graph]
+tags: [note, schema, graph]
 created: 2026-07-01
 status: evolving
 ---

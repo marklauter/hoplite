@@ -1,7 +1,7 @@
 ---
 title: db.py — Database interface and FileDatabase implementation
 summary: "`db.py` exposes a `Database` protocol with `open_rw` and `open_ro` methods that yield fresh `sqlite3.Connection` instances per call. `FileDatabase` is the day-one implementation; the interface is the seam for a future pool."
-tags: [note, sqlite, design, hoplite, architecture]
+tags: [note, sqlite, design, architecture]
 created: 2026-05-27
 status: design
 ---

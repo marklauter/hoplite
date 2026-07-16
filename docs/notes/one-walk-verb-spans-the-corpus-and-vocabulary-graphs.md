@@ -1,7 +1,7 @@
 ---
 title: One walk verb spans the corpus graph and the vocabulary graph
 summary: "The interned vocabulary is itself a graph — namespaces joined to their values — surfaced by the `namespace` view as entity-rooted uri paths (`node/tag/note`, `edge/stereotype/cites`). Survey is match + walk over that graph, the same walk verb the corpus graph uses, bound to the EAV substrate. One uri grammar addresses everything: `node` and `edge` for corpus instances, node- and edge-rooted namespaces for vocabulary, with vertices as unary paths and edges as binary tuples."
-tags: [note, hoplite, graph, design]
+tags: [note, graph, design]
 created: 2026-06-05
 ---
 

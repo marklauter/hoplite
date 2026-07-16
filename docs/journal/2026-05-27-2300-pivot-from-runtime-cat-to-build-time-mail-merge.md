@@ -1,7 +1,7 @@
 ---
 title: Pivot from runtime cat to build-time mail merge
 summary: Runtime `!`cat ${CLAUDE_PLUGIN_ROOT}/components/...`` injection breaks for consumers under the auto-mode classifier; the fix is to pre-inline components at build time and ship self-contained SKILL.md files.
-tags: [journal, hoplite, skills, plugin, decision]
+tags: [journal, skills, plugin, decision]
 created: 2026-05-27
 ---
 

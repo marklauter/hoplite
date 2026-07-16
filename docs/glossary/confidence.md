@@ -1,7 +1,7 @@
 ---
 title: confidence
 summary: "How likely a statement is to be real."
-tags: [hoplite, glossary]
+tags: [glossary]
 created: 2026-06-19
 status: locked
 retired: [provenance, intrinsic, asserted]

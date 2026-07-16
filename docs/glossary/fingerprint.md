@@ -1,7 +1,7 @@
 ---
 title: fingerprint
 summary: "A hash of a document's content."
-tags: [hoplite, glossary]
+tags: [glossary]
 created: 2026-06-19
 status: locked
 is-a: "[[claim]]"

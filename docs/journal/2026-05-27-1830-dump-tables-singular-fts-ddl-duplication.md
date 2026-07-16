@@ -1,7 +1,7 @@
 ---
 title: Dump tables go singular; FTS DDL remains the lone duplication
 summary: Renamed the four dump tables from plural to singular to remove the join-table awkwardness, and surfaced that the FTS5 schema is the only DDL still duplicated between dump and in-memory.
-tags: [journal, hoplite, schema, naming, decision]
+tags: [journal, schema, naming, decision]
 created: 2026-05-27
 ---
 

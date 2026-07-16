@@ -1,7 +1,7 @@
 ---
 title: Colon separates vocabulary addresses from paths
 summary: "A vocabulary address is <predicate-label>:<operand> — priority:high, summary:docs/notes/foo.md — while slash remains the path separator. The wikilink grammar forbids colons in targets, so the vocabulary and filesystem namespaces are disjoint by construction; the collision between predicate labels and top-level folders dissolves without reserved roots or validation."
-tags: [note, decision, hoplite, schema, addressing]
+tags: [decision, schema, addressing]
 created: 2026-07-02
 status: evolving
 ---

@@ -1,7 +1,7 @@
 ---
 title: value
 summary: "A resource whose uri carries the value itself, shared by every subject that asserts it."
-tags: [hoplite, glossary]
+tags: [glossary]
 created: 2026-07-03
 status: evolving
 ---

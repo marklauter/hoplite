@@ -1,7 +1,7 @@
 ---
 title: A query is a triple pattern with positions bound by chain addresses
 summary: "Query sketch from the namespace-chain design session: a pattern names statement positions (subject, predicate, object) and binds some of them to chain addresses; the unbound positions are the result. (:predicate:status :object:todo) returns every subject with a status of todo. Bindings resolve by shortest-unique chain, the same rule as wikilink slugs."
-tags: [note, hoplite, query, design]
+tags: [note, query, design]
 created: 2026-07-03
 status: evolving
 ---

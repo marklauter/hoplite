@@ -1,7 +1,7 @@
 ---
 title: Score discovered edges by rarity-weighted feature overlap
 summary: A discovered edge's confidence is one rarity-weighted Jaccard over a single feature set that unions every dimension — tags, properties, stereotypes, graph neighbors, binned proximity — so overlap across dimensions accumulates into one rank. Generalizes the content-only BM25 move to all channels.
-tags: [note, hoplite, related-edges, ranking, signal, todo]
+tags: [todo, related-edges, ranking, signal]
 created: 2026-06-07
 status: open
 ---

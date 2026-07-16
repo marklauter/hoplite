@@ -1,7 +1,7 @@
 ---
 title: infer
 summary: "To derive a relationship from evidence."
-tags: [hoplite, glossary]
+tags: [glossary]
 created: 2026-06-19
 status: locked
 retired: [discover, deduce]

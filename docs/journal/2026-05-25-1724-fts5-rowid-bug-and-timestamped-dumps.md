@@ -1,7 +1,7 @@
 ---
 title: FTS5 rowid bug and timestamped dump filenames
 summary: hoplite_dump_index returned wrong paths because FTS5's rowid was independent of documents.id; binding rowid to documents.id fixed the path resolution. Default dump filename gains an ISO timestamp so prior dumps survive on disk.
-tags: [journal, hoplite, mcp, fts5, bug-fix]
+tags: [journal, mcp, fts5, bug-fix]
 created: 2026-05-25
 ---
 

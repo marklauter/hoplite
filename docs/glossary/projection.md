@@ -1,7 +1,7 @@
 ---
 title: projection
 summary: "An ordered, capped, field-selected view of a result set — the form the agent reads."
-tags: [hoplite, glossary]
+tags: [glossary]
 created: 2026-06-19
 status: evolving
 ---

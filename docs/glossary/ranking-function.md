@@ -1,7 +1,7 @@
 ---
 title: ranking-function
 summary: "A function that scores candidates to order them."
-tags: [hoplite, glossary]
+tags: [glossary]
 created: 2026-06-20
 status: locked
 ---

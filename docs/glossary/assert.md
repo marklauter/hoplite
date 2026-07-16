@@ -1,7 +1,7 @@
 ---
 title: assert
 summary: "To make a statement."
-tags: [hoplite, glossary]
+tags: [glossary]
 created: 2026-06-19
 status: locked
 retired: [author, declare, describe]

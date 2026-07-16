@@ -1,7 +1,7 @@
 ---
 title: SKILL.md to component, and the repo split
 summary: The hoplite SKILL.md body extracts to a component injected by taking-notes and journaling; non-hoplite content prunes; armory renames to hoplite for the new repo; the skill restores as a thin wrapper; the standalone skill renames to using-graph. Tag discipline backfills the corpus with the `note` tag. PowerShell rewrite leaves a UTF-8 BOM that strips off on a follow-up pass.
-tags: [journal, hoplite, skill, component, repo-split, milestone]
+tags: [journal, skill, component, repo-split, milestone]
 created: 2026-05-25
 ---
 

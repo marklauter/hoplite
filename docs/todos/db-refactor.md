@@ -1,7 +1,7 @@
 ---
 title: Hoplite DB refactor — file-based SQLite execution plan
 summary: Numbered plan to replace the in-memory dict-backed graph with a persistent file-based SQLite store (WAL, shared across MCP processes). The in-memory graph is retired — SQLite is the only implementation. A single `Graph` class in `graph.py` runs SQL against the `node`/`edge`/`edge_kind`/`fts` schema; traversal is a recursive CTE.
-tags: [note, todo, sqlite, hoplite, architecture]
+tags: [todo, sqlite, architecture]
 created: 2026-05-27
 priority: high
 effort: high

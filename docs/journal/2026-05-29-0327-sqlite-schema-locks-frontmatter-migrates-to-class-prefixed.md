@@ -1,7 +1,7 @@
 ---
 title: SQLite schema locks; frontmatter migrates to class-prefixed
 summary: Declared db.py shippable with a crash-orphaned-WAL recovery regression test, retired the in-memory graph for a single SQLite Graph with recursive-CTE traversal, locked schema.sql as frozen canon, migrated the whole corpus to class-prefixed frontmatter and flipped the shipped hook to match, and extracted frontmatter parsing into a new frontmatter.py on the prefixed standard.
-tags: [journal, hoplite, sqlite, schema, frontmatter, session-summary]
+tags: [journal, sqlite, schema, frontmatter, session-summary]
 created: 2026-05-29
 ---
 

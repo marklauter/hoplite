@@ -1,7 +1,7 @@
 ---
 title: Schema
 summary: "The SQLite schema for the Hoplite knowledge graph — an RDF-shaped triple store over a self-describing resource dictionary: resources in namespace chains grounded at meta:meta, statements, the literal store backing the literal projections, and FTS."
-tags: [hoplite, schema, reference]
+tags: [spec, schema, reference]
 created: 2026-06-21
 status: evolving
 ---

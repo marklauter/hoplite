@@ -1,7 +1,7 @@
 ---
 title: Progressive disclosure makes reading a graduated cost
 summary: "hoplite.md prices reading as expensive and earns every read by ranking meaning — but that treats a read as binary, take it or skip it. The read surface is finer: it is a ladder of progressive disclosure, an affordance where each rung reveals a little and costs a little. The agent climbs only as far as the reward pays — survey, filter, projection, body; walk shallow, then deep — so cost is proportional to the depth it needs, not the size of the corpus."
-tags: [note, hoplite, affordances]
+tags: [note, affordances]
 created: 2026-06-25
 status: evolving
 ---

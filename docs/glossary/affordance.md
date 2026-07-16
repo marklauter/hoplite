@@ -1,7 +1,7 @@
 ---
 title: affordance
 summary: "An action made possible by the presence of a statement."
-tags: [hoplite, glossary]
+tags: [glossary]
 created: 2026-06-23
 status: locked
 ---

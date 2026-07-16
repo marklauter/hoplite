@@ -1,7 +1,7 @@
 ---
 title: URIs are a tool-layer projection over relational storage
 summary: The normalized SQLite schema stays the model-of-record; uris and namespaces live only at the tool boundary. Tools parse an inbound uri into a relational query and project outbound rows back into uris. Records why a DynamoDB-style single-table key-value design was rejected — the uri address space is a projection, not a storage mandate.
-tags: [note, hoplite, architecture, decision]
+tags: [decision, architecture]
 created: 2026-06-05
 ---
 

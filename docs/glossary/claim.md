@@ -1,7 +1,7 @@
 ---
 title: claim
 summary: "A statement asserted about a document."
-tags: [hoplite, glossary]
+tags: [glossary]
 created: 2026-06-19
 status: evolving
 retired: [property, tags]

@@ -1,7 +1,7 @@
 ---
 title: document
 summary: "A structured markdown file and its representation within the knowledge graph."
-tags: [hoplite, glossary]
+tags: [glossary]
 created: 2026-06-19
 status: locked
 has-a: 
