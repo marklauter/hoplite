@@ -21,7 +21,7 @@ The author asserted the relationship, so the signal is simply true. It is ungrad
 
 - direct reference — A points to B (directed, binary)
 - backlink — the same edge read in reverse, who points to B (directed, binary)
-- typed edge — the link carries a label like supersedes, derives-from, or contradicts; the stereotype is itself a feature (directed, binary)
+- typed edge — the link carries a label like supersedes, derives-from, or contradicts; the predicate is itself a feature (directed, binary)
 - ghost reference — a link whose target doesn't exist yet, relating the citing document to an intended one (directed, binary)
 - transclusion — one document embeds another's content, strictly stronger than reference (directed, binary)
 
