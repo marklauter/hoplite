@@ -8,6 +8,7 @@
   "plugins": [
     {
       "name": "hoplite-skills",
+      "version": "0.1.0",
       "description": "The Hoplite authoring skills — glossary, spec, decision, notes, journal, todo, domain modeling — plus the frontmatter-validation hook and the locked specs they enforce.",
       "author": {
         "name": "MSL"
@@ -17,6 +18,7 @@
     },
     {
       "name": "hoplite-mcp",
+      "version": "0.0.1",
       "description": "The Hoplite knowledge-graph MCP server. Stub — under design.",
       "author": {
         "name": "MSL"
