@@ -16,6 +16,7 @@ Capture the current state of one idea as a note under `docs/notes/` — repo mem
 - Link what it sits beside. Wikilink the notes, terms, and sources the note turns on where the connection is durable, so it surfaces in their neighbourhood (edge/link syntax: `${CLAUDE_PLUGIN_ROOT}/references/expressing-edges.md`).
 
 Write `docs/notes/<slug>.md` (slug = the title, kebab-case) to the frontmatter standard (`${CLAUDE_PLUGIN_ROOT}/references/frontmatter.md`): `title`, `summary`, `tags: [note, <domain>]`, `created`, `status` (`evolving` while in flux, `locked` when settled).
+
 ## Proofread
 
 Reread the artifact before finishing. The register is engineering: the author is a software architect, the audience is software engineers and architects. Cut every tell of machine prose:

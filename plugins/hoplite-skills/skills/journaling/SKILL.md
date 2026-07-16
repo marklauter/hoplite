@@ -18,6 +18,7 @@ Record one event in the project's path as a dated entry under `docs/journal/` �
 Write to the [Microsoft Writing Style Guide](https://learn.microsoft.com/style-guide/welcome/) — plain and scannable; say what a thing is before how to use it.
 
 Write `docs/journal/<YYYY-MM-DD>-<HHMM>-<slug>.md` to the frontmatter standard (`${CLAUDE_PLUGIN_ROOT}/references/frontmatter.md`): `title`, `summary`, `tags: [journal, <domain>]`, `created`. No `status` — entries don't evolve. Open with the context going in, then what you tried, expected, and learned.
+
 ## Proofread
 
 Reread the artifact before finishing. The register is engineering: the author is a software architect, the audience is software engineers and architects. Cut every tell of machine prose:

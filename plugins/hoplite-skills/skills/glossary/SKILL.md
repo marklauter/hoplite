@@ -57,6 +57,7 @@ The frontmatter key names the relationship the edge expresses, read `<source> <k
   - `has-a:` — whole → part.
 - Symmetric — reciprocated. The relationship reads identical from both ends, so write it on both terms: add this term back on the target and give it a `## Contrasts` bullet, one per target.
   - `contrast:` — opposite; a mutual boundary.
+
 ## Proofread
 
 Reread the artifact before finishing. The register is engineering: the author is a software architect, the audience is software engineers and architects. Cut every tell of machine prose:

@@ -35,6 +35,7 @@ cites:
 
 - Cross-reference adjacent specs where the connection is durable.
 - Add the doc to the glossary README `## See also` when it anchors a cluster of terms.
+
 ## Proofread
 
 Reread the artifact before finishing. The register is engineering: the author is a software architect, the audience is software engineers and architects. Cut every tell of machine prose:
