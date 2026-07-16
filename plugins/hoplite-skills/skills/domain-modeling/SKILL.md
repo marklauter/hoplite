@@ -66,4 +66,4 @@ Before recording a kernel, load the skill that owns its form:
 - Concept — composed from locked terms → the `/spec` skill.
 - Decision — a hard-to-reverse trade-off → the `/decision` skill.
 - Note — more than a fleeting thought → the `/taking-notes` skill.
-- Todo — more than a fleeting thought → the `/-notes` skill.
+- Todo — a task to be completed or a follow up needed → the `/todo` skill.
