@@ -11,7 +11,7 @@ Declared `db.py` shippable, retired the in-memory graph in favor of one SQLite-b
 
 ## Context
 
-Going in, the SQLite refactor ([[docs/notes/db-refactor.md]]) had steps 1–3 landed (`db.py`, `migrations.py`, `row_factories.py`) and step 4 (the graph) still framed as a `Graph` Protocol with two permanent peers — `InMemoryGraph` and `SqliteGraph`. The design notes had drifted on two axes: the in-memory/two-impl framing, and an older `document`/`path`/casefold-on-store schema vocabulary that `schema.sql` had already moved past (`node`/`uri`/`edge_kind`, `COLLATE NOCASE`).
+Going in, the SQLite refactor ([[docs/todos/db-refactor.md]]) had steps 1–3 landed (`db.py`, `migrations.py`, `row_factories.py`) and step 4 (the graph) still framed as a `Graph` Protocol with two permanent peers — `InMemoryGraph` and `SqliteGraph`. The design notes had drifted on two axes: the in-memory/two-impl framing, and an older `document`/`path`/casefold-on-store schema vocabulary that `schema.sql` had already moved past (`node`/`uri`/`edge_kind`, `COLLATE NOCASE`).
 
 ## db.py shippable — WAL recovery proven, not assumed
 
@@ -25,7 +25,7 @@ The connection layer is sound; the one risk that could pass every unit test and 
 
 [Decision] The graph is SQLite-only. No `typing.Protocol`, no `InMemoryGraph`/`SqliteGraph` split, no parity oracle. One `Graph` class in `graph.py`, connection-per-call through the injected `Database`. Traversal moves from a Python BFS to a recursive CTE over `edge`/`edge_kind` — the `top_k_related` ranking and shortest-path dedupe live in the non-recursive CTEs (SQLite forbids window functions in the recursive term). Rationale recorded in [[docs/notes/graph-py-design.md]].
 
-Rebased the whole design-note cluster onto this: deleted the dead Protocol note and `graph-sqlite-py-design.md` (folded into [[docs/notes/graph-py-design.md]]); rewrote [[docs/notes/db-refactor.md]], [[docs/notes/walker-py-design.md]], [[docs/notes/row-factories-py-design.md]], [[docs/notes/tools-py-design.md]], plus `migrations`/`db-py`/`server`/`reify`. Dropped the Kingo C# reference (db.py is settled). Deleted the casefold-on-store contract — `node.uri COLLATE NOCASE` makes case-insensitivity the column's job. Confirmed `UNIQUE(src, dst)` is correct (the stereotype model depends on one edge per pair); the fix for the stale `Edge` docstring is the docstring, not the constraint.
+Rebased the whole design-note cluster onto this: deleted the dead Protocol note and `graph-sqlite-py-design.md` (folded into [[docs/notes/graph-py-design.md]]); rewrote [[docs/todos/db-refactor.md]], [[docs/notes/walker-py-design.md]], [[docs/notes/row-factories-py-design.md]], [[docs/notes/tools-py-design.md]], plus `migrations`/`db-py`/`server`/`reify`. Dropped the Kingo C# reference (db.py is settled). Deleted the casefold-on-store contract — `node.uri COLLATE NOCASE` makes case-insensitivity the column's job. Confirmed `UNIQUE(src, dst)` is correct (the stereotype model depends on one edge per pair); the fix for the stale `Edge` docstring is the docstring, not the constraint.
 
 ## schema.sql locked
 

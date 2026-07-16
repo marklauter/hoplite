@@ -38,8 +38,8 @@ The glossary cluster (`fact`, `claim`, `assert`, `infer`, `intrinsic`) nearly en
 
 Both `wip` concept drafts are mis-cut against this tree and must defer to the glossary:
 
-- `docs/hoplite/hoplite-feature-taxonomy.md` — the binary is mis-stated. It locks origin as the binary intrinsic / asserted and pushes `inferred` off the feature axis entirely ("inferred edges are outputs... never tokens"). The binary is `fact` vs `claim`, and `inferred` sits on the claim side, not off-axis. What taxonomy was actually protecting — "only declared is an input feature; inferred edges are outputs" — is a real input/output distinction, but a separate axis from provenance. Taxonomy fused the two and used "not a feature" to mean "not an input." That fusion is the bug to fix on its lock.
-- `docs/hoplite/hoplite-affordances.md` — the trinity is mislabeled. Line 15 and OQ5 write the provenance trinity as "asserted, intrinsic, inferred," mixing the genus (`asserted`) with a leaf (`inferred`). The three leaves are `intrinsic` / `declared` / `inferred`; the affordances' "asserted" should read `declared` (the author leaf).
+- `docs/specs/hoplite-feature-taxonomy.md` — the binary is mis-stated. It locks origin as the binary intrinsic / asserted and pushes `inferred` off the feature axis entirely ("inferred edges are outputs... never tokens"). The binary is `fact` vs `claim`, and `inferred` sits on the claim side, not off-axis. What taxonomy was actually protecting — "only declared is an input feature; inferred edges are outputs" — is a real input/output distinction, but a separate axis from provenance. Taxonomy fused the two and used "not a feature" to mean "not an input." That fusion is the bug to fix on its lock.
+- `docs/specs/hoplite-affordances.md` — the trinity is mislabeled. Line 15 and OQ5 write the provenance trinity as "asserted, intrinsic, inferred," mixing the genus (`asserted`) with a leaf (`inferred`). The three leaves are `intrinsic` / `declared` / `inferred`; the affordances' "asserted" should read `declared` (the author leaf).
 
 ## Open seam
 

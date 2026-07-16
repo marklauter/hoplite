@@ -76,7 +76,7 @@ def validate_target(target: str, *, inline: bool = False) -> str | None:
     if ":" in t:
         return (
             f"`{target}`: targets have no colons — the folder path is the namespace "
-            "(`docs/hoplite/term`, not `docs/hoplite:term`)"
+            "(`docs/specs/term`, not `docs/specs:term`)"
         )
     if "|" in t:
         return f"`{target}`: display text `|` is body-only; a frontmatter edge is data"

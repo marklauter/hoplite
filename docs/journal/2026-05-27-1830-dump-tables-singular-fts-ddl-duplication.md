@@ -11,7 +11,7 @@ Renamed the four dump tables from plural to singular to remove the join-table aw
 
 ## Context
 
-Going in, the dump schema in [[docs/hoplite/hoplite-architecture.md]] carried `documents`, `document_properties`, `edges`, `edge_properties`. The drive for the rename was join-table consistency: the entity tables were plural while the join tables read naturally as singular-of-the-thing-they-annotate (`document_property` is the property of a document; `edge_property` is the property of an edge). `edge_properties.kind REFERENCES edges(kind)` reads as the property-of-many-edges rather than the property-of-an-edge — the mismatch was right in the foreign keys. Aligning every table on the row-name-singular convention (one row = one document) makes the entity tables and their join tables speak the same grammar.
+Going in, the dump schema in [[docs/specs/hoplite-architecture.md]] carried `documents`, `document_properties`, `edges`, `edge_properties`. The drive for the rename was join-table consistency: the entity tables were plural while the join tables read naturally as singular-of-the-thing-they-annotate (`document_property` is the property of a document; `edge_property` is the property of an edge). `edge_properties.kind REFERENCES edges(kind)` reads as the property-of-many-edges rather than the property-of-an-edge — the mismatch was right in the foreign keys. Aligning every table on the row-name-singular convention (one row = one document) makes the entity tables and their join tables speak the same grammar.
 
 ## Decision
 

@@ -11,7 +11,7 @@ Straight after [[2026-06-23-1718-neo4j-book-grounds-stereotyped-edge-model]], we
 were settling the last open piece of the edge model: what does a *bare* inline
 link mean — a `[[circle]]` with no stereotype attached?
 
-The locked spec `docs/hoplite/expressing-edges.md` called that an "untyped edge,"
+The locked spec `docs/specs/expressing-edges.md` called that an "untyped edge,"
 and went further: its summary said "A markdown link is plain hypertext, **not an
 edge**." Markdown links were excluded from the graph entirely.
 

@@ -21,15 +21,15 @@ Everything an author writes in frontmatter is a property: a key with a value (ke
 
 ## Implication for the schema
 
-In [[docs/hoplite/schema]], the `document` facet's first-class columns (title, summary, created) and the `node_property` EAV table are two storage strategies for one concept. `content_hash`/`minhash` stay derived: they are intrinsic facts, computed, not author-written properties. Open question: do first-class columns survive at all, or does everything store as `node_property` (key/value) plus an array form (key/bag)?
+In [[docs/specs/schema]], the `document` facet's first-class columns (title, summary, created) and the `node_property` EAV table are two storage strategies for one concept. `content_hash`/`minhash` stay derived: they are intrinsic facts, computed, not author-written properties. Open question: do first-class columns survive at all, or does everything store as `node_property` (key/value) plus an array form (key/bag)?
 
 ## Where the concept is scattered today
 
-- [[docs/hoplite/schema]]: the "every defined attribute earns a first-class home" comment and the `document` facet columns.
-- [[docs/hoplite/hoplite-frontmatter]]: lists title, summary, tags, and properties as separate things.
-- [[docs/hoplite/glossary/property]] and [[docs/hoplite/glossary/feature]]: the domain terms.
+- [[docs/specs/schema]]: the "every defined attribute earns a first-class home" comment and the `document` facet columns.
+- [[docs/specs/hoplite-frontmatter]]: lists title, summary, tags, and properties as separate things.
+- [[docs/glossary/property]] and [[docs/glossary/feature]]: the domain terms.
 
 ## See also
 
 - [[docs/notes/stereotypes-are-open-vocab-edge-properties]]: holds the prior "title and summary are first-class fields, not properties" model that this note unifies away.
-- [[docs/notes/uris-are-a-tool-layer-projection-over-relational-storage]]: why first-class columns are a storage choice. The relational schema is the model-of-record, projected to uris at the tool boundary.
+- [[docs/decisions/uris-are-a-tool-layer-projection-over-relational-storage]]: why first-class columns are a storage choice. The relational schema is the model-of-record, projected to uris at the tool boundary.

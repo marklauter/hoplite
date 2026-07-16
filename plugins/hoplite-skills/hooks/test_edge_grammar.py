@@ -24,7 +24,7 @@ from edge_grammar import (
 VALID = [
     "circle",                       # bare slug
     "lib/shapes/circle",            # folder-path prefix
-    "docs/hoplite/glossary/term",   # the canonical corpus form
+    "docs/glossary/term",   # the canonical corpus form
     "circle#properties",            # section
     "circle#properties#radius",     # nested section
     "circle#cross sections",        # section label keeps its spaces
@@ -56,7 +56,7 @@ def test_inline_display_text_allowed() -> None:
 INVALID = [
     ("", "empty"),
     ("   ", "empty"),
-    ("docs/hoplite:term", "colon"),     # no colons — the folder path is the namespace
+    ("docs/specs:term", "colon"),     # no colons — the folder path is the namespace
     ("a:b:c", "colon"),
     ("refines::circle", "predicate"),   # predicates are frontmatter keys, not targets
     ("circle|shown", "body-only"),      # display is body-only
@@ -95,7 +95,7 @@ def test_md_extension_is_optional() -> None:
 REGEX_MATCHES = [
     "circle",
     "lib/shapes/circle",
-    "docs/hoplite/glossary/term",
+    "docs/glossary/term",
     "circle#properties",
     "circle#properties#radius",
     "circle#cross sections",
@@ -109,7 +109,7 @@ REGEX_MATCHES = [
 
 REGEX_REJECTS = [
     "",                         # no page
-    "docs/hoplite:term",        # colons are gone
+    "docs/specs:term",        # colons are gone
     "refines::circle",          # predicate colons are gone
     "a:b:c:d",                  # any colon
     "circle|shown",             # `|` is not a segment char
@@ -147,8 +147,8 @@ def test_block_id_is_dash_and_alnum_only() -> None:
 
 
 def test_folder_path_is_the_namespace() -> None:
-    assert validate_target("docs/hoplite/term") is None
-    assert validate_target("docs/hoplite:term") is not None
+    assert validate_target("docs/specs/term") is None
+    assert validate_target("docs/specs:term") is not None
 
 
 # --- frontmatter wikilink extraction ------------------------------------------
@@ -203,7 +203,7 @@ def test_fm_multiple_edges() -> None:
 
 
 def test_fm_extracted_targets_validate() -> None:
-    lines = ['cites: ["[[circle]]", "[[docs/hoplite/glossary/term]]"]']
+    lines = ['cites: ["[[circle]]", "[[docs/glossary/term]]"]']
     for target, quoted, _ in frontmatter_wikilink_targets(lines):
         assert quoted, target
         assert validate_target(target) is None, target
@@ -217,7 +217,7 @@ def test_inline_basic() -> None:
 
 
 def test_inline_path_link() -> None:
-    assert inline_wikilinks("[[docs/hoplite/glossary/term]]") == [("docs/hoplite/glossary/term", 1)]
+    assert inline_wikilinks("[[docs/glossary/term]]") == [("docs/glossary/term", 1)]
 
 
 def test_inline_embed_marker_not_in_target() -> None:

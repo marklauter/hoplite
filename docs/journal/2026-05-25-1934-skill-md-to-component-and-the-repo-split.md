@@ -55,4 +55,4 @@ The plugin's marketplace manifest and the README in the hoplite repo still carry
 
 ## Next
 
-Post-1.0 hygiene: README dev layout updates, editorial-principles slim, component injection rules tighten, docs/mcp recomposes into docs/hoplite. See `[[journal/2026-05-25-2247-post-1-0-hygiene]]`.
+Post-1.0 hygiene: README dev layout updates, editorial-principles slim, component injection rules tighten, docs/mcp recomposes into docs/specs. See `[[journal/2026-05-25-2247-post-1-0-hygiene]]`.

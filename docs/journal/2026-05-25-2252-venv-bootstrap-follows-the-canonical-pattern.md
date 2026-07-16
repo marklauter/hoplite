@@ -86,6 +86,6 @@ A `windows-release` Git branch that swaps `python3` for `python` — Rejected: p
 
 ## See also
 
-- [[docs/notes/venv-bootstrap-races-mcp-supervisor-on-plugin-install.md]] — symptom-and-cause note from earlier in the session.
+- [[docs/todos/venv-bootstrap-races-mcp-supervisor-on-plugin-install.md]] — symptom-and-cause note from earlier in the session.
 - [[ghost/debug-the-venv-bootstrap-race-on-plugin-install]] — investigation TODO this cycle closes.
 - [[ghost/python-bootstrap/ideas]] — the design doc capturing the proposed-but-rejected workaround and the Option A decision.

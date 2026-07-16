@@ -39,5 +39,5 @@ Embeddings add a re-embed-on-write obligation: every note edit recomputes its ve
 ## See also
 
 - [[docs/notes/relatedness-signals.md]] — the channel taxonomy; semantic similarity is the channel this capability delivers.
-- [[docs/notes/rank-related-edges-by-bm25-cosine-not-minhash-jaccard.md]] — the lexical-similarity score for `discovered` edges; semantic vectors are a second, complementary similarity the same fusion could blend.
-- [[docs/notes/rerank-bm25-candidates-with-graph-signals.md]] — the rerank pattern `where` already wants; semantic score is another rerank signal.
+- [[docs/todos/rank-related-edges-by-bm25-cosine-not-minhash-jaccard.md]] — the lexical-similarity score for `discovered` edges; semantic vectors are a second, complementary similarity the same fusion could blend.
+- [[docs/todos/rerank-bm25-candidates-with-graph-signals.md]] — the rerank pattern `where` already wants; semantic score is another rerank signal.

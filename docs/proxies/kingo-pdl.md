@@ -18,4 +18,4 @@ Mark Lauter's Kingo is a Zanzibar-style ACL engine implementing PDL (policy desc
 
 ## Used by
 
-- [[docs/notes/hoplite-predicates-are-hql-rewrites-over-typed-relations.md]] — HQL's source calculus. The operator skeleton (`!`, `&`, `|`, `direct`, `computed`, `tuple`) is what HQL inherits from PDL; the C# implementation shows how a userset rewrite engine binds to tuple storage.
+- [[docs/todos/hoplite-predicates-are-hql-rewrites-over-typed-relations.md]] — HQL's source calculus. The operator skeleton (`!`, `&`, `|`, `direct`, `computed`, `tuple`) is what HQL inherits from PDL; the C# implementation shows how a userset rewrite engine binds to tuple storage.

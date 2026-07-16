@@ -230,7 +230,7 @@ The set is open and grows as keys earn defined semantics. Each reserved word nam
 
 The model is authored and read through surfaces that map onto it:
 
-- Frontmatter — node properties (a scalar value) and edge stereotypes (a wikilink value, like `cites: "[[target]]"`). The contract is [[docs/hoplite/frontmatter.md]].
+- Frontmatter — node properties (a scalar value) and edge stereotypes (a wikilink value, like `cites: "[[target]]"`). The contract is [[docs/specs/frontmatter.md]].
 - Inline wikilinks — `[[docs/<path>.md]]` materializes a `declared` edge, `[[ghost/<slug>]]` an open loop, and `[text](https://…)` a `declared` edge to a URL node. The stereotyped form (a `<!--stereotype-->` comment beside the link) is designed but not yet wired.
 - Queries — `where` (ranked FTS plus property filter) and `relatives` (edge traversal) read the graph back.
 
@@ -240,15 +240,15 @@ The graph persists in SQLite. The tables, columns, indexes, and their rationale 
 
 ## Open questions
 
-- Frontmatter doc retires into the express layer. [[docs/hoplite/hoplite-frontmatter.md]] still carries model content this canon now owns. Decided: dissolve it into [[docs/hoplite/hoplite-declare-and-describe.md]] as the frontmatter section — express-only, model deferred here — alongside inline wikilinks. Held until the access-pattern docs are authored; the doc stays frozen meanwhile.
+- Frontmatter doc retires into the express layer. [[docs/specs/hoplite-frontmatter.md]] still carries model content this canon now owns. Decided: dissolve it into [[docs/specs/hoplite-declare-and-describe.md]] as the frontmatter section — express-only, model deferred here — alongside inline wikilinks. Held until the access-pattern docs are authored; the doc stays frozen meanwhile.
 - The reserved-word set is incomplete. Only `created` is named. Enumerate the rest and give each its type and validation rule, the way `created` has one.
 - The implementation trails this canon. The parser, the handbook component, and the frontmatter hook still need to catch up to the model: drop `created` from the mandatory set everywhere it is still listed, and implement reserved-word validation (`created` as an ISO date-time that also accepts a bare ISO date). The model leads; the surfaces derive.
 
 ## See also
 
-- [[docs/hoplite/hoplite-frontmatter.md]] — the frontmatter expression of this model.
+- [[docs/specs/hoplite-frontmatter.md]] — the frontmatter expression of this model.
 - [[docs/notes/stereotypes-are-open-vocab-edge-properties.md]] — edge stereotypes in full.
-- [[docs/hoplite/hoplite-architecture.md]] — the system around the graph.
+- [[docs/specs/hoplite-architecture.md]] — the system around the graph.
 
 
 ## document structure
@@ -461,7 +461,7 @@ Affordances emerge from the mapped structure: survey the vocabulary, filter by m
 
   docA → { tag:note, tag:minhash, prop:status=design,
            stereotype:supersedes→docX, neighbor:docY,
-           folder:docs/hoplite, created:2026-06 }
+           folder:docs/specs, created:2026-06 }
 
   Weight each token by rarity — idf(f) = log(N / df(f)), df = how many docs carry
   it. Then similarity is the rarity-weighted overlap of two docs' token sets.

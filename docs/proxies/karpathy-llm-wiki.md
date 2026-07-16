@@ -16,4 +16,4 @@ External gist by Andrej Karpathy proposing ingest, query, and lint workflows ove
 
 ## Used by
 
-- [[docs/notes/dream-agent-extends-karpathys-llm-wiki-with-synthesis.md]] — extends Karpathy's lint workflow from suggestion to autonomous synthesis.
+- [[docs/todos/dream-agent-extends-karpathys-llm-wiki-with-synthesis.md]] — extends Karpathy's lint workflow from suggestion to autonomous synthesis.

@@ -10,7 +10,7 @@ status: design
 
 `db.py` exposes a `Database` protocol with `open_rw` and `open_ro` methods that yield fresh `sqlite3.Connection` instances per call. `FileDatabase` is the day-one implementation; the interface is the seam for a future pool.
 
-Sibling design notes: [[docs/notes/reify-in-memory-graph-as-file-based-sqlite.md]] for the rationale and trigger; [[docs/notes/db-refactor.md]] for the broader refactor plan. This note covers `db.py` alone.
+Sibling design notes: [[docs/todos/reify-in-memory-graph-as-file-based-sqlite.md]] for the rationale and trigger; [[docs/todos/db-refactor.md]] for the broader refactor plan. This note covers `db.py` alone.
 
 ## Interface — `Database`
 
@@ -33,7 +33,7 @@ Callers depend on `Database`, not on a concrete class. Tool handlers receive an 
 
 `open_rw` opens the file with create-if-missing semantics, the default of `sqlite3.connect(path)`. Before opening, it ensures the parent directory exists via `path.parent.mkdir(parents=True, exist_ok=True)`. The `.hoplite/` directory is created on first use; no manual setup is needed.
 
-`open_ro` opens with the URI form, built via `path.as_uri()` so Windows paths produce the correct `file:///D:/...` shape and POSIX paths produce `file:///home/...`. The query string `?mode=ro&immutable=0` appends to the URI. SQLite errors if the file doesn't exist. `FileDatabase.open_ro` catches that and re-raises as `IndexNotFoundError`. Failing loud is right here; see the "fail loud" decision in [[docs/notes/db-refactor.md]].
+`open_ro` opens with the URI form, built via `path.as_uri()` so Windows paths produce the correct `file:///D:/...` shape and POSIX paths produce `file:///home/...`. The query string `?mode=ro&immutable=0` appends to the URI. SQLite errors if the file doesn't exist. `FileDatabase.open_ro` catches that and re-raises as `IndexNotFoundError`. Failing loud is right here; see the "fail loud" decision in [[docs/todos/db-refactor.md]].
 
 Caller shape:
 
@@ -149,7 +149,7 @@ Note: `OperationalError.sqlite_errorcode` requires Python 3.11+. The current `py
 
 A shared connection would chokepoint concurrent requests: one transaction per connection, and stdlib `sqlite3` defaults to `check_same_thread=True`, which would crash outright under FastMCP's concurrent handler model. Per-call open under WAL is cheap. Pragma application takes microseconds, and `mmap_size = 256MB` keeps most reads in the OS page cache across connection close.
 
-The `Database` interface is the seam for future optimization. A `PooledDatabase` that satisfies the same protocol slots in without changes to tool handlers or `refresh`. See the lock-vs-pool tradeoff in [[docs/notes/db-refactor.md]] for the future direction.
+The `Database` interface is the seam for future optimization. A `PooledDatabase` that satisfies the same protocol slots in without changes to tool handlers or `refresh`. See the lock-vs-pool tradeoff in [[docs/todos/db-refactor.md]] for the future direction.
 
 
 ## Module skeleton

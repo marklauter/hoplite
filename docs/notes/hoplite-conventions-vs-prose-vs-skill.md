@@ -24,4 +24,4 @@ Test for the third home: would the rule hold for every writer of every artifact 
 
 ## Home
 
-These belong in the hoplite authoring spec (`docs/hoplite/hoplite-authoring.md`), referenced by skills and writing-prose rather than copied into them. One home, linked, not duplicated.
+These belong in the hoplite authoring spec (`docs/specs/hoplite-authoring.md`), referenced by skills and writing-prose rather than copied into them. One home, linked, not duplicated.

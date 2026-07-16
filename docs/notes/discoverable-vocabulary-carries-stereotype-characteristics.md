@@ -8,7 +8,7 @@ status: evolving
 
 # The discoverable vocabulary carries each stereotype's algebraic characteristics
 
-`docs/hoplite/glossary/stereotype` is open vocabulary: an author coins any verb that reads `<source> <stereotype> <target>`. The surveyable vocabulary in [[docs/hoplite/hoplite.md]]'s solution section ("the agent discovers the vocabulary… surveys the vocabulary, encoded in the map") today exposes which stereotypes exist. It should also expose how each behaves.
+`docs/glossary/stereotype` is open vocabulary: an author coins any verb that reads `<source> <stereotype> <target>`. The surveyable vocabulary in [[docs/specs/hoplite.md]]'s solution section ("the agent discovers the vocabulary… surveys the vocabulary, encoded in the map") today exposes which stereotypes exist. It should also expose how each behaves.
 
 ## The idea
 

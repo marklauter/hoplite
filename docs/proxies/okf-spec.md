@@ -28,5 +28,5 @@ Google's OKF: markdown concept documents with YAML frontmatter in a directory tr
 
 ## Used by
 
-- [[docs/hoplite/frontmatter.md]] — Hoplite's frontmatter standard. OKF's keys land as claims under the open-vocabulary rule; `type` is not a Hoplite special key.
-- [[docs/hoplite/expressing-edges.md]] — Hoplite's edge grammar. OKF's untyped markdown links are exactly Hoplite's `links-to` default.
+- [[docs/specs/frontmatter.md]] — Hoplite's frontmatter standard. OKF's keys land as claims under the open-vocabulary rule; `type` is not a Hoplite special key.
+- [[docs/specs/expressing-edges.md]] — Hoplite's edge grammar. OKF's untyped markdown links are exactly Hoplite's `links-to` default.

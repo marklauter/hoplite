@@ -10,7 +10,7 @@ status: design
 
 `graph.py` defines `Graph`, the one and only graph implementation. It is a thin class over an injected `Database`: each method opens a connection per call (`open_ro` for queries, `open_rw` for `refresh`/`export`), runs SQL against the `node`/`edge`/`edge_kind`/`fts` schema in [schema.sql](../../plugins/hoplite/mcp/src/hoplite/schema.sql), projects rows through `row_factories.py`, and returns the domain dataclasses. There is no `Graph` Protocol and no in-memory peer. The in-memory dict-backed graph is retired, and SQLite is the only store.
 
-Sibling design notes: [[docs/notes/reify-in-memory-graph-as-file-based-sqlite.md]] for the rationale; [[docs/notes/db-refactor.md]] for the broader plan; [[docs/notes/db-py-design.md]] (the `Database` this depends on), [[docs/notes/migrations-py-design.md]] (the schema this queries), [[docs/notes/row-factories-py-design.md]] (the projection layer this composes with), and [[docs/notes/walker-py-design.md]] (the writer behind `refresh`). This note covers `graph.py` alone.
+Sibling design notes: [[docs/todos/reify-in-memory-graph-as-file-based-sqlite.md]] for the rationale; [[docs/todos/db-refactor.md]] for the broader plan; [[docs/notes/db-py-design.md]] (the `Database` this depends on), [[docs/notes/migrations-py-design.md]] (the schema this queries), [[docs/notes/row-factories-py-design.md]] (the projection layer this composes with), and [[docs/notes/walker-py-design.md]] (the writer behind `refresh`). This note covers `graph.py` alone.
 
 ## What replaces the old `graph.py`
 
@@ -27,7 +27,7 @@ The new `graph.py` is a single class with no in-memory state:
 
 The SQL below targets the *current* `schema.sql`: `node(id, uri, resolved, content_hash, minhash)`, `node_property(id, key, value)`, `edge(id, src, dst, kind, confidence)` where `kind` is an integer FK into `edge_kind(id, kind)`, `edge_property`, and the `fts(uri, title, summary, body)` virtual table. `node.uri`, `node_property.key`, and `edge_kind.kind` carry `COLLATE NOCASE`.
 
-The landed `models.py` and `row_factories.py` still use the older `Document`/`path` vocabulary. The queries here project `n.uri AS path` so the existing factories keep working unchanged. The `node`/`uri` ↔ `Document`/`path` drift between `schema.sql` and `models.py` is a known reconcile item tracked in [[docs/notes/db-refactor.md]]. It is not resolved in this note.
+The landed `models.py` and `row_factories.py` still use the older `Document`/`path` vocabulary. The queries here project `n.uri AS path` so the existing factories keep working unchanged. The `node`/`uri` ↔ `Document`/`path` drift between `schema.sql` and `models.py` is a known reconcile item tracked in [[docs/todos/db-refactor.md]]. It is not resolved in this note.
 
 Case-insensitivity is the column's job now. `node.uri COLLATE NOCASE` means `WHERE uri = ?` already matches case-insensitively. The old "walker casefolds paths before insert, resolver casefolds the input" contract is deleted; there is no casefold-on-store anywhere. The walker stores URIs verbatim, and matching is the collation's responsibility.
 
@@ -199,7 +199,7 @@ Notes on the CTE:
 - **`via` is a JSON array of `edge.id` values** along the chosen path. Python expands those ids back into `Edge` objects (one batched `SELECT ... WHERE e.id IN (...)` joined to `node` twice for `src_path`/`dst_path`, projected through `row_to_edge`) and passes the list to `row_to_traversal_hit(row, via_edges)`.
 - **Direction `in`/`both`** flips or UNIONs the `step` relation; everything downstream is identical.
 
-This is more SQL than the old Python BFS, and the trade is deliberate: the walk, the cap, and the shortest-path selection happen in one round-trip instead of one `SELECT` per depth level. If the CTE ever proves slower than a Python loop at realistic depths (1–3), it can be swapped behind `traverse` without changing the public surface. The default is the CTE, per [[docs/notes/db-refactor.md]].
+This is more SQL than the old Python BFS, and the trade is deliberate: the walk, the cap, and the shortest-path selection happen in one round-trip instead of one `SELECT` per depth level. If the CTE ever proves slower than a Python loop at realistic depths (1–3), it can be swapped behind `traverse` without changing the public surface. The default is the CTE, per [[docs/todos/db-refactor.md]].
 
 ### Per-node projection
 
@@ -317,14 +317,14 @@ Row counts for `WriteResult.counts`: `documents`/`ghosts`/`urls`/`edges`. `ghost
 ### Known gaps — accepted, documented, not yet fixed
 
 - **`refresh()` depends on `walker.walk` (step 5).** Until the walker lands, `refresh()` is a stub, and its tests ship with the walker.
-- **Schema/model vocabulary drift.** `schema.sql` says `node`/`uri`; `models.py`/`row_factories.py` say `Document`/`path`. The queries bridge it with `n.uri AS path`. A future pass should rename the models or accept the alias permanently, tracked in [[docs/notes/db-refactor.md]].
+- **Schema/model vocabulary drift.** `schema.sql` says `node`/`uri`; `models.py`/`row_factories.py` say `Document`/`path`. The queries bridge it with `n.uri AS path`. A future pass should rename the models or accept the alias permanently, tracked in [[docs/todos/db-refactor.md]].
 - **`node_property` is `WITHOUT ROWID`.** There is no `rowid`, so tag aggregation can't `ORDER BY rowid`. Tags are sorted at projection (`row_to_hit`/`row_to_traversal_hit`) regardless, so column order is moot for them. Any future order-sensitive property must order by `(key, value)` or carry an explicit ordinal.
 
 ### Future considerations — forward-pointers
 
 - **Python BFS fallback** if the recursive CTE underperforms at realistic depths. Swap it behind `traverse` without touching the public surface.
 - **Pure-SQL tag-predicate compilation** if the Python evaluator becomes the bottleneck on heavy-tag queries.
-- **Connection pooling** lands behind the `Database` interface, with no change to `graph.py` (see [[docs/notes/db-refactor.md]] "Connection pooling vs locking").
+- **Connection pooling** lands behind the `Database` interface, with no change to `graph.py` (see [[docs/todos/db-refactor.md]] "Connection pooling vs locking").
 
 ### Editorial
 

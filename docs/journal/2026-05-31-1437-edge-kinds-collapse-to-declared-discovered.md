@@ -7,7 +7,7 @@ created: 2026-05-31
 
 # Edge kinds collapse to declared and discovered
 
-Going in, the graph carried a closed enum of three edge kinds — `mentions` (wikilink, doc→doc), `cites` (markdown link, doc→URL), `related` (MinHash similarity). Designing the apex overview ([[docs/hoplite/hoplite.md]]) forced the question of what an agent actually declares, and the enum didn't survive it.
+Going in, the graph carried a closed enum of three edge kinds — `mentions` (wikilink, doc→doc), `cites` (markdown link, doc→URL), `related` (MinHash similarity). Designing the apex overview ([[docs/specs/hoplite.md]]) forced the question of what an agent actually declares, and the enum didn't survive it.
 
 ## the problem
 
@@ -35,7 +35,7 @@ This supersedes the `cites`-as-kind decision in [[docs/journal/2026-05-27-1600-e
 
 ## outcome
 
-Captured at the model layer: the canon ([[docs/hoplite/hoplite-graph.md]]), the architecture and tool-api docs, the skill component (rebuilt into the research, taking-notes, and journaling skills), the stereotypes note, and `schema.sql` comments all state the two-kind model. No DDL changed — `edge_kind` interns two values instead of three, and the kind-leading indexes work unchanged.
+Captured at the model layer: the canon ([[docs/specs/hoplite-graph.md]]), the architecture and tool-api docs, the skill component (rebuilt into the research, taking-notes, and journaling skills), the stereotypes note, and `schema.sql` comments all state the two-kind model. No DDL changed — `edge_kind` interns two values instead of three, and the kind-leading indexes work unchanged.
 
 ## next
 
