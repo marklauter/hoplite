@@ -62,8 +62,8 @@ Reread the glossary for two entries that name the same idea or contradict each o
 
 Before recording a kernel, load the skill that owns its form:
 
-- Term — a word plus its smallest phrase → the `/glossary` skill.
-- Concept — composed from locked terms → the `/spec` skill.
-- Decision — a hard-to-reverse trade-off → the `/decision` skill.
-- Note — more than a fleeting thought → the `/taking-notes` skill.
-- Todo — a task to be completed or a follow up needed → the `/todo` skill.
+- Term — a word plus its smallest phrase → the `hoplite-skills:glossary` skill.
+- Concept — composed from locked terms → the `hoplite-skills:spec` skill.
+- Decision — a hard-to-reverse trade-off → the `hoplite-skills:decision` skill.
+- Note — more than a fleeting thought → the `hoplite-skills:taking-notes` skill.
+- Todo — a task to be completed or a follow up needed → the `hoplite-skills:todo` skill.

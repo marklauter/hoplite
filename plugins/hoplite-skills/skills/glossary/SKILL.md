@@ -1,6 +1,6 @@
 ---
 name: glossary
-description: Reduce a resolved term to its kernel — a word plus the smallest phrase that unpacks it — and write it to the Hoplite glossary. Use when a term settles, or when a definition needs collapsing, reducing, or locking.
+description: Reduce a resolved term to its kernel — a word plus the smallest phrase that unpacks it — and write it to the glossary. Use when a term settles, or when a definition needs collapsing, reducing, or locking.
 ---
 
 # Glossary
@@ -20,7 +20,7 @@ Write `docs/glossary/<term>.md` (kebab-case) to the frontmatter standard (`${CLA
 ---
 title: <term>
 summary: "<the smallest phrase that unpacks it>"
-tags: [hoplite, glossary, <grouping>]
+tags: [glossary, <grouping>]
 aliases: [<retired page name>, ...]
 created: YYYY-MM-DD
 status: <evolving | locked>

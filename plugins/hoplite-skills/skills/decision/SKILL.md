@@ -21,7 +21,7 @@ Write `docs/decisions/<slug>.md` (kebab-case of the title) to the frontmatter st
 ---
 title: <the decision, stated as a claim>
 summary: "<one line — what was decided and why>"
-tags: [note, decision, <domain>]
+tags: [decision, <domain>]
 created: YYYY-MM-DD
 status: <evolving | locked>
 ---
