@@ -33,11 +33,11 @@ status: <evolving | locked>
 
 ## Alternatives
 
-<the options considered, and why each was not chosen>
+<each option, and why it lost>
 
 ## Why
 
-<the trade-off — what this choice costs, and what it buys>
+<what this costs, and what it buys>
 ```
 
 Wikilink the terms and concepts the decision turns on, so it sits beside what it affects (link/edge syntax: `${CLAUDE_PLUGIN_ROOT}/references/expressing-edges.md`).
