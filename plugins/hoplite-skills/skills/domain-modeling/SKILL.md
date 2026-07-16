@@ -10,14 +10,14 @@ Actively build and sharpen hoplite's domain model by reducing each term, concept
 The model lives in the corpus, addressed by path:
 
 ```
-docs/hoplite/             ← the spec corpus
-├── glossary/             ← leaf kernels: one term each
-│   ├── README.md         ← hand-maintained index
-│   └── <term>.md         ← title, summary, status, aliases, and edge properties
-└── *.md                  ← composite kernels: concepts built from the terms (affordances, frontmatter, graph)
-docs/hoplite/glossary     ← the living domain model
+docs/specs/               ← composite kernels: concepts built from the terms (affordances, frontmatter, graph)
+docs/glossary/            ← the living domain model, one term per leaf
+├── README.md             ← hand-maintained index
+└── <term>.md             ← title, summary, status, aliases, and edge properties
 docs/journal/             ← the why: the design path, each tradeoff and its reasoning
-docs/notes/               ← current state: findings, decisions, scratch (mixed bag)
+docs/notes/               ← current state: findings and scratch
+docs/decisions/           ← hard-to-reverse trade-offs, ADR-equivalents
+docs/todos/               ← action items the corpus tracks
 ```
 
 Capture greedily, lock lazily — write a term the moment it's contested with `status: evolving`, and let the drift sweep reconcile it; promote to `locked` only when it resolves. Decisions stay lazy: offer a `decision` note only when one is earned.
@@ -66,3 +66,4 @@ Before recording a kernel, load the skill that owns its form:
 - Concept — composed from locked terms → the `/spec` skill.
 - Decision — a hard-to-reverse trade-off → the `/decision` skill.
 - Note — more than a fleeting thought → the `/taking-notes` skill.
+- Todo — a task to be completed or a follow up needed → the `/todo` skill.

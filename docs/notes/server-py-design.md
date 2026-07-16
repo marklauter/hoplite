@@ -10,7 +10,7 @@ status: design
 
 `server.py` constructs the FastMCP app, calls `tools.set_root(Path.cwd())` to compute the DB path and stash a `FileDatabase` singleton, and registers the four tool handlers. No connection opens, no schema applies, no walk runs at import. First `refresh()` call is the bootstrap; queries before refresh return an actionable error.
 
-Sibling design notes: [[docs/notes/reify-in-memory-graph-as-file-based-sqlite.md]] for the rationale; [[docs/notes/db-refactor.md]] for the broader plan; [[docs/notes/tools-py-design.md]] (the handlers this wires up) and [[docs/notes/db-py-design.md]] (the `FileDatabase` constructed here) for collaborating modules. This note covers `server.py` alone.
+Sibling design notes: [[docs/todos/reify-in-memory-graph-as-file-based-sqlite.md]] for the rationale; [[docs/todos/db-refactor.md]] for the broader plan; [[docs/notes/tools-py-design.md]] (the handlers this wires up) and [[docs/notes/db-py-design.md]] (the `FileDatabase` constructed here) for collaborating modules. This note covers `server.py` alone.
 
 ## The startup-does-nothing decision
 
@@ -126,7 +126,7 @@ No new test bullets specific to `server.py`. If the integration test passes and 
 
 ### Future considerations — forward-pointers
 
-- Connection pooling lands behind the `Database` interface (see [[docs/notes/db-refactor.md]] "Connection pooling vs locking"). `server.py` doesn't change; `tools.set_root` would construct `PooledDatabase` instead of `FileDatabase`.
+- Connection pooling lands behind the `Database` interface (see [[docs/todos/db-refactor.md]] "Connection pooling vs locking"). `server.py` doesn't change; `tools.set_root` would construct `PooledDatabase` instead of `FileDatabase`.
 - Schema migration tooling lands next to `migrations.py` when a real schema change forces it. `server.py` is unaffected.
 - Health endpoint. If FastMCP grows a "is the server alive" probe, it should not trigger a refresh. The probe should answer "yes, registered, ready to receive a `refresh` call." Today's MCP protocol doesn't have one; if it lands, this is the design hook.
 

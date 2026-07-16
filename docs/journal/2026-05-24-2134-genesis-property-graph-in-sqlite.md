@@ -9,10 +9,10 @@ created: 2026-05-24
 
 This is the origin conversation, kept verbatim. On 2026-05-24, before Hoplite existed as a project, this Opus 4.7 session worked through property graphs from first principles and arrived at the decisions Hoplite is built on:
 
-- the property-graph model — nodes and edges both first-class, each a label plus a property map — which became the graph in [[docs/hoplite/hoplite-graph.md]];
+- the property-graph model — nodes and edges both first-class, each a label plus a property map — which became the graph in [[docs/specs/hoplite-graph.md]];
 - the edges-are-just-nodes argument (the presheaf on `E ⇒ V`, subdivision, the line-graph functor) behind the substrate model;
-- a two-table `nodes`/`edges` schema over SQLite with covering indexes and recursive-CTE traversal — the seed of `schema.sql`, of [[docs/hoplite/glossary/walk.md]] as the recursive CTE, and of the edge-type filter as an edge predicate;
-- Cypher ergonomics versus rolling your own over SQLite, with the verdict "roll the two-table schema yourself" — the lineage of the later decision not to ship a Cypher-like query language, captured in [[docs/hoplite/hoplite-read-model.md]].
+- a two-table `nodes`/`edges` schema over SQLite with covering indexes and recursive-CTE traversal — the seed of `schema.sql`, of [[docs/glossary/walk.md]] as the recursive CTE, and of the edge-type filter as an edge predicate;
+- Cypher ergonomics versus rolling your own over SQLite, with the verdict "roll the two-table schema yourself" — the lineage of the later decision not to ship a Cypher-like query language, captured in [[docs/specs/hoplite-read-model.md]].
 
 It is preserved as mining stock — raw transcript, not corpus prose. It records what was believed that day; later specs supersede its details. It is never to be corrected; a correction is a new entry.
 

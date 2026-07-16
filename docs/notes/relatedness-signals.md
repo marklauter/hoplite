@@ -110,5 +110,5 @@ The differentiator, stated precisely: grep, FTS, and a reading agent harvest onl
 
 ## See also
 
-- [[docs/hoplite/hoplite.md]] — the deliverable subset, framed for the agent
-- [[docs/hoplite/hoplite-graph.md]] — the model that stores these signals
+- [[docs/specs/hoplite.md]] — the deliverable subset, framed for the agent
+- [[docs/specs/hoplite-graph.md]] — the model that stores these signals

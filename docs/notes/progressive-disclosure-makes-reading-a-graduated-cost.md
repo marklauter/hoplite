@@ -8,9 +8,9 @@ status: evolving
 
 # Progressive disclosure makes reading a graduated cost
 
-[[docs/hoplite/hoplite.md]] prices reading as expensive against a budget that never refills, and earns every read by ranking meaning so the agent reads only what pays. That treats a read as binary — take it or skip it. The read surface is finer than that: it is **progressive disclosure**, and disclosure is graduated. The agent pays in rungs, reveals a little at each, and stops climbing when the next rung stops paying.
+[[docs/specs/hoplite.md]] prices reading as expensive against a budget that never refills, and earns every read by ranking meaning so the agent reads only what pays. That treats a read as binary — take it or skip it. The read surface is finer than that: it is **progressive disclosure**, and disclosure is graduated. The agent pays in rungs, reveals a little at each, and stops climbing when the next rung stops paying.
 
-Progressive disclosure is an [[docs/hoplite/glossary/affordance.md]]: the presence of the lede features — `title`, `summary`, the projection — makes possible the action of judging before paying for the body. "Reveal a little, pay a little" is the whole read surface's grammar, not one trick.
+Progressive disclosure is an [[docs/glossary/affordance.md]]: the presence of the lede features — `title`, `summary`, the projection — makes possible the action of judging before paying for the body. "Reveal a little, pay a little" is the whole read surface's grammar, not one trick.
 
 ## The rungs
 

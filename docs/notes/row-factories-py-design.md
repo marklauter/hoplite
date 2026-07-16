@@ -10,11 +10,11 @@ status: design
 
 `row_factories.py` turns `sqlite3.Row` objects into the dataclasses defined in `models.py`. Inputs are explicit. Transformations (JSON parsing, summary fallback, edge-list copy) are contained inside the module rather than delegated to SQL writers. Each factory carries a named SQL contract.
 
-Sibling design notes: [[docs/notes/reify-in-memory-graph-as-file-based-sqlite.md]] for the rationale; [[docs/notes/db-refactor.md]] for the broader plan; [[docs/notes/db-py-design.md]] and [[docs/notes/migrations-py-design.md]] for collaborating modules; [[docs/notes/graph-py-design.md]] for the sole consumer. This note covers `row_factories.py` alone.
+Sibling design notes: [[docs/todos/reify-in-memory-graph-as-file-based-sqlite.md]] for the rationale; [[docs/todos/db-refactor.md]] for the broader plan; [[docs/notes/db-py-design.md]] and [[docs/notes/migrations-py-design.md]] for collaborating modules; [[docs/notes/graph-py-design.md]] for the sole consumer. This note covers `row_factories.py` alone.
 
 ## Schema/vocabulary note
 
-The landed factories read the `Document`/`path` vocabulary (`row["path"]`, `row["src_path"]`, `row["kind"]`). The current `schema.sql` uses `node`/`uri` and an interned `edge_kind`. The two are bridged in the query, not the factory: every SQL block below projects `n.uri AS path` and joins `edge_kind` to surface `k.kind AS kind`. The factory code is therefore unchanged by the schema rename; only the SQL contracts move. The `node`/`uri` ↔ `Document`/`path` drift is tracked in [[docs/notes/db-refactor.md]].
+The landed factories read the `Document`/`path` vocabulary (`row["path"]`, `row["src_path"]`, `row["kind"]`). The current `schema.sql` uses `node`/`uri` and an interned `edge_kind`. The two are bridged in the query, not the factory: every SQL block below projects `n.uri AS path` and joins `edge_kind` to surface `k.kind AS kind`. The factory code is therefore unchanged by the schema rename; only the SQL contracts move. The `node`/`uri` ↔ `Document`/`path` drift is tracked in [[docs/todos/db-refactor.md]].
 
 ## Public API
 
@@ -128,7 +128,7 @@ LIMIT ?
 
 **Why summary isn't in `node_property`.** FTS5 already stores the original text of each indexed column, and `fts` carries one row per document by construction. Duplicating title/summary into `node_property` as `(id, 'summary', <text>)` rows would mean two sources of truth and a uniqueness problem. The walker writes `title`/`summary` to FTS only. `node_property` holds every other frontmatter key.
 
-**Tags is one instance of the EAV list-decomposition pattern.** List-valued frontmatter fields decompose into multiple EAV rows. The convention is documented in [docs/hoplite/hoplite-architecture.md#eav-decomposition](../hoplite/hoplite-architecture.md#eav-decomposition). The factories materialize one such list back out via the `json_group_array(...)` sub-select. `Hit.tags` is the first list-property the dataclasses surface by name, but the same SQL shape and `parse_tags` helper work for any other list-property.
+**Tags is one instance of the EAV list-decomposition pattern.** List-valued frontmatter fields decompose into multiple EAV rows. The convention is documented in [docs/specs/hoplite-architecture.md#eav-decomposition](../hoplite/hoplite-architecture.md#eav-decomposition). The factories materialize one such list back out via the `json_group_array(...)` sub-select. `Hit.tags` is the first list-property the dataclasses surface by name, but the same SQL shape and `parse_tags` helper work for any other list-property.
 
 ```python
 def row_to_hit(row: sqlite3.Row) -> Hit:

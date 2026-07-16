@@ -13,7 +13,7 @@ A knowledge graph over a markdown corpus — a **map of meaning** your agent can
 This repo is a Claude Code plugin marketplace (`hoplite`) shipping two plugins:
 
 - **`hoplite-skills`** — the authoring skills, the frontmatter-validation hook, and the locked specs that govern both. Live today.
-- **`hoplite-mcp`** — the knowledge-graph engine, as an MCP server. A stub; the engine is under design in the spec corpus at `docs/hoplite/`.
+- **`hoplite-mcp`** — the knowledge-graph engine, as an MCP server. A stub; the engine is under design in the spec corpus at `docs/specs/`.
 
 ## What hoplite is
 
@@ -25,7 +25,7 @@ A directory of `.md` files with Obsidian-compatible YAML frontmatter is bare tex
 
 Provenance runs through the meaning layer. Every feature is a **fact** — intrinsic, read off the bytes — or a **claim** — asserted by the author or inferred by the engine. So the map separates the terrain from what was drawn on it.
 
-Under the hood, the graph is **RDF-shaped**: a triple store where every statement is subject–predicate–object, every subject and object is a named node, and per-statement confidence rides as an RDF-star annotation. Frontmatter keys and link predicates form one open vocabulary. The full model is in [docs/hoplite/schema.md](docs/hoplite/schema.md).
+Under the hood, the graph is **RDF-shaped**: a triple store where every statement is subject–predicate–object, every subject and object is a named node, and per-statement confidence rides as an RDF-star annotation. Frontmatter keys and link predicates form one open vocabulary. The full model is in [docs/specs/schema.md](docs/specs/schema.md).
 
 Hoplite natively supports Google's [Open Knowledge Format (OKF)](https://cloud.google.com/blog/products/data-analytics/how-the-open-knowledge-format-can-improve-data-sharing/). OKF and Hoplite share the same substrate — markdown files with YAML frontmatter, linked into a graph — so an OKF bundle is already a valid Hoplite corpus: each concept file becomes a node, its frontmatter becomes properties, and its markdown links become edges.
 
@@ -83,9 +83,9 @@ Seven skills over one authoring model — the corpus splits into a glossary (ter
 
 - `taking-notes` — capture the current state of one idea under `docs/notes/`; mutable, rewritten freely as understanding moves.
 - `journaling` — record what happened as an immutable dated entry under `docs/journal/`; never corrected, only appended.
-- `todo` — triage notes tagged `todo`: priority, effort, status, `blocked-by` edges.
-- `decision` — record a hard-to-reverse trade-off as an ADR-equivalent note.
-- `glossary` — reduce a term to its kernel — a word plus the smallest phrase that unpacks it — under `docs/hoplite/glossary/`.
+- `todo` — triage notes tagged `todo` under `docs/todos/`: priority, effort, status, `blocked-by` edges.
+- `decision` — record a hard-to-reverse trade-off as an ADR-equivalent note under `docs/decisions/`.
+- `glossary` — reduce a term to its kernel — a word plus the smallest phrase that unpacks it — under `docs/glossary/`.
 - `spec` — compose a resolved concept from locked terms into the smallest spec document that carries it.
 - `domain-modeling` — the active discipline: interview, challenge terms, stress-test boundaries, then hand each kernel to the skill that owns its form.
 
@@ -96,7 +96,7 @@ The locked specs ship inside the plugin at `plugins/hoplite-skills/references/` 
 - [`frontmatter.md`](plugins/hoplite-skills/references/frontmatter.md) — flat Obsidian Properties: four special keys (`title`, `summary`, `aliases`, `tags`), every other key open vocabulary; a wikilink value is an edge, anything else a claim.
 - [`expressing-edges.md`](plugins/hoplite-skills/references/expressing-edges.md) — the wikilink and edge grammar: inline links, frontmatter edges, inline predicates, anchors, ghosts.
 
-`docs/hoplite/frontmatter.md` and `docs/hoplite/expressing-edges.md` are symlinks into the plugin, so the spec corpus reads the same files.
+`docs/specs/frontmatter.md` and `docs/specs/expressing-edges.md` are symlinks into the plugin, so the spec corpus reads the same files.
 
 ### The hook
 
@@ -129,8 +129,9 @@ Layout:
 - `.claude-plugin/marketplace.json` — the `hoplite` marketplace.
 - `plugins/hoplite-skills/` — skills (`skills/`), hook (`hooks/`), locked specs (`references/`).
 - `plugins/hoplite-mcp/` — stub manifest; no server yet.
-- `docs/hoplite/` — the spec corpus: architecture, graph model, schema, tool API, roadmap, and the glossary.
-- `docs/notes/`, `docs/journal/` — the agent's own corpus: current state and design history.
+- `docs/specs/` — the spec corpus: architecture, graph model, schema, tool API, roadmap.
+- `docs/glossary/` — the domain glossary, one node per term.
+- `docs/notes/`, `docs/journal/`, `docs/decisions/`, `docs/todos/` — the agent's own corpus: current state, design history, decisions, and action items.
 
 Running tests:
 
@@ -142,9 +143,9 @@ Adding a skill: create `plugins/hoplite-skills/skills/<skill-name>/SKILL.md`, th
 
 ## Reference
 
-- [docs/hoplite/README.md](docs/hoplite/README.md) — spec index.
-- [docs/hoplite/hoplite-architecture.md](docs/hoplite/hoplite-architecture.md) — the system under design.
-- [docs/hoplite/schema.md](docs/hoplite/schema.md) — the RDF-shaped storage model.
-- [docs/hoplite/hoplite-tool-api.md](docs/hoplite/hoplite-tool-api.md) — the planned MCP tool surface.
-- [docs/hoplite/hoplite-roadmap.md](docs/hoplite/hoplite-roadmap.md) — what comes after.
-- [docs/hoplite/glossary/README.md](docs/hoplite/glossary/README.md) — the domain glossary, one node per term.
+- [docs/specs/README.md](docs/specs/README.md) — spec index.
+- [docs/specs/hoplite-architecture.md](docs/specs/hoplite-architecture.md) — the system under design.
+- [docs/specs/schema.md](docs/specs/schema.md) — the RDF-shaped storage model.
+- [docs/specs/hoplite-tool-api.md](docs/specs/hoplite-tool-api.md) — the planned MCP tool surface.
+- [docs/specs/hoplite-roadmap.md](docs/specs/hoplite-roadmap.md) — what comes after.
+- [docs/glossary/README.md](docs/glossary/README.md) — the domain glossary, one node per term.

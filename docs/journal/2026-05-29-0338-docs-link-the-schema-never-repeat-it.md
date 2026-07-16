@@ -11,7 +11,7 @@ The first rule of documenting driftable content is to point at it, not copy it. 
 
 ## Observation
 
-[Observation] [[docs/hoplite/hoplite-architecture.md]] had drifted to describe a `document` table the schema renamed to `node`, with `path` where the schema now has `uri`. The cause was structural, not neglect: the spec pasted the DDL inline, so it held a second copy of the schema that silently fell out of sync with the source.
+[Observation] [[docs/specs/hoplite-architecture.md]] had drifted to describe a `document` table the schema renamed to `node`, with `path` where the schema now has `uri`. The cause was structural, not neglect: the spec pasted the DDL inline, so it held a second copy of the schema that silently fell out of sync with the source.
 
 ## Decision
 

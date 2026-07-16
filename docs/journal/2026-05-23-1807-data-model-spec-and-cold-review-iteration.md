@@ -50,7 +50,7 @@ The pattern that emerged: read the spec the way the implementer would read it, i
 - `FetchedNode` is one shape for both verbs. Both `invoke` and `read` return the same record; the verb chooses what fills the `envelope.framing` field and whether `envelope.primes` is populated. The agent (or its runtime) composes for display by concatenating `framing + primes + body` in that order.
 - `apply_framing` is scoped narrow. Only label-envelope files. The read envelope at `docs/index/envelopes/read.md` is operational, edited by hand or via repair, not via the agent surface.
 - Envelope ordering follows LLM attention. Framing at the strong start, body at the strong end, supplementary primes in the middle. This shape outlived the spec by several days — even after the retrieval tools died in the redesign, the framing-prefix-then-body ordering survived as a principle.
-- Contracts split from implementation. The folder restructure on the evening of the 23rd was the recognition that "what the agent sees" and "how the indexer builds it" are different concerns that deserve different docs. The split foreshadows the docs/hoplite/ recompose two days later, which collapses the same docs back into a single architecture file when the contract/implementation distinction stops mattering after day-one ships.
+- Contracts split from implementation. The folder restructure on the evening of the 23rd was the recognition that "what the agent sees" and "how the indexer builds it" are different concerns that deserve different docs. The split foreshadows the docs/specs/ recompose two days later, which collapses the same docs back into a single architecture file when the contract/implementation distinction stops mattering after day-one ships.
 
 ## What this spec set up
 

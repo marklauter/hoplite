@@ -10,11 +10,11 @@ status: design
 
 `tools.py` keeps its existing four-handler surface (`where`, `relatives`, `refresh`, `export`), but the bodies shrink to predicate parsing plus a single call into a `Graph`. The module-level `_graph` singleton is replaced by a `FileDatabase` singleton; each handler constructs a per-call `Graph(db, corpus_root)` (see [[docs/notes/graph-py-design.md]]) and lets `with db.open_*()` blocks own connection lifetime. There is one `Graph` implementation, SQLite-backed, so the handler depends on the concrete class directly: no Protocol, no impl selection.
 
-Sibling design notes: [[docs/notes/reify-in-memory-graph-as-file-based-sqlite.md]] for the rationale; [[docs/notes/db-refactor.md]] for the broader plan; [[docs/notes/db-py-design.md]] (the `Database` interface), [[docs/notes/graph-py-design.md]] (the `Graph` this delegates to), and [[docs/notes/walker-py-design.md]] (the writer behind `Graph.refresh()`) for collaborating modules. This note covers `tools.py` alone.
+Sibling design notes: [[docs/todos/reify-in-memory-graph-as-file-based-sqlite.md]] for the rationale; [[docs/todos/db-refactor.md]] for the broader plan; [[docs/notes/db-py-design.md]] (the `Database` interface), [[docs/notes/graph-py-design.md]] (the `Graph` this delegates to), and [[docs/notes/walker-py-design.md]] (the writer behind `Graph.refresh()`) for collaborating modules. This note covers `tools.py` alone.
 
 ## Surface preserved
 
-The MCP wire schema in `docs/hoplite/hoplite-tool-api.md` is the contract; this refactor preserves it.
+The MCP wire schema in `docs/specs/hoplite-tool-api.md` is the contract; this refactor preserves it.
 
 - `where(predicate: MatchPredicate, k: int) -> list[Hit]`
 - `relatives(from_: str, predicate: TraversePredicate | None, depth: int) -> list[TraversalHit]`
@@ -41,7 +41,7 @@ def set_root(cwd: Path) -> None:
     _database = FileDatabase(db_path)
 ```
 
-`_graph` is gone. `_database` holds a `FileDatabase` constructed once at `set_root()`. Construction is cheap: no connection opens, no schema applies, it just stashes the path. This matches the "server bootstrap does nothing" decision in [[docs/notes/db-refactor.md]].
+`_graph` is gone. `_database` holds a `FileDatabase` constructed once at `set_root()`. Construction is cheap: no connection opens, no schema applies, it just stashes the path. This matches the "server bootstrap does nothing" decision in [[docs/todos/db-refactor.md]].
 
 `set_root()` is still called at module import from `server.py`. The signature is unchanged.
 

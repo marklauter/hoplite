@@ -7,7 +7,7 @@ created: 2026-05-31
 
 # Property keys intern into vocabulary tables that feed Survey
 
-Going in, `node_property` and `edge_property` stored the attribute name as a repeated `key TEXT` column. Refining the apex overview ([[docs/hoplite/hoplite.md]]) pinned Survey as the first read affordance — retrieve the schema vocabulary, properties and stereotypes, before composing a predicate. The schema had no substrate for it: surveying the property vocabulary meant `SELECT DISTINCT key` over the widest tables in the graph.
+Going in, `node_property` and `edge_property` stored the attribute name as a repeated `key TEXT` column. Refining the apex overview ([[docs/specs/hoplite.md]]) pinned Survey as the first read affordance — retrieve the schema vocabulary, properties and stereotypes, before composing a predicate. The schema had no substrate for it: surveying the property vocabulary meant `SELECT DISTINCT key` over the widest tables in the graph.
 
 ## Decision
 

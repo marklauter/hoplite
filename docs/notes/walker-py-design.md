@@ -10,7 +10,7 @@ status: evolving
 
 `walker.py` exposes `walk(conn, corpus_root) -> WriteResult`. It truncates the persisted tables inside the caller's `BEGIN IMMEDIATE` transaction, then runs a two-pass scan over `*.md` files under `corpus_root` to repopulate `node`, `node_property`, `edge`, `edge_property`, and `fts`. The walker is the only writer in the system; every schema invariant the queries rely on is enforced here at insert time.
 
-Sibling design notes: [[docs/notes/reify-in-memory-graph-as-file-based-sqlite.md]] for the rationale; [[docs/notes/db-refactor.md]] for the broader plan; [[docs/notes/db-py-design.md]] (transaction protocol), [[docs/notes/migrations-py-design.md]] (schema lifecycle), [[docs/notes/row-factories-py-design.md]] (the projection contracts this walker must satisfy), and [[docs/notes/graph-py-design.md]] (the caller — `Graph.refresh`). This note covers `walker.py` alone.
+Sibling design notes: [[docs/todos/reify-in-memory-graph-as-file-based-sqlite.md]] for the rationale; [[docs/todos/db-refactor.md]] for the broader plan; [[docs/notes/db-py-design.md]] (transaction protocol), [[docs/notes/migrations-py-design.md]] (schema lifecycle), [[docs/notes/row-factories-py-design.md]] (the projection contracts this walker must satisfy), and [[docs/notes/graph-py-design.md]] (the caller — `Graph.refresh`). This note covers `walker.py` alone.
 
 ## Module location and surface
 
@@ -64,7 +64,7 @@ conn.execute("PRAGMA defer_foreign_keys = ON")
 
 `defer_foreign_keys = ON` is per-transaction and resets at COMMIT. The walker re-inserts every referenced row before the transaction commits, so FKs are satisfied at the boundary. No cleanup needed.
 
-Reconcile semantics (added/changed/removed via `content_hash`) is future work — see [[docs/notes/db-refactor.md]] "Held for future."
+Reconcile semantics (added/changed/removed via `content_hash`) is future work — see [[docs/todos/db-refactor.md]] "Held for future."
 
 ## Pass 1: identity collection
 
@@ -86,7 +86,7 @@ VALUES (?, ?, 1, ?, NULL)
 
 The `id` is assigned in iteration order starting at 1; the walker holds a `uri_to_id: dict[str, int]` map for pass 2 and the aggregate pass.
 
-9. Insert frontmatter into `node_property`. `title` and `summary` are skipped: they're FTS-only fields, not properties (see [[docs/notes/row-factories-py-design.md]] "Why summary isn't in node_property"). Every other key fans out per the EAV decomposition pattern in [docs/hoplite/hoplite-architecture.md#eav-decomposition](../hoplite/hoplite-architecture.md#eav-decomposition):
+9. Insert frontmatter into `node_property`. `title` and `summary` are skipped: they're FTS-only fields, not properties (see [[docs/notes/row-factories-py-design.md]] "Why summary isn't in node_property"). Every other key fans out per the EAV decomposition pattern in [docs/specs/hoplite-architecture.md#eav-decomposition](../hoplite/hoplite-architecture.md#eav-decomposition):
    - Scalar value → one row `(id, key, str(value))`.
    - List value → one row per element `(id, key, str(element))`. Tag values are casefolded; other list values stored verbatim (aliases, custom keys).
    - `None` → skip.
@@ -162,9 +162,9 @@ The walker is where "FTS vs `node_property`" is enforced:
 | `<any-key>` (scalar) | `node_property` row with `key='<any-key>'` |
 | `<any-key>` (list) | `node_property` rows with `key='<any-key>'`, one row per element |
 
-Keys are flat, with no `document.` prefix (see [docs/hoplite/hoplite-architecture.md#eav-decomposition](../hoplite/hoplite-architecture.md#eav-decomposition)); the walker stores each non-special key verbatim (`priority: high` → `(id, 'priority', 'high')`).
+Keys are flat, with no `document.` prefix (see [docs/specs/hoplite-architecture.md#eav-decomposition](../hoplite/hoplite-architecture.md#eav-decomposition)); the walker stores each non-special key verbatim (`priority: high` → `(id, 'priority', 'high')`).
 
-A property whose value is a wikilink is a stereotyped edge, handled by the stereotype layer, a locked-in design (see [[docs/notes/stereotypes-are-open-vocab-edge-properties.md]] and [[docs/notes/ship-the-stereotype-edge-annotation-layer.md]]). Each wikilink in a `<stereotype>: ["[[target]]"]` value (and each inline `[[target]]<!--stereotype-->`) materializes a `mentions` edge plus an `edge_property` row `(edge_id, 'stereotype', '<stereotype>')` keyed by that edge's id. The stereotype layer ships as its own coordinated cycle, independent of this refactor's ship order; this walker is where its emit path lands when the two converge.
+A property whose value is a wikilink is a stereotyped edge, handled by the stereotype layer, a locked-in design (see [[docs/notes/stereotypes-are-open-vocab-edge-properties.md]] and [[docs/todos/ship-the-stereotype-edge-annotation-layer.md]]). Each wikilink in a `<stereotype>: ["[[target]]"]` value (and each inline `[[target]]<!--stereotype-->`) materializes a `mentions` edge plus an `edge_property` row `(edge_id, 'stereotype', '<stereotype>')` keyed by that edge's id. The stereotype layer ships as its own coordinated cycle, independent of this refactor's ship order; this walker is where its emit path lands when the two converge.
 
 ## Tests
 
@@ -214,8 +214,8 @@ Test bullets:
 
 ### Known gaps — accepted, documented, not yet fixed
 
-- No reconcile semantics. Every walk is truncate-and-rebuild. Past ~5k docs this is minutes per refresh; reconcile is the next perf lever (see [[docs/notes/db-refactor.md]] "Held for future").
-- The stereotype layer is locked-in design, shipped on its own cycle. Both authoring surfaces (`[[target]]<!--stereotype-->` inline, `<stereotype>: "[[target]]"` frontmatter) emit a `mentions` edge plus an `edge_property` stereotype row through this walker (see [[docs/notes/stereotypes-are-open-vocab-edge-properties.md]] and [[docs/notes/ship-the-stereotype-edge-annotation-layer.md]]). Whether it lands in the same pass as this refactor depends on ship order between the two clusters, which is free.
+- No reconcile semantics. Every walk is truncate-and-rebuild. Past ~5k docs this is minutes per refresh; reconcile is the next perf lever (see [[docs/todos/db-refactor.md]] "Held for future").
+- The stereotype layer is locked-in design, shipped on its own cycle. Both authoring surfaces (`[[target]]<!--stereotype-->` inline, `<stereotype>: "[[target]]"` frontmatter) emit a `mentions` edge plus an `edge_property` stereotype row through this walker (see [[docs/notes/stereotypes-are-open-vocab-edge-properties.md]] and [[docs/todos/ship-the-stereotype-edge-annotation-layer.md]]). Whether it lands in the same pass as this refactor depends on ship order between the two clusters, which is free.
 - `node_property` is `WITHOUT ROWID`. No insertion-order column. Tags are sorted at projection, so order is moot for them; any future order-sensitive property needs an explicit ordinal.
 
 ### Future considerations — forward-pointers

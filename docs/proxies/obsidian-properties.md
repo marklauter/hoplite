@@ -21,4 +21,4 @@ Obsidian's Properties help page — the canonical syntax for YAML frontmatter pr
 
 ## Used by
 
-- [[docs/hoplite/expressing-edges]] — Hoplite's edge grammar and frontmatter edge model, written for Obsidian parity.
+- [[docs/specs/expressing-edges]] — Hoplite's edge grammar and frontmatter edge model, written for Obsidian parity.

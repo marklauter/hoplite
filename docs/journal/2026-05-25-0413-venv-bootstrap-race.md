@@ -49,7 +49,7 @@ The number of operating-system-level details a "Python package" install touches.
 ## Cross-references
 
 - `docs/notes/debug-the-venv-bootstrap-race-on-plugin-install.md` — open TODO for the actual fix.
-- `docs/notes/venv-bootstrap-races-mcp-supervisor-on-plugin-install.md` — captured during this work as a longer write-up of the race shape.
+- `docs/todos/venv-bootstrap-races-mcp-supervisor-on-plugin-install.md` — captured during this work as a longer write-up of the race shape.
 - `[[journal/2026-05-25-2252-venv-bootstrap-follows-the-canonical-pattern]]` — later same evening, a design-review pass confirmed the bootstrap layer matches Anthropic's documented pattern verbatim and the race is inherent to that pattern, not our adaptation. The design holds; the workaround is documented.
 
 ## Next

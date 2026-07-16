@@ -10,7 +10,7 @@ status: design
 
 `migrations.py` owns the schema-apply path. `apply(conn)` checks `sqlite_master` for the expected tables. If any are absent, it runs the full schema script. The path is idempotent and race-tolerant. There are no in-place migrations on day one. Schema versioning is carried in the filename, not in the database header.
 
-Sibling design notes: [[docs/notes/reify-in-memory-graph-as-file-based-sqlite.md]] for the rationale and trigger; [[docs/notes/db-refactor.md]] for the broader refactor plan; [[docs/notes/db-py-design.md]] for the `Database` interface this collaborates with. This note covers `migrations.py` alone.
+Sibling design notes: [[docs/todos/reify-in-memory-graph-as-file-based-sqlite.md]] for the rationale and trigger; [[docs/todos/db-refactor.md]] for the broader refactor plan; [[docs/notes/db-py-design.md]] for the `Database` interface this collaborates with. This note covers `migrations.py` alone.
 
 ## Public API
 

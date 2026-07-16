@@ -1,6 +1,6 @@
 ---
 name: spec
-description: Compose a resolved concept from locked terms into the smallest spec document that still carries it, under docs/hoplite/. Use when a composite concept settles above the glossary.
+description: Compose a resolved concept from locked terms into the smallest spec document that still carries it, under docs/specs/. Use when a composite concept settles above the glossary.
 ---
 
 # Spec
@@ -13,7 +13,7 @@ A spec document is a composite concept reduced to the smallest prose that still 
 
 Write to the [Microsoft Writing Style Guide](https://learn.microsoft.com/style-guide/welcome/) — plain and scannable; say what a thing is before how to use it.
 
-Write `docs/hoplite/<concept>.md` to the frontmatter standard (`${CLAUDE_PLUGIN_ROOT}/references/frontmatter.md`):
+Write `docs/specs/<concept>.md` to the frontmatter standard (`${CLAUDE_PLUGIN_ROOT}/references/frontmatter.md`):
 
 ```markdown
 ---

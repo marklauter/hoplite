@@ -53,6 +53,6 @@ Survey the vocabulary graph — find namespaces, walk the `node/property_key` on
 
 ## See also
 
-- [[docs/hoplite/hoplite-graph.md]] — the structure, including the Vocabulary section.
-- [[docs/hoplite/hoplite-affordances.md]] — survey, match, walk, projection as read-operations.
+- [[docs/specs/hoplite-graph.md]] — the structure, including the Vocabulary section.
+- [[docs/specs/hoplite-affordances.md]] — survey, match, walk, projection as read-operations.
 - [[docs/journal/2026-05-31-2134-property-keys-intern-into-vocabulary-tables-that-feed-survey.md]] — the interning decision that produced the vocabulary tables.

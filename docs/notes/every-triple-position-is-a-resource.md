@@ -8,7 +8,7 @@ status: evolving
 
 # Every triple position is a resource
 
-The graph is triples: `subject — predicate — object`, and every position holds a [[docs/hoplite/glossary/resource.md|resource]]. The middle is special by *role*, not by kind: the [[docs/hoplite/glossary/predicate.md|predicate]] position is filled by a relationship or claim — predicate-licensing is namespace-derived, so `doc-1 doc-2 doc-3` is invalid — and those resources stand as subject or object like any other, so statements about the vocabulary are ordinary statements. A [[docs/hoplite/glossary/document.md|document]] binds to its resource — identity and nothing more; its facts attach through statements. Tags, claim values, predicates, and out-of-line content bind to resources the same way.
+The graph is triples: `subject — predicate — object`, and every position holds a [[docs/glossary/resource.md|resource]]. The middle is special by *role*, not by kind: the [[docs/glossary/predicate.md|predicate]] position is filled by a relationship or claim — predicate-licensing is namespace-derived, so `doc-1 doc-2 doc-3` is invalid — and those resources stand as subject or object like any other, so statements about the vocabulary are ordinary statements. A [[docs/glossary/document.md|document]] binds to its resource — identity and nothing more; its facts attach through statements. Tags, claim values, predicates, and out-of-line content bind to resources the same way.
 
 Predicates were never ruled out of the dictionary — "not addressable" was *edge's* property in the old model, and predicates inherited it by succession, not by argument, when they took over edge's core-concept role.
 
@@ -33,7 +33,7 @@ Claim keys are predicates. `status`, `tags`, `created`, `summary` sit in the sam
 ### Shared value
 
 - Address: the value itself — `priority:high`, `tag:note`, `created:2026-06-30`.
-- Carries: categorical, multi-document values. The operand is a string; mid-token characters strict Turtle disallows (dots, dashes, slashes) ride the dialect relaxation, but whitespace is a token delimiter — how whitespace-bearing values address is an open question in [[docs/hoplite/schema.md]].
+- Carries: categorical, multi-document values. The operand is a string; mid-token characters strict Turtle disallows (dots, dashes, slashes) ride the dialect relaxation, but whitespace is a token delimiter — how whitespace-bearing values address is an open question in [[docs/specs/schema.md]].
 - One resource per distinct value, shared by every subject that asserts it — which is what makes values walkable ("who else carries this value").
 - Range queries ride lexicographic uri scans; ISO-8601 dates sort.
 
@@ -48,7 +48,7 @@ The line is semantic, not lexical: *enumerable → the value is the address; fre
 
 ## Literal projections
 
-A literal's address is computable from subject + predicate, so its triple carries no new information. Storage keeps a generic literal store — `literal(predicateid, resourceid, value)`, keyed in address order, the long-value half of the term dictionary — and the graph layer projects the resources on demand: the pattern in [[docs/notes/uris-are-a-tool-layer-projection-over-relational-storage.md]]. The document facet dissolves into it: `title`, `summary`, and fingerprints are literal rows, not columns, so a new literal-valued predicate is data, never a migration. The model is uniformly triples; the physics stays a keyed lookup where a keyed lookup wins.
+A literal's address is computable from subject + predicate, so its triple carries no new information. Storage keeps a generic literal store — `literal(predicateid, resourceid, value)`, keyed in address order, the long-value half of the term dictionary — and the graph layer projects the resources on demand: the pattern in [[docs/decisions/uris-are-a-tool-layer-projection-over-relational-storage.md]]. The document facet dissolves into it: `title`, `summary`, and fingerprints are literal rows, not columns, so a new literal-valued predicate is data, never a migration. The model is uniformly triples; the physics stays a keyed lookup where a keyed lookup wins.
 
 ## Consequences for the schema
 
@@ -60,7 +60,7 @@ A literal's address is computable from subject + predicate, so its triple carrie
 - Multi-valued properties are sets (repeated triples; asserting twice yields one triple) — older notes saying "key/bag" mean key/set.
 - The dictionary is self-describing: `nsid` references `resource`, addresses are namespace chains grounded at the `meta:meta` fixed point, and `meta` parents `relationship`, `claim`, `document`, `url`. Short forms resolve shortest-unique, like wikilink slugs. No namespace table, no nullable columns, no name stored twice.
 
-The schema realizes this model: [[docs/hoplite/schema.md]] (resource, statement, literal, plus aliases and FTS).
+The schema realizes this model: [[docs/specs/schema.md]] (resource, statement, literal, plus aliases and FTS).
 
 ## Supersedes
 

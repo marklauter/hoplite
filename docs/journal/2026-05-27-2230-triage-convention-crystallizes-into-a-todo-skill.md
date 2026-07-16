@@ -11,7 +11,7 @@ A list-the-open-todos request opened a triage pass that landed an ad-hoc frontma
 
 ## Context
 
-Session opened authoring one note — the SQLite reify proposal at [[docs/notes/reify-in-memory-graph-as-file-based-sqlite.md]] — then a request for the list of open todos. Fifteen notes tagged `todo`. No triage signal: priority unknowable, effort unknowable, dependencies implicit. A backlog, but shapeless.
+Session opened authoring one note — the SQLite reify proposal at [[docs/todos/reify-in-memory-graph-as-file-based-sqlite.md]] — then a request for the list of open todos. Fifteen notes tagged `todo`. No triage signal: priority unknowable, effort unknowable, dependencies implicit. A backlog, but shapeless.
 
 ## Attempted
 
@@ -37,14 +37,14 @@ Twenty-two frontmatters carry the new shape: the original nineteen triaged this 
 
 The new skill at `plugins/hoplite/skills/todo/SKILL.md` lands in the journaling shape — declarative, ambient-reference, four cat injections, around seventy lines. Sits beside [taking-notes](../../plugins/hoplite/skills/taking-notes/SKILL.md) (which authors notes that might be tagged `todo`) as the lifecycle manager for those todos.
 
-The master-todo / sub-task hierarchy question lives at [[docs/notes/master-todos-track-subtasks-via-wikilink.md]] with status `open`, low priority. Two candidate shapes documented (body wikilinks versus `edge.subtask` frontmatter list). Convention stays uncommitted until a real composite todo forces the choice.
+The master-todo / sub-task hierarchy question lives at [[docs/todos/master-todos-track-subtasks-via-wikilink.md]] with status `open`, low priority. Two candidate shapes documented (body wikilinks versus `edge.subtask` frontmatter list). Convention stays uncommitted until a real composite todo forces the choice.
 
 ## Next
 
 Three notes landed concurrently during the session — the user's parallel work on the stereotype model and cross-repo scaling story. Each carries `todo` but no triage fields, so each needs a pass under the new convention:
 
-- [[docs/notes/hoplite-scales-to-the-cross-repo-knowledge-graph.md]]
-- [[docs/notes/ship-the-stereotype-edge-annotation-layer.md]]
+- [[docs/todos/hoplite-scales-to-the-cross-repo-knowledge-graph.md]]
+- [[docs/todos/ship-the-stereotype-edge-annotation-layer.md]]
 - [[docs/notes/stereotypes-are-open-vocab-edge-properties.md]]
 
 After triage, the convention's first real test is a status transition — a `deferred` item that comes back to `open`, or a `declined` that survives unchanged. The lifecycle becomes fully visible after one of each.

@@ -1,6 +1,6 @@
 ---
 name: decision
-description: Record a hard-to-reverse design decision as an ADR-equivalent note under docs/notes/. Use when a genuine trade-off is made — offer it before writing, never impose.
+description: Record a hard-to-reverse design decision as an ADR-equivalent note under docs/decisions/. Use when a genuine trade-off is made — offer it before writing, never impose.
 ---
 
 # Decision
@@ -15,7 +15,7 @@ A decision note records a choice hard enough to reverse that it earns a durable 
 
 Write to the [Microsoft Writing Style Guide](https://learn.microsoft.com/style-guide/welcome/) — plain and scannable; say what a thing is before how to use it.
 
-Write `docs/notes/<slug>.md` (kebab-case of the title) to the frontmatter standard (`${CLAUDE_PLUGIN_ROOT}/references/frontmatter.md`):
+Write `docs/decisions/<slug>.md` (kebab-case of the title) to the frontmatter standard (`${CLAUDE_PLUGIN_ROOT}/references/frontmatter.md`):
 
 ```markdown
 ---

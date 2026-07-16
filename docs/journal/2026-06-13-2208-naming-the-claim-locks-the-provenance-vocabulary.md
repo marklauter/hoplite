@@ -23,7 +23,7 @@ From there the synonyms collapsed. `declared` and `authored` are the same act as
 
 ## Decision
 
-Five terms lock as the substrate: claim, assert, infer, intrinsic, provenance. Retired: declared and authored fold into asserted; discovered into inferred; instantiation into provenance. The glossary [[docs/hoplite/hoplite-glossary.md]] splits into Locked, Evolving, and Synonyms, the crosswalk keyed by the retired word so a stale term met in the wild still resolves. The `edge_kind` enum is renamed and seeded in the schema DDL as `asserted`/`inferred`, id order carrying the asserted-wins precedence.
+Five terms lock as the substrate: claim, assert, infer, intrinsic, provenance. Retired: declared and authored fold into asserted; discovered into inferred; instantiation into provenance. The glossary [[docs/specs/hoplite-glossary.md]] splits into Locked, Evolving, and Synonyms, the crosswalk keyed by the retired word so a stale term met in the wild still resolves. The `edge_kind` enum is renamed and seeded in the schema DDL as `asserted`/`inferred`, id order carrying the asserted-wins precedence.
 
 ## Next
 

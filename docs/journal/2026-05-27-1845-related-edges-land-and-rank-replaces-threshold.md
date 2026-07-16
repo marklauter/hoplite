@@ -33,8 +33,8 @@ Four decisions, each a consequence of the prior:
 1. Confidence is first-class on `Edge`. Promoted from an `edge_properties` string lookup to a `float = 1.0` field on the dataclass and a `confidence REAL NOT NULL` column in the dump schema. mentions and cites default to 1.0; related carries its Jaccard score directly.
 2. The inferred edge skips when an authored edge already exists. `_emit_related_edges` drops any pair already connected by a `mentions` edge in either direction — the author declared the link, so the inferred edge is redundant noise.
 3. MinHash defaults retuned. `DEFAULT_K = 512`, `DEFAULT_SHINGLE_SIZE = 4`, `DEFAULT_THRESHOLD = 0.0058` (three hash matches out of 512). The live corpus emits 15 distinct related pairs at scores 0.0058–0.0137.
-4. `min_confidence` replaced with `top_k_related: int | None` on `TraversePredicate`. At each BFS node, related edges rank by descending confidence and truncate to the top K. mentions and cites are always followed regardless of the cap. Agents now ask for the K most-related neighbors per hop without needing to know the score distribution. See [[docs/notes/weighted-edge-traversal-ranks-by-accumulated-similarity.md]] for the broader ranking thread this fits into.
+4. `min_confidence` replaced with `top_k_related: int | None` on `TraversePredicate`. At each BFS node, related edges rank by descending confidence and truncate to the top K. mentions and cites are always followed regardless of the cap. Agents now ask for the K most-related neighbors per hop without needing to know the score distribution. See [[docs/todos/weighted-edge-traversal-ranks-by-accumulated-similarity.md]] for the broader ranking thread this fits into.
 
 ## Next
 
-None. Cycle closed. Updated spec lives in [[docs/hoplite/hoplite-architecture.md]] and [[docs/hoplite/hoplite-tool-api.md]].
+None. Cycle closed. Updated spec lives in [[docs/specs/hoplite-architecture.md]] and [[docs/specs/hoplite-tool-api.md]].

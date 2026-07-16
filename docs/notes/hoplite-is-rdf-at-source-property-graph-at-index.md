@@ -10,7 +10,7 @@ status: evolving
 
 The RDF and property-graph framings are not rivals; they describe two layers of one model. Both layers are RDF-shaped — the difference is storage.
 
-- **Authored source (markdown)** is triples. A note is a subject; a frontmatter key or an inline edge label is a [[docs/hoplite/glossary/predicate.md|predicate]]; a wikilink or a scalar is the object. A bare wikilink carries no attributes — its predicate (the default, when none is written) is the sole carried semantics.
+- **Authored source (markdown)** is triples. A note is a subject; a frontmatter key or an inline edge label is a [[docs/glossary/predicate.md|predicate]]; a wikilink or a scalar is the object. A bare wikilink carries no attributes — its predicate (the default, when none is written) is the sole carried semantics.
 - **Materialized index (SQLite)** stores the same triples in a property-graph *storage layout*. An edge is a first-class row — its own id, covering indexes, walked in `O(log n + k)`. But "first-class" is a storage fact, not a data one: an edge has no property bag (`schema.md`: "an edge has no open key/value vocabulary"). Its only attributes are an intrinsic `confidence` weight and a set of interned predicate labels (the `predicate` and `edge_predicate` tables). The edge row is a reification anchor — `(src, dst)` interns the subject-object pair and its weight, and each `edge_stereotype` row adds a predicate, one triple per predicate.
 
 The two layers reconcile because the index is a projection of the source, rebuildable at any time (`reindex`). Markdown stays canonical; the graph store is a materialized view, never the record.
@@ -36,6 +36,6 @@ The schema is a deliberate hybrid across three axes — node identity and facets
 
 ## See also
 
-- [[docs/hoplite/hoplite-graph.md]] — the model the schema serves (wip: still describes edge origination, which the bare-graph rework dropped; the locked `edge` glossary and `schema.md` are the source of truth — an edge is `id, src, dst, confidence`, provenance unrecorded).
+- [[docs/specs/hoplite-graph.md]] — the model the schema serves (wip: still describes edge origination, which the bare-graph rework dropped; the locked `edge` glossary and `schema.md` are the source of truth — an edge is `id, src, dst, confidence`, provenance unrecorded).
 - [[docs/notes/one-walk-verb-spans-the-corpus-and-vocabulary-graphs.md]] — vocabulary uris double as condition atoms (that note's older term is "predicate atoms"); vault-prefixed uris answer cross-repo identity without RDF IRIs.
-- [[docs/notes/predicates-are-an-open-vocabulary.md]] — the open-vocabulary policy for predicates, including the drift concern and the audit affordance as future work.
+- [[docs/todos/predicates-are-an-open-vocabulary.md]] — the open-vocabulary policy for predicates, including the drift concern and the audit affordance as future work.
