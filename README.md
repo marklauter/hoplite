@@ -47,7 +47,14 @@ Or straight from GitHub, no clone:
 /plugin install hoplite-skills@hoplite
 ```
 
-After source changes, run `/plugin uninstall hoplite-skills@hoplite` followed by `/plugin install hoplite-skills@hoplite` to refresh the cached skill prose — `/reload-plugins` alone keeps stale copies.
+After source changes, update the marketplace, then the plugin:
+
+```text
+/plugin marketplace update hoplite
+/plugin update hoplite-skills@hoplite
+```
+
+`/reload-plugins` alone keeps stale cached skill prose.
 
 ## Prerequisites
 
