@@ -44,7 +44,7 @@ Probe a relationship with a concrete case, not the abstraction. "A `[[...]]` to 
 
 ### Cross-reference the source
 
-A stated behavior → check the implementation agrees. "The spec calls edges symmetric, but the walker emits one direction — which is right?"
+A stated behavior → check the source agrees. "The spec calls edges symmetric, but the walker emits one direction — which is right?"
 
 ### Narrow to one
 
