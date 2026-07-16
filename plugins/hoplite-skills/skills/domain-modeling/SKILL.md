@@ -1,11 +1,11 @@
 ---
 name: domain-modeling
-description: Use when designing hoplite itself — reducing a term, concept, or decision to its irreducible kernel: resolving terminology against the glossary, stress-testing concept boundaries against the spec, or recording a design decision. The active discipline of changing the model, not reading the corpus for vocabulary.
+description: Use when designing the domain model — reducing a term, concept, or decision to its irreducible kernel: resolving terminology against the glossary, stress-testing concept boundaries against the spec, or recording a design decision. The active discipline of changing the model, not reading the corpus for vocabulary.
 ---
 
 # Domain modeling
 
-Actively build and sharpen hoplite's domain model by reducing each term, concept, or decision to its irreducible kernel during design — challenging terms and inventing edge cases until only one reading survives — then write it down the moment it crystallises. A term reduces to a glossary entry: the word plus the smallest phrase that unpacks it in the domain. A concept reduces to a spec document built from those terms. A decision reduces to a note recording the trade-off. (Reading the corpus for vocabulary is not this skill; this is for changing the model.)
+Actively build and sharpen the domain model by reducing each term, concept, or decision to its irreducible kernel during design — challenging terms and inventing edge cases until only one reading survives — then write it down the moment it crystallises. A term reduces to a glossary entry: the word plus the smallest phrase that unpacks it in the domain. A concept reduces to a spec document built from those terms. A decision reduces to a note recording the trade-off. (Reading the corpus for vocabulary is not this skill; this is for changing the model.)
 
 The model lives in the corpus, addressed by path:
 
@@ -44,7 +44,7 @@ Probe a relationship with a concrete case, not the abstraction. "A `[[...]]` to 
 
 ### Cross-reference the source
 
-A stated behavior → check `plugins/hoplite/mcp/src/` agrees. "`discovered.md` calls edges symmetric, but the walker emits one direction — which is right?"
+A stated behavior → check the implementation agrees. "The spec calls edges symmetric, but the walker emits one direction — which is right?"
 
 ### Narrow to one
 
