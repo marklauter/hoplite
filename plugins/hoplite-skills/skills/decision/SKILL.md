@@ -1,6 +1,7 @@
 ---
 name: decision
 description: Record a hard-to-reverse design decision as an ADR-equivalent note under docs/notes/. Use when a genuine trade-off is made — offer it before writing, never impose.
+disable-model-invocation: true
 ---
 
 # Decision

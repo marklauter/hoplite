@@ -1,6 +1,7 @@
 ---
 name: spec
 description: Compose a resolved concept from locked terms into the smallest spec document that still carries it, under docs/hoplite/. Use when a composite concept settles above the glossary.
+disable-model-invocation: true
 ---
 
 # Spec

@@ -1,6 +1,7 @@
 ---
 name: journaling
 description: Record what happened — an experiment, decision, or dead-end — as an immutable dated entry under docs/journal/, answering "how did we get here?". Write it in the moment, warts and all; never corrected.
+disable-model-invocation: true
 ---
 
 # Journaling

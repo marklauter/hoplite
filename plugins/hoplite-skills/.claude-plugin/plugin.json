@@ -1,6 +1,6 @@
 {
   "name": "hoplite-skills",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Hoplite authoring skills and the frontmatter-validation hook. The locked specs (frontmatter, expressing-edges) ship under references/ as the plugin's source of truth.",
   "author": {
     "name": "MSL"

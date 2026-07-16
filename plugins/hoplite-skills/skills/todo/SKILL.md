@@ -1,6 +1,7 @@
 ---
 name: todo
 description: Triage notes tagged `todo` — assign priority, effort, and status, mark blockers, close what's done. Use to work the backlog, prioritise, or sweep for unlabelled action items.
+disable-model-invocation: true
 ---
 
 # Todo

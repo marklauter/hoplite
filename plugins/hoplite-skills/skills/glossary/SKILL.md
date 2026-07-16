@@ -1,6 +1,7 @@
 ---
 name: glossary
 description: Reduce a resolved term to its kernel — a word plus the smallest phrase that unpacks it — and write it to the Hoplite glossary. Use when a term settles, or when a definition needs collapsing, reducing, or locking.
+disable-model-invocation: true
 ---
 
 # Glossary
