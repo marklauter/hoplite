@@ -1,7 +1,7 @@
 version: 2
 updates:
-  - package-ecosystem: "pip"
-    directory: "/plugins/hoplite/mcp"
+  - package-ecosystem: "github-actions"
+    directory: "/"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 10
