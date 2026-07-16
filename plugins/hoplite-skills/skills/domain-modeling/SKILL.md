@@ -58,10 +58,11 @@ A term or boundary being pinned before the information exists to decide well →
 
 Reread the glossary for two entries that name the same idea or contradict each other — unreconciled overlap. Merge, alias, or draw the contrast. When staying open costs more than deciding, lock it.
 
-## Record
+## Durability - recording the kernel
 
-To record a kernel, hand it to the skill that owns its form:
+Before recording a kernel, load the skill that owns its form:
 
 - Term — a word plus its smallest phrase → the `/glossary` skill.
 - Concept — composed from locked terms → the `/spec` skill.
 - Decision — a hard-to-reverse trade-off → the `/decision` skill.
+- Note — more than a fleeting thought → the `/taking-notes` skill.
