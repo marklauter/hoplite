@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/check-frontmatter.py\""
+            "command": "\"${CLAUDE_PLUGIN_OPTION_PYTHON_PATH:-python3}\" \"${CLAUDE_PLUGIN_ROOT}/hooks/check-frontmatter.py\""
           }
         ]
       }

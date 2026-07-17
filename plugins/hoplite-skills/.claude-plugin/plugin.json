@@ -6,6 +6,14 @@
     "name": "MSL"
   },
   "license": "MIT",
+  "userConfig": {
+    "python_path": {
+      "type": "string",
+      "title": "Python executable",
+      "description": "Python 3 interpreter the frontmatter hook runs under (e.g. python3, python, or a full path). On Windows, python3 may resolve to the Microsoft Store stub; use python or a full path instead.",
+      "default": "python3"
+    }
+  },
   "keywords": [
     "claude-code",
     "knowledge-graph",
