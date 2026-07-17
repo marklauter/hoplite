@@ -1,11 +1,19 @@
 {
   "name": "hoplite-skills",
-  "version": "0.7.1",
+  "version": "0.8.0",
   "description": "Hoplite authoring skills and the frontmatter-validation hook. The locked specs (frontmatter, expressing-edges) ship under references/ as the plugin's source of truth.",
   "author": {
     "name": "MSL"
   },
   "license": "MIT",
+  "userConfig": {
+    "python_path": {
+      "type": "string",
+      "title": "Python executable",
+      "description": "Python 3 interpreter the frontmatter hook runs under (e.g. python3, python, or a full path). On Windows, python3 may resolve to the Microsoft Store stub; use python or a full path instead.",
+      "default": "python3"
+    }
+  },
   "keywords": [
     "claude-code",
     "knowledge-graph",
