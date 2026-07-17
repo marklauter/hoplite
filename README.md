@@ -60,7 +60,7 @@ After source changes, update the marketplace, then the plugin:
 
 Python 3 — the frontmatter hook runs under system Python, stdlib only, no venv.
 
-When you enable the plugin, it prompts for the **Python executable** to use (default `python3`). Set it to whatever launches Python 3 on your machine — `python3`, `python`, or a full path. To change it later, edit `pluginConfigs` in your `settings.json` or re-enable the plugin.
+When you enable the plugin, it prompts for the **Python executable** to use (default `python3`). Set it to whatever launches Python 3 on your machine — `python3`, `python`, or a full path. To change it later, edit `pluginConfigs` in your `settings.json` or re-enable the plugin, then run `/reload-plugins` (or restart the session) so the new value takes effect.
 
 On Windows, beware the `python3.exe` *App Execution Alias* at `%LOCALAPPDATA%\Microsoft\WindowsApps\python3.exe`: it looks like Python but is a stub that opens the Microsoft Store page when invoked. If you installed Python from python.org, `python3` resolves to this stub and the hook fails — set the plugin's Python executable to `python` instead. To check what a name resolves to:
 
