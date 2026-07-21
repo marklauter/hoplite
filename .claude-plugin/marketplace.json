@@ -8,8 +8,8 @@
   "plugins": [
     {
       "name": "hoplite-skills",
-      "version": "0.9.0",
-      "description": "The Hoplite authoring skills — glossary, spec, decision, notes, journal, todo, domain modeling — plus the frontmatter-validation hook and the locked specs they enforce.",
+      "version": "0.10.0",
+      "description": "The Hoplite authoring skills — glossary, spec, decision, notes, journal, todo, triage, domain modeling — plus the frontmatter-validation hook and the locked specs they enforce.",
       "author": {
         "name": "MSL"
       },
