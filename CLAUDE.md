@@ -7,7 +7,7 @@ Hoplite — a knowledge graph over a markdown corpus. The repo is a Claude Code 
 - `.claude-plugin/marketplace.json` — the `hoplite` marketplace: two plugins, `hoplite-skills` and `hoplite-mcp`.
 - `plugins/hoplite-skills/` — the live plugin: authoring skills, the frontmatter-validation hook, and the locked specs.
   - `references/` — **source of truth** for the locked specs: `expressing-edges.md` (the wikilink/edge grammar) and `frontmatter.md` (the frontmatter standard). `docs/specs/` reaches them through symlinks, so corpus wikilinks still resolve.
-  - `skills/` — the seven authoring skills (glossary, spec, decision, taking-notes, journaling, todo, domain-modeling). They cite the specs via `${CLAUDE_PLUGIN_ROOT}/references/`.
+  - `skills/` — the eight authoring skills (glossary, spec, decision, taking-notes, journaling, todo, triage, domain-modeling). They cite the specs via `${CLAUDE_PLUGIN_ROOT}/references/`.
   - `hooks/` — `check-frontmatter.py` (a PostToolUse hook validating wikilinks in `docs/`) and `edge_grammar.py` (the executable form of `expressing-edges.md`, with `test_edge_grammar.py`).
 - `plugins/hoplite-mcp/` — stub. The knowledge-graph MCP server, under design; no server is shipped yet.
 - `docs/specs/` — the spec corpus: architecture, tool API, roadmap, and symlinks to the locked specs.

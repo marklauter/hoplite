@@ -1,18 +1,22 @@
 ---
 name: todo
-description: Triage notes tagged `todo` under docs/todos/ — assign priority, effort, and status, mark blockers, close what's done. Use to work the backlog, prioritise, or sweep for unlabelled action items.
+description: Capture an action item as a todo — a note tagged `todo` under docs/todos/, born triaged with priority, effort, and status. Use whenever a task, follow-up, or fix worth tracking surfaces; `triage` works the backlog afterwards.
 ---
 
 # Todo
 
-A todo is a note tagged `todo` — an action item the corpus tracks, living under `docs/todos/`. The tag is immutable; its lifecycle lives in three properties, so history stays queryable without rewriting it. Triage sets those properties; state is a property, never a tag.
+Capture one action item as a note under `docs/todos/` — repo memory that outlives the context window to answer *what should happen next?* A todo is a note tagged `todo`: the tag is immutable identity, and the lifecycle lives in three properties set at birth, so the note enters the backlog already triaged. Mutable like any note — rewrite it freely as the work's shape moves. (Working the backlog — re-prioritising, blocking, closing — is the `triage` skill's job.)
 
-- Untriaged todo → assign. A `todo` note with no triage fields → set `priority` (high|medium|low), `effort` (high|medium|low), `status: open` (frontmatter standard: `${CLAUDE_PLUGIN_ROOT}/references/frontmatter.md`).
-- Judge effort from the code, not the note. Reading the file the note points at surfaces three shapes: *closure* (already done → `closed` plus a `## Resolution` naming where it landed), *fork* (two unrelated changes in one note → split into two), *revised effort* (a "localized" fix that actually needs migration or tests).
-- Blocked → link it. Todos that must close first → a `blocked-by` edge property whose value is a quoted wikilink, like `blocked-by: "[[<target>]]"` (a block-style list when there are several; edge/link syntax: `${CLAUDE_PLUGIN_ROOT}/references/expressing-edges.md`).
-- Done → close. Work landed → `status: closed`, body gets `## Resolution`. Parked → `deferred`, naming what would un-park it (a blocker resolves, the scale arrives). Won't-do → `declined`, body says why.
-- Recoverable from the note alone. A `## Resolution` or a `declined` reason → name where it landed in full — file, function, or commit — concrete enough to verify without re-walking the conversation.
-- Action-shaped but untagged → sweep. A note that reads as an action item but lacks `todo` → tag it, move it to `docs/todos/`, then triage.
-- Epic → decompose. A `todo` tagged `epic` → wikilink its child todos; its status rolls up: `open` while any child is `open` or `deferred`, `closed` once every child is `closed` or `declined`.
+- One todo per action. Find the existing todo and update it rather than duplicate; two unrelated changes still get two todos.
+- Born triaged. Set `priority` (high|medium|low), `effort` (high|medium|low), and `status: open` at capture. Judge effort from the code the todo points at, not from the note.
+- Reduce to the action. Title states what should happen; summary is the smallest phrase that carries it; the body holds only what acting on it needs — the why, the where, the shape of done.
+- Recoverable from the note alone. The reader has lost the context you hold now → name it all in full — files, functions, numbers, dates; never "the thing we discussed."
+- Don't duplicate the source. What code, CLAUDE.md, or git already states → reference it, never copy it; copies drift.
+- Blocked from birth → link it. A todo that can't start until another closes → a `blocked-by` edge property whose value is a quoted wikilink, like `blocked-by: "[[<target>]]"` (a block-style list when there are several; edge/link syntax: `${CLAUDE_PLUGIN_ROOT}/references/expressing-edges.md`).
+- Link what it sits beside. Wikilink the notes, terms, and sources the todo turns on where the connection is durable, so it surfaces in their neighbourhood (same edge/link syntax).
 
-`closed`/`resolved` as tags duplicate `status` and rot — keep state in the property. Triage operates on existing notes (`taking-notes` authors them) and tracks work shape, not who or when — no deadlines, calendars, or assignment.
+Write `docs/todos/<slug>.md` (slug = the title, kebab-case) to the frontmatter standard (`${CLAUDE_PLUGIN_ROOT}/references/frontmatter.md`): `title`, `summary`, `tags: [todo, <domain>]`, `created`, `priority`, `effort`, `status: open`.
+
+## Proofread
+
+The artifact is not done until it has been proofread. Before presenting it, committing it, or ending the turn, invoke the `proofreading` skill (`hoplite-skills:proofreading` via the Skill tool) and follow its instructions on the artifact.
