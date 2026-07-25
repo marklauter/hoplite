@@ -1,40 +1,54 @@
 ---
 name: glossary
-description: Reduce a resolved term to its kernel — a word plus the smallest phrase that unpacks it — and write it to the glossary. Use when a term settles, or when a definition needs collapsing, reducing, or locking.
+description: Reduce a concept to the single term that names it, then reduce that term's definition to its kernel, a statement of genus and differentiae. Use when a term settles, or when a definition needs collapsing, reducing, or locking.
 ---
 
-# Glossary
+A glossary is a set of terms that carries the ubiquitous language of a domain model. Each entry fixes one concept in the domain and gives it the single term that carries it precisely. Modeling simplifies the real world, so the many words offered by ordinary speech for a concept are reduced to one that best serves the model.
 
 A definition is a statement that fixes a term's meaning by naming the nearest class to which the term belongs and the property that distinguishes it within that class. It is a single statement that contains the genus and its differentiae and nothing else. Keep cutting until the next cut would take the genus or a differentia. What's left after the cuts is the kernel.
 
-A glossary entry carries one term's kernel. Reduce before you write, and lock only when the kernel is reduced and resolved.
+Writing an entry takes two reductions. The first narrows a concept to the single term that names it. The second narrows that term's meaning to the kernel the entry carries. Reduce before you write, and lock only when the kernel is reduced and resolved.
 
-- A summary opens on the class the term belongs to, then narrows. A noun takes an indefinite article and its genus: *an evaluation that applies…*, *a set of facts closed under…*. A verb takes the infinitive: *to decide whether…*. The differentia that follows cuts the class down to the term.
-- Several words for one idea are one term. Keep the canonical word and retire the rest into `retired`. A retired word that had its own glossary file also goes in `aliases`, so existing links still resolve. "`couch`, `settee`, and `davenport` name one thing, so they retire into `sofa`."
-- A definition carries meaning, not mechanism. Implementation belongs to the term it describes, so move it there. "`engine` is *a machine that converts fuel to motion*, not *the spark-plug firing order* — that belongs to `ignition`."
-- An overloaded word is an incomplete reduction, not a kernel. Each sense in the domain has its own precise word, so find both words and retire the overloaded one into them. A second file never appears under the same name. "`bug` did double duty: the creature sense reduced to `insect`, the fault sense to `defect`, and `bug` retired into them — because `bug.md` existed, it aliases `defect` too."
+Obey these logical rules when reducing terms to their kernel:
+
+1. State genus and differentiae — the essence, not accidents.
+2. Be coextensive — neither too broad nor too narrow.
+3. Don't be circular — the definiens can't contain the definiendum, directly or through a chain.
+4. Don't be obscure or figurative — the definiens must be better known than the definiendum.
+5. Be affirmative — a negation names a complement, and a complement isn't a class.
+
+A noun kernel opens with an indefinite article and its genus. A verb kernel opens with the infinitive.
+
+- Several words for one idea are one term. Keep the canonical word, delete the others, and repoint their wikilinks. "`couch`, `settee`, and `davenport` name one thing, so only `sofa` gets an entry."
+- Mechanism belongs to the term it describes, so move it there. "`engine` is *a machine that converts fuel to motion*, not *the spark-plug firing order*, which belongs to `ignition`."
+- An overloaded word is an incomplete reduction. Give each sense its own word, delete the overloaded entry, and repoint its wikilinks at the sense meant. "`bug` split into `insect` and `defect`."
 - A term locks when it is reduced and resolved. The next cut would cost meaning, and the word carries one sense with its contrasts drawn; that entry takes `status: locked`. Until both hold it stays `evolving`.
 
+The glossary is coherent when every term is satisfiable. A term whose genus, differentiae, and contrasts cannot all hold at once names nothing.
+
+Walk the edges before locking a term. Follow `is-a` to the root and confirm the term never appears on its own path. Read the genus chain you land on and confirm each differentia narrows what the chain already says. Check every contrast and confirm it points at a sibling under a shared genus rather than a class the term descends from. A term that fails any of these has the wrong genus or the wrong contrast, so fix one and walk again.
+
 Write to the [Microsoft Writing Style Guide](https://learn.microsoft.com/style-guide/welcome/) — plain and scannable; say what a thing is before how to use it.
+
+## Structure
 
 Write `docs/glossary/<term>.md` (kebab-case) to the frontmatter standard (`${CLAUDE_PLUGIN_ROOT}/references/frontmatter.md`):
 
 ```markdown
 ---
 title: <term>
-summary: "<the smallest phrase that unpacks it>"
+type: definition
+summary: "<the kernel>"
 tags: [glossary, <grouping>]
-aliases: [<retired page name>, ...]
 created: YYYY-MM-DD
 status: <evolving | locked>
-retired: [<retired term>, ...]
 is-a: "[[<broader-term>]]"
 contrast:
   - "[[<other-term>]]"
   - "[[<another-term>]]"
 ---
 
-<the summary, verbatim>
+<the kernel, verbatim>
 
 ## Examples
 
@@ -45,7 +59,6 @@ contrast:
 - `<contrast-term>` — <one line drawing the boundary against it — never implementation detail>
 ```
 
-- `aliases`, `retired`, and the edge keys are optional; omit when empty.
 - An edge is a property whose value is a quoted wikilink — the key names the relationship, the value the target, like `is-a: "[[...]]"`; there is no `edges:` list and no `edge.` prefix (edge/link syntax: `${CLAUDE_PLUGIN_ROOT}/references/expressing-edges.md`).
 - Index it — add `- [[<term>]]` to the `## Terms` list in `docs/glossary/README.md`, kept alphabetical.
 - Examples — the optional `## Examples` section illustrates the term with concrete instances; the definition stays in the summary, and an example never restates it. Omit the section when there are none.
