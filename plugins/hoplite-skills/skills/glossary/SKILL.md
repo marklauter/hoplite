@@ -24,6 +24,7 @@ A noun kernel opens with an indefinite article and its genus. A verb kernel open
 The glossary maps each concept to exactly one term, and every statement sits on the term it describes. Repair the map when either breaks.
 
 - Collapse several words for one concept into the canonical one, and split one word carrying several concepts into a word per sense. Delete the entries you retire and repoint their wikilinks. "`couch`, `settee`, and `davenport` collapse to `sofa`. `bug` splits into `insect` and `defect`."
+- Define the domain, not the build. A kernel stays true after a rewrite in another language, so a type, function, module, or layer name never appears in one.
 - Move mechanism to the term it describes. "`engine` is *a machine that converts fuel to motion*, not *the spark-plug firing order*, which belongs to `ignition`."
 
 The glossary is coherent when every term is satisfiable. A term whose genus, differentiae, and disjointness claims cannot all hold at once names nothing.
@@ -56,7 +57,7 @@ disjoint-with:
 
 - <a concrete instance — the term in use, not more definition>
 
-## Discussion
+## Rationale
 
 <what the kernel cannot carry — why this genus, what the boundary excludes, what was rejected>
 ```
@@ -64,7 +65,7 @@ disjoint-with:
 - An edge is a property whose value is a quoted wikilink — the key names the relationship, the value the target, like `is-a: "[[...]]"`; there is no `edges:` list and no `edge.` prefix (edge/link syntax: `${CLAUDE_PLUGIN_ROOT}/references/expressing-edges.md`).
 - Index it — add `- [[<term>]]` to the `## Terms` list in `docs/glossary/README.md`, kept alphabetical.
 - Examples — the optional `## Examples` section illustrates the term with concrete instances; the definition stays in the summary, and an example never restates it. Omit the section when there are none.
-- Discussion — the optional `## Discussion` section holds what the kernel cannot carry, such as why this genus was chosen, what the boundary excludes, or which candidate terms lost. It never redefines the term. Omit the section when there is nothing to say.
+- Rationale — the optional `## Rationale` section holds what the kernel cannot carry, such as why this genus was chosen, what the boundary excludes, or which candidate terms lost. It never redefines the term, and dated history belongs in the journal. Omit the section when there is nothing to say.
 
 ## Edge keys
 
