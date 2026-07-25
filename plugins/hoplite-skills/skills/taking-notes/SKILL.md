@@ -1,6 +1,6 @@
 ---
 name: taking-notes
-description: Capture an idea, problem, todo, or finding as a note — the mutable, current-state memory answering "where are we now?". Notes land under docs/notes/, todo-tagged notes under docs/todos/. Use whenever something worth keeping surfaces; rewrite the note freely as understanding moves.
+description: Capture an idea, problem, or finding as a note under docs/notes/ — the mutable, current-state memory answering "where are we now?". Use whenever something worth keeping surfaces; rewrite the note freely as understanding moves.
 ---
 
 # Taking notes
@@ -14,7 +14,7 @@ Capture the current state of one idea as a note under `docs/notes/` — repo mem
 - Don't duplicate the source. What code, CLAUDE.md, or git already states → reference it, never copy it; copies drift. Cross-repo facts and user preferences → memory, not a note.
 - Link what it sits beside. Wikilink the notes, terms, and sources the note turns on where the connection is durable, so it surfaces in their neighbourhood (edge/link syntax: `${CLAUDE_PLUGIN_ROOT}/references/expressing-edges.md`).
 
-Write `docs/notes/<slug>.md` (slug = the title, kebab-case; a note tagged `todo` goes under `docs/todos/` instead) to the frontmatter standard (`${CLAUDE_PLUGIN_ROOT}/references/frontmatter.md`): `title`, `summary`, `tags: [note, <domain>]`, `created`, `status` (`evolving` while in flux, `locked` when settled).
+Write `docs/notes/<slug>.md` (slug = the title, kebab-case) to the frontmatter standard (`${CLAUDE_PLUGIN_ROOT}/references/frontmatter.md`): `title`, `summary`, `tags: [note, <domain>]`, `created`, `status` (`evolving` while in flux, `locked` when settled).
 
 ## Proofread
 
