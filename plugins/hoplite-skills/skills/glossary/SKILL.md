@@ -7,7 +7,9 @@ A glossary is a set of terms that carries the ubiquitous language of a domain mo
 
 A definition is a statement that fixes a term's meaning by naming the nearest class to which the term belongs and the property that distinguishes it within that class. It is a single statement that contains the genus and its differentiae and nothing else. Keep cutting until the next cut would take the genus or a differentia. What's left after the cuts is the kernel.
 
-Writing an entry takes two reductions. The first narrows a concept to the single term that names it. The second narrows that term's meaning to the kernel the entry carries. Reduce before you write, and lock only when the kernel is reduced and resolved.
+Search `docs/glossary/` before writing. A concept already named keeps its entry, and a term that names a concept the glossary already carries breaks the one concept, one term rule before it is written.
+
+Writing an entry takes two reductions. The first narrows a concept to the single term that names it. The second narrows that term's meaning to the kernel the entry carries. Reduce before you write.
 
 Obey these logical rules when reducing terms to their kernel:
 
@@ -19,16 +21,16 @@ Obey these logical rules when reducing terms to their kernel:
 
 A noun kernel opens with an indefinite article and its genus. A verb kernel opens with the infinitive.
 
-- Several words for one idea are one term. Keep the canonical word, delete the others, and repoint their wikilinks. "`couch`, `settee`, and `davenport` name one thing, so only `sofa` gets an entry."
-- Mechanism belongs to the term it describes, so move it there. "`engine` is *a machine that converts fuel to motion*, not *the spark-plug firing order*, which belongs to `ignition`."
-- An overloaded word is an incomplete reduction. Give each sense its own word, delete the overloaded entry, and repoint its wikilinks at the sense meant. "`bug` split into `insect` and `defect`."
-- A term locks when it is reduced and resolved. The next cut would cost meaning, and the word carries one sense with its contrasts drawn; that entry takes `status: locked`. Until both hold it stays `evolving`.
+The glossary maps each concept to exactly one term, and every statement sits on the term it describes. Repair the map when either breaks.
 
-The glossary is coherent when every term is satisfiable. A term whose genus, differentiae, and contrasts cannot all hold at once names nothing.
+- Collapse several words for one concept into the canonical one, and split one word carrying several concepts into a word per sense. Delete the entries you retire and repoint their wikilinks. "`couch`, `settee`, and `davenport` collapse to `sofa`. `bug` splits into `insect` and `defect`."
+- Move mechanism to the term it describes. "`engine` is *a machine that converts fuel to motion*, not *the spark-plug firing order*, which belongs to `ignition`."
 
-Walk the edges before locking a term. Follow `is-a` to the root and confirm the term never appears on its own path. Read the genus chain you land on and confirm each differentia narrows what the chain already says. Check every contrast and confirm it points at a sibling under a shared genus rather than a class the term descends from. A term that fails any of these has the wrong genus or the wrong contrast, so fix one and walk again.
+The glossary is coherent when every term is satisfiable. A term whose genus, differentiae, and disjointness claims cannot all hold at once names nothing.
 
-Write to the [Microsoft Writing Style Guide](https://learn.microsoft.com/style-guide/welcome/) — plain and scannable; say what a thing is before how to use it.
+Walk the edges before locking a term. Follow `is-a` to the root and confirm the term never appears on its own path. Follow `has-a` and confirm the term never contains itself along the chain. Read the genus chain you land on and confirm each differentia narrows what the chain already says. Check every `disjoint-with` and confirm it points at a sibling under a shared genus rather than a class the term descends from. A term that fails any of these has the wrong genus or the wrong `disjoint-with`, so fix one and walk again.
+
+Lock the term when the walk passes, the next cut would cost meaning, and the word carries one sense with its disjoint terms named. Set `status: locked`. Otherwise set `status: evolving`.
 
 ## Structure
 
@@ -39,11 +41,11 @@ Write `docs/glossary/<term>.md` (kebab-case) to the frontmatter standard (`${CLA
 title: <term>
 type: definition
 summary: "<the kernel>"
-tags: [glossary, <grouping>]
+tags: [glossary, <optional-grouping>]
 created: YYYY-MM-DD
 status: <evolving | locked>
 is-a: "[[<broader-term>]]"
-contrast:
+disjoint-with:
   - "[[<other-term>]]"
   - "[[<another-term>]]"
 ---
@@ -54,14 +56,15 @@ contrast:
 
 - <a concrete instance — the term in use, not more definition>
 
-## Contrasts
+## Discussion
 
-- `<contrast-term>` — <one line drawing the boundary against it — never implementation detail>
+<what the kernel cannot carry — why this genus, what the boundary excludes, what was rejected>
 ```
 
 - An edge is a property whose value is a quoted wikilink — the key names the relationship, the value the target, like `is-a: "[[...]]"`; there is no `edges:` list and no `edge.` prefix (edge/link syntax: `${CLAUDE_PLUGIN_ROOT}/references/expressing-edges.md`).
 - Index it — add `- [[<term>]]` to the `## Terms` list in `docs/glossary/README.md`, kept alphabetical.
 - Examples — the optional `## Examples` section illustrates the term with concrete instances; the definition stays in the summary, and an example never restates it. Omit the section when there are none.
+- Discussion — the optional `## Discussion` section holds what the kernel cannot carry, such as why this genus was chosen, what the boundary excludes, or which candidate terms lost. It never redefines the term. Omit the section when there is nothing to say.
 
 ## Edge keys
 
@@ -69,9 +72,9 @@ The frontmatter key names the relationship the edge expresses, read `<source> <k
 
 - Directional — the default. The edge lives on the dependent's side and points at what it depends on; the target stays ignorant, so a new dependent never edits it.
   - `is-a:` — species → genus. Transitive.
-  - `has-a:` — whole → part.
-- Symmetric — reciprocated. The relationship reads identical from both ends, so write it on both terms: add this term back on the target and give it a `## Contrasts` bullet, one per target.
-  - `contrast:` — opposite; a mutual boundary.
+  - `has-a:` — whole → part. Not transitive, and a part never inherits the whole's genus.
+- Symmetric — reciprocated. The relationship reads identical from both ends, so write it on both terms. Add `disjoint-with` back on the target pointing here.
+  - `disjoint-with:` — a sibling under the same genus; no instance is both.
 
 ## Proofread
 
