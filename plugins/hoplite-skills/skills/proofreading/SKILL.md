@@ -14,6 +14,7 @@ Reread the artifact before finishing. The register is engineering: the author is
 - Announcing. Describing the content instead of saying it — "This note covers…", "Let's examine" → say the thing.
 - One idea per sentence. A sentence you have to reread, clauses stacked past one thought → split it.
 - Em dashes. More than one per paragraph → rewrite with periods.
+- Analogies. No inference carried across, or a source less familiar than the subject → delete.
 - Empty contrast. "Not just X but Y", "X isn't about Y" → state the positive claim alone.
 - Cohesion. Every paragraph advances the artifact's one claim; a stray that belongs elsewhere → move or cut.
 - Consistency. Title, summary, and body make the same claim; a term means one thing throughout, and it's the glossary's meaning.
