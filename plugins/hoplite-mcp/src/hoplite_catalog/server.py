@@ -33,7 +33,7 @@ __all__ = ["DEFAULT_UNDER", "PROTOCOL_VERSION", "SERVER_NAME", "TOOLS", "respond
 
 SERVER_NAME: Final = "catalog"
 # Pinned to .claude-plugin/plugin.json by a test, since initialize reports it.
-SERVER_VERSION: Final = "0.1.5"
+SERVER_VERSION: Final = "0.1.6"
 PROTOCOL_VERSION: Final = "2025-06-18"
 DEFAULT_UNDER: Final = "docs"
 
@@ -81,9 +81,10 @@ TOOLS: Final[tuple[dict[str, object], ...]] = (
                     "type": "array",
                     "items": {"type": "string"},
                     "description": (
-                        "Folders to skip, as corpus-relative paths like "
-                        "['docs/journal']. Matches whole path segments, so a folder and "
-                        "everything under it drop out."
+                        "Paths to skip, relative to the corpus root, like "
+                        "['docs/journal'] for a folder and everything under it or "
+                        "['docs/journal/2026-07-26.md'] for one document. Matches whole "
+                        "path segments, so 'docs/journal' leaves 'docs/journals.md' alone."
                     ),
                 },
             },

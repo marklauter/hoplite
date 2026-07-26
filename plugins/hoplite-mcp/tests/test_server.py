@@ -209,7 +209,7 @@ class TestToolsCall:
         params = {"name": "contents", "arguments": {"exclude": ["journal"]}}
         message = respond(corpus, _request("tools/call", params))
         assert _result(message)["isError"] is True
-        assert "not a folder in the corpus" in _tool_text(message)
+        assert "not a path in the corpus" in _tool_text(message)
 
     def test_a_key_absent_from_some_documents_is_fine(self, corpus: Path) -> None:
         # docs/loose.md has no frontmatter at all; docs/edge.md has a title.

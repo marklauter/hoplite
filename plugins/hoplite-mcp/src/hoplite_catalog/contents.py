@@ -131,8 +131,8 @@ def normalize_exclusions(folders: Iterable[str]) -> frozenset[str]:
     return frozenset(folder for folder in cleaned if folder not in ("", "."))
 
 
-def resolve_exclusions(root: Path, folders: Iterable[str]) -> frozenset[str]:
-    """Normalize ``exclude`` entries and require each to name a real folder in the corpus.
+def resolve_exclusions(root: Path, paths: Iterable[str]) -> frozenset[str]:
+    """Normalize ``exclude`` entries and require each to name something real in the corpus.
 
     Normalization alone cannot catch a wrong address. ``exclude: ["journal"]`` — the path
     written relative to ``under`` instead of the root — and ``exclude: ["docs/journals"]``
@@ -140,15 +140,22 @@ def resolve_exclusions(root: Path, folders: Iterable[str]) -> frozenset[str]:
     trimming. That is the silent-empty failure ``resolve_under`` refuses for ``under``.
 
     Validation is against the corpus, not against what the listing yields: an entry naming
-    a real folder outside the current ``under`` is a no-op, not a mistake, and a caller
+    a real path outside the current ``under`` is a no-op, not a mistake, and a caller
     passing one standing exclusion list across several calls should not be punished for it.
+
+    A single document is as excludable as a folder. Restricting this to folders would make
+    the only remedy for one bad link — a symlink out of the corpus at ``docs/leak.md`` —
+    excluding ``docs`` entirely, which costs the whole listing to route around one file.
+
+    Containment is checked lexically here and the entry is never resolved, because the
+    document a caller most needs to exclude is precisely the one whose target is elsewhere.
     """
     resolved_root = root.resolve()
-    excluded = normalize_exclusions(folders)
-    for folder in sorted(excluded):
-        target = Path(os.path.normpath(resolved_root / folder))
-        if not _contains(resolved_root, target) or not target.is_dir():
-            raise ValueError(f"{folder!r} is not a folder in the corpus")
+    excluded = normalize_exclusions(paths)
+    for path in sorted(excluded):
+        target = Path(os.path.normpath(resolved_root / path))
+        if not _contains(resolved_root, target) or not target.exists():
+            raise ValueError(f"{path!r} is not a path in the corpus")
     return excluded
 
 
@@ -194,7 +201,11 @@ def collect(root: Path, under: Path, exclude: frozenset[str] = frozenset()) -> t
     ``docs/leak.md`` with foreign frontmatter attached — a listing that lies about what the
     corpus contains. Such a link raises rather than being dropped: silently omitting a
     document a caller can see on disk is the other way to lie. Exclusions are applied
-    first, so an operator who wants the link ignored can say so.
+    first, so naming that one document in ``exclude`` is enough to get past it.
+
+    The refusal names the corpus path and nothing else. Where the link points is a host
+    filesystem path the corpus does not otherwise expose, and it adds nothing a caller can
+    act on — the corpus path is what identifies the link to fix.
 
     A symlinked *folder* never reaches this loop, because ``rglob`` does not recurse into
     one. It is therefore absent from the listing rather than refused.
@@ -210,11 +221,10 @@ def collect(root: Path, under: Path, exclude: frozenset[str] = frozenset()) -> t
         relative = corpus_path(root, path)
         if is_excluded(relative, exclude):
             continue
-        target = path.resolve()
-        if not _contains(resolved_root, target):
+        if not _contains(resolved_root, path.resolve()):
             raise ValueError(
-                f"{relative} is a link to {target}, outside the corpus root; "
-                "exclude its folder or remove the link"
+                f"{relative} is a link to a target outside the corpus root; "
+                f"remove the link, or pass exclude: [{relative!r}] to skip it"
             )
         entries.append(read_entry(root, path))
     return tuple(sorted(entries, key=lambda entry: entry.path))

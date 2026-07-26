@@ -8,7 +8,7 @@
   "plugins": [
     {
       "name": "hoplite-skills",
-      "version": "0.11.6",
+      "version": "0.11.7",
       "description": "The Hoplite authoring skills — glossary, spec, decision, notes, journal, todo, triage, domain modeling — plus the frontmatter-validation hook and the locked specs they enforce.",
       "author": {
         "name": "MSL"
@@ -18,7 +18,7 @@
     },
     {
       "name": "hoplite-mcp",
-      "version": "0.1.5",
+      "version": "0.1.6",
       "description": "The Hoplite catalog MCP server — lists corpus documents with their frontmatter as written, so the index is a call rather than a checked-in file.",
       "author": {
         "name": "MSL"

@@ -258,15 +258,22 @@ class TestCollectContainment:
         with pytest.raises(ValueError, match="outside the corpus root"):
             collect(tmp_path, docs)
 
-    def test_excluding_the_link_lets_the_listing_through(self, tmp_path: Path) -> None:
-        # Exclusions are applied before the check, so an operator can opt out of the link.
+    def test_the_refusal_names_the_corpus_path_and_no_host_path(self, tmp_path: Path) -> None:
+        # Where the link points is a filesystem path the corpus does not otherwise expose,
+        # and it adds nothing the caller can act on.
         docs = self._leaky_corpus(tmp_path)
-        (docs / "vendor").mkdir()
-        (docs / "vendor" / "leak.md").symlink_to(
-            tmp_path.parent / f"{tmp_path.name}-outside" / "secret.md"
-        )
-        (docs / "leak.md").unlink()
-        entries = collect(tmp_path, docs, frozenset({"docs/vendor"}))
+        with pytest.raises(ValueError) as caught:
+            collect(tmp_path, docs)
+        message = str(caught.value)
+        assert "docs/leak.md" in message
+        assert "secret.md" not in message
+        assert str(tmp_path.parent) not in message
+
+    def test_excluding_the_one_link_lets_the_rest_through(self, tmp_path: Path) -> None:
+        # The remedy is the single document, not its whole folder: excluding docs/ to route
+        # around one planted link would cost the entire listing.
+        docs = self._leaky_corpus(tmp_path)
+        entries = collect(tmp_path, docs, frozenset({"docs/leak.md"}))
         assert [entry.path for entry in entries] == ["docs/ok.md"]
 
     def test_a_symlink_resolving_inside_the_root_is_read(self, tmp_path: Path) -> None:
@@ -291,22 +298,36 @@ class TestResolveExclusions:
         # 'journal' instead of 'docs/journal' — normalizes fine, matches nothing, and would
         # silently return the full listing the caller meant to trim.
         (tmp_path / "docs" / "journal").mkdir(parents=True)
-        with pytest.raises(ValueError, match="not a folder in the corpus"):
+        with pytest.raises(ValueError, match="not a path in the corpus"):
             resolve_exclusions(tmp_path, ["journal"])
 
     def test_a_misspelled_folder_is_rejected(self, tmp_path: Path) -> None:
         (tmp_path / "docs" / "journal").mkdir(parents=True)
-        with pytest.raises(ValueError, match="not a folder in the corpus"):
+        with pytest.raises(ValueError, match="not a path in the corpus"):
             resolve_exclusions(tmp_path, ["docs/journals"])
 
-    def test_a_file_is_not_a_folder(self, tmp_path: Path) -> None:
+    def test_a_single_document_is_excludable(self, tmp_path: Path) -> None:
+        # Otherwise the only remedy for one bad link is excluding its whole folder.
         _write(tmp_path / "docs" / "a.md", "")
-        with pytest.raises(ValueError, match="not a folder in the corpus"):
-            resolve_exclusions(tmp_path, ["docs/a.md"])
+        assert resolve_exclusions(tmp_path, ["docs/a.md"]) == frozenset({"docs/a.md"})
+
+    def test_a_link_pointing_out_of_the_corpus_is_still_excludable(self, tmp_path: Path) -> None:
+        # The document a caller most needs to exclude is the one whose target is elsewhere,
+        # so exclusion entries are checked lexically and never resolved.
+        outside = tmp_path.parent / f"{tmp_path.name}-target"
+        outside.mkdir(exist_ok=True)
+        target = _write(outside / "secret.md", "")
+        (tmp_path / "docs").mkdir()
+        try:
+            (tmp_path / "docs" / "leak.md").symlink_to(target)
+        except OSError as exc:
+            pytest.skip(f"cannot create a symlink here: {exc}")
+
+        assert resolve_exclusions(tmp_path, ["docs/leak.md"]) == frozenset({"docs/leak.md"})
 
     def test_escaping_the_root_is_rejected(self, tmp_path: Path) -> None:
         (tmp_path / "docs").mkdir()
-        with pytest.raises(ValueError, match="not a folder in the corpus"):
+        with pytest.raises(ValueError, match="not a path in the corpus"):
             resolve_exclusions(tmp_path, ["../elsewhere"])
 
     def test_a_folder_outside_the_current_under_is_a_no_op_not_an_error(
