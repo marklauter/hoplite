@@ -221,6 +221,25 @@ class TestToolsCall:
         assert _result(message)["isError"] is False
         assert _tool_text(message) == "docs/edge.md\ntitle: Edge\n\ndocs/loose.md"
 
+    def test_an_unreadable_document_also_names_a_remedy_that_works(self, corpus: Path) -> None:
+        # Same invariant as the out-of-root link, second place it has to hold: a link
+        # dangling inside the corpus. The raw OSError named no remedy and leaked a host path.
+        try:
+            (corpus / "docs" / "inner.md").symlink_to(corpus / "docs" / "never-created.md")
+        except OSError as exc:
+            pytest.skip(f"cannot create a symlink here: {exc}")
+
+        refusal = respond(corpus, _request("tools/call", {"name": "contents"}))
+        assert _result(refusal)["isError"] is True
+        text = _tool_text(refusal)
+        assert "docs/inner.md" in text
+        assert str(corpus) not in text
+
+        params = {"name": "contents", "arguments": {"exclude": ["docs/inner.md"]}}
+        message = respond(corpus, _request("tools/call", params))
+        assert _result(message)["isError"] is False
+        assert _tool_text(message) == "docs/edge.md\ntitle: Edge\n\ndocs/loose.md"
+
     def test_an_exclude_relative_to_under_is_refused(self, corpus: Path) -> None:
         (corpus / "docs" / "journal").mkdir()
         params = {"name": "contents", "arguments": {"exclude": ["journal"]}}

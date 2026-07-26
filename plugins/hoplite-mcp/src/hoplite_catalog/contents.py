@@ -206,9 +206,14 @@ def collect(root: Path, under: Path, exclude: frozenset[str] = frozenset()) -> t
     document a caller can see on disk is the other way to lie. Exclusions are applied
     first, so naming that one document in ``exclude`` is enough to get past it.
 
-    The refusal names the corpus path and nothing else. Where the link points is a host
-    filesystem path the corpus does not otherwise expose, and it adds nothing a caller can
-    act on — the corpus path is what identifies the link to fix.
+    A document that cannot be read — a link dangling *inside* the corpus, a permission
+    failure — is refused the same way, since the read is where the corpus path is still in
+    hand. Letting the ``OSError`` propagate would report neither: its message carries an
+    absolute host path and names no remedy.
+
+    Every refusal here names the corpus path and nothing else, plus an ``exclude`` entry the
+    tool accepts. Where a link points is a host filesystem path the corpus does not
+    otherwise expose, and it adds nothing a caller can act on.
 
     A symlinked *folder* never reaches this loop, because ``rglob`` does not recurse into
     one. It is therefore absent from the listing rather than refused.
@@ -229,7 +234,17 @@ def collect(root: Path, under: Path, exclude: frozenset[str] = frozenset()) -> t
                 f"{relative} is a link to a target outside the corpus root; "
                 f"remove the link, or pass exclude: [{relative!r}] to skip it"
             )
-        entries.append(read_entry(root, path))
+        try:
+            entries.append(read_entry(root, path))
+        except OSError as exc:
+            # A dangling link pointing *inside* the corpus passes the check above and then
+            # fails here. Translated rather than propagated for two reasons: the OSError
+            # string carries an absolute host path, and it names no remedy, though
+            # excluding the document is one. Every refusal names a remedy the tool accepts.
+            raise ValueError(
+                f"{relative} cannot be read ({exc.strerror or type(exc).__name__}); "
+                f"fix it, or pass exclude: [{relative!r}] to skip it"
+            ) from exc
     return tuple(sorted(entries, key=lambda entry: entry.path))
 
 

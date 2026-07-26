@@ -33,7 +33,7 @@ __all__ = ["DEFAULT_UNDER", "PROTOCOL_VERSION", "SERVER_NAME", "TOOLS", "respond
 
 SERVER_NAME: Final = "catalog"
 # Pinned to .claude-plugin/plugin.json by a test, since initialize reports it.
-SERVER_VERSION: Final = "0.1.7"
+SERVER_VERSION: Final = "0.1.8"
 PROTOCOL_VERSION: Final = "2025-06-18"
 DEFAULT_UNDER: Final = "docs"
 

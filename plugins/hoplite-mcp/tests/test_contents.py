@@ -276,6 +276,34 @@ class TestCollectContainment:
         entries = collect(tmp_path, docs, frozenset({"docs/leak.md"}))
         assert [entry.path for entry in entries] == ["docs/ok.md"]
 
+    def test_a_link_dangling_inside_the_root_is_refused_with_a_remedy(self, tmp_path: Path) -> None:
+        # Passes the containment check, then fails at the read. The raw OSError would carry
+        # an absolute host path and name no remedy, though excluding the document is one.
+        _write(tmp_path / "docs" / "ok.md", "---\ntitle: OK\n---\n")
+        try:
+            (tmp_path / "docs" / "inner.md").symlink_to(tmp_path / "docs" / "never-created.md")
+        except OSError as exc:
+            pytest.skip(f"cannot create a symlink here: {exc}")
+
+        with pytest.raises(ValueError) as caught:
+            collect(tmp_path, tmp_path / "docs")
+        message = str(caught.value)
+        assert "docs/inner.md" in message
+        assert "exclude: ['docs/inner.md']" in message
+        assert str(tmp_path) not in message
+
+    def test_excluding_an_unreadable_document_lets_the_listing_through(
+        self, tmp_path: Path
+    ) -> None:
+        _write(tmp_path / "docs" / "ok.md", "---\ntitle: OK\n---\n")
+        try:
+            (tmp_path / "docs" / "inner.md").symlink_to(tmp_path / "docs" / "never-created.md")
+        except OSError as exc:
+            pytest.skip(f"cannot create a symlink here: {exc}")
+
+        entries = collect(tmp_path, tmp_path / "docs", frozenset({"docs/inner.md"}))
+        assert [entry.path for entry in entries] == ["docs/ok.md"]
+
     def test_a_symlink_resolving_inside_the_root_is_read(self, tmp_path: Path) -> None:
         target = _write(tmp_path / "references" / "frontmatter.md", "---\ntitle: F\n---\n")
         link = tmp_path / "docs" / "specs" / "frontmatter.md"
