@@ -193,6 +193,24 @@ class TestToolsCall:
         assert _result(message)["isError"] is True
         assert "none of the requested keys" in _tool_text(message)
 
+    def test_a_frontmatterless_subtree_is_not_blamed_on_the_keys(self, corpus: Path) -> None:
+        # Nothing here has frontmatter, so an empty projection is the corpus's doing, not
+        # a typo. Refusing with a message naming the keys would be confidently wrong.
+        bare = corpus / "docs" / "bare"
+        bare.mkdir()
+        (bare / "a.md").write_text("# A\n", encoding="utf-8")
+        params = {"name": "contents", "arguments": {"under": "docs/bare", "keys": ["title"]}}
+        message = respond(corpus, _request("tools/call", params))
+        assert _result(message)["isError"] is False
+        assert _tool_text(message) == "docs/bare/a.md"
+
+    def test_an_exclude_relative_to_under_is_refused(self, corpus: Path) -> None:
+        (corpus / "docs" / "journal").mkdir()
+        params = {"name": "contents", "arguments": {"exclude": ["journal"]}}
+        message = respond(corpus, _request("tools/call", params))
+        assert _result(message)["isError"] is True
+        assert "not a folder in the corpus" in _tool_text(message)
+
     def test_a_key_absent_from_some_documents_is_fine(self, corpus: Path) -> None:
         # docs/loose.md has no frontmatter at all; docs/edge.md has a title.
         params = {"name": "contents", "arguments": {"keys": ["title"]}}

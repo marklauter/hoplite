@@ -23,9 +23,9 @@ from typing import Final, TextIO, cast
 
 from hoplite_catalog.contents import (
     collect,
-    normalize_exclusions,
     project,
     render,
+    resolve_exclusions,
     resolve_under,
 )
 
@@ -33,7 +33,7 @@ __all__ = ["DEFAULT_UNDER", "PROTOCOL_VERSION", "SERVER_NAME", "TOOLS", "respond
 
 SERVER_NAME: Final = "catalog"
 # Pinned to .claude-plugin/plugin.json by a test, since initialize reports it.
-SERVER_VERSION: Final = "0.1.4"
+SERVER_VERSION: Final = "0.1.5"
 PROTOCOL_VERSION: Final = "2025-06-18"
 DEFAULT_UNDER: Final = "docs"
 
@@ -133,15 +133,19 @@ def _call_contents(root: Path, arguments: dict[str, object]) -> dict[str, object
     if not isinstance(under, str):
         raise ValueError("'under' must be a string")
     keys = _string_set(arguments.get("keys"), "keys")
-    exclude = normalize_exclusions(_string_set(arguments.get("exclude"), "exclude") or ())
+    exclude = resolve_exclusions(root, _string_set(arguments.get("exclude"), "exclude") or ())
 
     entries = collect(root, resolve_under(root, under), exclude)
     projected = [project(entry, keys) for entry in entries]
 
     # A misspelled key would otherwise return a bare path list, which reads as "these
-    # documents have no frontmatter" rather than "that key does not exist". An empty
-    # `keys` is exempt: it asks for paths alone, and gets them.
-    if keys and entries and not any(entry.frontmatter for entry in projected):
+    # documents have no frontmatter" rather than "that key does not exist". The
+    # `had_frontmatter` guard is what separates those two: a subtree where nothing has
+    # frontmatter at all is not the caller's mistake, so it must not be blamed on the keys.
+    # An empty `keys` is exempt too — it asks for paths alone, and gets them.
+    had_frontmatter = any(entry.frontmatter for entry in entries)
+    kept_any = any(entry.frontmatter for entry in projected)
+    if keys and had_frontmatter and not kept_any:
         raise ValueError(
             f"none of the requested keys appear in any document under {under!r}: {sorted(keys)}"
         )

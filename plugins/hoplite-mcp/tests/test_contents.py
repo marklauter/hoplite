@@ -14,6 +14,7 @@ from hoplite_catalog.contents import (
     project,
     read_entry,
     render,
+    resolve_exclusions,
     resolve_under,
     slice_frontmatter,
 )
@@ -236,6 +237,88 @@ class TestIsExcluded:
 
     def test_no_exclusions_excludes_nothing(self) -> None:
         assert is_excluded("docs/journal/a.md", frozenset()) is False
+
+
+class TestCollectContainment:
+    def _leaky_corpus(self, tmp_path: Path) -> Path:
+        outside = tmp_path.parent / f"{tmp_path.name}-outside"
+        outside.mkdir(exist_ok=True)
+        _write(outside / "secret.md", "---\ntitle: Secret\n---\n")
+        _write(tmp_path / "docs" / "ok.md", "---\ntitle: OK\n---\n")
+        try:
+            (tmp_path / "docs" / "leak.md").symlink_to(outside / "secret.md")
+        except OSError as exc:  # Windows needs developer mode or elevation
+            pytest.skip(f"cannot create a symlink here: {exc}")
+        return tmp_path / "docs"
+
+    def test_a_symlinked_file_pointing_out_of_the_root_is_refused(self, tmp_path: Path) -> None:
+        # The walk reads symlinked files like any other, so the guard has to sit here too:
+        # otherwise foreign frontmatter comes back attached to an in-corpus path.
+        docs = self._leaky_corpus(tmp_path)
+        with pytest.raises(ValueError, match="outside the corpus root"):
+            collect(tmp_path, docs)
+
+    def test_excluding_the_link_lets_the_listing_through(self, tmp_path: Path) -> None:
+        # Exclusions are applied before the check, so an operator can opt out of the link.
+        docs = self._leaky_corpus(tmp_path)
+        (docs / "vendor").mkdir()
+        (docs / "vendor" / "leak.md").symlink_to(
+            tmp_path.parent / f"{tmp_path.name}-outside" / "secret.md"
+        )
+        (docs / "leak.md").unlink()
+        entries = collect(tmp_path, docs, frozenset({"docs/vendor"}))
+        assert [entry.path for entry in entries] == ["docs/ok.md"]
+
+    def test_a_symlink_resolving_inside_the_root_is_read(self, tmp_path: Path) -> None:
+        target = _write(tmp_path / "references" / "frontmatter.md", "---\ntitle: F\n---\n")
+        link = tmp_path / "docs" / "specs" / "frontmatter.md"
+        link.parent.mkdir(parents=True)
+        try:
+            link.symlink_to(target)
+        except OSError as exc:
+            pytest.skip(f"cannot create a symlink here: {exc}")
+
+        entries = collect(tmp_path, tmp_path / "docs")
+        assert [entry.path for entry in entries] == ["docs/specs/frontmatter.md"]
+
+
+class TestResolveExclusions:
+    def test_a_real_folder_is_accepted(self, tmp_path: Path) -> None:
+        (tmp_path / "docs" / "journal").mkdir(parents=True)
+        assert resolve_exclusions(tmp_path, ["docs/journal/"]) == frozenset({"docs/journal"})
+
+    def test_a_path_relative_to_under_is_rejected(self, tmp_path: Path) -> None:
+        # 'journal' instead of 'docs/journal' — normalizes fine, matches nothing, and would
+        # silently return the full listing the caller meant to trim.
+        (tmp_path / "docs" / "journal").mkdir(parents=True)
+        with pytest.raises(ValueError, match="not a folder in the corpus"):
+            resolve_exclusions(tmp_path, ["journal"])
+
+    def test_a_misspelled_folder_is_rejected(self, tmp_path: Path) -> None:
+        (tmp_path / "docs" / "journal").mkdir(parents=True)
+        with pytest.raises(ValueError, match="not a folder in the corpus"):
+            resolve_exclusions(tmp_path, ["docs/journals"])
+
+    def test_a_file_is_not_a_folder(self, tmp_path: Path) -> None:
+        _write(tmp_path / "docs" / "a.md", "")
+        with pytest.raises(ValueError, match="not a folder in the corpus"):
+            resolve_exclusions(tmp_path, ["docs/a.md"])
+
+    def test_escaping_the_root_is_rejected(self, tmp_path: Path) -> None:
+        (tmp_path / "docs").mkdir()
+        with pytest.raises(ValueError, match="not a folder in the corpus"):
+            resolve_exclusions(tmp_path, ["../elsewhere"])
+
+    def test_a_folder_outside_the_current_under_is_a_no_op_not_an_error(
+        self, tmp_path: Path
+    ) -> None:
+        # A standing exclusion list reused across calls must not be punished for missing.
+        (tmp_path / "docs" / "journal").mkdir(parents=True)
+        (tmp_path / "docs" / "glossary").mkdir()
+        assert resolve_exclusions(tmp_path, ["docs/journal"]) == frozenset({"docs/journal"})
+
+    def test_nothing_in_means_nothing_out(self, tmp_path: Path) -> None:
+        assert resolve_exclusions(tmp_path, []) == frozenset()
 
 
 class TestNormalizeExclusions:

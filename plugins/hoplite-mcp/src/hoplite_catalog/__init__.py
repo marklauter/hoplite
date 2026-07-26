@@ -13,6 +13,7 @@ from hoplite_catalog.contents import (
     project,
     read_entry,
     render,
+    resolve_exclusions,
     resolve_under,
     slice_frontmatter,
 )
@@ -26,6 +27,7 @@ __all__ = [
     "project",
     "read_entry",
     "render",
+    "resolve_exclusions",
     "resolve_under",
     "slice_frontmatter",
 ]

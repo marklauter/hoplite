@@ -31,6 +31,7 @@ __all__ = [
     "project",
     "read_entry",
     "render",
+    "resolve_exclusions",
     "resolve_under",
     "slice_frontmatter",
 ]
@@ -130,6 +131,27 @@ def normalize_exclusions(folders: Iterable[str]) -> frozenset[str]:
     return frozenset(folder for folder in cleaned if folder not in ("", "."))
 
 
+def resolve_exclusions(root: Path, folders: Iterable[str]) -> frozenset[str]:
+    """Normalize ``exclude`` entries and require each to name a real folder in the corpus.
+
+    Normalization alone cannot catch a wrong address. ``exclude: ["journal"]`` — the path
+    written relative to ``under`` instead of the root — and ``exclude: ["docs/journals"]``
+    both clean up fine, match nothing, and return the full listing the caller was
+    trimming. That is the silent-empty failure ``resolve_under`` refuses for ``under``.
+
+    Validation is against the corpus, not against what the listing yields: an entry naming
+    a real folder outside the current ``under`` is a no-op, not a mistake, and a caller
+    passing one standing exclusion list across several calls should not be punished for it.
+    """
+    resolved_root = root.resolve()
+    excluded = normalize_exclusions(folders)
+    for folder in sorted(excluded):
+        target = Path(os.path.normpath(resolved_root / folder))
+        if not _contains(resolved_root, target) or not target.is_dir():
+            raise ValueError(f"{folder!r} is not a folder in the corpus")
+    return excluded
+
+
 def read_entry(root: Path, path: Path) -> Entry:
     """Read one document and slice its frontmatter. The I/O edge of this module.
 
@@ -166,15 +188,35 @@ def collect(root: Path, under: Path, exclude: frozenset[str] = frozenset()) -> t
 
     Excluded folders are skipped before the read, so their bytes are never touched.
 
+    Every document is checked for containment here, at the read, not only where ``under``
+    was resolved. A symlinked *file* inside the corpus is walked and read like any other,
+    so ``docs/leak.md -> ../outside/secret.md`` would otherwise be reported as
+    ``docs/leak.md`` with foreign frontmatter attached — a listing that lies about what the
+    corpus contains. Such a link raises rather than being dropped: silently omitting a
+    document a caller can see on disk is the other way to lie. Exclusions are applied
+    first, so an operator who wants the link ignored can say so.
+
+    A symlinked *folder* never reaches this loop, because ``rglob`` does not recurse into
+    one. It is therefore absent from the listing rather than refused.
+
     Ordering is by the emitted path string, so two calls over an unchanged corpus return
     identical output — the listing stays diffable and cacheable.
     """
+    resolved_root = root.resolve()
     paths = [under] if under.is_file() else sorted(under.rglob("*.md"))
-    entries = (
-        read_entry(root, path)
-        for path in paths
-        if not is_excluded(corpus_path(root, path), exclude)
-    )
+
+    entries: list[Entry] = []
+    for path in paths:
+        relative = corpus_path(root, path)
+        if is_excluded(relative, exclude):
+            continue
+        target = path.resolve()
+        if not _contains(resolved_root, target):
+            raise ValueError(
+                f"{relative} is a link to {target}, outside the corpus root; "
+                "exclude its folder or remove the link"
+            )
+        entries.append(read_entry(root, path))
     return tuple(sorted(entries, key=lambda entry: entry.path))
 
 
