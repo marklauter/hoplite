@@ -34,21 +34,14 @@ _PARSE_ERROR: Final = -32700
 _INVALID_REQUEST: Final = -32600
 _METHOD_NOT_FOUND: Final = -32601
 
-# This description is the tool's entire onboarding: an installed MCP server ships no
-# instructions beyond it. It opens with the job and the alternative it should beat
-# (globbing and reading files), then names the moments to reach for it. An agent picks a
-# tool by matching intent, and a list of capabilities gives it nothing to match. The
-# triggers mirror instructions the authoring skills already carry: `glossary` says to
-# search docs/glossary/ before writing, and `taking-notes` and `todo` both say to find
-# the existing note rather than duplicate it.
+# Shaped like method help: one line on what it does, then Returns. When to call it stays
+# out — the authoring skills already say when to search the corpus for a pre-existing
+# document, and a trigger here would fire on writes that have nothing to do with the
+# corpus. The skills do not name this tool yet, which is the gap that connects them.
 _CONTENTS_DESCRIPTION: Final = (
-    "Survey a folder of the markdown corpus without opening files. One call "
-    "instead of a glob plus a read per document, and it shows what each document "
-    "claims: title, tags, status, and the frontmatter edges to other documents.\n\n"
-    "Use it before you write a document, to check whether one already exists. Use it to "
-    "find which glossary terms and notes are written, to answer what a folder holds, "
-    "and to trace how documents link.\n\n"
-    "You get a path line per document, then its YAML frontmatter between `---` fences. "
+    "Survey a folder of the markdown corpus without opening files, or trace how its "
+    "documents link.\n\n"
+    "Returns: a path line per document, then its YAML frontmatter between `---` fences. "
     "Documents without frontmatter show just the path. Nothing is parsed or derived: "
     "keys keep the order and quoting you wrote them in, absent keys stay absent, and no "
     "title or summary is inferred from the body. A property whose value is a "
