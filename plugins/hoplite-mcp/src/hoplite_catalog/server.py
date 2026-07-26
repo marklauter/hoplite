@@ -39,9 +39,8 @@ _METHOD_NOT_FOUND: Final = -32601
 # document, and a trigger here would fire on writes that have nothing to do with the
 # corpus. The skills do not name this tool yet, which is the gap that connects them.
 _CONTENTS_DESCRIPTION: Final = (
-    "Survey a folder of the markdown corpus without opening files, or trace how its "
-    "documents link.\n\n"
-    "Returns: a path line per document, then, if available, its YAML frontmatter "
+    "Survey a folder of the markdown corpus and trace its documents' edges.\n\n"
+    "Returns the path line per document, and, if available, its YAML frontmatter "
     "between `---` fences. A property whose value is a `[[wikilink]]` is an edge; "
     "anything else is a claim about the document."
 )
