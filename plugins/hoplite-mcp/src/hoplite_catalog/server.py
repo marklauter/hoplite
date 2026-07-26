@@ -42,18 +42,17 @@ _METHOD_NOT_FOUND: Final = -32601
 # search docs/glossary/ before writing, and `taking-notes` and `todo` both say to find
 # the existing note rather than duplicate it.
 _CONTENTS_DESCRIPTION: Final = (
-    "Survey a folder of the markdown corpus without opening files. Use this instead of "
-    "globbing and reading documents when you need to know what exists and what each "
-    "document claims — its title, tags, status, and the frontmatter edges to other "
-    "documents. Reach for it first when checking whether a document already exists "
-    "before creating one, when looking up which glossary terms or notes are written, "
-    "when asked what a folder holds, or when tracing how documents link.\n\n"
-    "Returns a path line per document followed by its YAML frontmatter between `---` "
-    "fences. A document with no frontmatter contributes its path alone. "
-    "Nothing is parsed or derived: keys keep their authored order and quoting, "
-    "absent keys stay absent, and no title or summary is inferred from the body. A "
-    "property whose value is a `[[wikilink]]` is an edge; every other property is a "
-    "claim about the document."
+    "See what's in a folder of the markdown corpus without opening files. One call "
+    "instead of a glob plus a read per document, and it shows what each document "
+    "claims: title, tags, status, and the frontmatter edges to other documents.\n\n"
+    "Use it before you write a document, to check whether one already exists. Use it to "
+    "find which glossary terms and notes are written, to answer what a folder holds, "
+    "and to trace how documents link.\n\n"
+    "You get a path line per document, then its YAML frontmatter between `---` fences. "
+    "Documents without frontmatter show just the path. Nothing is parsed or derived: "
+    "keys keep the order and quoting you wrote them in, absent keys stay absent, and no "
+    "title or summary is inferred from the body. A property whose value is a "
+    "`[[wikilink]]` is an edge; anything else is a claim about the document."
 )
 
 TOOLS: Final[tuple[dict[str, object], ...]] = (
