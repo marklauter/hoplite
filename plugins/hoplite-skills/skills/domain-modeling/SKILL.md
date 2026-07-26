@@ -12,7 +12,6 @@ The model lives in the corpus, addressed by path:
 ```
 docs/specs/               ← composite kernels: concepts built from the terms (affordances, frontmatter, graph)
 docs/glossary/            ← the living domain model, one term per leaf
-├── README.md             ← hand-maintained index
 └── <term>.md             ← title, summary, status, aliases, and edge properties
 docs/journal/             ← the why: the design path, each tradeoff and its reasoning
 docs/notes/               ← current state: findings and scratch

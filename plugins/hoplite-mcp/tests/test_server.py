@@ -1,0 +1,150 @@
+"""Tests for the stdio JSON-RPC host."""
+
+from __future__ import annotations
+
+import io
+import json
+from pathlib import Path
+from typing import Any
+
+import pytest
+
+from hoplite_catalog.server import PROTOCOL_VERSION, SERVER_NAME, respond, serve
+
+
+@pytest.fixture
+def corpus(tmp_path: Path) -> Path:
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    (docs / "edge.md").write_text("---\ntitle: Edge\n---\n\n# Edge\n", encoding="utf-8")
+    (docs / "loose.md").write_text("# Loose\n", encoding="utf-8")
+    return tmp_path
+
+
+def _request(method: str, params: dict[str, Any] | None = None, request_id: int = 1) -> str:
+    message: dict[str, Any] = {"jsonrpc": "2.0", "id": request_id, "method": method}
+    if params is not None:
+        message["params"] = params
+    return json.dumps(message)
+
+
+def _result(message: dict[str, Any] | None) -> dict[str, Any]:
+    assert message is not None
+    assert "error" not in message, message
+    result: dict[str, Any] = message["result"]
+    return result
+
+
+def _error_of(message: dict[str, Any] | None) -> dict[str, Any]:
+    assert message is not None
+    error: Any = message["error"]
+    return error
+
+
+def _tool_text(message: dict[str, Any] | None) -> str:
+    result = _result(message)
+    text: str = result["content"][0]["text"]
+    return text
+
+
+class TestHandshake:
+    def test_initialize_names_the_server_and_protocol(self, corpus: Path) -> None:
+        result = _result(respond(corpus, _request("initialize")))
+        assert result["protocolVersion"] == PROTOCOL_VERSION
+        assert result["serverInfo"]["name"] == SERVER_NAME
+        assert "tools" in result["capabilities"]
+
+    def test_initialized_notification_gets_no_reply(self, corpus: Path) -> None:
+        line = json.dumps({"jsonrpc": "2.0", "method": "notifications/initialized"})
+        assert respond(corpus, line) is None
+
+    def test_ping_is_answered(self, corpus: Path) -> None:
+        assert _result(respond(corpus, _request("ping"))) == {}
+
+
+class TestToolsList:
+    def test_advertises_contents(self, corpus: Path) -> None:
+        tools = _result(respond(corpus, _request("tools/list")))["tools"]
+        assert [tool["name"] for tool in tools] == ["contents"]
+
+    def test_contents_is_marked_read_only(self, corpus: Path) -> None:
+        tool = _result(respond(corpus, _request("tools/list")))["tools"][0]
+        assert tool["annotations"]["readOnlyHint"] is True
+        assert tool["annotations"]["openWorldHint"] is False
+
+    def test_under_is_the_only_input(self, corpus: Path) -> None:
+        schema = _result(respond(corpus, _request("tools/list")))["tools"][0]["inputSchema"]
+        assert list(schema["properties"]) == ["under"]
+        assert schema["additionalProperties"] is False
+
+
+class TestToolsCall:
+    def test_lists_the_corpus(self, corpus: Path) -> None:
+        message = respond(corpus, _request("tools/call", {"name": "contents"}))
+        assert _tool_text(message) == "docs/edge.md\n---\ntitle: Edge\n---\n\ndocs/loose.md"
+        assert _result(message)["isError"] is False
+
+    def test_under_scopes_the_listing(self, corpus: Path) -> None:
+        (corpus / "docs" / "sub").mkdir()
+        (corpus / "docs" / "sub" / "deep.md").write_text("---\ntitle: D\n---\n", encoding="utf-8")
+        params = {"name": "contents", "arguments": {"under": "docs/sub"}}
+        assert _tool_text(respond(corpus, _request("tools/call", params))) == (
+            "docs/sub/deep.md\n---\ntitle: D\n---"
+        )
+
+    def test_an_empty_folder_says_so(self, corpus: Path) -> None:
+        (corpus / "docs" / "empty").mkdir()
+        params = {"name": "contents", "arguments": {"under": "docs/empty"}}
+        assert "no markdown documents" in _tool_text(
+            respond(corpus, _request("tools/call", params))
+        )
+
+    def test_a_bad_under_is_an_error_result_not_a_protocol_error(self, corpus: Path) -> None:
+        params = {"name": "contents", "arguments": {"under": "docs/nope"}}
+        message = respond(corpus, _request("tools/call", params))
+        assert _result(message)["isError"] is True
+        assert "does not exist" in _tool_text(message)
+
+    def test_escaping_the_root_is_refused(self, corpus: Path) -> None:
+        params = {"name": "contents", "arguments": {"under": ".."}}
+        message = respond(corpus, _request("tools/call", params))
+        assert _result(message)["isError"] is True
+        assert "outside the corpus root" in _tool_text(message)
+
+    def test_a_non_string_under_is_refused(self, corpus: Path) -> None:
+        params = {"name": "contents", "arguments": {"under": 7}}
+        message = respond(corpus, _request("tools/call", params))
+        assert _result(message)["isError"] is True
+
+    def test_an_unknown_tool_is_an_error_result(self, corpus: Path) -> None:
+        message = respond(corpus, _request("tools/call", {"name": "nope"}))
+        assert _result(message)["isError"] is True
+        assert "unknown tool" in _tool_text(message)
+
+
+class TestProtocolErrors:
+    def test_malformed_json_returns_a_parse_error(self, corpus: Path) -> None:
+        assert _error_of(respond(corpus, "{not json"))["code"] == -32700
+
+    def test_an_unknown_method_returns_method_not_found(self, corpus: Path) -> None:
+        assert _error_of(respond(corpus, _request("resources/list")))["code"] == -32601
+
+    def test_a_json_array_is_an_invalid_request(self, corpus: Path) -> None:
+        assert _error_of(respond(corpus, "[1, 2]"))["code"] == -32600
+
+
+class TestServeLoop:
+    def test_replies_to_requests_and_skips_notifications(self, corpus: Path) -> None:
+        lines = "\n".join(
+            [
+                _request("initialize"),
+                json.dumps({"jsonrpc": "2.0", "method": "notifications/initialized"}),
+                "",
+                _request("tools/list", request_id=2),
+            ]
+        )
+        stdout = io.StringIO()
+        assert serve(corpus, io.StringIO(lines), stdout) == 0
+
+        replies = [json.loads(line) for line in stdout.getvalue().splitlines()]
+        assert [reply["id"] for reply in replies] == [1, 2]

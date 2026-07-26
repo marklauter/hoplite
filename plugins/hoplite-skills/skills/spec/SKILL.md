@@ -33,7 +33,6 @@ cites:
 ```
 
 - Cross-reference adjacent specs where the connection is durable.
-- Add the doc to the glossary README `## See also` when it anchors a cluster of terms.
 
 ## Proofread
 

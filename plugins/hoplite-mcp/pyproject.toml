@@ -1,0 +1,48 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hoplite-catalog"
+version = "0.1.0"
+description = "The Hoplite catalog MCP server — a frontmatter listing over the corpus"
+requires-python = ">=3.11"
+# No runtime dependencies, deliberately. `contents` slices text and the stdio host is
+# stdlib JSON-RPC, so the plugin runs under whatever Python is on PATH with no venv to
+# bootstrap. Adding a dependency here reintroduces that install step for every user.
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.6",
+    "pyright>=1.1.380",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["A", "E", "F", "I", "B", "UP", "SIM", "RUF"]
+
+[tool.pyright]
+include = ["src", "tests"]
+extraPaths = ["src"]
+typeCheckingMode = "strict"
+pythonVersion = "3.11"
+
+# Tests read JSON-RPC envelopes, which are `dict[str, Any]` by nature; the strict-mode
+# unknown-type reports fire on every subscript. Real type errors still surface here.
+[[tool.pyright.executionEnvironments]]
+root = "tests"
+reportUnknownMemberType = "none"
+reportUnknownVariableType = "none"
+reportUnknownArgumentType = "none"
