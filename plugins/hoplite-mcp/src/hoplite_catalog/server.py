@@ -41,9 +41,9 @@ _METHOD_NOT_FOUND: Final = -32601
 _CONTENTS_DESCRIPTION: Final = (
     "Survey a folder of the markdown corpus without opening files, or trace how its "
     "documents link.\n\n"
-    "Returns: a path line per document, then its YAML frontmatter between `---` fences. "
-    "Documents without frontmatter show just the path. A property whose value is a "
-    "`[[wikilink]]` is an edge; anything else is a claim about the document."
+    "Returns: a path line per document, then, if available, its YAML frontmatter "
+    "between `---` fences. A property whose value is a `[[wikilink]]` is an edge; "
+    "anything else is a claim about the document."
 )
 
 TOOLS: Final[tuple[dict[str, object], ...]] = (
