@@ -34,15 +34,26 @@ _PARSE_ERROR: Final = -32700
 _INVALID_REQUEST: Final = -32600
 _METHOD_NOT_FOUND: Final = -32601
 
+# This description is the tool's entire onboarding: an installed MCP server ships no
+# instructions beyond it. It opens with the job and the alternative it should beat
+# (globbing and reading files), then names the moments to reach for it. An agent picks a
+# tool by matching intent, and a list of capabilities gives it nothing to match. The
+# triggers mirror instructions the authoring skills already carry: `glossary` says to
+# search docs/glossary/ before writing, and `taking-notes` and `todo` both say to find
+# the existing note rather than duplicate it.
 _CONTENTS_DESCRIPTION: Final = (
-    "List every markdown document under a folder of the corpus, each with its YAML "
-    "frontmatter exactly as written. Use it to survey what a folder holds — titles, "
-    "tags, status, and the frontmatter edges between documents — without opening files. "
-    "Output is a path line per document followed by its frontmatter block between `---` "
-    "fences; a document with no frontmatter contributes its path alone. Nothing is "
-    "parsed or derived: keys keep their authored order and quoting, absent keys stay "
-    "absent, and no title or summary is inferred from the body. A property whose value "
-    "is a `[[wikilink]]` is an edge; every other property is a claim about the document."
+    "Survey a folder of the markdown corpus without opening files. Use this instead of "
+    "globbing and reading documents when you need to know what exists and what each "
+    "document claims — its title, tags, status, and the frontmatter edges to other "
+    "documents. Reach for it first when checking whether a document already exists "
+    "before creating one, when looking up which glossary terms or notes are written, "
+    "when asked what a folder holds, or when tracing how documents link.\n\n"
+    "Returns a path line per document followed by its YAML frontmatter between `---` "
+    "fences, exactly as written. A document with no frontmatter contributes its path "
+    "alone. Nothing is parsed or derived: keys keep their authored order and quoting, "
+    "absent keys stay absent, and no title or summary is inferred from the body. A "
+    "property whose value is a `[[wikilink]]` is an edge; every other property is a "
+    "claim about the document."
 )
 
 TOOLS: Final[tuple[dict[str, object], ...]] = (
