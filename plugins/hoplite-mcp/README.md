@@ -55,9 +55,11 @@ files.
 
 ## Install
 
-The server has no dependencies and no build step. It runs under whatever Python 3 is on
-PATH; set the plugin's **Python executable** option if `python3` is not the right one on
-your machine.
+The server has no dependencies and no build step. `.mcp.json` runs the interpreter
+directly — no shell, since Claude Code spawns MCP servers as processes and `sh` is absent
+from the PATH on Windows. Set the plugin's **Python executable** option if `python3` is
+not the right name on your machine; a wrong value shows up as a failed MCP connection
+rather than a message, because the process never starts.
 
 The corpus root is the working directory Claude Code launched in, so `under` paths are
 repo-relative.
