@@ -42,7 +42,7 @@ _METHOD_NOT_FOUND: Final = -32601
 # search docs/glossary/ before writing, and `taking-notes` and `todo` both say to find
 # the existing note rather than duplicate it.
 _CONTENTS_DESCRIPTION: Final = (
-    "See what's in a folder of the markdown corpus without opening files. One call "
+    "Survey a folder of the markdown corpus without opening files. One call "
     "instead of a glob plus a read per document, and it shows what each document "
     "claims: title, tags, status, and the frontmatter edges to other documents.\n\n"
     "Use it before you write a document, to check whether one already exists. Use it to "
