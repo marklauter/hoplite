@@ -148,3 +148,8 @@ class TestServeLoop:
 
         replies = [json.loads(line) for line in stdout.getvalue().splitlines()]
         assert [reply["id"] for reply in replies] == [1, 2]
+
+    def test_a_leading_byte_order_mark_is_tolerated(self, corpus: Path) -> None:
+        stdout = io.StringIO()
+        assert serve(corpus, io.StringIO("﻿" + _request("initialize")), stdout) == 0
+        assert json.loads(stdout.getvalue())["id"] == 1
