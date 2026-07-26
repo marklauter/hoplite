@@ -204,6 +204,23 @@ class TestToolsCall:
         assert _result(message)["isError"] is False
         assert _tool_text(message) == "docs/bare/a.md"
 
+    def test_the_remedy_a_refusal_names_is_actually_callable(self, corpus: Path) -> None:
+        # End to end on the deadlock: collect refuses the listing over a dangling link out
+        # of the corpus and names an exclusion, so that exclusion has to be accepted.
+        try:
+            (corpus / "docs" / "dangling.md").symlink_to(corpus.parent / "never-created.md")
+        except OSError as exc:
+            pytest.skip(f"cannot create a symlink here: {exc}")
+
+        refusal = respond(corpus, _request("tools/call", {"name": "contents"}))
+        assert _result(refusal)["isError"] is True
+        assert "docs/dangling.md" in _tool_text(refusal)
+
+        params = {"name": "contents", "arguments": {"exclude": ["docs/dangling.md"]}}
+        message = respond(corpus, _request("tools/call", params))
+        assert _result(message)["isError"] is False
+        assert _tool_text(message) == "docs/edge.md\ntitle: Edge\n\ndocs/loose.md"
+
     def test_an_exclude_relative_to_under_is_refused(self, corpus: Path) -> None:
         (corpus / "docs" / "journal").mkdir()
         params = {"name": "contents", "arguments": {"exclude": ["journal"]}}

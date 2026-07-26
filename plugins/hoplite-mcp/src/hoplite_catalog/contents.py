@@ -149,12 +149,15 @@ def resolve_exclusions(root: Path, paths: Iterable[str]) -> frozenset[str]:
 
     Containment is checked lexically here and the entry is never resolved, because the
     document a caller most needs to exclude is precisely the one whose target is elsewhere.
+    Existence uses ``lexists``, which sees the link itself: ``Path.exists`` follows it, so a
+    dangling link would be refused here while ``collect`` refuses the listing and names that
+    same entry as the remedy — the tool would have no callable form at all.
     """
     resolved_root = root.resolve()
     excluded = normalize_exclusions(paths)
     for path in sorted(excluded):
         target = Path(os.path.normpath(resolved_root / path))
-        if not _contains(resolved_root, target) or not target.exists():
+        if not _contains(resolved_root, target) or not os.path.lexists(target):
             raise ValueError(f"{path!r} is not a path in the corpus")
     return excluded
 

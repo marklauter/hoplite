@@ -311,6 +311,17 @@ class TestResolveExclusions:
         _write(tmp_path / "docs" / "a.md", "")
         assert resolve_exclusions(tmp_path, ["docs/a.md"]) == frozenset({"docs/a.md"})
 
+    def test_a_dangling_link_is_still_excludable(self, tmp_path: Path) -> None:
+        # exists() follows the link and would refuse this, while collect refuses the
+        # listing and names this exact entry as the remedy — leaving no callable form.
+        (tmp_path / "docs").mkdir()
+        try:
+            (tmp_path / "docs" / "dangling.md").symlink_to(tmp_path.parent / "never-created.md")
+        except OSError as exc:
+            pytest.skip(f"cannot create a symlink here: {exc}")
+
+        assert resolve_exclusions(tmp_path, ["docs/dangling.md"]) == frozenset({"docs/dangling.md"})
+
     def test_a_link_pointing_out_of_the_corpus_is_still_excludable(self, tmp_path: Path) -> None:
         # The document a caller most needs to exclude is the one whose target is elsewhere,
         # so exclusion entries are checked lexically and never resolved.
