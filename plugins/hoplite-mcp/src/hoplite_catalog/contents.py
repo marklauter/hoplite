@@ -177,15 +177,14 @@ def project(entry: Entry, keys: frozenset[str] | None) -> Entry:
 
 
 def render(entries: Iterable[Entry]) -> str:
-    """Render the listing: a path line per document, then its block between fences.
+    """Render the listing: a path per document, then its properties, one per line.
 
-    A document with no frontmatter is its path line alone. Blocks are reproduced line for
-    line, so what comes back is what is on disk.
+    A blank line separates documents. No ``---`` fences — they delimit a block for a
+    parser, and only an agent reads this. Blank lines inside a block are dropped, so a
+    stray one cannot split a document into two records.
     """
     blocks = [
-        entry.path
-        if entry.frontmatter is None
-        else "\n".join([entry.path, FENCE, *entry.frontmatter, FENCE])
+        "\n".join([entry.path, *(line for line in entry.frontmatter or () if line.strip())])
         for entry in entries
     ]
     return "\n\n".join(blocks)

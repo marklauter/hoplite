@@ -11,19 +11,22 @@ frontmatter exactly as written.
 contents(under="docs/glossary")
 
 docs/glossary/edge.md
----
 title: Edge
 summary: "A relationship between two documents."
 tags: [glossary, hoplite]
 status: locked
 is-a: "[[relationship]]"
----
 
 docs/glossary/README.md
 ```
 
-The output is a path line per document, followed by the frontmatter block between `---`
-fences. A document with no frontmatter contributes its path alone.
+The output is a path per document, followed by its frontmatter properties, one per line,
+with a blank line between documents. A document with no frontmatter is a single line.
+
+There are no `---` fences. They delimit a block for a parser reading a file, and nothing
+reads this but an agent, for which the path line and the blank line already mark every
+boundary. Blank lines inside a block are dropped, so a stray one cannot split a document
+into two records.
 
 `under` is a folder relative to the corpus root, and defaults to `docs`. The listing
 recurses, and is ordered by path so two calls over an unchanged corpus return identical
@@ -31,19 +34,19 @@ text.
 
 ### Sizing the listing
 
-The whole corpus is around 17,000 tokens, and `summary` is 57% of that. Since `summary`
-is what makes a listing worth reading, it stays in by default and two optional arguments
-cut the cost when a folder is too large to read whole.
+Listing the whole corpus costs around 16,800 tokens, and `summary` is 57% of that. Since
+`summary` is what makes a listing worth reading, it stays in by default, and two optional
+arguments cut the cost when a folder is too large to read whole.
 
 `keys` picks which properties to emit. `exclude` drops folders, matched on whole path
 segments, before the files are read.
 
 | call over `docs/` | documents | ~tokens |
 |---|---|---|
-| `contents()` | 163 | 17,100 |
-| `exclude: ["docs/journal"]` | 113 | 10,900 |
-| `keys: ["title", "tags", "status"]` | 163 | 6,100 |
-| both of the above | 113 | 3,800 |
+| `contents()` | 163 | 16,800 |
+| `exclude: ["docs/journal"]` | 113 | 10,700 |
+| `keys: ["title", "tags", "status"]` | 163 | 5,800 |
+| both of the above | 113 | 3,600 |
 | `keys: []` | 163 | 2,100 |
 
 `keys` omitted means every property; `keys: []` means paths alone. The two compose.

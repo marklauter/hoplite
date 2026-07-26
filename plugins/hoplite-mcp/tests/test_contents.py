@@ -56,22 +56,30 @@ class TestSliceFrontmatter:
 
 
 class TestRender:
-    def test_document_with_frontmatter_is_fenced(self) -> None:
-        entry = Entry(path="docs/a.md", frontmatter=("title: A",))
-        assert render([entry]) == "docs/a.md\n---\ntitle: A\n---"
+    def test_properties_follow_the_path_one_per_line(self) -> None:
+        entry = Entry(path="docs/a.md", frontmatter=("title: A", "tags: [x]"))
+        assert render([entry]) == "docs/a.md\ntitle: A\ntags: [x]"
+
+    def test_no_fences_are_emitted(self) -> None:
+        assert "---" not in render([Entry(path="docs/a.md", frontmatter=("title: A",))])
 
     def test_document_without_frontmatter_is_its_path_alone(self) -> None:
         assert render([Entry(path="docs/a.md", frontmatter=None)]) == "docs/a.md"
 
-    def test_empty_block_round_trips_as_an_empty_block(self) -> None:
-        assert render([Entry(path="docs/a.md", frontmatter=())]) == "docs/a.md\n---\n---"
+    def test_an_empty_block_renders_as_the_path_alone(self) -> None:
+        assert render([Entry(path="docs/a.md", frontmatter=())]) == "docs/a.md"
 
     def test_entries_are_separated_by_a_blank_line(self) -> None:
         entries = [
             Entry(path="docs/a.md", frontmatter=("title: A",)),
             Entry(path="docs/b.md", frontmatter=None),
         ]
-        assert render(entries) == "docs/a.md\n---\ntitle: A\n---\n\ndocs/b.md"
+        assert render(entries) == "docs/a.md\ntitle: A\n\ndocs/b.md"
+
+    def test_a_blank_line_inside_a_block_cannot_split_a_record(self) -> None:
+        # Otherwise the blank-line separator would turn one document into two records.
+        entry = Entry(path="docs/a.md", frontmatter=("title: A", "   ", "tags: [x]"))
+        assert render([entry]) == "docs/a.md\ntitle: A\ntags: [x]"
 
     def test_no_entries_renders_empty(self) -> None:
         assert render([]) == ""

@@ -82,7 +82,7 @@ class TestToolsList:
 class TestToolsCall:
     def test_lists_the_corpus(self, corpus: Path) -> None:
         message = respond(corpus, _request("tools/call", {"name": "contents"}))
-        assert _tool_text(message) == "docs/edge.md\n---\ntitle: Edge\n---\n\ndocs/loose.md"
+        assert _tool_text(message) == "docs/edge.md\ntitle: Edge\n\ndocs/loose.md"
         assert _result(message)["isError"] is False
 
     def test_under_scopes_the_listing(self, corpus: Path) -> None:
@@ -90,7 +90,7 @@ class TestToolsCall:
         (corpus / "docs" / "sub" / "deep.md").write_text("---\ntitle: D\n---\n", encoding="utf-8")
         params = {"name": "contents", "arguments": {"under": "docs/sub"}}
         assert _tool_text(respond(corpus, _request("tools/call", params))) == (
-            "docs/sub/deep.md\n---\ntitle: D\n---"
+            "docs/sub/deep.md\ntitle: D"
         )
 
     def test_an_empty_folder_says_so(self, corpus: Path) -> None:
@@ -181,7 +181,7 @@ class TestToolsCall:
             "arguments": {"keys": ["title"], "exclude": ["docs/journal"]},
         }
         text = _tool_text(respond(corpus, _request("tools/call", params)))
-        assert text == "docs/edge.md\n---\ntitle: Edge\n---\n\ndocs/loose.md"
+        assert text == "docs/edge.md\ntitle: Edge\n\ndocs/loose.md"
 
     def test_an_unknown_tool_is_an_error_result(self, corpus: Path) -> None:
         message = respond(corpus, _request("tools/call", {"name": "nope"}))

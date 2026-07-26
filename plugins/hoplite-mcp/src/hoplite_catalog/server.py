@@ -40,9 +40,9 @@ _METHOD_NOT_FOUND: Final = -32601
 # corpus. The skills do not name this tool yet, which is the gap that connects them.
 _CONTENTS_DESCRIPTION: Final = (
     "Survey a folder of the markdown corpus and trace its documents' edges.\n\n"
-    "Returns the path line per document, and, if available, its YAML frontmatter "
-    "between `---` fences. A property whose value is a `[[wikilink]]` is an edge; "
-    "anything else is a claim about the document."
+    "Returns the path per document, and, if available, its frontmatter properties, one "
+    "per line, with a blank line between documents. A property whose value is a "
+    "`[[wikilink]]` is an edge; anything else is a claim about the document."
 )
 
 TOOLS: Final[tuple[dict[str, object], ...]] = (
