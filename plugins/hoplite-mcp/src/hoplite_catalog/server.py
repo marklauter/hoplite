@@ -21,7 +21,7 @@ import sys
 from pathlib import Path
 from typing import Final, TextIO, cast
 
-from hoplite_catalog.contents import collect, render, resolve_under
+from hoplite_catalog.contents import collect, project, render, resolve_under
 
 __all__ = ["DEFAULT_UNDER", "PROTOCOL_VERSION", "SERVER_NAME", "TOOLS", "respond", "serve"]
 
@@ -59,7 +59,26 @@ TOOLS: Final[tuple[dict[str, object], ...]] = (
                         "Folder to list, relative to the corpus root, like "
                         f"'docs/glossary'. Recurses into subfolders. Defaults to '{DEFAULT_UNDER}'."
                     ),
-                }
+                },
+                "keys": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": (
+                        "Frontmatter properties to keep, like ['title', 'tags']. Omit to "
+                        "get every property, including summary. An empty list returns "
+                        "paths alone. Use it to trade detail for size when a folder is "
+                        "too large to read whole."
+                    ),
+                },
+                "exclude": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": (
+                        "Folders to skip, as corpus-relative paths like "
+                        "['docs/journal']. Matches whole path segments, so a folder and "
+                        "everything under it drop out."
+                    ),
+                },
             },
             "additionalProperties": False,
         },
@@ -85,13 +104,36 @@ def _text_result(text: str, *, is_error: bool = False) -> dict[str, object]:
     return {"content": [{"type": "text", "text": text}], "isError": is_error}
 
 
+def _string_set(value: object, name: str) -> frozenset[str] | None:
+    """Read an optional list-of-strings argument, or ``None`` when it is absent.
+
+    An empty list is not the same as an omitted one: ``keys: []`` asks for paths alone,
+    where an omitted ``keys`` asks for every property.
+    """
+    if value is None:
+        return None
+    if not isinstance(value, list):
+        raise ValueError(f"{name!r} must be a list of strings")
+    items = cast("list[object]", value)
+    if not all(isinstance(item, str) for item in items):
+        raise ValueError(f"{name!r} must be a list of strings")
+    return frozenset(cast("list[str]", items))
+
+
 def _call_contents(root: Path, arguments: dict[str, object]) -> dict[str, object]:
     """Run the ``contents`` tool. Raises ``ValueError`` on a bad argument."""
     under = arguments.get("under", DEFAULT_UNDER)
     if not isinstance(under, str):
         raise ValueError("'under' must be a string")
-    listing = render(collect(root, resolve_under(root, under)))
-    return _text_result(listing or f"no markdown documents under {under!r}")
+    keys = _string_set(arguments.get("keys"), "keys")
+    exclude = _string_set(arguments.get("exclude"), "exclude") or frozenset()
+
+    entries = collect(root, resolve_under(root, under), exclude)
+    listing = render(project(entry, keys) for entry in entries)
+    if listing:
+        return _text_result(listing)
+    tail = " after exclusions" if exclude else ""
+    return _text_result(f"no markdown documents under {under!r}{tail}")
 
 
 def _call_tool(root: Path, params: dict[str, object]) -> dict[str, object]:

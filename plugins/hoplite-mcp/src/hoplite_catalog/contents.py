@@ -15,8 +15,9 @@ particular the spec's derived defaults (slug-derived ``title``, body-excerpt
 from __future__ import annotations
 
 import os.path
+import re
 from collections.abc import Iterable, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Final
 
@@ -24,6 +25,9 @@ __all__ = [
     "FENCE",
     "Entry",
     "collect",
+    "corpus_path",
+    "is_excluded",
+    "project",
     "read_entry",
     "render",
     "resolve_under",
@@ -31,6 +35,10 @@ __all__ = [
 ]
 
 FENCE: Final = "---"
+
+# A root-level mapping key: unindented, up to the first colon. Indented lines and `-`
+# list items are continuations of the key above them.
+_ROOT_KEY_RE: Final = re.compile(r"^([A-Za-z0-9_.\-]+)\s*:")
 
 
 @dataclass(frozen=True, slots=True)
@@ -105,20 +113,67 @@ def read_entry(root: Path, path: Path) -> Entry:
     normalized base.
     """
     lines = path.read_text(encoding="utf-8-sig").splitlines()
-    return Entry(
-        path=path.absolute().relative_to(root.resolve()).as_posix(),
-        frontmatter=slice_frontmatter(lines),
-    )
+    return Entry(path=corpus_path(root, path), frontmatter=slice_frontmatter(lines))
 
 
-def collect(root: Path, under: Path) -> tuple[Entry, ...]:
+def corpus_path(root: Path, path: Path) -> str:
+    """The document's path as the corpus addresses it — root-relative, forward slashes."""
+    return path.absolute().relative_to(root.resolve()).as_posix()
+
+
+def is_excluded(path: str, exclude: frozenset[str]) -> bool:
+    """True when a corpus path sits at or under one of the excluded folders.
+
+    Matching is on whole path segments, so excluding ``docs/journal`` leaves
+    ``docs/journals-are-not-notes.md`` alone. A plain string prefix would not.
+    """
+    return any(path == folder or path.startswith(f"{folder}/") for folder in exclude)
+
+
+def collect(root: Path, under: Path, exclude: frozenset[str] = frozenset()) -> tuple[Entry, ...]:
     """Read every ``.md`` document at or under ``under``, ordered by path.
+
+    Excluded folders are skipped before the read, so their bytes are never touched.
 
     Ordering is by the emitted path string, so two calls over an unchanged corpus return
     identical output — the listing stays diffable and cacheable.
     """
     paths = [under] if under.is_file() else sorted(under.rglob("*.md"))
-    return tuple(sorted((read_entry(root, path) for path in paths), key=lambda e: e.path))
+    entries = (
+        read_entry(root, path)
+        for path in paths
+        if not is_excluded(corpus_path(root, path), exclude)
+    )
+    return tuple(sorted(entries, key=lambda entry: entry.path))
+
+
+def project(entry: Entry, keys: frozenset[str] | None) -> Entry:
+    """Keep only the frontmatter properties named in ``keys``.
+
+    ``None`` keeps everything, which is the default: ``summary`` is what makes a listing
+    worth reading, so a caller has to ask to lose it. An empty set keeps nothing, leaving
+    the path alone. Projecting a document down to no properties drops its fences too — the
+    output is a listing at that point, not a copy of the file, so an empty block would be
+    noise.
+
+    Still a line scan, no parser. A property whose value spans lines — a block list under
+    ``disjoint-with:`` — carries its indented continuation lines along, because they belong
+    to the last root key seen. A malformed root line that is not ``key: value`` rides with
+    the key above it for the same reason.
+    """
+    if keys is None or entry.frontmatter is None:
+        return entry
+
+    kept: list[str] = []
+    current: str | None = None
+    for line in entry.frontmatter:
+        at_root = bool(line[:1]) and not line[0].isspace()
+        match = _ROOT_KEY_RE.match(line) if at_root else None
+        if match is not None:
+            current = match.group(1)
+        if current in keys:
+            kept.append(line)
+    return replace(entry, frontmatter=tuple(kept) or None)
 
 
 def render(entries: Iterable[Entry]) -> str:

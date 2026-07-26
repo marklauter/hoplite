@@ -9,6 +9,8 @@ import pytest
 from hoplite_catalog.contents import (
     Entry,
     collect,
+    is_excluded,
+    project,
     read_entry,
     render,
     resolve_under,
@@ -75,6 +77,55 @@ class TestRender:
         assert render([]) == ""
 
 
+class TestProject:
+    FULL = Entry(
+        path="docs/glossary/edge.md",
+        frontmatter=(
+            "title: Edge",
+            'summary: "A relationship between two documents."',
+            "tags: [glossary, hoplite]",
+            "disjoint-with:",
+            '  - "[[node]]"',
+            '  - "[[claim]]"',
+        ),
+    )
+
+    def test_no_keys_keeps_everything(self) -> None:
+        assert project(self.FULL, None) == self.FULL
+
+    def test_keeps_only_the_named_properties(self) -> None:
+        assert project(self.FULL, frozenset({"title", "tags"})).frontmatter == (
+            "title: Edge",
+            "tags: [glossary, hoplite]",
+        )
+
+    def test_a_block_list_keeps_its_continuation_lines(self) -> None:
+        assert project(self.FULL, frozenset({"disjoint-with"})).frontmatter == (
+            "disjoint-with:",
+            '  - "[[node]]"',
+            '  - "[[claim]]"',
+        )
+
+    def test_a_continuation_line_is_dropped_with_its_key(self) -> None:
+        kept = project(self.FULL, frozenset({"title"})).frontmatter
+        assert kept == ("title: Edge",)
+
+    def test_an_empty_key_set_leaves_the_path_alone(self) -> None:
+        projected = project(self.FULL, frozenset())
+        assert projected.frontmatter is None
+        assert render([projected]) == "docs/glossary/edge.md"
+
+    def test_an_unmatched_key_leaves_the_path_alone(self) -> None:
+        assert project(self.FULL, frozenset({"nonesuch"})).frontmatter is None
+
+    def test_a_document_without_frontmatter_is_untouched(self) -> None:
+        bare = Entry(path="docs/a.md", frontmatter=None)
+        assert project(bare, frozenset({"title"})) == bare
+
+    def test_the_path_is_never_changed(self) -> None:
+        assert project(self.FULL, frozenset({"title"})).path == self.FULL.path
+
+
 class TestReadEntry:
     def test_path_is_corpus_relative_and_posix(self, tmp_path: Path) -> None:
         _write(tmp_path / "docs" / "glossary" / "edge.md", "---\ntitle: Edge\n---\n")
@@ -139,6 +190,43 @@ class TestCollect:
     def test_empty_folder_collects_nothing(self, tmp_path: Path) -> None:
         (tmp_path / "docs").mkdir()
         assert collect(tmp_path, tmp_path / "docs") == ()
+
+    def test_excluded_folders_are_skipped(self, tmp_path: Path) -> None:
+        _write(tmp_path / "docs" / "notes" / "a.md", "---\ntitle: A\n---\n")
+        _write(tmp_path / "docs" / "journal" / "b.md", "---\ntitle: B\n---\n")
+        _write(tmp_path / "docs" / "journal" / "deep" / "c.md", "---\ntitle: C\n---\n")
+        entries = collect(tmp_path, tmp_path / "docs", frozenset({"docs/journal"}))
+        assert [entry.path for entry in entries] == ["docs/notes/a.md"]
+
+    def test_exclusion_matches_whole_segments(self, tmp_path: Path) -> None:
+        # 'docs/journal' must not exclude a sibling whose name merely starts the same way.
+        _write(tmp_path / "docs" / "journal" / "a.md", "---\ntitle: A\n---\n")
+        _write(tmp_path / "docs" / "journals-are-not-notes.md", "---\ntitle: B\n---\n")
+        entries = collect(tmp_path, tmp_path / "docs", frozenset({"docs/journal"}))
+        assert [entry.path for entry in entries] == ["docs/journals-are-not-notes.md"]
+
+    def test_excluding_everything_collects_nothing(self, tmp_path: Path) -> None:
+        _write(tmp_path / "docs" / "a.md", "---\ntitle: A\n---\n")
+        assert collect(tmp_path, tmp_path / "docs", frozenset({"docs"})) == ()
+
+
+class TestIsExcluded:
+    @pytest.mark.parametrize(
+        ("path", "expected"),
+        [
+            ("docs/journal/2026-07-26.md", True),
+            ("docs/journal/deep/nested.md", True),
+            ("docs/journal", True),
+            ("docs/journals-are-not-notes.md", False),
+            ("docs/notes/journal.md", False),
+            ("docs/notes/a.md", False),
+        ],
+    )
+    def test_matches_whole_segments_only(self, path: str, expected: bool) -> None:
+        assert is_excluded(path, frozenset({"docs/journal"})) is expected
+
+    def test_no_exclusions_excludes_nothing(self) -> None:
+        assert is_excluded("docs/journal/a.md", frozenset()) is False
 
 
 class TestResolveUnder:

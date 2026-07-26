@@ -72,10 +72,11 @@ class TestToolsList:
         assert tool["annotations"]["readOnlyHint"] is True
         assert tool["annotations"]["openWorldHint"] is False
 
-    def test_under_is_the_only_input(self, corpus: Path) -> None:
+    def test_every_input_is_optional(self, corpus: Path) -> None:
         schema = _result(respond(corpus, _request("tools/list")))["tools"][0]["inputSchema"]
-        assert list(schema["properties"]) == ["under"]
+        assert list(schema["properties"]) == ["under", "keys", "exclude"]
         assert schema["additionalProperties"] is False
+        assert "required" not in schema
 
 
 class TestToolsCall:
@@ -115,6 +116,72 @@ class TestToolsCall:
         params = {"name": "contents", "arguments": {"under": 7}}
         message = respond(corpus, _request("tools/call", params))
         assert _result(message)["isError"] is True
+
+    def test_keys_projects_the_frontmatter(self, corpus: Path) -> None:
+        (corpus / "docs" / "edge.md").write_text(
+            "---\ntitle: Edge\nsummary: long prose\ntags: [glossary]\n---\n", encoding="utf-8"
+        )
+        params = {"name": "contents", "arguments": {"under": "docs", "keys": ["title", "tags"]}}
+        text = _tool_text(respond(corpus, _request("tools/call", params)))
+        assert "title: Edge" in text
+        assert "tags: [glossary]" in text
+        assert "summary" not in text
+
+    def test_omitting_keys_keeps_the_summary(self, corpus: Path) -> None:
+        (corpus / "docs" / "edge.md").write_text(
+            "---\ntitle: Edge\nsummary: long prose\n---\n", encoding="utf-8"
+        )
+        text = _tool_text(respond(corpus, _request("tools/call", {"name": "contents"})))
+        assert "summary: long prose" in text
+
+    def test_an_empty_keys_list_returns_paths_alone(self, corpus: Path) -> None:
+        params = {"name": "contents", "arguments": {"under": "docs", "keys": []}}
+        text = _tool_text(respond(corpus, _request("tools/call", params)))
+        assert text == "docs/edge.md\n\ndocs/loose.md"
+
+    def test_a_non_list_keys_is_refused(self, corpus: Path) -> None:
+        params = {"name": "contents", "arguments": {"keys": "title"}}
+        message = respond(corpus, _request("tools/call", params))
+        assert _result(message)["isError"] is True
+        assert "list of strings" in _tool_text(message)
+
+    def test_a_non_string_key_is_refused(self, corpus: Path) -> None:
+        params = {"name": "contents", "arguments": {"keys": ["title", 7]}}
+        message = respond(corpus, _request("tools/call", params))
+        assert _result(message)["isError"] is True
+
+    def test_exclude_drops_a_folder(self, corpus: Path) -> None:
+        (corpus / "docs" / "journal").mkdir()
+        (corpus / "docs" / "journal" / "day.md").write_text(
+            "---\ntitle: D\n---\n", encoding="utf-8"
+        )
+        params = {"name": "contents", "arguments": {"exclude": ["docs/journal"]}}
+        text = _tool_text(respond(corpus, _request("tools/call", params)))
+        assert "docs/journal/day.md" not in text
+        assert "docs/edge.md" in text
+
+    def test_excluding_everything_says_so(self, corpus: Path) -> None:
+        params = {"name": "contents", "arguments": {"exclude": ["docs"]}}
+        text = _tool_text(respond(corpus, _request("tools/call", params)))
+        assert text == "no markdown documents under 'docs' after exclusions"
+
+    def test_a_non_list_exclude_is_refused(self, corpus: Path) -> None:
+        params = {"name": "contents", "arguments": {"exclude": "docs/journal"}}
+        message = respond(corpus, _request("tools/call", params))
+        assert _result(message)["isError"] is True
+        assert "'exclude' must be a list of strings" in _tool_text(message)
+
+    def test_keys_and_exclude_compose(self, corpus: Path) -> None:
+        (corpus / "docs" / "journal").mkdir()
+        (corpus / "docs" / "journal" / "day.md").write_text(
+            "---\ntitle: D\n---\n", encoding="utf-8"
+        )
+        params = {
+            "name": "contents",
+            "arguments": {"keys": ["title"], "exclude": ["docs/journal"]},
+        }
+        text = _tool_text(respond(corpus, _request("tools/call", params)))
+        assert text == "docs/edge.md\n---\ntitle: Edge\n---\n\ndocs/loose.md"
 
     def test_an_unknown_tool_is_an_error_result(self, corpus: Path) -> None:
         message = respond(corpus, _request("tools/call", {"name": "nope"}))

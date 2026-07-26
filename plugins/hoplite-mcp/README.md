@@ -29,6 +29,25 @@ fences. A document with no frontmatter contributes its path alone.
 recurses, and is ordered by path so two calls over an unchanged corpus return identical
 text.
 
+### Sizing the listing
+
+The whole corpus is around 17,000 tokens, and `summary` is 57% of that. Since `summary`
+is what makes a listing worth reading, it stays in by default and two optional arguments
+cut the cost when a folder is too large to read whole.
+
+`keys` picks which properties to emit. `exclude` drops folders, matched on whole path
+segments, before the files are read.
+
+| call over `docs/` | documents | ~tokens |
+|---|---|---|
+| `contents()` | 163 | 17,100 |
+| `exclude: ["docs/journal"]` | 113 | 10,900 |
+| `keys: ["title", "tags", "status"]` | 163 | 6,100 |
+| both of the above | 113 | 3,800 |
+| `keys: []` | 163 | 2,100 |
+
+`keys` omitted means every property; `keys: []` means paths alone. The two compose.
+
 ### It slices, it does not parse
 
 `contents` finds the opening `---`, finds the closing `---`, and emits the lines between
