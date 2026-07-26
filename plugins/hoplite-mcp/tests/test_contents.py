@@ -160,3 +160,20 @@ class TestResolveUnder:
     def test_a_missing_folder_is_rejected(self, tmp_path: Path) -> None:
         with pytest.raises(ValueError, match="does not exist"):
             resolve_under(tmp_path, "docs/nope")
+
+    def test_collapses_dot_segments_without_following_symlinks(self, tmp_path: Path) -> None:
+        (tmp_path / "docs" / "specs").mkdir(parents=True)
+        assert resolve_under(tmp_path, "docs/./notes/../specs") == tmp_path / "docs" / "specs"
+
+    def test_naming_a_symlink_keeps_the_link_path(self, tmp_path: Path) -> None:
+        # Passing the symlink itself as `under`, not reaching it through a folder walk.
+        target = _write(tmp_path / "references" / "frontmatter.md", "---\ntitle: F\n---\n")
+        link = tmp_path / "docs" / "specs" / "frontmatter.md"
+        link.parent.mkdir(parents=True)
+        try:
+            link.symlink_to(target)
+        except OSError as exc:  # Windows needs developer mode or elevation
+            pytest.skip(f"cannot create a symlink here: {exc}")
+
+        under = resolve_under(tmp_path, "docs/specs/frontmatter.md")
+        assert collect(tmp_path, under)[0].path == "docs/specs/frontmatter.md"

@@ -14,6 +14,7 @@ particular the spec's derived defaults (slug-derived ``title``, body-excerpt
 
 from __future__ import annotations
 
+import os.path
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from pathlib import Path
@@ -67,7 +68,14 @@ def slice_frontmatter(lines: Sequence[str]) -> tuple[str, ...] | None:
 
 
 def resolve_under(root: Path, under: str) -> Path:
-    """Resolve ``under`` against the corpus root, rejecting anything outside it.
+    """Normalize ``under`` against the corpus root, rejecting anything outside it.
+
+    Normalization is lexical — ``normpath`` collapses ``.`` and ``..`` without touching
+    the filesystem — so a symlinked target keeps the path the corpus links to.
+    ``Path.resolve`` would follow the link and make ``docs/specs/frontmatter.md`` come
+    back as ``plugins/hoplite-skills/references/frontmatter.md``, which is the same defect
+    ``read_entry`` avoids. A path is a link address here; where the bytes live is not this
+    module's business.
 
     Raises ``ValueError`` when the path escapes the root or names nothing. Both are
     caller errors the agent could have prevented, and per the error model in
@@ -75,7 +83,7 @@ def resolve_under(root: Path, under: str) -> Path:
     result — a silent empty listing reads as "the folder is empty", not "you typo'd".
     """
     resolved_root = root.resolve()
-    target = (resolved_root / under).resolve()
+    target = Path(os.path.normpath(resolved_root / under))
     if target != resolved_root and resolved_root not in target.parents:
         raise ValueError(f"{under!r} is outside the corpus root")
     if not target.exists():
