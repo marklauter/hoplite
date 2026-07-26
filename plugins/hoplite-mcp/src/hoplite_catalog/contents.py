@@ -89,10 +89,16 @@ def read_entry(root: Path, path: Path) -> Entry:
     ``utf-8-sig`` strips a byte-order mark, which would otherwise sit in front of the
     opening fence and hide it. Text mode translates CRLF, so a file Obsidian wrote on
     Windows slices the same as one written on Linux.
+
+    The emitted path is where the corpus links to the document, not where the bytes live.
+    ``path`` is deliberately not resolved: ``docs/specs/frontmatter.md`` is a symlink into
+    ``plugins/hoplite-skills/references/``, and resolving it would report a path no
+    wikilink in the corpus uses. Only ``root`` is resolved, to give ``relative_to`` a
+    normalized base.
     """
     lines = path.read_text(encoding="utf-8-sig").splitlines()
     return Entry(
-        path=path.resolve().relative_to(root.resolve()).as_posix(),
+        path=path.absolute().relative_to(root.resolve()).as_posix(),
         frontmatter=slice_frontmatter(lines),
     )
 

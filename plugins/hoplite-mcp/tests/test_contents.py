@@ -96,6 +96,21 @@ class TestReadEntry:
             "summary: a kernel — the genus",
         )
 
+    def test_a_symlinked_document_reports_the_link_path(self, tmp_path: Path) -> None:
+        # docs/specs/frontmatter.md is a symlink into plugins/hoplite-skills/references/.
+        # The listing must report the path the corpus links to, not where the bytes live.
+        target = _write(tmp_path / "references" / "frontmatter.md", "---\ntitle: F\n---\n")
+        link = tmp_path / "docs" / "specs" / "frontmatter.md"
+        link.parent.mkdir(parents=True)
+        try:
+            link.symlink_to(target)
+        except OSError as exc:  # Windows needs developer mode or elevation
+            pytest.skip(f"cannot create a symlink here: {exc}")
+
+        entry = read_entry(tmp_path, link)
+        assert entry.path == "docs/specs/frontmatter.md"
+        assert entry.frontmatter == ("title: F",)
+
 
 class TestCollect:
     def test_recurses_and_orders_by_path(self, tmp_path: Path) -> None:
