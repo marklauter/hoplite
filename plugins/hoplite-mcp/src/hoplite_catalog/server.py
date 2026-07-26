@@ -162,9 +162,14 @@ def respond(root: Path, line: str) -> dict[str, object] | None:
 
 
 def serve(root: Path, stdin: TextIO, stdout: TextIO) -> int:
-    """Read newline-delimited JSON from ``stdin`` until it closes, replying on ``stdout``."""
+    """Read newline-delimited JSON from ``stdin`` until it closes, replying on ``stdout``.
+
+    ``strip`` takes a leading byte-order mark along with the whitespace. A conforming
+    client never sends one, but a Windows shell piping into the process does, and the
+    resulting parse error is a confusing way to learn that.
+    """
     for line in stdin:
-        stripped = line.strip()
+        stripped = line.strip("﻿ \t\r\n")
         if not stripped:
             continue
         message = respond(root, stripped)
