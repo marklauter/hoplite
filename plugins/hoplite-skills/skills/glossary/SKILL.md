@@ -63,7 +63,6 @@ disjoint-with:
 ```
 
 - An edge is a property whose value is a quoted wikilink — the key names the relationship, the value the target, like `is-a: "[[...]]"`; there is no `edges:` list and no `edge.` prefix (edge/link syntax: `${CLAUDE_PLUGIN_ROOT}/references/expressing-edges.md`).
-- Index it — add `- [[<term>]]` to the `## Terms` list in `docs/glossary/README.md`, kept alphabetical.
 - Examples — the optional `## Examples` section illustrates the term with concrete instances; the definition stays in the summary, and an example never restates it. Omit the section when there are none.
 - Rationale — the optional `## Rationale` section holds what the kernel cannot carry, such as why this genus was chosen, what the boundary excludes, or which candidate terms lost. It never redefines the term, and dated history belongs in the journal. Omit the section when there is nothing to say.
 
