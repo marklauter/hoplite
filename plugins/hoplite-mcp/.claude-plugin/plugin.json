@@ -1,6 +1,6 @@
 {
   "name": "hoplite-mcp",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "The Hoplite catalog MCP server. Ships one tool, contents, which lists corpus documents with their frontmatter as written. The graph tools are still under design.",
   "author": {
     "name": "MSL"
