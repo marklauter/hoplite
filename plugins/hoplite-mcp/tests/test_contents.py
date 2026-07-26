@@ -10,6 +10,7 @@ from hoplite_catalog.contents import (
     Entry,
     collect,
     is_excluded,
+    normalize_exclusions,
     project,
     read_entry,
     render,
@@ -237,6 +238,26 @@ class TestIsExcluded:
         assert is_excluded("docs/journal/a.md", frozenset()) is False
 
 
+class TestNormalizeExclusions:
+    @pytest.mark.parametrize(
+        "given",
+        ["docs/journal", "docs/journal/", "/docs/journal", "./docs/journal", "docs\\journal"],
+    )
+    def test_spellings_clean_to_the_matchable_form(self, given: str) -> None:
+        assert normalize_exclusions([given]) == frozenset({"docs/journal"})
+
+    def test_a_trailing_slash_still_excludes(self) -> None:
+        # The silent failure this prevents: no match, so the full listing comes back.
+        assert is_excluded("docs/journal/a.md", normalize_exclusions(["docs/journal/"])) is True
+
+    @pytest.mark.parametrize("given", ["", "/", ".", "./"])
+    def test_entries_that_clean_to_nothing_are_dropped(self, given: str) -> None:
+        assert normalize_exclusions([given]) == frozenset()
+
+    def test_nothing_in_means_nothing_out(self) -> None:
+        assert normalize_exclusions([]) == frozenset()
+
+
 class TestResolveUnder:
     def test_resolves_relative_to_the_root(self, tmp_path: Path) -> None:
         (tmp_path / "docs" / "glossary").mkdir(parents=True)
@@ -256,6 +277,34 @@ class TestResolveUnder:
     def test_a_missing_folder_is_rejected(self, tmp_path: Path) -> None:
         with pytest.raises(ValueError, match="does not exist"):
             resolve_under(tmp_path, "docs/nope")
+
+    def test_a_symlinked_folder_pointing_out_of_the_root_is_rejected(self, tmp_path: Path) -> None:
+        # Lexically inside the corpus, physically outside it. Reads follow symlinks, so
+        # without the resolved check this listing would report foreign files under docs/.
+        outside = tmp_path.parent / f"{tmp_path.name}-outside"
+        outside.mkdir()
+        _write(outside / "secret.md", "---\ntitle: Secret\n---\n")
+        corpus = tmp_path / "docs"
+        corpus.mkdir()
+        try:
+            (corpus / "external").symlink_to(outside, target_is_directory=True)
+        except OSError as exc:  # Windows needs developer mode or elevation
+            pytest.skip(f"cannot create a symlink here: {exc}")
+
+        with pytest.raises(ValueError, match="resolves outside the corpus root"):
+            resolve_under(tmp_path, "docs/external")
+
+    def test_a_symlink_resolving_inside_the_root_is_allowed(self, tmp_path: Path) -> None:
+        # The docs/specs case: a symlink into plugins/, still inside the corpus root.
+        target = _write(tmp_path / "references" / "frontmatter.md", "---\ntitle: F\n---\n")
+        link = tmp_path / "docs" / "specs" / "frontmatter.md"
+        link.parent.mkdir(parents=True)
+        try:
+            link.symlink_to(target)
+        except OSError as exc:
+            pytest.skip(f"cannot create a symlink here: {exc}")
+
+        assert resolve_under(tmp_path, "docs/specs/frontmatter.md") == link
 
     def test_collapses_dot_segments_without_following_symlinks(self, tmp_path: Path) -> None:
         (tmp_path / "docs" / "specs").mkdir(parents=True)

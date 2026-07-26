@@ -9,7 +9,13 @@ from typing import Any
 
 import pytest
 
-from hoplite_catalog.server import PROTOCOL_VERSION, SERVER_NAME, respond, serve
+from hoplite_catalog.server import (
+    PROTOCOL_VERSION,
+    SERVER_NAME,
+    SERVER_VERSION,
+    respond,
+    serve,
+)
 
 
 @pytest.fixture
@@ -53,6 +59,12 @@ class TestHandshake:
         assert result["protocolVersion"] == PROTOCOL_VERSION
         assert result["serverInfo"]["name"] == SERVER_NAME
         assert "tools" in result["capabilities"]
+
+    def test_the_reported_version_matches_the_plugin_manifest(self) -> None:
+        # initialize reports SERVER_VERSION, so a bumped manifest must not leave it behind.
+        manifest = Path(__file__).parent.parent / ".claude-plugin" / "plugin.json"
+        declared: str = json.loads(manifest.read_text(encoding="utf-8"))["version"]
+        assert declared == SERVER_VERSION
 
     def test_initialized_notification_gets_no_reply(self, corpus: Path) -> None:
         line = json.dumps({"jsonrpc": "2.0", "method": "notifications/initialized"})
@@ -164,6 +176,28 @@ class TestToolsCall:
         params = {"name": "contents", "arguments": {"exclude": ["docs"]}}
         text = _tool_text(respond(corpus, _request("tools/call", params)))
         assert text == "no markdown documents under 'docs' after exclusions"
+
+    def test_a_trailing_slash_on_exclude_still_excludes(self, corpus: Path) -> None:
+        (corpus / "docs" / "journal").mkdir()
+        (corpus / "docs" / "journal" / "day.md").write_text(
+            "---\ntitle: D\n---\n", encoding="utf-8"
+        )
+        params = {"name": "contents", "arguments": {"exclude": ["docs/journal/"]}}
+        assert "docs/journal/day.md" not in _tool_text(
+            respond(corpus, _request("tools/call", params))
+        )
+
+    def test_a_misspelled_key_is_refused(self, corpus: Path) -> None:
+        params = {"name": "contents", "arguments": {"keys": ["titel"]}}
+        message = respond(corpus, _request("tools/call", params))
+        assert _result(message)["isError"] is True
+        assert "none of the requested keys" in _tool_text(message)
+
+    def test_a_key_absent_from_some_documents_is_fine(self, corpus: Path) -> None:
+        # docs/loose.md has no frontmatter at all; docs/edge.md has a title.
+        params = {"name": "contents", "arguments": {"keys": ["title"]}}
+        text = _tool_text(respond(corpus, _request("tools/call", params)))
+        assert text == "docs/edge.md\ntitle: Edge\n\ndocs/loose.md"
 
     def test_a_non_list_exclude_is_refused(self, corpus: Path) -> None:
         params = {"name": "contents", "arguments": {"exclude": "docs/journal"}}

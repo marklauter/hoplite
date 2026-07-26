@@ -27,6 +27,7 @@ __all__ = [
     "collect",
     "corpus_path",
     "is_excluded",
+    "normalize_exclusions",
     "project",
     "read_entry",
     "render",
@@ -85,6 +86,14 @@ def resolve_under(root: Path, under: str) -> Path:
     ``read_entry`` avoids. A path is a link address here; where the bytes live is not this
     module's business.
 
+    Containment is checked twice, because reporting and reading are different questions.
+    The lexical check stops ``..`` traversal. The resolved check stops a symlinked folder
+    inside the corpus from pointing out of it: reads follow symlinks, so without it
+    ``docs/external -> /somewhere/else`` would be read and reported under ``docs/``, which
+    is a listing that lies about what the corpus contains. The two real symlinks in
+    ``docs/specs/`` resolve to ``plugins/hoplite-skills/references/``, inside the root, so
+    they pass.
+
     Raises ``ValueError`` when the path escapes the root or names nothing. Both are
     caller errors the agent could have prevented, and per the error model in
     ``docs/specs/hoplite-tool-api.md`` those throw rather than riding back as an empty
@@ -92,11 +101,33 @@ def resolve_under(root: Path, under: str) -> Path:
     """
     resolved_root = root.resolve()
     target = Path(os.path.normpath(resolved_root / under))
-    if target != resolved_root and resolved_root not in target.parents:
+    if not _contains(resolved_root, target):
         raise ValueError(f"{under!r} is outside the corpus root")
     if not target.exists():
         raise ValueError(f"{under!r} does not exist")
+    if not _contains(resolved_root, target.resolve()):
+        raise ValueError(f"{under!r} resolves outside the corpus root")
     return target
+
+
+def _contains(root: Path, path: Path) -> bool:
+    """True when ``path`` is ``root`` or sits beneath it."""
+    return path == root or root in path.parents
+
+
+def normalize_exclusions(folders: Iterable[str]) -> frozenset[str]:
+    """Clean ``exclude`` entries into the form ``is_excluded`` matches.
+
+    A trailing slash, a leading slash, a ``./`` prefix, or Windows separators would each
+    otherwise match nothing and silently return the full listing the caller was trimming.
+    Entries that clean to nothing are dropped, so ``exclude: [""]`` excludes nothing
+    rather than everything.
+    """
+    cleaned = (
+        os.path.normpath(folder.replace("\\", "/")).replace("\\", "/").strip("/")
+        for folder in folders
+    )
+    return frozenset(folder for folder in cleaned if folder not in ("", "."))
 
 
 def read_entry(root: Path, path: Path) -> Entry:
