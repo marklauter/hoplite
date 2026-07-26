@@ -25,7 +25,9 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from edge_grammar import (  # noqa: E402  — sibling module; the hook runs by path (see hooks.json)
+# Sibling module, imported after the sys.path insert above because the hook runs by path
+# rather than as a package (see hooks.json).
+from edge_grammar import (
     frontmatter_wikilink_targets,
     inline_wikilinks,
     validate_target,
@@ -50,8 +52,8 @@ ADVISORY_TEMPLATE = """\
 {guidance}"""
 
 
-_TAB_INDENT_RE = re.compile(r"^ *\t")           # a tab used for indentation
-_MAPPING_COLON_RE = re.compile(r":(?:\s|$)")    # the `key:` of a mapping entry
+_TAB_INDENT_RE = re.compile(r"^ *\t")  # a tab used for indentation
+_MAPPING_COLON_RE = re.compile(r":(?:\s|$)")  # the `key:` of a mapping entry
 
 
 def _wellformedness_issues(fm_lines: list[str]) -> list[str]:
@@ -89,9 +91,7 @@ def _wellformedness_issues(fm_lines: list[str]) -> list[str]:
 
         flow_depth = max(
             0,
-            flow_depth
-            + line.count("[") + line.count("{")
-            - line.count("]") - line.count("}"),
+            flow_depth + line.count("[") + line.count("{") - line.count("]") - line.count("}"),
         )
     return problems
 

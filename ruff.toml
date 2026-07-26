@@ -1,0 +1,22 @@
+# Ruff settings for the Python outside plugins/hoplite-mcp/, which carries its own config
+# in pyproject.toml. Without this file a run from the repo root fell back to ruff's
+# defaults — 88 columns — and reformatted the skills hooks and the quary archive as a side
+# effect of formatting the MCP plugin.
+line-length = 100
+
+# The frontmatter hook runs under whatever interpreter is on PATH, not a project venv, so
+# it stays on syntax an older Python accepts. The MCP plugin targets 3.11 in its own config.
+target-version = "py39"
+
+# quary/ is a superseded generation of this repo, kept for reference and not maintained.
+# templates/ is the retired mail-merge build. Neither is edited; neither gets formatted.
+extend-exclude = ["quary", "templates"]
+
+[lint]
+select = ["A", "E", "F", "I", "B", "UP", "SIM", "RUF"]
+
+[lint.isort]
+# The hooks directory is a flat script directory, not a package: check-frontmatter.py
+# imports edge_grammar as a sibling after a sys.path insert. Without this, isort files it
+# under third-party and merges it into the pytest import group.
+known-first-party = ["edge_grammar"]
