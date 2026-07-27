@@ -9,8 +9,12 @@ import pytest
 from hoplite_catalog.contents import (
     Entry,
     collect,
+    is_excluded,
+    normalize_exclusions,
+    project,
     read_entry,
     render,
+    resolve_exclusions,
     resolve_under,
     slice_frontmatter,
 )
@@ -54,25 +58,82 @@ class TestSliceFrontmatter:
 
 
 class TestRender:
-    def test_document_with_frontmatter_is_fenced(self) -> None:
-        entry = Entry(path="docs/a.md", frontmatter=("title: A",))
-        assert render([entry]) == "docs/a.md\n---\ntitle: A\n---"
+    def test_properties_follow_the_path_one_per_line(self) -> None:
+        entry = Entry(path="docs/a.md", frontmatter=("title: A", "tags: [x]"))
+        assert render([entry]) == "docs/a.md\ntitle: A\ntags: [x]"
+
+    def test_no_fences_are_emitted(self) -> None:
+        assert "---" not in render([Entry(path="docs/a.md", frontmatter=("title: A",))])
 
     def test_document_without_frontmatter_is_its_path_alone(self) -> None:
         assert render([Entry(path="docs/a.md", frontmatter=None)]) == "docs/a.md"
 
-    def test_empty_block_round_trips_as_an_empty_block(self) -> None:
-        assert render([Entry(path="docs/a.md", frontmatter=())]) == "docs/a.md\n---\n---"
+    def test_an_empty_block_renders_as_the_path_alone(self) -> None:
+        assert render([Entry(path="docs/a.md", frontmatter=())]) == "docs/a.md"
 
     def test_entries_are_separated_by_a_blank_line(self) -> None:
         entries = [
             Entry(path="docs/a.md", frontmatter=("title: A",)),
             Entry(path="docs/b.md", frontmatter=None),
         ]
-        assert render(entries) == "docs/a.md\n---\ntitle: A\n---\n\ndocs/b.md"
+        assert render(entries) == "docs/a.md\ntitle: A\n\ndocs/b.md"
+
+    def test_a_blank_line_inside_a_block_cannot_split_a_record(self) -> None:
+        # Otherwise the blank-line separator would turn one document into two records.
+        entry = Entry(path="docs/a.md", frontmatter=("title: A", "   ", "tags: [x]"))
+        assert render([entry]) == "docs/a.md\ntitle: A\ntags: [x]"
 
     def test_no_entries_renders_empty(self) -> None:
         assert render([]) == ""
+
+
+class TestProject:
+    FULL = Entry(
+        path="docs/glossary/edge.md",
+        frontmatter=(
+            "title: Edge",
+            'summary: "A relationship between two documents."',
+            "tags: [glossary, hoplite]",
+            "disjoint-with:",
+            '  - "[[node]]"',
+            '  - "[[claim]]"',
+        ),
+    )
+
+    def test_no_keys_keeps_everything(self) -> None:
+        assert project(self.FULL, None) == self.FULL
+
+    def test_keeps_only_the_named_properties(self) -> None:
+        assert project(self.FULL, frozenset({"title", "tags"})).frontmatter == (
+            "title: Edge",
+            "tags: [glossary, hoplite]",
+        )
+
+    def test_a_block_list_keeps_its_continuation_lines(self) -> None:
+        assert project(self.FULL, frozenset({"disjoint-with"})).frontmatter == (
+            "disjoint-with:",
+            '  - "[[node]]"',
+            '  - "[[claim]]"',
+        )
+
+    def test_a_continuation_line_is_dropped_with_its_key(self) -> None:
+        kept = project(self.FULL, frozenset({"title"})).frontmatter
+        assert kept == ("title: Edge",)
+
+    def test_an_empty_key_set_leaves_the_path_alone(self) -> None:
+        projected = project(self.FULL, frozenset())
+        assert projected.frontmatter is None
+        assert render([projected]) == "docs/glossary/edge.md"
+
+    def test_an_unmatched_key_leaves_the_path_alone(self) -> None:
+        assert project(self.FULL, frozenset({"nonesuch"})).frontmatter is None
+
+    def test_a_document_without_frontmatter_is_untouched(self) -> None:
+        bare = Entry(path="docs/a.md", frontmatter=None)
+        assert project(bare, frozenset({"title"})) == bare
+
+    def test_the_path_is_never_changed(self) -> None:
+        assert project(self.FULL, frozenset({"title"})).path == self.FULL.path
 
 
 class TestReadEntry:
@@ -140,6 +201,205 @@ class TestCollect:
         (tmp_path / "docs").mkdir()
         assert collect(tmp_path, tmp_path / "docs") == ()
 
+    def test_excluded_folders_are_skipped(self, tmp_path: Path) -> None:
+        _write(tmp_path / "docs" / "notes" / "a.md", "---\ntitle: A\n---\n")
+        _write(tmp_path / "docs" / "journal" / "b.md", "---\ntitle: B\n---\n")
+        _write(tmp_path / "docs" / "journal" / "deep" / "c.md", "---\ntitle: C\n---\n")
+        entries = collect(tmp_path, tmp_path / "docs", frozenset({"docs/journal"}))
+        assert [entry.path for entry in entries] == ["docs/notes/a.md"]
+
+    def test_exclusion_matches_whole_segments(self, tmp_path: Path) -> None:
+        # 'docs/journal' must not exclude a sibling whose name merely starts the same way.
+        _write(tmp_path / "docs" / "journal" / "a.md", "---\ntitle: A\n---\n")
+        _write(tmp_path / "docs" / "journals-are-not-notes.md", "---\ntitle: B\n---\n")
+        entries = collect(tmp_path, tmp_path / "docs", frozenset({"docs/journal"}))
+        assert [entry.path for entry in entries] == ["docs/journals-are-not-notes.md"]
+
+    def test_excluding_everything_collects_nothing(self, tmp_path: Path) -> None:
+        _write(tmp_path / "docs" / "a.md", "---\ntitle: A\n---\n")
+        assert collect(tmp_path, tmp_path / "docs", frozenset({"docs"})) == ()
+
+
+class TestIsExcluded:
+    @pytest.mark.parametrize(
+        ("path", "expected"),
+        [
+            ("docs/journal/2026-07-26.md", True),
+            ("docs/journal/deep/nested.md", True),
+            ("docs/journal", True),
+            ("docs/journals-are-not-notes.md", False),
+            ("docs/notes/journal.md", False),
+            ("docs/notes/a.md", False),
+        ],
+    )
+    def test_matches_whole_segments_only(self, path: str, expected: bool) -> None:
+        assert is_excluded(path, frozenset({"docs/journal"})) is expected
+
+    def test_no_exclusions_excludes_nothing(self) -> None:
+        assert is_excluded("docs/journal/a.md", frozenset()) is False
+
+
+class TestCollectContainment:
+    def _leaky_corpus(self, tmp_path: Path) -> Path:
+        outside = tmp_path.parent / f"{tmp_path.name}-outside"
+        outside.mkdir(exist_ok=True)
+        _write(outside / "secret.md", "---\ntitle: Secret\n---\n")
+        _write(tmp_path / "docs" / "ok.md", "---\ntitle: OK\n---\n")
+        try:
+            (tmp_path / "docs" / "leak.md").symlink_to(outside / "secret.md")
+        except OSError as exc:  # Windows needs developer mode or elevation
+            pytest.skip(f"cannot create a symlink here: {exc}")
+        return tmp_path / "docs"
+
+    def test_a_symlinked_file_pointing_out_of_the_root_is_refused(self, tmp_path: Path) -> None:
+        # The walk reads symlinked files like any other, so the guard has to sit here too:
+        # otherwise foreign frontmatter comes back attached to an in-corpus path.
+        docs = self._leaky_corpus(tmp_path)
+        with pytest.raises(ValueError, match="outside the corpus root"):
+            collect(tmp_path, docs)
+
+    def test_the_refusal_names_the_corpus_path_and_no_host_path(self, tmp_path: Path) -> None:
+        # Where the link points is a filesystem path the corpus does not otherwise expose,
+        # and it adds nothing the caller can act on.
+        docs = self._leaky_corpus(tmp_path)
+        with pytest.raises(ValueError) as caught:
+            collect(tmp_path, docs)
+        message = str(caught.value)
+        assert "docs/leak.md" in message
+        assert "secret.md" not in message
+        assert str(tmp_path.parent) not in message
+
+    def test_excluding_the_one_link_lets_the_rest_through(self, tmp_path: Path) -> None:
+        # The remedy is the single document, not its whole folder: excluding docs/ to route
+        # around one planted link would cost the entire listing.
+        docs = self._leaky_corpus(tmp_path)
+        entries = collect(tmp_path, docs, frozenset({"docs/leak.md"}))
+        assert [entry.path for entry in entries] == ["docs/ok.md"]
+
+    def test_a_link_dangling_inside_the_root_is_refused_with_a_remedy(self, tmp_path: Path) -> None:
+        # Passes the containment check, then fails at the read. The raw OSError would carry
+        # an absolute host path and name no remedy, though excluding the document is one.
+        _write(tmp_path / "docs" / "ok.md", "---\ntitle: OK\n---\n")
+        try:
+            (tmp_path / "docs" / "inner.md").symlink_to(tmp_path / "docs" / "never-created.md")
+        except OSError as exc:
+            pytest.skip(f"cannot create a symlink here: {exc}")
+
+        with pytest.raises(ValueError) as caught:
+            collect(tmp_path, tmp_path / "docs")
+        message = str(caught.value)
+        assert "docs/inner.md" in message
+        assert "exclude: ['docs/inner.md']" in message
+        assert str(tmp_path) not in message
+
+    def test_excluding_an_unreadable_document_lets_the_listing_through(
+        self, tmp_path: Path
+    ) -> None:
+        _write(tmp_path / "docs" / "ok.md", "---\ntitle: OK\n---\n")
+        try:
+            (tmp_path / "docs" / "inner.md").symlink_to(tmp_path / "docs" / "never-created.md")
+        except OSError as exc:
+            pytest.skip(f"cannot create a symlink here: {exc}")
+
+        entries = collect(tmp_path, tmp_path / "docs", frozenset({"docs/inner.md"}))
+        assert [entry.path for entry in entries] == ["docs/ok.md"]
+
+    def test_a_symlink_resolving_inside_the_root_is_read(self, tmp_path: Path) -> None:
+        target = _write(tmp_path / "references" / "frontmatter.md", "---\ntitle: F\n---\n")
+        link = tmp_path / "docs" / "specs" / "frontmatter.md"
+        link.parent.mkdir(parents=True)
+        try:
+            link.symlink_to(target)
+        except OSError as exc:
+            pytest.skip(f"cannot create a symlink here: {exc}")
+
+        entries = collect(tmp_path, tmp_path / "docs")
+        assert [entry.path for entry in entries] == ["docs/specs/frontmatter.md"]
+
+
+class TestResolveExclusions:
+    def test_a_real_folder_is_accepted(self, tmp_path: Path) -> None:
+        (tmp_path / "docs" / "journal").mkdir(parents=True)
+        assert resolve_exclusions(tmp_path, ["docs/journal/"]) == frozenset({"docs/journal"})
+
+    def test_a_path_relative_to_under_is_rejected(self, tmp_path: Path) -> None:
+        # 'journal' instead of 'docs/journal' — normalizes fine, matches nothing, and would
+        # silently return the full listing the caller meant to trim.
+        (tmp_path / "docs" / "journal").mkdir(parents=True)
+        with pytest.raises(ValueError, match="not a path in the corpus"):
+            resolve_exclusions(tmp_path, ["journal"])
+
+    def test_a_misspelled_folder_is_rejected(self, tmp_path: Path) -> None:
+        (tmp_path / "docs" / "journal").mkdir(parents=True)
+        with pytest.raises(ValueError, match="not a path in the corpus"):
+            resolve_exclusions(tmp_path, ["docs/journals"])
+
+    def test_a_single_document_is_excludable(self, tmp_path: Path) -> None:
+        # Otherwise the only remedy for one bad link is excluding its whole folder.
+        _write(tmp_path / "docs" / "a.md", "")
+        assert resolve_exclusions(tmp_path, ["docs/a.md"]) == frozenset({"docs/a.md"})
+
+    def test_a_dangling_link_is_still_excludable(self, tmp_path: Path) -> None:
+        # exists() follows the link and would refuse this, while collect refuses the
+        # listing and names this exact entry as the remedy — leaving no callable form.
+        (tmp_path / "docs").mkdir()
+        try:
+            (tmp_path / "docs" / "dangling.md").symlink_to(tmp_path.parent / "never-created.md")
+        except OSError as exc:
+            pytest.skip(f"cannot create a symlink here: {exc}")
+
+        assert resolve_exclusions(tmp_path, ["docs/dangling.md"]) == frozenset({"docs/dangling.md"})
+
+    def test_a_link_pointing_out_of_the_corpus_is_still_excludable(self, tmp_path: Path) -> None:
+        # The document a caller most needs to exclude is the one whose target is elsewhere,
+        # so exclusion entries are checked lexically and never resolved.
+        outside = tmp_path.parent / f"{tmp_path.name}-target"
+        outside.mkdir(exist_ok=True)
+        target = _write(outside / "secret.md", "")
+        (tmp_path / "docs").mkdir()
+        try:
+            (tmp_path / "docs" / "leak.md").symlink_to(target)
+        except OSError as exc:
+            pytest.skip(f"cannot create a symlink here: {exc}")
+
+        assert resolve_exclusions(tmp_path, ["docs/leak.md"]) == frozenset({"docs/leak.md"})
+
+    def test_escaping_the_root_is_rejected(self, tmp_path: Path) -> None:
+        (tmp_path / "docs").mkdir()
+        with pytest.raises(ValueError, match="not a path in the corpus"):
+            resolve_exclusions(tmp_path, ["../elsewhere"])
+
+    def test_a_folder_outside_the_current_under_is_a_no_op_not_an_error(
+        self, tmp_path: Path
+    ) -> None:
+        # A standing exclusion list reused across calls must not be punished for missing.
+        (tmp_path / "docs" / "journal").mkdir(parents=True)
+        (tmp_path / "docs" / "glossary").mkdir()
+        assert resolve_exclusions(tmp_path, ["docs/journal"]) == frozenset({"docs/journal"})
+
+    def test_nothing_in_means_nothing_out(self, tmp_path: Path) -> None:
+        assert resolve_exclusions(tmp_path, []) == frozenset()
+
+
+class TestNormalizeExclusions:
+    @pytest.mark.parametrize(
+        "given",
+        ["docs/journal", "docs/journal/", "/docs/journal", "./docs/journal", "docs\\journal"],
+    )
+    def test_spellings_clean_to_the_matchable_form(self, given: str) -> None:
+        assert normalize_exclusions([given]) == frozenset({"docs/journal"})
+
+    def test_a_trailing_slash_still_excludes(self) -> None:
+        # The silent failure this prevents: no match, so the full listing comes back.
+        assert is_excluded("docs/journal/a.md", normalize_exclusions(["docs/journal/"])) is True
+
+    @pytest.mark.parametrize("given", ["", "/", ".", "./"])
+    def test_entries_that_clean_to_nothing_are_dropped(self, given: str) -> None:
+        assert normalize_exclusions([given]) == frozenset()
+
+    def test_nothing_in_means_nothing_out(self) -> None:
+        assert normalize_exclusions([]) == frozenset()
+
 
 class TestResolveUnder:
     def test_resolves_relative_to_the_root(self, tmp_path: Path) -> None:
@@ -160,6 +420,34 @@ class TestResolveUnder:
     def test_a_missing_folder_is_rejected(self, tmp_path: Path) -> None:
         with pytest.raises(ValueError, match="does not exist"):
             resolve_under(tmp_path, "docs/nope")
+
+    def test_a_symlinked_folder_pointing_out_of_the_root_is_rejected(self, tmp_path: Path) -> None:
+        # Lexically inside the corpus, physically outside it. Reads follow symlinks, so
+        # without the resolved check this listing would report foreign files under docs/.
+        outside = tmp_path.parent / f"{tmp_path.name}-outside"
+        outside.mkdir()
+        _write(outside / "secret.md", "---\ntitle: Secret\n---\n")
+        corpus = tmp_path / "docs"
+        corpus.mkdir()
+        try:
+            (corpus / "external").symlink_to(outside, target_is_directory=True)
+        except OSError as exc:  # Windows needs developer mode or elevation
+            pytest.skip(f"cannot create a symlink here: {exc}")
+
+        with pytest.raises(ValueError, match="resolves outside the corpus root"):
+            resolve_under(tmp_path, "docs/external")
+
+    def test_a_symlink_resolving_inside_the_root_is_allowed(self, tmp_path: Path) -> None:
+        # The docs/specs case: a symlink into plugins/, still inside the corpus root.
+        target = _write(tmp_path / "references" / "frontmatter.md", "---\ntitle: F\n---\n")
+        link = tmp_path / "docs" / "specs" / "frontmatter.md"
+        link.parent.mkdir(parents=True)
+        try:
+            link.symlink_to(target)
+        except OSError as exc:
+            pytest.skip(f"cannot create a symlink here: {exc}")
+
+        assert resolve_under(tmp_path, "docs/specs/frontmatter.md") == link
 
     def test_collapses_dot_segments_without_following_symlinks(self, tmp_path: Path) -> None:
         (tmp_path / "docs" / "specs").mkdir(parents=True)
