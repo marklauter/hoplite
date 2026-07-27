@@ -1,10 +1,9 @@
-"""Walk one directory of the corpus and slice the frontmatter out of its documents.
+"""Walk one directory of the corpus and read the documents in it.
 
-``contents`` is a listing, not a parse. It finds the opening ``---``, finds the closing
-``---``, and emits the lines between them verbatim. There is no YAML parser here, so
-keys keep their authored order, quoting, and spacing; malformed frontmatter passes
-through as written instead of being rejected; and a property whose value is a wikilink
-is self-identifying as an edge without this module having to say so.
+Everything here is about a filesystem. What a document's frontmatter says is
+``documents``' business, and this module only hands it the lines it read — the two share
+the records and nothing else, which is what the layering contract now asserts rather than
+leaves to convention.
 
 Directories recurse, documents do not. The report leads with the directory subtree to
 full depth — names and per-directory document counts, which cost about 50 tokens for the
@@ -12,118 +11,49 @@ whole of ``docs/`` — then the non-markdown files in the requested directory, t
 documents in that directory alone. The caller pays for the directory it asked for rather
 than for the corpus, and it sees the skeleton first, so it knows what asking will cost.
 
-The frontmatter standard lives in ``plugins/hoplite-skills/references/frontmatter.md``.
-This module does not implement it — it hands the block to the caller untouched. In
-particular the spec's derived defaults (slug-derived ``title``, body-excerpt
-``summary``) are not applied: a document with no block contributes its path alone.
+Every directory is read once per call. Two passes need the same listing — the link
+resolution that decides which of two names for one directory gets descended, then the walk
+itself — and a memo holds what each returned for as long as the call lasts. See
+``_Listings``.
 """
 
 from __future__ import annotations
 
 import os.path
-import re
 from collections.abc import Iterable, Iterator, Sequence
-from dataclasses import dataclass, replace
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Final, final
+from typing import final
 
 from hoplite_catalog.corpus import Corpus
-from hoplite_catalog.errors import CallerError
+from hoplite_catalog.documents import Document, Entry, Unreadable, slice_frontmatter
+from hoplite_catalog.refusals import (
+    Missing,
+    NotMarkdown,
+    OutsideRoot,
+    ResolvesOutside,
+    Unaddressable,
+)
 
 __all__ = [
-    "FENCE",
     "Directory",
     "DirectoryNode",
-    "Document",
-    "Entry",
     "File",
     "FileNode",
     "ForeignDirectory",
     "ForeignFile",
-    "Property",
+    "Report",
     "UnlistableDirectory",
-    "Unreadable",
     "UnreadableFile",
     "collect",
-    "group_properties",
     "markdown_in",
     "other_files",
     "read_entry",
     "resolve_under",
-    "slice_frontmatter",
     "subdirectories",
+    "survey",
     "walk",
 ]
-
-FENCE: Final = "---"
-
-# A root-level mapping key: unindented, up to the first colon. Indented lines and `-`
-# list items are continuations of the key above them.
-_ROOT_KEY_RE: Final = re.compile(r"^([A-Za-z0-9_.\-]+)\s*:")
-
-
-@final
-@dataclass(frozen=True, slots=True)
-class Entry:
-    """One markdown document: its corpus-relative path and its frontmatter as written.
-
-    ``frontmatter`` is ``None`` when the document has no block, and an empty tuple when
-    it has an empty one. Keeping those apart is what lets the listing round-trip: an
-    empty block renders back as an empty block, not as a document without one.
-    """
-
-    path: str
-    frontmatter: tuple[str, ...] | None
-
-    def properties(self) -> tuple[Property, ...]:
-        """The frontmatter grouped by root key."""
-        return group_properties(self.frontmatter or ())
-
-    def projected(self, keys: frozenset[str] | None) -> Entry:
-        """Keep only the properties named in ``keys``. ``None`` keeps everything."""
-        if keys is None or self.frontmatter is None:
-            return self
-        kept = [line for prop in self.properties() if prop.key in keys for line in prop.lines]
-        return replace(self, frontmatter=tuple(kept) or None)
-
-
-@final
-@dataclass(frozen=True, slots=True)
-class Unreadable:
-    """A markdown document the listing could not open, and why.
-
-    It renders like any other document — the path, then lines under it — with the reason
-    standing where the frontmatter would be. That is the same answer the listing already
-    gives for a PDF: when properties cannot be had, the path is still reported, because a
-    document a caller can see on disk must not go missing from the listing.
-
-    Reporting beats refusing. A stray link used to fail the whole call, so one unreadable
-    file made its directory unlistable, and through the recursive key count it took the
-    whole subtree with it.
-
-    ``reason`` never carries a host path. Where a link points is a filesystem path the
-    corpus does not otherwise expose, and it adds nothing a caller can act on.
-    """
-
-    path: str
-    reason: str
-
-    def properties(self) -> tuple[Property, ...]:
-        """No properties: nothing was read. Keeps the reason out of the key vocabulary."""
-        return ()
-
-    def projected(self, keys: frozenset[str] | None) -> Unreadable:
-        """Unchanged. ``keys`` selects frontmatter, and there is none to select from."""
-        return self
-
-
-@final
-@dataclass(frozen=True, slots=True)
-class Property:
-    """One frontmatter key with the lines it owns — its own line and its continuations."""
-
-    key: str
-    lines: tuple[str, ...]
 
 
 @final
@@ -218,33 +148,27 @@ type DirectoryNode = Directory | ForeignDirectory | UnlistableDirectory
 # not be reached. Every visible non-markdown entry is exactly one of the three.
 type FileNode = File | ForeignFile | UnreadableFile
 
-# What the documents group lists: one that was read, or one that could not be.
-type Document = Entry | Unreadable
 
+@final
+@dataclass(frozen=True, slots=True, kw_only=True)
+class Report:
+    """What one ``contents`` call found: the subtree, the other files, the documents.
 
-def slice_frontmatter(lines: Sequence[str]) -> tuple[str, ...] | None:
-    """Return the lines between the fences, or ``None`` when the document has no block.
+    The three come from one ``survey`` rather than three calls, which is what lets them
+    share a single read of each directory — and what stops them disagreeing about which
+    directories exist.
 
-    The opening fence must be the first line; the closing fence is the next line that is
-    a fence on its own. Both are matched after stripping surrounding whitespace, so a
-    trailing space — invisible in an editor — doesn't cost a document its whole block.
-
-    An unterminated block reads as no block. Emitting to the end of the file instead
-    would pull the entire document body into the listing, which is the one outcome a
-    listing must never produce. The ``check-frontmatter`` hook already flags the
-    unclosed fence at write time.
+    Keyword-only: three tuple fields, so positionally a transposed pair type-checks and
+    renders a plausible wrong report.
     """
-    if not lines or lines[0].strip() != FENCE:
-        return None
-    closing = next(
-        (index for index, line in enumerate(lines[1:], start=1) if line.strip() == FENCE),
-        None,
-    )
-    return None if closing is None else tuple(lines[1:closing])
+
+    tree: tuple[DirectoryNode, ...]
+    others: tuple[FileNode, ...]
+    documents: tuple[Document, ...]
 
 
-def resolve_under(corpus: Corpus, under: str) -> Path:
-    """Normalize ``under`` against the corpus root, rejecting anything outside it.
+def resolve_under(corpus: Corpus, under: str) -> Path | Unaddressable:
+    """Normalize ``under`` against the corpus root, or say why it cannot be addressed.
 
     Normalization is lexical — ``normpath`` collapses ``.`` and ``..`` without touching
     the filesystem — so a symlinked target keeps the path the corpus links to.
@@ -261,25 +185,20 @@ def resolve_under(corpus: Corpus, under: str) -> Path:
     ``docs/specs/`` resolve to ``plugins/hoplite-skills/references/``, inside the root, so
     they pass.
 
-    Raises ``CallerError`` when the path escapes the root, names nothing, or names a file
-    that is not a ``.md`` document. All three are things the agent could have gotten right,
-    and the host turns them into an error result carrying the message — see ``errors``.
+    A path that escapes the root, names nothing, or names a file that is not a ``.md``
+    document comes back as a value rather than raising: all three are things the agent
+    could have gotten right, so they are outcomes of this function and not failures of it.
+    The host turns each into an error result carrying the reason — see ``refusals``.
     """
     target = Path(os.path.normpath(corpus.root / under))
     if not corpus.contains(target):
-        raise CallerError(f"{under!r} is outside the corpus root")
+        return OutsideRoot(under)
     if not corpus.exists(target):
-        raise CallerError(f"{under!r} does not exist")
+        return Missing(under)
     if not corpus.contains_target(target):
-        raise CallerError(f"{under!r} resolves outside the corpus root")
+        return ResolvesOutside(under)
     if corpus.is_file(target) and target.suffix != ".md":
-        # A file named directly is the one path into `collect` that skips `markdown_in`,
-        # and with it both the suffix test and the hidden-file skip. Without this, any file
-        # in the working directory opening with `---` has that block emitted — a `.env`
-        # someone wrote YAML into, a lockfile, a certificate. The listing reports a
-        # non-markdown file by path and never opens it, and asking for one by name must not
-        # be the exception to that.
-        raise CallerError(f"{under!r} is not a markdown document")
+        return NotMarkdown(under)
     return target
 
 
@@ -359,6 +278,46 @@ def _is_markdown(path: Path) -> bool:
     return path.suffix == ".md"
 
 
+@final
+class _Listings:
+    """The directories one call has already read, so none is read twice.
+
+    Two passes need the same listings. ``_unlinked_directories`` partitions every directory
+    in the subtree to decide which of two names for one of them gets descended, and then
+    ``_walk`` partitions all of them again; the report's other-files and documents groups
+    made a third and fourth read of the directory asked for. On this repository's ``docs/``
+    — eight directories — one ``contents`` call made 18 ``entries`` calls and 366
+    ``is_directory`` calls. It is now one ``entries`` call per directory, which is what the
+    single-pass ``_partition`` was for before the second pass gave it back.
+
+    The memo is the one mutable thing in the walk, and it is scoped to a call by
+    construction: each public entry point makes one, hands it down, and drops it on the way
+    out, so a listing can never outlive the call that read it and no caller can hold one.
+    Keyed on the path as it was reached, never on what it resolves to, because
+    ``docs/mirror`` and ``docs/glossary`` are two directories to a report that lists both.
+
+    A failed read is not remembered. It is rare, it is one line in the report either way,
+    and caching it would mean deciding how long a permission error stays true.
+
+    Not a frozen dataclass, unlike everything else here: it is a memo and it mutates, and
+    dressing it as a record would say the opposite of what it is.
+    """
+
+    __slots__ = ("_read", "corpus")
+
+    def __init__(self, corpus: Corpus) -> None:
+        self.corpus = corpus
+        self._read: dict[Path, _Listing] = {}
+
+    def of(self, directory: Path) -> _Listing:
+        """``directory`` split into its three groups, read at most once. Raises ``OSError``."""
+        listing = self._read.get(directory)
+        if listing is None:
+            listing = _partition(self.corpus, directory)
+            self._read[directory] = listing
+        return listing
+
+
 def subdirectories(corpus: Corpus, directory: Path) -> tuple[Path, ...]:
     """The child directories a walk descends into, ordered by path. See ``_partition``."""
     return _partition(corpus, directory).directories
@@ -416,7 +375,7 @@ def _file_node(corpus: Corpus, path: Path) -> FileNode:
     return File(path=relative) if contained else ForeignFile(path=relative)
 
 
-def _unlinked_directories(corpus: Corpus, under: Path) -> frozenset[Path]:
+def _unlinked_directories(listings: _Listings, under: Path) -> frozenset[Path]:
     """The resolved paths of the directories reachable from ``under`` without crossing a link.
 
     Which of two names for one directory gets descended is decided from this rather than by
@@ -425,6 +384,7 @@ def _unlinked_directories(corpus: Corpus, under: Path) -> frozenset[Path]:
 
     Only the descent needs it. Both names are still listed either way — see ``walk``.
     """
+    corpus = listings.corpus
     unlinked: set[Path] = set()
     stack = [under]
 
@@ -437,7 +397,7 @@ def _unlinked_directories(corpus: Corpus, under: Path) -> frozenset[Path]:
             unlinked.add(resolved)
             stack.extend(
                 child
-                for child in _partition(corpus, directory).directories
+                for child in listings.of(directory).directories
                 if not corpus.is_symlink(child)
             )
         except OSError:
@@ -467,7 +427,7 @@ class _Visit:
     documents: tuple[Path, ...] | None
 
 
-def _walk(corpus: Corpus, under: Path) -> Iterator[_Visit]:
+def _walk(listings: _Listings, under: Path) -> Iterator[_Visit]:
     """Every directory at or under ``under``, with its node and the documents in it.
 
     The one traversal both the subtree and the recursive listing read, so they cannot
@@ -475,7 +435,8 @@ def _walk(corpus: Corpus, under: Path) -> Iterator[_Visit]:
     nodes; ``collect`` keeps the documents of the directories that were descended, which
     are exactly the ones not already listed under another name.
     """
-    unlinked = _unlinked_directories(corpus, under)
+    corpus = listings.corpus
+    unlinked = _unlinked_directories(listings, under)
     visited: set[Path] = set()
     stack: list[tuple[Path, int]] = [(under, 0)]
 
@@ -492,7 +453,7 @@ def _walk(corpus: Corpus, under: Path) -> Iterator[_Visit]:
             if not corpus.contains(resolved):
                 yield _Visit(ForeignDirectory(path=path, depth=depth), None)
                 continue
-            listing = _partition(corpus, directory)
+            listing = listings.of(directory)
         except OSError:
             yield _Visit(UnlistableDirectory(path=path, depth=depth), None)
             continue
@@ -547,7 +508,30 @@ def walk(corpus: Corpus, under: Path) -> tuple[DirectoryNode, ...]:
     That is also what stops a link back to an ancestor from looping forever: the ancestor is
     reached without a link, so the loop is entered once, named, and not descended.
     """
-    return tuple(visit.node for visit in _walk(corpus, under))
+    return tuple(visit.node for visit in _walk(_Listings(corpus), under))
+
+
+def survey(corpus: Corpus, under: Path) -> Report:
+    """The whole of one ``contents`` call: the subtree, the other files, the documents.
+
+    One memo across the three, so the directory asked for is read once for all of them and
+    every directory below it once for the subtree. Calling ``walk``, ``other_files``, and
+    ``collect`` in turn reads the same directory three times and answers the same.
+
+    A directory that cannot be read has no groups to report; the subtree names it
+    ``cannot be listed``, which is where the caller learns why the rest is empty.
+    """
+    listings = _Listings(corpus)
+    tree = tuple(visit.node for visit in _walk(listings, under))
+    try:
+        listing = listings.of(under)
+    except OSError:
+        return Report(tree=tree, others=(), documents=())
+    return Report(
+        tree=tree,
+        others=tuple(_file_node(corpus, path) for path in listing.others),
+        documents=_read_all(corpus, listing.documents),
+    )
 
 
 def collect(corpus: Corpus, under: Path, *, recurse: bool = False) -> tuple[Document, ...]:
@@ -556,6 +540,37 @@ def collect(corpus: Corpus, under: Path, *, recurse: bool = False) -> tuple[Docu
     ``recurse`` is off for the listing, which reports one directory at a time, and on for
     a report over the whole subtree, like the frontmatter key vocabulary. Either way a
     single file as ``under`` collects that file.
+
+    Under ``recurse`` the documents come from the same walk the subtree is built from, not
+    from ``rglob``. ``rglob`` never follows a directory symlink, so the subtree would
+    advertise ``docs/mirror/ 3`` while the key count saw none of those three. Reading from
+    the walk keeps one answer to "which directories are there, and what is in them", and it
+    inherits the walk's two rules for free: hidden directories are skipped, and a directory
+    whose target was already listed under another name is not read a second time.
+
+    A recursive read reports one document once, however many paths reach it — see
+    ``_distinct``. The one-directory listing does not de-duplicate: two names in one
+    directory are two entries a caller can see on disk, and both belong in the group.
+    """
+    listings = _Listings(corpus)
+    if corpus.is_file(under):
+        paths: tuple[Path, ...] = (under,)
+    elif recurse:
+        paths = _distinct(
+            corpus,
+            (path for visit in _walk(listings, under) for path in visit.documents or ()),
+        )
+    else:
+        # The subtree names an unreadable directory; here it simply holds no documents.
+        try:
+            paths = listings.of(under).documents
+        except OSError:
+            paths = ()
+    return _read_all(corpus, paths)
+
+
+def _read_all(corpus: Corpus, paths: Sequence[Path]) -> tuple[Document, ...]:
+    """Read every path, ordered by the path the report emits.
 
     A document that cannot be contributed comes back as ``Unreadable`` rather than raising.
     Two things put it there, and neither is the caller's doing:
@@ -577,34 +592,9 @@ def collect(corpus: Corpus, under: Path, *, recurse: bool = False) -> tuple[Docu
     away. Outside it, one such file unwound past this handler and cost the caller the whole
     report, which under ``recurse`` is the whole subtree.
 
-    Under ``recurse`` the documents come from the same walk the subtree is built from, not
-    from ``rglob``. ``rglob`` never follows a directory symlink, so the subtree would
-    advertise ``docs/mirror/ 3`` while the key count saw none of those three. Reading from
-    the walk keeps one answer to "which directories are there, and what is in them", and it
-    inherits the walk's two rules for free: hidden directories are skipped, and a directory
-    whose target was already listed under another name is not read a second time.
-
-    A recursive read reports one document once, however many paths reach it — see
-    ``_distinct``. The one-directory listing does not de-duplicate: two names in one
-    directory are two entries a caller can see on disk, and both belong in the group.
-
     Ordering is by the emitted path string, so two calls over an unchanged corpus return
     identical output — the listing stays diffable and cacheable.
     """
-    if corpus.is_file(under):
-        paths: tuple[Path, ...] = (under,)
-    elif recurse:
-        paths = _distinct(
-            corpus,
-            (path for visit in _walk(corpus, under) for path in visit.documents or ()),
-        )
-    else:
-        # The subtree names an unreadable directory; here it simply holds no documents.
-        try:
-            paths = markdown_in(corpus, under)
-        except OSError:
-            paths = ()
-
     documents: list[Document] = []
     for path in paths:
         relative = corpus.path_of(path)
@@ -635,7 +625,7 @@ def _distinct(corpus: Corpus, paths: Iterable[Path]) -> tuple[Path, ...]:
     does not change a key count; that it is one name is the whole point.
 
     A path that cannot be resolved is kept rather than dropped. Nothing here can tell it
-    apart from another, and ``collect`` reports it as ``Unreadable`` a few lines later —
+    apart from another, and ``_read_all`` reports it as ``Unreadable`` a few lines later —
     the alternative is a document going missing over a failure that has its own line in
     the report.
     """
@@ -658,7 +648,7 @@ def _read_failure(exc: OSError | UnicodeDecodeError) -> str:
     """Why a read failed, in terms the caller can act on and with no host path in it.
 
     ``UnicodeDecodeError`` is a ``ValueError``, not an ``OSError``, so catching only the
-    latter let one latin-1 file escape ``collect`` and fail the whole call — the outcome
+    latter let one latin-1 file escape the read loop and fail the whole call — the outcome
     ``Unreadable`` exists to prevent, and under the recursive key count it took the entire
     subtree. A binary file named as ``under`` reaches the same read, since that path skips
     the ``*.md`` filter.
@@ -666,34 +656,3 @@ def _read_failure(exc: OSError | UnicodeDecodeError) -> str:
     if isinstance(exc, UnicodeDecodeError):
         return "cannot be read (not UTF-8 text)"
     return f"cannot be read ({exc.strerror or type(exc).__name__})"
-
-
-def group_properties(lines: Sequence[str]) -> tuple[Property, ...]:
-    """Group frontmatter lines by the root key each belongs to.
-
-    Still a line scan, no parser. A property whose value spans lines — a block list under
-    ``disjoint-with:`` — carries its indented continuation lines along, because they belong
-    to the last root key seen. A malformed root line that is not ``key: value`` rides with
-    the key above it for the same reason. Lines before the first key belong to no property
-    and are dropped.
-
-    An unindented ``#`` line is a YAML comment and belongs to no key, so it is dropped
-    rather than riding with the key above it. A ``#`` line inside a block scalar is data,
-    not a comment, but block-scalar content is indented and so never reaches this test.
-
-    Both the projection and the key vocabulary read the grouping from here. A second
-    scanner would be a second answer to "where does this value end", and the block list is
-    exactly where a naive one goes wrong: a scanner reading only the ``key:`` line sees an
-    empty value.
-    """
-    groups: list[tuple[str, list[str]]] = []
-    for line in lines:
-        at_root = bool(line[:1]) and not line[0].isspace()
-        if at_root and line.startswith("#"):
-            continue
-        match = _ROOT_KEY_RE.match(line) if at_root else None
-        if match is not None:
-            groups.append((match.group(1), [line]))
-        elif groups:
-            groups[-1][1].append(line)
-    return tuple(Property(key=key, lines=tuple(owned)) for key, owned in groups)

@@ -1,32 +1,33 @@
-"""Tests for the directory walk and the frontmatter slicer."""
+"""Tests for the directory walk and the reads it makes."""
 
 from __future__ import annotations
 
 from pathlib import Path
 
 import pytest
-from fakes import CORPUS, FakeFiles, document, fake, real
+from fakes import CORPUS, REAL, CountingFiles, FakeFiles, document, fake, real
 
 from hoplite_catalog.contents import (
     Directory,
-    Entry,
     File,
     ForeignDirectory,
     ForeignFile,
+    Report,
     UnlistableDirectory,
-    Unreadable,
     UnreadableFile,
     collect,
-    group_properties,
     markdown_in,
     other_files,
     read_entry,
     resolve_under,
-    slice_frontmatter,
     subdirectories,
+    survey,
     walk,
 )
-from hoplite_catalog.rendering import render, render_report
+from hoplite_catalog.corpus import Corpus
+from hoplite_catalog.documents import Entry, Unreadable
+from hoplite_catalog.refusals import Missing, NotMarkdown, OutsideRoot, ResolvesOutside
+from hoplite_catalog.rendering import render, render_refusal, render_report
 
 
 def _write(path: Path, text: str, *, encoding: str = "utf-8", newline: str = "\n") -> Path:
@@ -35,172 +36,11 @@ def _write(path: Path, text: str, *, encoding: str = "utf-8", newline: str = "\n
     return path
 
 
-class TestSliceFrontmatter:
-    def test_returns_the_lines_between_the_fences(self) -> None:
-        lines = ["---", "title: Edge", "tags: [glossary]", "---", "", "# Edge"]
-        assert slice_frontmatter(lines) == ("title: Edge", "tags: [glossary]")
-
-    def test_no_opening_fence_is_no_block(self) -> None:
-        assert slice_frontmatter(["# Edge", "prose"]) is None
-
-    def test_empty_file_is_no_block(self) -> None:
-        assert slice_frontmatter([]) is None
-
-    def test_unterminated_block_is_no_block(self) -> None:
-        # Emitting to EOF would pull the whole body into the listing.
-        assert slice_frontmatter(["---", "title: Edge", "", "# Edge"]) is None
-
-    def test_empty_block_is_kept_apart_from_no_block(self) -> None:
-        assert slice_frontmatter(["---", "---", "# Edge"]) == ()
-
-    def test_fences_match_despite_trailing_whitespace(self) -> None:
-        assert slice_frontmatter(["--- ", "title: Edge", " ---", "body"]) == ("title: Edge",)
-
-    def test_a_fence_in_the_body_is_not_reached(self) -> None:
-        lines = ["---", "title: Edge", "---", "", "some prose", "---", "more prose"]
-        assert slice_frontmatter(lines) == ("title: Edge",)
-
-    def test_values_are_verbatim(self) -> None:
-        # No YAML parse, so quoting, spacing, and key order survive untouched.
-        lines = ["---", 'is-a:   "[[relationship]]"', "zzz: 1", "aaa: 2", "---"]
-        assert slice_frontmatter(lines) == ('is-a:   "[[relationship]]"', "zzz: 1", "aaa: 2")
-
-
-class TestRender:
-    def test_properties_follow_the_path_one_per_line(self) -> None:
-        entry = Entry(path="docs/a.md", frontmatter=("title: A", "tags: [x]"))
-        assert render([entry]) == "docs/a.md\ntitle: A\ntags: [x]"
-
-    def test_no_fences_are_emitted(self) -> None:
-        assert "---" not in render([Entry(path="docs/a.md", frontmatter=("title: A",))])
-
-    def test_document_without_frontmatter_is_its_path_alone(self) -> None:
-        assert render([Entry(path="docs/a.md", frontmatter=None)]) == "docs/a.md"
-
-    def test_an_empty_block_renders_as_the_path_alone(self) -> None:
-        assert render([Entry(path="docs/a.md", frontmatter=())]) == "docs/a.md"
-
-    def test_entries_are_separated_by_a_blank_line(self) -> None:
-        entries = [
-            Entry(path="docs/a.md", frontmatter=("title: A",)),
-            Entry(path="docs/b.md", frontmatter=None),
-        ]
-        assert render(entries) == "docs/a.md\ntitle: A\n\ndocs/b.md"
-
-    def test_a_blank_line_inside_a_block_cannot_split_a_record(self) -> None:
-        # Otherwise the blank-line separator would turn one document into two records.
-        entry = Entry(path="docs/a.md", frontmatter=("title: A", "   ", "tags: [x]"))
-        assert render([entry]) == "docs/a.md\ntitle: A\ntags: [x]"
-
-    def test_a_frontmatter_comment_cannot_forge_a_heading(self) -> None:
-        # The report's only group boundary is a leading `#`, so a comment emitted verbatim
-        # would read as a fourth group.
-        entry = Entry(path="docs/a.md", frontmatter=("# documents", "title: A"))
-        assert render([entry]) == "docs/a.md\ntitle: A"
-
-    def test_a_document_renders_the_same_projected_and_not(self) -> None:
-        # Both paths read the grouping from one scanner, so the projection cannot keep a
-        # line the plain listing drops.
-        entry = Entry(path="docs/a.md", frontmatter=("# a note", "title: A"))
-        assert render([entry]) == render([entry.projected(frozenset({"title"}))])
-
-    def test_no_entries_renders_empty(self) -> None:
-        assert render([]) == ""
-
-
-class TestGroupProperties:
-    def test_each_key_owns_its_own_line(self) -> None:
-        grouped = group_properties(["title: Edge", "status: locked"])
-        assert [(prop.key, prop.lines) for prop in grouped] == [
-            ("title", ("title: Edge",)),
-            ("status", ("status: locked",)),
-        ]
-
-    def test_a_block_list_belongs_to_the_key_above_it(self) -> None:
-        # The counterexample the vocabulary count is built on: a scanner reading only the
-        # `key:` line sees an empty value, and one reading raw lines sees three keys.
-        grouped = group_properties(["cites:", '  - "[[a]]"', '  - "[[b]]"'])
-        assert [prop.key for prop in grouped] == ["cites"]
-        assert grouped[0].lines == ("cites:", '  - "[[a]]"', '  - "[[b]]"')
-
-    def test_an_unindented_list_item_is_still_a_continuation(self) -> None:
-        # `- "[[a]]"` at column zero is legal YAML and is not a key.
-        grouped = group_properties(["cites:", '- "[[a]]"'])
-        assert [prop.key for prop in grouped] == ["cites"]
-
-    def test_a_malformed_root_line_rides_with_the_key_above(self) -> None:
-        grouped = group_properties(["title: Edge", "nonsense"])
-        assert [prop.key for prop in grouped] == ["title"]
-        assert grouped[0].lines == ("title: Edge", "nonsense")
-
-    def test_lines_before_the_first_key_belong_to_no_property(self) -> None:
-        assert group_properties(["  orphaned", "title: Edge"]) == group_properties(["title: Edge"])
-
-    def test_an_unindented_comment_belongs_to_no_property(self) -> None:
-        # A YAML comment is not a value, and emitted verbatim its `#` forges a report
-        # heading. It does not ride with the key above it the way a malformed line does.
-        grouped = group_properties(["title: Edge", "# a note", "status: locked"])
-        assert [(prop.key, prop.lines) for prop in grouped] == [
-            ("title", ("title: Edge",)),
-            ("status", ("status: locked",)),
-        ]
-
-    def test_an_indented_hash_line_is_kept(self) -> None:
-        # Inside a block scalar a `#` line is data, not a comment, and it is indented.
-        grouped = group_properties(["summary: |", "  # a heading in the value"])
-        assert grouped[0].lines == ("summary: |", "  # a heading in the value")
-
-    def test_nothing_in_means_nothing_out(self) -> None:
-        assert group_properties([]) == ()
-
-
-class TestProjected:
-    FULL = Entry(
-        path="docs/glossary/edge.md",
-        frontmatter=(
-            "title: Edge",
-            'summary: "A relationship between two documents."',
-            "tags: [glossary, hoplite]",
-            "disjoint-with:",
-            '  - "[[node]]"',
-            '  - "[[claim]]"',
-        ),
-    )
-
-    def test_no_keys_keeps_everything(self) -> None:
-        assert self.FULL.projected(None) == self.FULL
-
-    def test_keeps_only_the_named_properties(self) -> None:
-        assert self.FULL.projected(frozenset({"title", "tags"})).frontmatter == (
-            "title: Edge",
-            "tags: [glossary, hoplite]",
-        )
-
-    def test_a_block_list_keeps_its_continuation_lines(self) -> None:
-        assert self.FULL.projected(frozenset({"disjoint-with"})).frontmatter == (
-            "disjoint-with:",
-            '  - "[[node]]"',
-            '  - "[[claim]]"',
-        )
-
-    def test_a_continuation_line_is_dropped_with_its_key(self) -> None:
-        kept = self.FULL.projected(frozenset({"title"})).frontmatter
-        assert kept == ("title: Edge",)
-
-    def test_an_empty_key_set_leaves_the_path_alone(self) -> None:
-        projected = self.FULL.projected(frozenset())
-        assert projected.frontmatter is None
-        assert render([projected]) == "docs/glossary/edge.md"
-
-    def test_an_unmatched_key_leaves_the_path_alone(self) -> None:
-        assert self.FULL.projected(frozenset({"nonesuch"})).frontmatter is None
-
-    def test_a_document_without_frontmatter_is_untouched(self) -> None:
-        bare = Entry(path="docs/a.md", frontmatter=None)
-        assert bare.projected(frozenset({"title"})) == bare
-
-    def test_the_path_is_never_changed(self) -> None:
-        assert self.FULL.projected(frozenset({"title"})).path == self.FULL.path
+def _resolved(corpus: Corpus, under: str) -> Path:
+    """The target, for the tests that are not about refusing one."""
+    target = resolve_under(corpus, under)
+    assert isinstance(target, Path), target
+    return target
 
 
 class TestReadEntry:
@@ -497,7 +337,7 @@ class TestWalk:
 
         nodes = walk(real(tmp_path), tmp_path / "docs")
         assert nodes[1] == ForeignDirectory(path="docs/external", depth=1)
-        assert "secret" not in render_report(nodes, (), ())
+        assert "secret" not in render_report(survey(real(tmp_path), tmp_path / "docs"))
 
     def test_a_symlinked_folder_resolving_inside_the_root_is_walked(self, tmp_path: Path) -> None:
         _write(tmp_path / "references" / "a.md", "")
@@ -708,7 +548,7 @@ class TestUnlistableDirectory:
         assert "docs/closed/deep" not in walked
 
     def test_it_renders_as_one_line_beside_the_others(self) -> None:
-        rendered = render_report(walk(fake(self.FILES), self.DOCS), (), ())
+        rendered = render_report(survey(fake(self.FILES), self.DOCS))
         assert "  closed/ cannot be listed" in rendered
 
     def test_it_costs_the_recursive_read_only_its_own_documents(self) -> None:
@@ -723,13 +563,17 @@ class TestUnlistableDirectory:
             UnlistableDirectory(path="docs/closed", depth=0),
         )
 
-    def test_no_host_path_reaches_the_report(self) -> None:
-        rendered = render_report(
-            walk(fake(self.FILES), self.DOCS),
-            other_files(fake(self.FILES), self.DOCS),
-            (),
+    def test_asking_for_it_directly_still_reports_the_subtree_line(self) -> None:
+        # The whole call, not the three parts separately: the groups are empty because
+        # there is nothing to put in them, and the subtree is where the caller reads why.
+        assert survey(fake(self.FILES), self.CLOSED) == Report(
+            tree=(UnlistableDirectory(path="docs/closed", depth=0),),
+            others=(),
+            documents=(),
         )
-        assert str(CORPUS) not in rendered
+
+    def test_no_host_path_reaches_the_report(self) -> None:
+        assert str(CORPUS) not in render_report(survey(fake(self.FILES), self.DOCS))
 
 
 class TestContainmentWithoutSymlinks:
@@ -761,6 +605,24 @@ class TestContainmentWithoutSymlinks:
     def test_a_directory_linking_out_of_the_corpus_is_named_not_walked(self) -> None:
         assert ForeignDirectory(path="docs/external", depth=1) in walk(fake(self.FILES), self.DOCS)
 
+    def test_one_named_outright_is_named_and_reaches_nothing(self) -> None:
+        # `resolve_under` refuses this before a tool call gets here, so the walk's own
+        # guard is what holds when it is handed one directly. Link resolution has to stop
+        # at it too: it reaches nothing inside the corpus, so it contributes no path that
+        # could win a descent.
+        assert walk(fake(self.FILES), self.DOCS / "external") == (
+            ForeignDirectory(path="docs/external", depth=0),
+        )
+        # Its documents are named and never opened, which is the containment check at the
+        # read doing its second job: the subtree already said the folder leaves the corpus.
+        report = survey(fake(self.FILES), self.DOCS / "external")
+        assert report.documents == (
+            Unreadable(
+                path="docs/external/secret.md", reason="links to a target outside the corpus"
+            ),
+        )
+        assert "Secret" not in render_report(report)
+
     def test_a_directory_linking_inside_the_corpus_is_listed_once(self) -> None:
         # Named, because it exists; not descended, because its documents already appeared
         # under the path they are reachable by.
@@ -788,78 +650,9 @@ class TestContainmentWithoutSymlinks:
         assert not any("secret" in node.path for node in listed)
 
     def test_no_host_path_or_target_name_reaches_the_report(self) -> None:
-        rendered = render_report(
-            walk(fake(self.FILES), self.DOCS),
-            other_files(fake(self.FILES), self.DOCS),
-            collect(fake(self.FILES), self.DOCS),
-        )
+        rendered = render_report(survey(fake(self.FILES), self.DOCS))
         assert str(self.OUTSIDE) not in rendered
         assert "elsewhere" not in rendered
-
-
-class TestRenderReport:
-    TREE = (
-        Directory(path="docs", depth=0, documents=0),
-        Directory(path="docs/glossary", depth=1, documents=2),
-        Directory(path="docs/glossary/deep", depth=2, documents=1),
-    )
-
-    def test_the_three_groups_come_in_order_under_their_headings(self) -> None:
-        report = render_report(
-            self.TREE,
-            (File(path="docs/graph.pdf"),),
-            (Entry(path="docs/a.md", frontmatter=("title: A",)),),
-        )
-        assert report == (
-            "# directories (documents directly in each)\n"
-            "docs/ 0\n"
-            "  glossary/ 2\n"
-            "    deep/ 1\n"
-            "\n"
-            "# other files\n"
-            "docs/graph.pdf\n"
-            "\n"
-            "# documents\n"
-            "docs/a.md\n"
-            "title: A"
-        )
-
-    def test_the_root_line_carries_the_path_and_children_carry_names(self) -> None:
-        # Names are what make the subtree cheap enough to lead with; the root line is
-        # where the caller reads off which folder it is looking at.
-        report = render_report(self.TREE, (), ())
-        assert "docs/ 0" in report
-        assert "  glossary/ 2" in report
-
-    def test_an_empty_group_says_none(self) -> None:
-        # A folder holding no documents is a real answer, not an error.
-        report = render_report((Directory(path="docs", depth=0, documents=0),), (), ())
-        assert report.endswith("# other files\nnone\n\n# documents\nnone")
-
-    def test_a_foreign_folder_is_named_as_unlistable(self) -> None:
-        report = render_report((ForeignDirectory(path="docs/external", depth=1),), (), ())
-        assert "  external/ links outside the corpus" in report
-
-    def test_a_pdf_is_distinguishable_from_a_frontmatterless_document(self) -> None:
-        # Both render as a bare path, so only the heading tells them apart.
-        report = render_report(
-            (Directory(path="docs", depth=0, documents=1),),
-            (File(path="docs/graph.pdf"),),
-            (Entry(path="docs/bare.md", frontmatter=None),),
-        )
-        assert "# other files\ndocs/graph.pdf" in report
-        assert "# documents\ndocs/bare.md" in report
-
-    def test_an_other_file_leaving_the_corpus_carries_the_directory_wording(self) -> None:
-        # One phrase for the whole report: a file and a folder that leave say the same thing.
-        report = render_report((), (ForeignFile(path="docs/leak.pdf"),), ())
-        assert "# other files\ndocs/leak.pdf links outside the corpus" in report
-
-    def test_an_unreachable_other_file_says_so_on_its_own_line(self) -> None:
-        # A symlink loop or a share that went away. The file is named either way, because a
-        # file a caller can see on disk must not go missing from the listing.
-        report = render_report((), (UnreadableFile(path="docs/loop.pdf"),), ())
-        assert "# other files\ndocs/loop.pdf cannot be read" in report
 
 
 class TestCollect:
@@ -1093,8 +886,7 @@ class TestCollectContainment:
         # So the reason standing in for its frontmatter never enters the key vocabulary.
         docs = self._leaky_corpus(tmp_path)
         leak = next(doc for doc in collect(real(tmp_path), docs) if doc.path == "docs/leak.md")
-        assert leak.properties() == ()
-        assert leak.projected(frozenset({"title"})) == leak
+        assert leak.properties == ()
 
     def test_a_symlink_resolving_inside_the_root_is_read(self, tmp_path: Path) -> None:
         target = _write(tmp_path / "references" / "frontmatter.md", "---\ntitle: F\n---\n")
@@ -1119,18 +911,19 @@ class TestOnlyMarkdownIsOpened:
     @pytest.mark.parametrize("name", [".env", "secrets.yaml", "notes.txt", "Makefile"])
     def test_a_non_markdown_file_named_directly_is_refused(self, tmp_path: Path, name: str) -> None:
         _write(tmp_path / name, "---\nAWS_SECRET: hunter2\n---\n")
-        with pytest.raises(ValueError, match="not a markdown document"):
-            resolve_under(real(tmp_path), name)
+        assert resolve_under(real(tmp_path), name) == NotMarkdown(name)
 
     def test_the_refusal_does_not_echo_the_contents(self, tmp_path: Path) -> None:
+        # The record carries the name it was asked about and nothing it read, so neither
+        # can the sentence rendered from it.
         _write(tmp_path / ".env", "---\nAWS_SECRET: hunter2\n---\n")
-        with pytest.raises(ValueError) as caught:
-            resolve_under(real(tmp_path), ".env")
-        assert "hunter2" not in str(caught.value)
+        refusal = resolve_under(real(tmp_path), ".env")
+        assert not isinstance(refusal, Path)
+        assert "hunter2" not in render_refusal(refusal)
 
     def test_a_markdown_file_named_directly_still_works(self, tmp_path: Path) -> None:
         _write(tmp_path / "docs" / "edge.md", "---\ntitle: Edge\n---\n")
-        target = resolve_under(real(tmp_path), "docs/edge.md")
+        target = _resolved(real(tmp_path), "docs/edge.md")
         assert collect(real(tmp_path), target) == (
             Entry(path="docs/edge.md", frontmatter=("title: Edge",)),
         )
@@ -1138,7 +931,7 @@ class TestOnlyMarkdownIsOpened:
     def test_a_hidden_markdown_file_named_directly_still_works(self, tmp_path: Path) -> None:
         # The same rule folders follow: skipped by the walk, reachable when asked for.
         _write(tmp_path / "docs" / ".draft.md", "---\ntitle: Draft\n---\n")
-        target = resolve_under(real(tmp_path), "docs/.draft.md")
+        target = _resolved(real(tmp_path), "docs/.draft.md")
         assert collect(real(tmp_path), target) == (
             Entry(path="docs/.draft.md", frontmatter=("title: Draft",)),
         )
@@ -1149,6 +942,13 @@ class TestOnlyMarkdownIsOpened:
 
 
 class TestResolveUnder:
+    """A path the caller supplied, parsed against the corpus root.
+
+    What it cannot address comes back as a value rather than an exception: the rejection is
+    an outcome of asking, not a failure of answering, and the host hands it to the agent as
+    the reason the call was refused. Which sentence each one becomes is `rendering`'s.
+    """
+
     def test_resolves_relative_to_the_root(self, tmp_path: Path) -> None:
         (tmp_path / "docs" / "glossary").mkdir(parents=True)
         assert (
@@ -1160,16 +960,21 @@ class TestResolveUnder:
         assert resolve_under(real(tmp_path), "") == tmp_path.resolve()
 
     @pytest.mark.parametrize("under", ["..", "docs/../..", "../elsewhere"])
-    def test_escaping_the_root_is_rejected(self, tmp_path: Path, under: str) -> None:
+    def test_escaping_the_root_is_refused(self, tmp_path: Path, under: str) -> None:
         (tmp_path / "docs").mkdir()
-        with pytest.raises(ValueError, match="outside the corpus root"):
-            resolve_under(real(tmp_path), under)
+        assert resolve_under(real(tmp_path), under) == OutsideRoot(under)
 
-    def test_a_missing_folder_is_rejected(self, tmp_path: Path) -> None:
-        with pytest.raises(ValueError, match="does not exist"):
-            resolve_under(real(tmp_path), "docs/nope")
+    def test_a_missing_folder_is_refused(self, tmp_path: Path) -> None:
+        assert resolve_under(real(tmp_path), "docs/nope") == Missing("docs/nope")
 
-    def test_a_symlinked_folder_pointing_out_of_the_root_is_rejected(self, tmp_path: Path) -> None:
+    def test_the_refusal_names_the_path_the_caller_used(self, tmp_path: Path) -> None:
+        # Not the absolute path it normalized to, which is a host path the corpus does not
+        # otherwise expose and which the caller cannot act on.
+        refusal = resolve_under(real(tmp_path), "docs/nope")
+        assert not isinstance(refusal, Path)
+        assert str(tmp_path) not in render_refusal(refusal)
+
+    def test_a_symlinked_folder_pointing_out_of_the_root_is_refused(self, tmp_path: Path) -> None:
         # Lexically inside the corpus, physically outside it. Reads follow symlinks, so
         # without the resolved check this listing would report foreign files under docs/.
         outside = tmp_path.parent / f"{tmp_path.name}-outside"
@@ -1182,8 +987,7 @@ class TestResolveUnder:
         except OSError as exc:  # Windows needs developer mode or elevation
             pytest.skip(f"cannot create a symlink here: {exc}")
 
-        with pytest.raises(ValueError, match="resolves outside the corpus root"):
-            resolve_under(real(tmp_path), "docs/external")
+        assert resolve_under(real(tmp_path), "docs/external") == ResolvesOutside("docs/external")
 
     def test_a_symlink_resolving_inside_the_root_is_allowed(self, tmp_path: Path) -> None:
         # The docs/specs case: a symlink into plugins/, still inside the corpus root.
@@ -1211,5 +1015,42 @@ class TestResolveUnder:
         except OSError as exc:  # Windows needs developer mode or elevation
             pytest.skip(f"cannot create a symlink here: {exc}")
 
-        under = resolve_under(real(tmp_path), "docs/specs/frontmatter.md")
+        under = _resolved(real(tmp_path), "docs/specs/frontmatter.md")
         assert collect(real(tmp_path), under)[0].path == "docs/specs/frontmatter.md"
+
+
+class TestEachDirectoryIsReadOnce:
+    """The cost claim, counted at the port.
+
+    Link resolution walks the subtree to decide which of two names for one directory gets
+    descended, and the walk then goes over it again; the report's other two groups made a
+    third and fourth read of the directory asked for. Nothing in the output changes when a
+    directory is read twice, so only a count can say.
+    """
+
+    def _corpus(self, tmp_path: Path) -> tuple[Corpus, CountingFiles]:
+        _write(tmp_path / "docs" / "a.md", "---\ntitle: A\n---\n")
+        _write(tmp_path / "docs" / "glossary" / "edge.md", "---\ntitle: E\n---\n")
+        _write(tmp_path / "docs" / "glossary" / "deep" / "b.md", "---\ntitle: B\n---\n")
+        _write(tmp_path / "docs" / "notes" / "c.md", "---\ntitle: C\n---\n")
+        _write(tmp_path / "docs" / "graph.pdf", "")
+        counting = CountingFiles(REAL)
+        return Corpus.rooted_at(counting, tmp_path), counting
+
+    def test_a_survey_reads_each_directory_once(self, tmp_path: Path) -> None:
+        corpus, counting = self._corpus(tmp_path)
+        report = survey(corpus, tmp_path / "docs")
+        assert len(report.tree) == 4
+        assert counting.calls["entries"] == len(report.tree)
+
+    def test_a_recursive_read_reads_each_directory_once(self, tmp_path: Path) -> None:
+        # `vocabulary` recurses from the corpus root, which is where the doubling cost most.
+        corpus, counting = self._corpus(tmp_path)
+        collect(corpus, tmp_path, recurse=True)
+        assert counting.calls["entries"] == 5
+
+    def test_every_entry_is_classified_once(self, tmp_path: Path) -> None:
+        # One `is_directory` per entry, once per directory read, so the entry count bounds it.
+        corpus, counting = self._corpus(tmp_path)
+        survey(corpus, tmp_path / "docs")
+        assert counting.calls["is_directory"] == sum(1 for _ in (tmp_path / "docs").rglob("*"))

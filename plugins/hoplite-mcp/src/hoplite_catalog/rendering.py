@@ -7,7 +7,9 @@ returns records that say *what* it found, and every string a caller sees is writ
 
 That split is what stops the two from drifting. The walk used to return the other-files
 group already rendered, so it owned ``links outside the corpus`` while the subtree lines
-owned the same phrase one function away, and a change to either could miss the other.
+owned the same phrase one function away, and a change to either could miss the other. A
+refusal is the same shape: the walk decides that ``under`` cannot be addressed, and the
+sentence saying so is written here beside the rest.
 """
 
 from __future__ import annotations
@@ -18,19 +20,29 @@ from typing import Final, assert_never
 from hoplite_catalog.contents import (
     Directory,
     DirectoryNode,
-    Document,
-    Entry,
     File,
     FileNode,
     ForeignDirectory,
     ForeignFile,
+    Report,
     UnlistableDirectory,
-    Unreadable,
     UnreadableFile,
+)
+from hoplite_catalog.documents import Document, Entry, Unreadable
+from hoplite_catalog.refusals import (
+    Missing,
+    NoSuchKeys,
+    NotAList,
+    NotAString,
+    NotMarkdown,
+    OutsideRoot,
+    Refusal,
+    ResolvesOutside,
+    UnknownTool,
 )
 from hoplite_catalog.vocabulary import KeyUse
 
-__all__ = ["render", "render_report", "render_vocabulary"]
+__all__ = ["render", "render_refusal", "render_report", "render_vocabulary"]
 
 # Headings carry a `#` so they cannot be mistaken for content. A blank line separates the
 # groups and also separates two documents inside the last one, so the heading is the only
@@ -71,7 +83,7 @@ def _render_document(document: Document) -> str:
     """
     match document:
         case Entry():
-            lines = (line for prop in document.properties() for line in prop.lines if line.strip())
+            lines = (line for prop in document.properties for line in prop.lines if line.strip())
             return "\n".join([document.path, *lines])
         case Unreadable(path=path, reason=reason):
             return f"{path}\n{reason}"
@@ -97,7 +109,9 @@ def _render_node(node: DirectoryNode) -> str:
     path off the indentation without a round trip.
     """
     indent = "  " * node.depth
-    name = node.path.rsplit("/", 1)[-1] if node.depth else (node.path or ".")
+    # The corpus root is `.`, which is what `Corpus.path_of` returns for it, so the root
+    # line always has something to print.
+    name = node.path.rsplit("/", 1)[-1] if node.depth else node.path
     match node:
         case Directory(documents=documents):
             return f"{indent}{name}/ {documents}"
@@ -126,9 +140,7 @@ def _render_file(node: FileNode) -> str:
     assert_never(node)
 
 
-def render_report(
-    tree: Iterable[DirectoryNode], others: Iterable[FileNode], documents: Iterable[Document]
-) -> str:
+def render_report(report: Report) -> str:
     """Render the three parts of the report, each under its own heading.
 
     Every heading is emitted, with ``none`` under an empty one. A directory holding no
@@ -136,17 +148,54 @@ def render_report(
     so the shape of the report stays the same whether or not a part has anything in it.
     """
     sections = (
-        "\n".join([_TREE_HEADING, *(_render_node(node) for node in tree)]),
-        "\n".join([_OTHER_HEADING, *(tuple(_render_file(node) for node in others) or (_NONE,))]),
-        "\n".join([_DOCUMENT_HEADING, render(documents) or _NONE]),
+        "\n".join([_TREE_HEADING, *(_render_node(node) for node in report.tree)]),
+        "\n".join(
+            [_OTHER_HEADING, *(tuple(_render_file(node) for node in report.others) or (_NONE,))]
+        ),
+        "\n".join([_DOCUMENT_HEADING, render(report.documents) or _NONE]),
     )
     return "\n\n".join(sections)
 
 
-def render_vocabulary(uses: Iterable[KeyUse]) -> str:
+def render_vocabulary(uses: Iterable[KeyUse], under: str) -> str:
     """Render the tally: one ``key: documents`` line per key.
 
     The shape is frontmatter's own — a key, a colon, a value — because that is what the
     caller is about to write and read.
+
+    A folder whose documents carry no frontmatter at all says so in words. It is a real
+    answer rather than a refusal, and empty text would read as a broken tool.
     """
-    return "\n".join(f"{use.key}: {use.documents}" for use in uses)
+    lines = [f"{use.key}: {use.documents}" for use in uses]
+    return "\n".join(lines) if lines else f"no frontmatter keys under {under!r}"
+
+
+def render_refusal(refusal: Refusal) -> str:
+    """One sentence saying what the caller asked for and why it cannot be answered.
+
+    The agent reads this and retries, so each says what was wrong with the request and
+    nothing about the host: no host path, no exception text, no ``errno``. The keys refusal
+    carries the folder's own vocabulary, because that is the answer the retry needs and
+    this call already read it.
+    """
+    match refusal:
+        case OutsideRoot(under=under):
+            return f"{under!r} is outside the corpus root"
+        case ResolvesOutside(under=under):
+            return f"{under!r} resolves outside the corpus root"
+        case Missing(under=under):
+            return f"{under!r} does not exist"
+        case NotMarkdown(under=under):
+            return f"{under!r} is not a markdown document"
+        case NotAString(argument=argument):
+            return f"{argument!r} must be a string"
+        case NotAList(argument=argument):
+            return f"{argument!r} must be a list of strings"
+        case UnknownTool(name=name):
+            return f"unknown tool: {name!r}"
+        case NoSuchKeys(under=under, requested=requested, in_use=in_use):
+            return (
+                f"none of the requested keys appear in any document under {under!r}: "
+                f"{list(requested)}; the keys in use there are {list(in_use)}"
+            )
+    assert_never(refusal)

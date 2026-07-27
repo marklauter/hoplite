@@ -3,8 +3,15 @@
 Every walking function used to take ``(files, root)`` and re-derive the resolved root from
 it — six call sites did their own ``files.resolve(root)``, and ``corpus_path`` did one more
 for every path the report emits. The two arguments are one thing, so they are one type. The
-root is resolved once, at construction, and after that "the root is resolved" is true by
-construction rather than restated wherever containment is checked.
+root is resolved once, and after that "the root is resolved" is true by construction rather
+than restated wherever containment is checked.
+
+Resolving it is I/O, so it happens where I/O belongs: ``rooted_at`` is the one constructor
+that touches a filesystem, and the composition root is the one place that calls it. It used
+to happen in ``__post_init__``, which made building a value hit the disk — a ``Corpus`` you
+could not construct in a test, or in a pure transform, without a filesystem answering. What
+kept it there was that a plain constructor could otherwise be handed an unresolved root;
+``ResolvedRoot`` is what closes that instead, since only ``rooted_at`` produces one.
 
 The port is not exposed. ``Corpus`` forwards the seven questions the walk asks of a
 filesystem, so the core never names ``Files`` and there is one way to reach a filesystem
@@ -15,30 +22,35 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import final
+from typing import NewType, Self, final
 
 from hoplite_catalog.ports import Files
 
-__all__ = ["Corpus"]
+__all__ = ["Corpus", "ResolvedRoot"]
+
+# A root with the links already followed. Erased at runtime, so it costs nothing and only
+# pyright enforces it — enough, since the one function that produces one is `rooted_at` and
+# the alternative is a bare `Path` that says nothing about whether anyone resolved it.
+ResolvedRoot = NewType("ResolvedRoot", Path)
 
 
 @final
 @dataclass(frozen=True, slots=True)
 class Corpus:
-    """A rooted, readable corpus. ``root`` is resolved; every method may raise ``OSError``.
+    """A rooted, readable corpus. Every method may raise ``OSError``; construction does not.
 
     ``_files`` is the injected port and not part of the contract: the delegating methods
     below are, so a caller cannot reach the filesystem two ways.
     """
 
     _files: Files
-    root: Path
+    root: ResolvedRoot
 
-    def __post_init__(self) -> None:
-        # The one resolve. `object.__setattr__` is how a frozen dataclass normalizes in
-        # `__post_init__`; the alternative is a classmethod constructor, which leaves the
-        # plain one able to build a corpus whose root is not resolved.
-        object.__setattr__(self, "root", self._files.resolve(self.root))
+    @classmethod
+    def rooted_at(cls, files: Files, root: Path) -> Self:
+        """Resolve ``root`` against ``files`` and pair the two. The one construction that
+        reads a filesystem, and the composition root's to call."""
+        return cls(files, ResolvedRoot(files.resolve(root)))
 
     def entries(self, directory: Path) -> tuple[Path, ...]:
         return self._files.entries(directory)

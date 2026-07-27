@@ -8,42 +8,61 @@ Two tools today: ``contents``, a per-directory frontmatter listing over the corp
 pairs a port with a resolved root and is what every walking function takes as its first
 argument. ``server`` is not re-exported here: it is the composition root and an entry
 point, so importing this package must not pull the host in.
+
+What is re-exported is the whole of it: build a corpus, address a path in it, ask it the
+two questions, read the records that come back, and render them. It is smaller than the
+sum of what the modules export, deliberately. ``slice_frontmatter``, ``group_properties``,
+``read_entry``, ``markdown_in``, ``subdirectories``, and ``FENCE`` are part of their own
+module's contract and stay reachable there — the tests drive them directly, because a
+line scanner is the cheapest thing in the suite to test and routing it through ``collect``
+would make every failure less local.
+
+They are not part of this package's contract, because each is a step inside one that is:
+``markdown_in`` is one branch of ``collect``, ``read_entry`` is its loop body,
+``subdirectories`` is a slice of the walk's partition, and the scanners are what an
+``Entry`` is built from. Re-exporting them offers a second way to do what ``collect``
+already does, with none of the guards it wraps them in — the containment check at the read,
+the reason reported in place of a document that could not be opened, the de-duplication of
+one document reached by two paths. Every name here is a promise that narrowing again would
+break, so the ones that buy a caller nothing are not made.
 """
 
 from hoplite_catalog.adapters import RealFiles
 from hoplite_catalog.contents import (
-    FENCE,
     Directory,
     DirectoryNode,
-    Document,
-    Entry,
     File,
     FileNode,
     ForeignDirectory,
     ForeignFile,
-    Property,
+    Report,
     UnlistableDirectory,
-    Unreadable,
     UnreadableFile,
     collect,
-    group_properties,
-    markdown_in,
     other_files,
-    read_entry,
     resolve_under,
-    slice_frontmatter,
-    subdirectories,
+    survey,
     walk,
 )
-from hoplite_catalog.corpus import Corpus
-from hoplite_catalog.errors import CallerError
+from hoplite_catalog.corpus import Corpus, ResolvedRoot
+from hoplite_catalog.documents import Document, Entry, Property, Unreadable
 from hoplite_catalog.ports import Files
-from hoplite_catalog.rendering import render, render_report, render_vocabulary
+from hoplite_catalog.refusals import (
+    Missing,
+    NoSuchKeys,
+    NotAList,
+    NotAString,
+    NotMarkdown,
+    OutsideRoot,
+    Refusal,
+    ResolvesOutside,
+    Unaddressable,
+    UnknownTool,
+)
+from hoplite_catalog.rendering import render, render_refusal, render_report, render_vocabulary
 from hoplite_catalog.vocabulary import KeyUse, tally
 
 __all__ = [
-    "FENCE",
-    "CallerError",
     "Corpus",
     "Directory",
     "DirectoryNode",
@@ -55,22 +74,31 @@ __all__ = [
     "ForeignDirectory",
     "ForeignFile",
     "KeyUse",
+    "Missing",
+    "NoSuchKeys",
+    "NotAList",
+    "NotAString",
+    "NotMarkdown",
+    "OutsideRoot",
     "Property",
     "RealFiles",
+    "Refusal",
+    "Report",
+    "ResolvedRoot",
+    "ResolvesOutside",
+    "Unaddressable",
+    "UnknownTool",
     "UnlistableDirectory",
     "Unreadable",
     "UnreadableFile",
     "collect",
-    "group_properties",
-    "markdown_in",
     "other_files",
-    "read_entry",
     "render",
+    "render_refusal",
     "render_report",
     "render_vocabulary",
     "resolve_under",
-    "slice_frontmatter",
-    "subdirectories",
+    "survey",
     "tally",
     "walk",
 ]

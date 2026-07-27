@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-from hoplite_catalog.contents import Entry
-from hoplite_catalog.rendering import render_vocabulary
+from hoplite_catalog.documents import Entry
 from hoplite_catalog.vocabulary import KeyUse, tally
 
 
@@ -56,12 +55,3 @@ class TestTally:
         # Nothing here judges a key, so title and tags are ordinary rows.
         entries = [_entry("a.md", "title: A", "tags: [note]", "cites: x")]
         assert [use.key for use in tally(entries)] == ["cites", "tags", "title"]
-
-
-class TestRenderVocabulary:
-    def test_one_key_colon_count_per_line(self) -> None:
-        uses = (KeyUse(key="created", documents=162), KeyUse(key="status", documents=88))
-        assert render_vocabulary(uses) == "created: 162\nstatus: 88"
-
-    def test_nothing_in_renders_empty(self) -> None:
-        assert render_vocabulary(()) == ""

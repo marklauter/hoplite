@@ -54,14 +54,27 @@ root_packages = ["hoplite_catalog"]
 # `vocabulary` cannot import it, which is what makes `ports` a boundary rather than a
 # suggestion; `corpus` pairs a port with a resolved root and is the only thing the walk
 # holds; `ports` is the port and depends on nothing local. `exhaustive` makes a new module
-# a failure until it is placed in the layering deliberately. `errors` sits at the bottom
-# because both `contents` and `server` raise `CallerError` and neither owns it. `rendering`
-# sits above the core because every string a caller sees is written there and nothing
-# below it decides wording.
+# a failure until it is placed in the layering deliberately. `rendering` sits above the core
+# because every string a caller sees is written there and nothing below it decides wording.
+#
+# The bottom two are the pure ones. `documents` slices frontmatter out of text it is handed
+# and has no idea a filesystem exists — this is the line that says so, where before it was
+# true only by convention inside one module with `contents`. `refusals` names what a caller
+# can get wrong, which both `contents` and `server` produce and neither owns.
 [[tool.importlinter.contracts]]
 name = "The package layers in one direction"
 type = "layers"
-layers = ["server", "adapters", "rendering", "vocabulary", "contents", "corpus", "ports", "errors"]
+layers = [
+    "server",
+    "adapters",
+    "rendering",
+    "vocabulary",
+    "contents",
+    "corpus",
+    "ports",
+    "documents",
+    "refusals",
+]
 containers = ["hoplite_catalog"]
 exhaustive = true
 

@@ -123,9 +123,11 @@ implementation, and is the only code that touches a filesystem; an import-linter
 keeps the core from importing it, so the port cannot be bypassed. `corpus.py` pairs that
 port with its resolved root as a `Corpus`, which every walking function takes as its first
 argument, so a test hands it an in-memory corpus and drives the cases a real filesystem
-will not reliably produce. `contents.py` holds the walking and the slicing, `rendering.py`
-turns what they return into the report text, and `vocabulary.py` counts keys over what
-`contents` collects. `errors.py` holds `CallerError`, the one exception the host answers
-with instead of logging. `server.py` is the stdio JSON-RPC host, hand-rolled on the
-standard library. The graph tools designed in `docs/specs/hoplite-tool-api.md` register
-here when they land.
+will not reliably produce. `documents.py` slices frontmatter out of text and knows nothing
+about a filesystem, `contents.py` does the walking, `rendering.py` turns what they return
+into the report text, and `vocabulary.py` counts keys over what `contents` collects.
+`refusals.py` names what a caller can get wrong — a folder that does not exist, an
+argument of the wrong shape — which the tools return as values and the host answers with
+instead of logging. Anything else that goes wrong is raised and logged. `server.py` is the
+stdio JSON-RPC host, hand-rolled on the standard library. The graph tools designed in
+`docs/specs/hoplite-tool-api.md` register here when they land.

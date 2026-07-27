@@ -18,14 +18,16 @@ import io
 import json
 import sys
 import traceback
+from dataclasses import replace
 from pathlib import Path
-from typing import Final, TextIO, cast
+from typing import Final, TextIO, TypedDict, cast
 
 from hoplite_catalog.adapters import RealFiles
-from hoplite_catalog.contents import collect, other_files, resolve_under, walk
+from hoplite_catalog.contents import collect, resolve_under, survey
 from hoplite_catalog.corpus import Corpus
-from hoplite_catalog.errors import CallerError
-from hoplite_catalog.rendering import render, render_report, render_vocabulary
+from hoplite_catalog.documents import Document
+from hoplite_catalog.refusals import NoSuchKeys, NotAList, NotAString, Refusal, UnknownTool
+from hoplite_catalog.rendering import render, render_refusal, render_report, render_vocabulary
 from hoplite_catalog.vocabulary import tally
 
 __all__ = ["DEFAULT_UNDER", "PROTOCOL_VERSION", "SERVER_NAME", "TOOLS", "respond", "serve"]
@@ -44,6 +46,33 @@ _PARSE_ERROR: Final = -32700
 _INVALID_REQUEST: Final = -32600
 _METHOD_NOT_FOUND: Final = -32601
 _INTERNAL_ERROR: Final = -32603
+
+
+class _Annotations(TypedDict):
+    """The behaviour hints MCP defines for a tool. Every one of ours is a read."""
+
+    title: str
+    readOnlyHint: bool
+    destructiveHint: bool
+    idempotentHint: bool
+    openWorldHint: bool
+
+
+class _Tool(TypedDict):
+    """One entry of the ``tools/list`` reply, as the protocol shapes it.
+
+    A ``TypedDict`` rather than a bare ``dict[str, object]``, because this is the wire
+    boundary: a missing ``description`` or a misspelled ``inputSchema`` is a tool the client
+    shows wrong, and nothing reads these back to notice. ``inputSchema`` stays untyped —
+    it is JSON Schema, whose shape is not ours to declare.
+    """
+
+    name: str
+    title: str
+    description: str
+    inputSchema: dict[str, object]
+    annotations: _Annotations
+
 
 # Shaped like method help: one line on what it does, then Returns. When to call it stays
 # out — the authoring skills already say when to search the corpus for a pre-existing
@@ -80,10 +109,13 @@ _UNDER_SCHEMA: Final[dict[str, object]] = {
     ),
 }
 
-TOOLS: Final[tuple[dict[str, object], ...]] = (
+_CONTENTS_TITLE: Final = "List one folder of the corpus with its documents' frontmatter"
+_VOCABULARY_TITLE: Final = "Count the frontmatter keys in use"
+
+TOOLS: Final[tuple[_Tool, ...]] = (
     {
         "name": "contents",
-        "title": "List one folder of the corpus with its documents' frontmatter",
+        "title": _CONTENTS_TITLE,
         "description": _CONTENTS_DESCRIPTION,
         "inputSchema": {
             "type": "object",
@@ -103,7 +135,7 @@ TOOLS: Final[tuple[dict[str, object], ...]] = (
             "additionalProperties": False,
         },
         "annotations": {
-            "title": "List one folder of the corpus with its documents' frontmatter",
+            "title": _CONTENTS_TITLE,
             "readOnlyHint": True,
             "destructiveHint": False,
             "idempotentHint": True,
@@ -112,7 +144,7 @@ TOOLS: Final[tuple[dict[str, object], ...]] = (
     },
     {
         "name": "vocabulary",
-        "title": "Count the frontmatter keys in use",
+        "title": _VOCABULARY_TITLE,
         "description": _VOCABULARY_DESCRIPTION,
         "inputSchema": {
             "type": "object",
@@ -120,7 +152,7 @@ TOOLS: Final[tuple[dict[str, object], ...]] = (
             "additionalProperties": False,
         },
         "annotations": {
-            "title": "Count the frontmatter keys in use",
+            "title": _VOCABULARY_TITLE,
             "readOnlyHint": True,
             "destructiveHint": False,
             "idempotentHint": True,
@@ -141,7 +173,7 @@ def _text_result(text: str, *, is_error: bool = False) -> dict[str, object]:
     return {"content": [{"type": "text", "text": text}], "isError": is_error}
 
 
-def _string_set(value: object, name: str) -> frozenset[str] | None:
+def _string_set(value: object, name: str) -> frozenset[str] | None | NotAList:
     """Read an optional list-of-strings argument, or ``None`` when it is absent.
 
     An empty list is not the same as an omitted one: ``keys: []`` asks for paths alone,
@@ -150,95 +182,104 @@ def _string_set(value: object, name: str) -> frozenset[str] | None:
     if value is None:
         return None
     if not isinstance(value, list):
-        raise CallerError(f"{name!r} must be a list of strings")
+        return NotAList(name)
     items = cast("list[object]", value)
     if not all(isinstance(item, str) for item in items):
-        raise CallerError(f"{name!r} must be a list of strings")
+        return NotAList(name)
     return frozenset(cast("list[str]", items))
 
 
-def _under_argument(arguments: dict[str, object]) -> str:
+def _under_argument(arguments: dict[str, object]) -> str | NotAString:
     """Read the ``under`` argument, which every tool takes and defaults the same way."""
     under = arguments.get("under", DEFAULT_UNDER)
-    if not isinstance(under, str):
-        raise CallerError("'under' must be a string")
-    return under
+    return under if isinstance(under, str) else NotAString("under")
 
 
-def _call_contents(corpus: Corpus, arguments: dict[str, object]) -> dict[str, object]:
-    """Run the ``contents`` tool. Raises ``CallerError`` on a bad argument."""
+def _kept(
+    under: str, documents: tuple[Document, ...], keys: frozenset[str] | None
+) -> tuple[Document, ...] | NoSuchKeys:
+    """Project the documents onto ``keys``, or refuse when that would empty every one.
+
+    A misspelled key would otherwise return a bare path list, which reads as "these
+    documents have no frontmatter" rather than "that key does not exist". Whether anything
+    had frontmatter is what separates those two: a folder where nothing has any is not the
+    caller's mistake, so it must not be blamed on the keys. An empty ``keys`` is exempt too
+    — it asks for paths alone, and gets them.
+
+    The refusal carries the keys the folder does use, which is one directory's worth and
+    bounded by that: ten keys in the busiest folder here.
+    """
+    projected = tuple(document.projected(keys) for document in documents)
+    had_frontmatter = any(document.properties for document in documents)
+    kept_any = any(document.properties for document in projected)
+    if not keys or not had_frontmatter or kept_any:
+        return projected
+    return NoSuchKeys(
+        under=under,
+        requested=tuple(sorted(keys)),
+        in_use=tuple(use.key for use in tally(documents)),
+    )
+
+
+def _call_contents(corpus: Corpus, arguments: dict[str, object]) -> str | Refusal:
+    """Run the ``contents`` tool, or say what the caller got wrong."""
     under = _under_argument(arguments)
+    if not isinstance(under, str):
+        return under
     keys = _string_set(arguments.get("keys"), "keys")
-
+    if isinstance(keys, NotAList):
+        return keys
     target = resolve_under(corpus, under)
-    documents = collect(corpus, target)
-    projected = [document.projected(keys) for document in documents]
-
-    # A misspelled key would otherwise return a bare path list, which reads as "these
-    # documents have no frontmatter" rather than "that key does not exist". The
-    # `had_frontmatter` guard is what separates those two: a folder where nothing has
-    # frontmatter at all is not the caller's mistake, so it must not be blamed on the keys.
-    # An empty `keys` is exempt too — it asks for paths alone, and gets them.
-    #
-    # The refusal carries the keys that are in use, because the caller's next move is a
-    # second call with a corrected `keys`, and the answer to "corrected to what" was already
-    # read to decide this. Withholding it costs them a `vocabulary` round trip to learn what
-    # this call already knows. The list is what one directory carries, which is the scope
-    # the retry is against, and is bounded by that — ten keys in the busiest folder here.
-    had_frontmatter = any(document.properties() for document in documents)
-    kept_any = any(document.properties() for document in projected)
-    if keys and had_frontmatter and not kept_any:
-        in_use = [use.key for use in tally(documents)]
-        raise CallerError(
-            f"none of the requested keys appear in any document under {under!r}: "
-            f"{sorted(keys)}; the keys in use there are {in_use}"
-        )
+    if not isinstance(target, Path):
+        return target
 
     # A single document as `under` has no subtree and no siblings to report, so it gets the
     # listing alone. Wrapping one document in three headings would be all frame, no picture.
     if corpus.is_file(target):
-        return _text_result(render(projected))
-    return _text_result(render_report(walk(corpus, target), other_files(corpus, target), projected))
+        documents = _kept(under, collect(corpus, target), keys)
+        return documents if isinstance(documents, NoSuchKeys) else render(documents)
+
+    report = survey(corpus, target)
+    documents = _kept(under, report.documents, keys)
+    if isinstance(documents, NoSuchKeys):
+        return documents
+    return render_report(replace(report, documents=documents))
 
 
-def _call_vocabulary(corpus: Corpus, arguments: dict[str, object]) -> dict[str, object]:
-    """Run the ``vocabulary`` tool. Raises ``CallerError`` on a bad argument."""
+def _call_vocabulary(corpus: Corpus, arguments: dict[str, object]) -> str | Refusal:
+    """Run the ``vocabulary`` tool, or say what the caller got wrong."""
     under = _under_argument(arguments)
-    uses = tally(collect(corpus, resolve_under(corpus, under), recurse=True))
-    if not uses:
-        return _text_result(f"no frontmatter keys under {under!r}")
-    return _text_result(render_vocabulary(uses))
+    if not isinstance(under, str):
+        return under
+    target = resolve_under(corpus, under)
+    if not isinstance(target, Path):
+        return target
+    return render_vocabulary(tally(collect(corpus, target, recurse=True)), under)
 
 
 def _call_tool(corpus: Corpus, params: dict[str, object]) -> dict[str, object]:
-    """Dispatch ``tools/call``. An unknown tool or bad argument comes back as an error
-    result rather than a JSON-RPC error, so the agent can read the message and retry.
+    """Dispatch ``tools/call``. A refusal comes back as an error result rather than a
+    JSON-RPC error, so the agent can read the reason and retry.
 
-    Only ``CallerError`` gets that treatment. This used to catch ``ValueError``, which is
-    the same class a bug raises, so a defect in the walk came back as a readable message the
-    agent would retry against and nothing reached the log. A plain ``ValueError`` now
-    travels to ``respond``, which reports it as an internal error and prints the traceback.
+    Only a refusal gets that treatment, and a refusal is a value, so nothing here decides
+    it by catching. This used to catch ``ValueError`` — the class a bug raises — and then
+    ``OSError``, which handed back "cannot read the corpus" as though an unreadable corpus
+    root were a thing the agent had asked for wrong. Both now travel to ``respond``, which
+    reports an internal error and prints the traceback: a substrate failure is not an
+    answer, and it belongs in the log where an operator can see it.
     """
     name = params.get("name")
     arguments = _as_mapping(params.get("arguments")) or {}
-    try:
-        match name:
-            case "contents":
-                return _call_contents(corpus, arguments)
-            case "vocabulary":
-                return _call_vocabulary(corpus, arguments)
-            case _:
-                raise CallerError(f"unknown tool: {name!r}")
-    except CallerError as exc:
-        return _text_result(str(exc), is_error=True)
-    except OSError as exc:
-        # The backstop, not the normal path: an unreadable document and an unreadable
-        # directory are both reported in the listing. `exc.strerror` rather than `exc`,
-        # because the full message carries an absolute host path, which nothing else the
-        # server emits does.
-        return _text_result(
-            f"cannot read the corpus: {exc.strerror or type(exc).__name__}", is_error=True
-        )
+    match name:
+        case "contents":
+            answered = _call_contents(corpus, arguments)
+        case "vocabulary":
+            answered = _call_vocabulary(corpus, arguments)
+        case _:
+            answered = UnknownTool(name)
+    if isinstance(answered, str):
+        return _text_result(answered)
+    return _text_result(render_refusal(answered), is_error=True)
 
 
 def _dispatch(corpus: Corpus, method: str, params: dict[str, object]) -> dict[str, object] | None:
@@ -292,12 +333,13 @@ def respond(corpus: Corpus, line: str) -> dict[str, object] | None:
     try:
         result = _dispatch(corpus, method, _as_mapping(message.get("params")) or {})
     except Exception:
-        # The host boundary, and the only place this package catches broadly. A bug must
-        # not take the server down mid-session, and it must not be disguised as an answer
-        # either: the agent gets a protocol-level error it cannot mistake for a result, and
-        # the traceback goes to stderr, where Claude Code surfaces it under `--debug mcp`.
-        # The message carries nothing, because an exception's own text carries host paths.
-        # `Exception`, not `BaseException`, so KeyboardInterrupt still stops the process.
+        # The host boundary, and the only place this package catches broadly. A bug or a
+        # corpus that cannot be read must not take the server down mid-session, and must
+        # not be disguised as an answer either: the agent gets a protocol-level error it
+        # cannot mistake for a result, and the traceback goes to stderr, where Claude Code
+        # surfaces it under `--debug mcp`. The message carries nothing, because an
+        # exception's own text carries host paths. `Exception`, not `BaseException`, so
+        # KeyboardInterrupt still stops the process.
         traceback.print_exc(file=sys.stderr)
         return _error(request_id, _INTERNAL_ERROR, f"internal error handling {method}")
     if result is None:
@@ -334,9 +376,10 @@ def main() -> int:
     root = Path.cwd()
     sys.stderr.write(f"[hoplite-catalog] serving; corpus root = {root}\n")
     sys.stderr.flush()
-    # The composition root: the one place the real filesystem is named, and the one place a
-    # `Corpus` is built from it. Everything below takes the corpus and never the port.
-    return serve(Corpus(RealFiles(), root), sys.stdin, sys.stdout)
+    # The composition root: the one place the real filesystem is named, the one place a
+    # `Corpus` is built from it, and so the one place resolving the root can fail. Every
+    # thing below takes the corpus and never the port.
+    return serve(Corpus.rooted_at(RealFiles(), root), sys.stdin, sys.stdout)
 
 
 if __name__ == "__main__":

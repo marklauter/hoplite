@@ -460,6 +460,11 @@ class TestProtocolErrors:
     def test_a_json_array_is_an_invalid_request(self, corpus: Path) -> None:
         assert _error_of(respond(real(corpus), "[1, 2]"))["code"] == -32600
 
+    def test_a_request_without_a_method_is_an_invalid_request(self, corpus: Path) -> None:
+        # It carries an id, so a reply is owed and there is nothing to dispatch on.
+        line = json.dumps({"jsonrpc": "2.0", "id": 1, "params": {}})
+        assert _error_of(respond(real(corpus), line))["code"] == -32600
+
 
 @final
 @dataclass(frozen=True, slots=True)
@@ -498,13 +503,14 @@ class _BrokenFiles:
 class TestBugsAreNotAnswers:
     """A defect must not come back as a readable message the agent retries against.
 
-    `_call_tool` used to catch `ValueError` — the class `resolve_under` raises and the class
+    `_call_tool` used to catch `ValueError` — the class `resolve_under` raised and the class
     a bug raises — so both arrived as an error *result*: `isError: true` with prose in it,
-    which reads as "you asked wrong". Nothing reached the log either. These pin the split.
+    which reads as "you asked wrong". Nothing reached the log either. A refusal is now a
+    value and nothing is caught to tell the two apart, but these still pin the split.
     """
 
     def _broken(self, tmp_path: Path) -> Corpus:
-        return Corpus(_BrokenFiles(), tmp_path)
+        return Corpus.rooted_at(_BrokenFiles(), tmp_path)
 
     def test_a_bug_is_a_protocol_error_not_a_tool_result(self, tmp_path: Path) -> None:
         message = respond(self._broken(tmp_path), _request("tools/call", {"name": "contents"}))
@@ -512,7 +518,7 @@ class TestBugsAreNotAnswers:
 
     def test_a_bug_raising_value_error_is_still_a_protocol_error(self, tmp_path: Path) -> None:
         # The regression this split exists for: indistinguishable from a bad `under` before.
-        corpus = Corpus(_BrokenFiles(), tmp_path)
+        corpus = Corpus.rooted_at(_BrokenFiles(), tmp_path)
         message = respond(corpus, _request("tools/call", {"name": "vocabulary"}))
         assert _error_of(message)["code"] == -32603
 
@@ -528,7 +534,7 @@ class TestBugsAreNotAnswers:
         respond(self._broken(tmp_path), _request("tools/call", {"name": "contents"}))
         assert "a defect in the walk" in capsys.readouterr().err
 
-    def test_a_caller_error_is_still_a_tool_result(self, corpus: Path) -> None:
+    def test_a_refusal_is_still_a_tool_result(self, corpus: Path) -> None:
         # The other side of the split, so narrowing the catch cannot quietly widen again.
         message = respond(
             real(corpus),
@@ -536,6 +542,74 @@ class TestBugsAreNotAnswers:
         )
         assert _result(message)["isError"] is True
         assert "does not exist" in _tool_text(message)
+
+
+@final
+@dataclass(frozen=True, slots=True)
+class _DeniedFiles:
+    """A ``Files`` the process is not allowed to read.
+
+    Every question raises the way a denied corpus root does. ``resolve`` answers, because
+    that is the one call construction makes and refusing it would fail the test on the
+    setup rather than on the behavior it watches.
+    """
+
+    def _deny(self, path: Path) -> Never:
+        raise PermissionError(13, "Permission denied", str(path))
+
+    def entries(self, directory: Path) -> tuple[Path, ...]:
+        self._deny(directory)
+
+    def is_directory(self, path: Path) -> bool:
+        self._deny(path)
+
+    def is_file(self, path: Path) -> bool:
+        self._deny(path)
+
+    def is_symlink(self, path: Path) -> bool:
+        self._deny(path)
+
+    def exists(self, path: Path) -> bool:
+        self._deny(path)
+
+    def resolve(self, path: Path) -> Path:
+        return path
+
+    def read_text(self, path: Path) -> str:
+        self._deny(path)
+
+
+class TestASubstrateFailureIsNotAnAnswer:
+    """An unreadable corpus is not something the caller asked for wrong.
+
+    `_call_tool` used to catch `OSError` and hand back `isError: true` with
+    "cannot read the corpus" in it — the channel reserved for "you asked wrong". The agent
+    reads that and retries against a corpus that will keep failing, and nothing reaches the
+    log for the operator who could fix it. It is a substrate fault, so it travels.
+    """
+
+    def _denied(self, tmp_path: Path) -> Corpus:
+        return Corpus.rooted_at(_DeniedFiles(), tmp_path)
+
+    @pytest.mark.parametrize("tool", ["contents", "vocabulary"])
+    def test_it_is_a_protocol_error_not_a_tool_result(self, tmp_path: Path, tool: str) -> None:
+        message = respond(self._denied(tmp_path), _request("tools/call", {"name": tool}))
+        assert _error_of(message)["code"] == -32603
+        assert message is not None
+        assert "result" not in message
+
+    def test_the_traceback_reaches_stderr(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        # The operator's half. The old error result said nothing anywhere but to the agent.
+        respond(self._denied(tmp_path), _request("tools/call", {"name": "contents"}))
+        assert "Permission denied" in capsys.readouterr().err
+
+    def test_the_error_message_carries_no_host_path(self, tmp_path: Path) -> None:
+        # An OSError names the path its bytes were meant to live at; the protocol error
+        # must not, which is what the old `exc.strerror` dance was for.
+        message = respond(self._denied(tmp_path), _request("tools/call", {"name": "contents"}))
+        assert str(tmp_path) not in _error_of(message)["message"]
 
 
 @final
@@ -583,11 +657,11 @@ class TestNotifications:
         line = json.dumps(
             {"jsonrpc": "2.0", "method": "tools/call", "params": {"name": "vocabulary"}}
         )
-        assert respond(Corpus(_RefusingFiles(), corpus), line) is None
+        assert respond(Corpus.rooted_at(_RefusingFiles(), corpus), line) is None
 
     def test_an_unknown_method_without_an_id_is_still_silent(self, corpus: Path) -> None:
         line = json.dumps({"jsonrpc": "2.0", "method": "resources/list"})
-        assert respond(Corpus(_RefusingFiles(), corpus), line) is None
+        assert respond(Corpus.rooted_at(_RefusingFiles(), corpus), line) is None
 
 
 class TestServeLoop:

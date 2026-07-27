@@ -1,11 +1,15 @@
 """The in-memory ``Files`` fake, and the real adapter under test.
 
-Two ways to give the walk a corpus. ``REAL`` puts it on the actual filesystem under
+Three ways to give the walk a corpus. ``REAL`` puts it on the actual filesystem under
 ``tmp_path``, which is what pins ``RealFiles`` to real pathlib behavior. ``FakeFiles``
 describes one in a dict, which is what makes the cases the filesystem will not reliably
 produce — a symlink out of the corpus, a directory that cannot be read, a link back to an
 ancestor — deterministic on every platform. Eight tests used to ``pytest.skip`` when the OS
 refused a symlink, so on a plain Windows box the containment guarantees went unverified.
+
+``CountingFiles`` wraps either of them and counts what was asked of it, which is how
+the cost claims — one ``entries`` call per directory per call — are pinned rather than
+asserted in a commit message.
 
 The filesystem tests are not marked ``integration``. They run in half a second against a
 ``tmp_path`` the test owns, so splitting the suite would buy nothing.
@@ -15,6 +19,7 @@ from __future__ import annotations
 
 import errno
 import os.path
+from collections import Counter
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -22,8 +27,9 @@ from typing import Final, final
 
 from hoplite_catalog.adapters import RealFiles
 from hoplite_catalog.corpus import Corpus
+from hoplite_catalog.ports import Files
 
-__all__ = ["CORPUS", "REAL", "FakeFiles", "document", "fake", "real"]
+__all__ = ["CORPUS", "REAL", "CountingFiles", "FakeFiles", "document", "fake", "real"]
 
 REAL: Final = RealFiles()
 
@@ -34,12 +40,12 @@ CORPUS: Final = Path(os.path.abspath("/corpus"))
 
 def real(root: Path) -> Corpus:
     """The real filesystem rooted at ``root``, which is a ``tmp_path`` the test owns."""
-    return Corpus(REAL, root)
+    return Corpus.rooted_at(REAL, root)
 
 
 def fake(files: FakeFiles) -> Corpus:
     """An in-memory corpus rooted at ``CORPUS``, the root every ``FakeFiles`` tree uses."""
-    return Corpus(files, CORPUS)
+    return Corpus.rooted_at(files, CORPUS)
 
 
 def document(title: str) -> str:
@@ -129,3 +135,46 @@ class FakeFiles:
         if target not in self.texts:
             raise FileNotFoundError(2, "No such file or directory", str(path))
         return self.texts[target]
+
+
+@final
+@dataclass(frozen=True, slots=True)
+class CountingFiles:
+    """A ``Files`` that answers from another one and counts what it was asked.
+
+    How often the corpus is read is part of the contract — the whole design of the listing
+    is that a caller pays for the directory it asked for — and it is the part that drifts
+    silently, since a second read of the same directory returns the same answer. Counting
+    at the port is the only place the number is visible.
+    """
+
+    inner: Files
+    calls: Counter[str] = field(default_factory=Counter)
+
+    def entries(self, directory: Path) -> tuple[Path, ...]:
+        self.calls["entries"] += 1
+        return self.inner.entries(directory)
+
+    def is_directory(self, path: Path) -> bool:
+        self.calls["is_directory"] += 1
+        return self.inner.is_directory(path)
+
+    def is_file(self, path: Path) -> bool:
+        self.calls["is_file"] += 1
+        return self.inner.is_file(path)
+
+    def is_symlink(self, path: Path) -> bool:
+        self.calls["is_symlink"] += 1
+        return self.inner.is_symlink(path)
+
+    def exists(self, path: Path) -> bool:
+        self.calls["exists"] += 1
+        return self.inner.exists(path)
+
+    def resolve(self, path: Path) -> Path:
+        self.calls["resolve"] += 1
+        return self.inner.resolve(path)
+
+    def read_text(self, path: Path) -> str:
+        self.calls["read_text"] += 1
+        return self.inner.read_text(path)
