@@ -27,6 +27,29 @@ one document reached by two paths. Every name here is a promise that narrowing a
 break, so the ones that buy a caller nothing are not made.
 """
 
+import sys
+
+# The first thing the package does, because everything below it is what would fail first.
+# `contents` and `documents` use PEP 695 `type` statements, which do not parse before 3.12,
+# so an older interpreter dies with a SyntaxError pointing at a type alias — a true report
+# of a symptom and no help at all with the cause. `python -m hoplite_catalog.server` imports
+# this module before that one, and nothing here uses syntax newer than the check itself, so
+# this is the last point where a sentence can still be printed.
+#
+# `SystemExit` rather than `ImportError`: one line on stderr and an exit code, where a
+# traceback buries the sentence under a stack nobody needs. The cost is that importing the
+# package would stop any process, not just this one — moot on every interpreter that can
+# parse the rest of it.
+# UP036 is suppressed below: ruff reads this as a dead version block because
+# `target-version` is py312. It is dead for every version this project targets, and live for
+# the one it does not — the check exists to run on an interpreter the configuration says will
+# never reach it.
+if sys.version_info < (3, 12):  # noqa: UP036
+    raise SystemExit(
+        f"hoplite-catalog needs Python 3.12 or newer; {sys.executable} is "
+        f"{sys.version.split()[0]}. Set the plugin's Python executable option to a 3.12+ one."
+    )
+
 from hoplite_catalog.adapters import RealFiles
 from hoplite_catalog.contents import (
     Directory,

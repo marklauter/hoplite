@@ -41,6 +41,10 @@ exclude_also = [
     "assert_never\\(",
     # The entry-point guard runs under the interpreter, never under pytest.
     "if __name__ == .__main__.:",
+    # The version floor in `__init__`. Any interpreter that can run the suite is one the
+    # check passes, so the block is unreachable from here by definition — it exists for the
+    # interpreters that cannot get this far.
+    "if sys\\.version_info",
     # Import-time only; the block has no runtime behavior to test.
     "if TYPE_CHECKING:",
 ]
