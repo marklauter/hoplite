@@ -16,6 +16,8 @@ dependencies = []
 [project.optional-dependencies]
 dev = [
     "pytest>=8.0",
+    "pytest-cov>=5.0",
+    "import-linter>=2.0",
     "ruff>=0.6",
     "pyright>=1.1.380",
 ]
@@ -26,6 +28,34 @@ where = ["src"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
+# The ratchet: monotonic, set to the measured value and only ever raised. A scoped run
+# passes --no-cov, since a subset of the suite cannot meet a project-wide floor.
+addopts = "--cov=src --cov-branch --cov-fail-under=95"
+
+[tool.coverage.report]
+exclude_also = [
+    # Unreachable by construction: `assert_never` is how a new variant becomes a pyright
+    # error, so the line executing would mean the type check had already failed.
+    "assert_never\\(",
+    # The entry-point guard runs under the interpreter, never under pytest.
+    "if __name__ == .__main__.:",
+    # Import-time only; the block has no runtime behavior to test.
+    "if TYPE_CHECKING:",
+]
+
+[tool.importlinter]
+root_packages = ["hoplite_catalog"]
+
+# The dependency direction, asserted by tests/test_architecture.py so it runs in the same
+# pytest step as everything else. `server` is the composition root and the only module that
+# names the real filesystem; `files` is the port and depends on nothing local. `exhaustive`
+# makes a new module a failure until it is placed in the layering deliberately.
+[[tool.importlinter.contracts]]
+name = "The package layers in one direction"
+type = "layers"
+layers = ["server", "vocabulary", "contents", "files"]
+containers = ["hoplite_catalog"]
+exhaustive = true
 
 [tool.ruff]
 line-length = 100

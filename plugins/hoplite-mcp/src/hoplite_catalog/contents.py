@@ -27,6 +27,8 @@ from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Final, assert_never, final
 
+from hoplite_catalog.files import Files
+
 __all__ = [
     "FENCE",
     "Directory",
@@ -237,7 +239,7 @@ def slice_frontmatter(lines: Sequence[str]) -> tuple[str, ...] | None:
     return None if closing is None else tuple(lines[1:closing])
 
 
-def resolve_under(root: Path, under: str) -> Path:
+def resolve_under(files: Files, root: Path, under: str) -> Path:
     """Normalize ``under`` against the corpus root, rejecting anything outside it.
 
     Normalization is lexical — ``normpath`` collapses ``.`` and ``..`` without touching
@@ -260,13 +262,13 @@ def resolve_under(root: Path, under: str) -> Path:
     ``docs/specs/hoplite-tool-api.md`` those throw rather than riding back as an empty
     result — a silent empty listing reads as "the folder is empty", not "you typo'd".
     """
-    resolved_root = root.resolve()
+    resolved_root = files.resolve(root)
     target = Path(os.path.normpath(resolved_root / under))
     if not _contains(resolved_root, target):
         raise ValueError(f"{under!r} is outside the corpus root")
-    if not target.exists():
+    if not files.exists(target):
         raise ValueError(f"{under!r} does not exist")
-    if not _contains(resolved_root, target.resolve()):
+    if not _contains(resolved_root, files.resolve(target)):
         raise ValueError(f"{under!r} resolves outside the corpus root")
     return target
 
@@ -276,12 +278,11 @@ def _contains(root: Path, path: Path) -> bool:
     return path == root or root in path.parents
 
 
-def read_entry(root: Path, path: Path) -> Entry:
-    """Read one document and slice its frontmatter. The I/O edge of this module.
+def read_entry(files: Files, root: Path, path: Path) -> Entry:
+    """Read one document and slice its frontmatter.
 
-    ``utf-8-sig`` strips a byte-order mark, which would otherwise sit in front of the
-    opening fence and hide it. Text mode translates CRLF, so a file Obsidian wrote on
-    Windows slices the same as one written on Linux.
+    How bytes become text — the byte-order mark, the newline translation — is the adapter's
+    decision and lives in ``RealFiles.read_text``.
 
     The emitted path is where the corpus links to the document, not where the bytes live.
     ``path`` is deliberately not resolved: ``docs/specs/frontmatter.md`` is a symlink into
@@ -289,16 +290,16 @@ def read_entry(root: Path, path: Path) -> Entry:
     wikilink in the corpus uses. Only ``root`` is resolved, to give ``relative_to`` a
     normalized base.
     """
-    lines = path.read_text(encoding="utf-8-sig").splitlines()
-    return Entry(path=corpus_path(root, path), frontmatter=slice_frontmatter(lines))
+    lines = files.read_text(path).splitlines()
+    return Entry(path=corpus_path(files, root, path), frontmatter=slice_frontmatter(lines))
 
 
-def corpus_path(root: Path, path: Path) -> str:
+def corpus_path(files: Files, root: Path, path: Path) -> str:
     """The document's path as the corpus addresses it — root-relative, forward slashes."""
-    return path.absolute().relative_to(root.resolve()).as_posix()
+    return path.absolute().relative_to(files.resolve(root)).as_posix()
 
 
-def subdirectories(directory: Path) -> tuple[Path, ...]:
+def subdirectories(files: Files, directory: Path) -> tuple[Path, ...]:
     """The child directories a walk descends into, ordered by path.
 
     Hidden directories are skipped. A leading dot is the filesystem's own marker for
@@ -309,12 +310,14 @@ def subdirectories(directory: Path) -> tuple[Path, ...]:
     """
     return tuple(
         sorted(
-            path for path in directory.iterdir() if path.is_dir() and not path.name.startswith(".")
+            path
+            for path in files.entries(directory)
+            if files.is_directory(path) and not path.name.startswith(".")
         )
     )
 
 
-def markdown_in(directory: Path) -> tuple[Path, ...]:
+def markdown_in(files: Files, directory: Path) -> tuple[Path, ...]:
     """The markdown documents directly in ``directory``, ordered by path.
 
     One definition of "document", used by the listing, by the subtree counts, and — by
@@ -326,15 +329,25 @@ def markdown_in(directory: Path) -> tuple[Path, ...]:
     while also appearing there as a directory, and handed to ``read_entry``, where the
     read fails and takes the whole call with it.
 
-    The test is ``not is_dir()``, not ``is_file()``. A symlink dangling inside the corpus
-    is neither a file nor a directory, and ``is_file()`` would drop it silently — the one
-    outcome this module refuses, since a document a caller can see on disk must never go
-    missing from the listing. It stays in, and ``collect`` refuses it out loud.
+    The test is ``not is_directory()``, not ``is_file()``. A symlink dangling inside the
+    corpus is neither a file nor a directory, and ``is_file()`` would drop it silently —
+    the one outcome this module refuses, since a document a caller can see on disk must
+    never go missing from the listing. It stays in, and ``collect`` refuses it out loud.
+
+    The suffix is matched exactly, where ``glob("*.md")`` matched it case-insensitively on
+    Windows and case-sensitively everywhere else. One corpus now lists the same documents
+    on every platform; a ``README.MD`` moves to the other-files group rather than vanishing.
     """
-    return tuple(sorted(path for path in directory.glob("*.md") if not path.is_dir()))
+    return tuple(
+        sorted(
+            path
+            for path in files.entries(directory)
+            if path.suffix == ".md" and not files.is_directory(path)
+        )
+    )
 
 
-def other_files(root: Path, directory: Path) -> tuple[str, ...]:
+def other_files(files: Files, root: Path, directory: Path) -> tuple[str, ...]:
     """The non-markdown files directly in ``directory``, as corpus paths, ordered.
 
     They cannot carry frontmatter, but hiding them makes the listing lie about what the
@@ -342,9 +355,9 @@ def other_files(root: Path, directory: Path) -> tuple[str, ...]:
     bare path already means "markdown document with no frontmatter", so an unlabelled
     PDF path would be indistinguishable from one.
 
-    ``not is_dir()`` matches ``markdown_in``, so the two partition everything the report
-    shows: a visible entry is a subdirectory, a document, or an other file, never both and
-    never neither. ``is_file()`` would leave a dangling link in none of the three.
+    ``not is_directory()`` matches ``markdown_in``, so the two partition everything the
+    report shows: a visible entry is a subdirectory, a document, or an other file, never
+    both and never neither. ``is_file()`` would leave a dangling link in none of the three.
 
     Hidden files are skipped, the same rule ``subdirectories`` applies to hidden
     directories. A leading dot is the filesystem's marker for "not content", and it does
@@ -363,25 +376,27 @@ def other_files(root: Path, directory: Path) -> tuple[str, ...]:
     claiming something untrue. It is marked with the same wording a foreign directory
     carries, on the same line, because this group is one line per file.
     """
-    resolved_root = root.resolve()
+    resolved_root = files.resolve(root)
     try:
-        documents = set(markdown_in(directory))
+        documents = set(markdown_in(files, directory))
         others = sorted(
             path
-            for path in directory.iterdir()
-            if not path.is_dir() and not path.name.startswith(".") and path not in documents
+            for path in files.entries(directory)
+            if not files.is_directory(path)
+            and not path.name.startswith(".")
+            and path not in documents
         )
     except OSError:
         return ()
     return tuple(
-        corpus_path(root, path)
-        if _contains(resolved_root, path.resolve())
-        else f"{corpus_path(root, path)} {_OUTSIDE}"
+        corpus_path(files, root, path)
+        if _contains(resolved_root, files.resolve(path))
+        else f"{corpus_path(files, root, path)} {_OUTSIDE}"
         for path in others
     )
 
 
-def _walk(root: Path, under: Path) -> Iterator[tuple[Path, DirectoryNode, bool]]:
+def _walk(files: Files, root: Path, under: Path) -> Iterator[tuple[Path, DirectoryNode, bool]]:
     """Every directory at or under ``under``, with its node and whether it was descended.
 
     The one traversal both the subtree and the recursive listing read, so they cannot
@@ -389,25 +404,22 @@ def _walk(root: Path, under: Path) -> Iterator[tuple[Path, DirectoryNode, bool]]
     paths it descended into, which are exactly the directories whose documents have not
     already been listed under another name.
     """
-    resolved_root = root.resolve()
+    resolved_root = files.resolve(root)
     visited: set[Path] = set()
     stack: list[tuple[Path, int]] = [(under, 0)]
 
     while stack:
         directory, depth = stack.pop()
-        path = corpus_path(root, directory)
-        resolved = directory.resolve()
+        path = corpus_path(files, root, directory)
+        resolved = files.resolve(directory)
 
         if not _contains(resolved_root, resolved):
             yield directory, ForeignDirectory(path=path, depth=depth), False
             continue
 
-        # Both calls sit inside the try because both fail lazily: `iterdir` and `glob`
-        # raise mid-iteration, not at the call, so the failure surfaces inside the
-        # comprehension that consumes them.
         try:
-            documents = len(markdown_in(directory))
-            children = subdirectories(directory)
+            documents = len(markdown_in(files, directory))
+            children = subdirectories(files, directory)
         except OSError:
             yield directory, UnlistableDirectory(path=path, depth=depth), False
             continue
@@ -422,7 +434,7 @@ def _walk(root: Path, under: Path) -> Iterator[tuple[Path, DirectoryNode, bool]]
         stack.extend((child, depth + 1) for child in reversed(children))
 
 
-def walk(root: Path, under: Path) -> tuple[DirectoryNode, ...]:
+def walk(files: Files, root: Path, under: Path) -> tuple[DirectoryNode, ...]:
     """The directory subtree at ``under``, to full depth, in pre-order.
 
     Only directories recurse, and hidden ones are skipped — see ``subdirectories``, which
@@ -446,10 +458,12 @@ def walk(root: Path, under: Path) -> tuple[DirectoryNode, ...]:
     exists to prevent. It is also what stops a link back to an ancestor from looping
     forever: the loop is entered once, named, and not descended.
     """
-    return tuple(node for _, node, _ in _walk(root, under))
+    return tuple(node for _, node, _ in _walk(files, root, under))
 
 
-def collect(root: Path, under: Path, *, recurse: bool = False) -> tuple[Document, ...]:
+def collect(
+    files: Files, root: Path, under: Path, *, recurse: bool = False
+) -> tuple[Document, ...]:
     """Read the ``.md`` documents in ``under``, ordered by path.
 
     ``recurse`` is off for the listing, which reports one directory at a time, and on for
@@ -481,35 +495,35 @@ def collect(root: Path, under: Path, *, recurse: bool = False) -> tuple[Document
     Ordering is by the emitted path string, so two calls over an unchanged corpus return
     identical output — the listing stays diffable and cacheable.
     """
-    resolved_root = root.resolve()
-    if under.is_file():
+    resolved_root = files.resolve(root)
+    if files.is_file(under):
         paths: tuple[Path, ...] = (under,)
     elif recurse:
         paths = tuple(
             sorted(
                 path
-                for directory, _, descended in _walk(root, under)
+                for directory, _, descended in _walk(files, root, under)
                 if descended
-                for path in markdown_in(directory)
+                for path in markdown_in(files, directory)
             )
         )
     else:
         # The subtree names an unreadable directory; here it simply holds no documents.
         try:
-            paths = markdown_in(under)
+            paths = markdown_in(files, under)
         except OSError:
             paths = ()
 
     documents: list[Document] = []
     for path in paths:
-        relative = corpus_path(root, path)
-        if not _contains(resolved_root, path.resolve()):
+        relative = corpus_path(files, root, path)
+        if not _contains(resolved_root, files.resolve(path)):
             documents.append(
                 Unreadable(path=relative, reason="links to a target outside the corpus")
             )
             continue
         try:
-            documents.append(read_entry(root, path))
+            documents.append(read_entry(files, root, path))
         except (OSError, UnicodeDecodeError) as exc:
             documents.append(Unreadable(path=relative, reason=_read_failure(exc)))
     return tuple(sorted(documents, key=lambda document: document.path))

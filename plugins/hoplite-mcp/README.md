@@ -12,32 +12,31 @@ Reports one folder in three groups, each under a `#` heading:
   count of documents directly in it.
 - `# other files` — the non-markdown files in `under`.
 - `# documents` — the documents in `under` alone, each followed by its frontmatter lines as
-  written, less its comments.
+  written, comments dropped.
 
-The `#` is what separates a heading from content. A blank line does double duty — it
-divides the groups and also divides two documents inside `# documents` — so the heading is
-the only group boundary.
+The `#` marks a heading. A blank line can't, because blank lines also separate two
+documents inside `# documents`.
 
 A frontmatter key can never start with `#`. A path can: paths are corpus-relative, so one
 inside a folder always leads with that folder, but a file sitting at the corpus root leads
-with its own name. A root-level `#hash.md` therefore emits a line starting with `#`, and a
-root-level file named exactly `# documents` emits a line identical to a heading.
+with its own name. So a root-level `#hash.md` prints a line starting with `#`, and a
+root-level file named exactly `# documents` prints a line identical to a heading.
 
-A frontmatter comment is dropped, since a `#` line emitted verbatim would read as a
-heading. Nothing else in a block is touched.
+Frontmatter comments are dropped: printed as written, a `#` line would read as a heading.
+Nothing else in a block is touched.
 
 Directories recurse, documents do not. Hidden folders are not walked into and hidden files
 are not listed, though naming a hidden folder as `under` works. A hidden `.md` file is
-still a document. A folder linking outside the corpus takes the place of its count,
-and a non-markdown file linking outside is marked the same way:
+still a document. A folder linking outside the corpus prints `links outside the corpus`
+where its count would be, and a non-markdown file linking outside prints it after the path:
 
 ```
   external/ links outside the corpus
 notes/leak.pdf links outside the corpus
 ```
 
-A folder that cannot be read takes the place of its count the same way, and is not walked
-into, so nothing under it is listed:
+A folder that cannot be read prints `cannot be listed` where its count would be. It is not
+walked into, so nothing under it is listed:
 
 ```
   closed/ cannot be listed
@@ -45,9 +44,9 @@ into, so nothing under it is listed:
 
 A folder linking to another folder inside the corpus is walked, and its documents are
 reported under the link path. A document reachable by two paths is listed once, under the
-first path reached, so `vocabulary` counts it once. The folder counts are per folder, so
-the same document is counted in both — subtree counts do not sum to the document count
-when a folder is mirrored. A link back to an ancestor terminates.
+first path reached, so `vocabulary` counts it once. Each folder counts what sits in it, so
+a mirrored document is counted twice and the folder counts will not add up to the document
+count. A link back to an ancestor terminates.
 
 Skipping hidden folders is the only bound on the walk. Folders without a leading dot are
 walked to full depth, `__pycache__`, `node_modules`, and a dotless `venv` included. Naming
@@ -74,28 +73,27 @@ none
 
 ## vocabulary(under)
 
-Reports one `key: documents` line per distinct frontmatter key, ordered by key, where the
-number is how many documents carry it. Recurses, skipping hidden folders. `under` defaults
-to the corpus root.
+Reports one `key: documents` line per frontmatter key, ordered by key. The number is how
+many documents carry that key. Recurses, skipping hidden folders. `under` defaults to the
+corpus root.
 
 ## Errors
 
 Both tools return an error, and no report, when `under` names nothing, sits outside the
-corpus root, or resolves outside it through a link. So do the argument checks: `under`
-must be a string, `keys` a list of strings. `contents` also errors when `keys` names no
-property carried by any document that has frontmatter — a folder whose documents have no
+corpus root, or resolves outside it through a link. The argument checks do the same:
+`under` must be a string, `keys` a list of strings. `contents` also errors when `keys` names no
+property carried by any document that has frontmatter. A folder whose documents have no
 frontmatter at all is not that case, and lists normally.
 
-A document that cannot be read is reported rather than raised. It keeps its place in
-`# documents`, with the reason where its frontmatter would be:
+A document that cannot be read is reported instead of failing the call. It keeps its place
+in `# documents` and prints the path and the reason, where its frontmatter would be:
 
 ```
 notes/leak.md
 links to a target outside the corpus
 ```
 
-The other reason is `cannot be read (...)`, carrying the operating system's message. One
-bad document does not cost the caller the folder.
+The other reason is `cannot be read (...)`, carrying the operating system's message.
 
 ## Install
 
@@ -107,14 +105,19 @@ than a message.
 
 ```sh
 cd plugins/hoplite-mcp
+pip install -e .[dev]
 python -m pytest
 python -m ruff check .
 python -m pyright
 ```
 
-`contents.py` holds the walking, slicing, and rendering. Directory access is spread across
-its walking functions, through `iterdir`, `glob`, `resolve`, and `is_dir`; `read_entry` is
-the only function that opens a file.
+The dev extra installs the test and lint tools. The server itself has no dependencies.
+`pytest` needs the extra because coverage runs on every test run.
+
+`files.py` holds the `Files` port and its pathlib adapter, `RealFiles`. It is the only code
+that touches a filesystem. `contents.py` holds the walking, slicing, and rendering. It
+takes a `Files` as its first argument, so a test hands it an in-memory corpus and drives
+the cases a real filesystem will not reliably produce.
 `vocabulary.py` counts keys over what it collects. `server.py` is the stdio JSON-RPC host,
-hand-rolled on the standard library, and the layer to swap for the MCP SDK when the graph
-tools in `docs/specs/hoplite-tool-api.md` land.
+hand-rolled on the standard library. The graph tools designed in
+`docs/specs/hoplite-tool-api.md` register here when they land.

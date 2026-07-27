@@ -1,12 +1,11 @@
 """Stdio JSON-RPC host for the `catalog` MCP server.
 
-The transport is hand-rolled on the standard library. ``contents`` needs no YAML parser
-and no SDK, so the server needs no dependencies either, and the plugin runs under
-whatever Python is on PATH with no venv to bootstrap — the same choice the
-frontmatter hook next door makes. When the graph tools in
-``docs/specs/hoplite-tool-api.md`` land, this module is the layer to swap for the
-official SDK: the tool body in ``hoplite_catalog.contents`` is pure and knows nothing
-about transport.
+The transport is hand-rolled on the standard library, and stays that way. ``contents``
+needs no YAML parser and no SDK, so the server needs no dependencies either, and the
+plugin runs under whatever Python is on PATH with no venv to bootstrap — the same choice
+the frontmatter hook next door makes. Adding a dependency here reintroduces that install
+step for every user, and the graph tools designed in ``docs/specs/hoplite-tool-api.md``
+do not change that: they are more tools on this host, not a reason to adopt another one.
 
 MCP stdio framing is one JSON message per line. Stdout carries protocol traffic and
 nothing else, so every log line goes to stderr, where Claude Code surfaces it under
@@ -29,6 +28,7 @@ from hoplite_catalog.contents import (
     resolve_under,
     walk,
 )
+from hoplite_catalog.files import Files, RealFiles
 from hoplite_catalog.vocabulary import render_vocabulary, tally
 
 __all__ = ["DEFAULT_UNDER", "PROTOCOL_VERSION", "SERVER_NAME", "TOOLS", "respond", "serve"]
@@ -167,13 +167,13 @@ def _under_argument(arguments: dict[str, object]) -> str:
     return under
 
 
-def _call_contents(root: Path, arguments: dict[str, object]) -> dict[str, object]:
+def _call_contents(files: Files, root: Path, arguments: dict[str, object]) -> dict[str, object]:
     """Run the ``contents`` tool. Raises ``ValueError`` on a bad argument."""
     under = _under_argument(arguments)
     keys = _string_set(arguments.get("keys"), "keys")
 
-    target = resolve_under(root, under)
-    documents = collect(root, target)
+    target = resolve_under(files, root, under)
+    documents = collect(files, root, target)
     projected = [document.projected(keys) for document in documents]
 
     # A misspelled key would otherwise return a bare path list, which reads as "these
@@ -190,21 +190,23 @@ def _call_contents(root: Path, arguments: dict[str, object]) -> dict[str, object
 
     # A single document as `under` has no subtree and no siblings to report, so it gets the
     # listing alone. Wrapping one document in three headings would be all frame, no picture.
-    if target.is_file():
+    if files.is_file(target):
         return _text_result(render(projected))
-    return _text_result(render_report(walk(root, target), other_files(root, target), projected))
+    return _text_result(
+        render_report(walk(files, root, target), other_files(files, root, target), projected)
+    )
 
 
-def _call_vocabulary(root: Path, arguments: dict[str, object]) -> dict[str, object]:
+def _call_vocabulary(files: Files, root: Path, arguments: dict[str, object]) -> dict[str, object]:
     """Run the ``vocabulary`` tool. Raises ``ValueError`` on a bad argument."""
     under = _under_argument(arguments)
-    uses = tally(collect(root, resolve_under(root, under), recurse=True))
+    uses = tally(collect(files, root, resolve_under(files, root, under), recurse=True))
     if not uses:
         return _text_result(f"no frontmatter keys under {under!r}")
     return _text_result(render_vocabulary(uses))
 
 
-def _call_tool(root: Path, params: dict[str, object]) -> dict[str, object]:
+def _call_tool(files: Files, root: Path, params: dict[str, object]) -> dict[str, object]:
     """Dispatch ``tools/call``. An unknown tool or bad argument comes back as an error
     result rather than a JSON-RPC error, so the agent can read the message and retry."""
     name = params.get("name")
@@ -212,9 +214,9 @@ def _call_tool(root: Path, params: dict[str, object]) -> dict[str, object]:
     try:
         match name:
             case "contents":
-                return _call_contents(root, arguments)
+                return _call_contents(files, root, arguments)
             case "vocabulary":
-                return _call_vocabulary(root, arguments)
+                return _call_vocabulary(files, root, arguments)
             case _:
                 raise ValueError(f"unknown tool: {name!r}")
     except ValueError as exc:
@@ -229,7 +231,9 @@ def _call_tool(root: Path, params: dict[str, object]) -> dict[str, object]:
         )
 
 
-def _dispatch(root: Path, method: str, params: dict[str, object]) -> dict[str, object] | None:
+def _dispatch(
+    files: Files, root: Path, method: str, params: dict[str, object]
+) -> dict[str, object] | None:
     """Return the result for ``method``, or ``None`` when the method is unknown."""
     match method:
         case "initialize":
@@ -241,7 +245,7 @@ def _dispatch(root: Path, method: str, params: dict[str, object]) -> dict[str, o
         case "tools/list":
             return {"tools": list(TOOLS)}
         case "tools/call":
-            return _call_tool(root, params)
+            return _call_tool(files, root, params)
         case "ping":
             return {}
         case _:
@@ -252,7 +256,7 @@ def _error(request_id: object, code: int, message: str) -> dict[str, object]:
     return {"jsonrpc": "2.0", "id": request_id, "error": {"code": code, "message": message}}
 
 
-def respond(root: Path, line: str) -> dict[str, object] | None:
+def respond(files: Files, root: Path, line: str) -> dict[str, object] | None:
     """Turn one incoming line into one outgoing message, or ``None`` when none is owed.
 
     A notification carries no ``id`` and gets no reply — that includes
@@ -272,7 +276,7 @@ def respond(root: Path, line: str) -> dict[str, object] | None:
     if not isinstance(method, str):
         return None if request_id is None else _error(request_id, _INVALID_REQUEST, "no method")
 
-    result = _dispatch(root, method, _as_mapping(message.get("params")) or {})
+    result = _dispatch(files, root, method, _as_mapping(message.get("params")) or {})
 
     if request_id is None:
         return None  # a notification; the reply, if any, is discarded
@@ -281,7 +285,7 @@ def respond(root: Path, line: str) -> dict[str, object] | None:
     return {"jsonrpc": "2.0", "id": request_id, "result": result}
 
 
-def serve(root: Path, stdin: TextIO, stdout: TextIO) -> int:
+def serve(files: Files, root: Path, stdin: TextIO, stdout: TextIO) -> int:
     """Read newline-delimited JSON from ``stdin`` until it closes, replying on ``stdout``.
 
     ``strip`` takes a leading byte-order mark along with the whitespace. A conforming
@@ -292,7 +296,7 @@ def serve(root: Path, stdin: TextIO, stdout: TextIO) -> int:
         stripped = line.strip("﻿ \t\r\n")
         if not stripped:
             continue
-        message = respond(root, stripped)
+        message = respond(files, root, stripped)
         if message is None:
             continue
         stdout.write(json.dumps(message, ensure_ascii=False) + "\n")
@@ -310,7 +314,8 @@ def main() -> int:
     root = Path.cwd()
     sys.stderr.write(f"[hoplite-catalog] serving; corpus root = {root}\n")
     sys.stderr.flush()
-    return serve(root, sys.stdin, sys.stdout)
+    # The composition root: the one place the real filesystem is named.
+    return serve(RealFiles(), root, sys.stdin, sys.stdout)
 
 
 if __name__ == "__main__":

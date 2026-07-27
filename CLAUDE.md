@@ -1,32 +1,25 @@
 # CLAUDE.md
 
-Hoplite — a knowledge graph over a markdown corpus. The repo is a Claude Code plugin marketplace (`hoplite`) shipping two plugins, plus the spec corpus under `docs/`.
+Hoplite — a knowledge graph over a markdown corpus. A Claude Code plugin marketplace
+shipping `hoplite-skills` (authoring skills, frontmatter hook) and `hoplite-mcp` (the
+`catalog` MCP server), plus the corpus under `docs/`.
 
-## Layout
+## Reading `docs/`
 
-- `.claude-plugin/marketplace.json` — the `hoplite` marketplace: two plugins, `hoplite-skills` and `hoplite-mcp`.
-- `plugins/hoplite-skills/` — the live plugin: authoring skills, the frontmatter-validation hook, and the locked specs.
-  - `references/` — **source of truth** for the locked specs: `expressing-edges.md` (the wikilink/edge grammar) and `frontmatter.md` (the frontmatter standard). `docs/specs/` reaches them through symlinks, so corpus wikilinks still resolve.
-  - `skills/` — the eight authoring skills (glossary, spec, decision, taking-notes, journaling, todo, triage, domain-modeling). They cite the specs via `${CLAUDE_PLUGIN_ROOT}/references/`.
-  - `hooks/` — `check-frontmatter.py` (a PostToolUse hook validating wikilinks in `docs/`) and `edge_grammar.py` (the executable form of `expressing-edges.md`, with `test_edge_grammar.py`).
-- `plugins/hoplite-mcp/` — stub. The knowledge-graph MCP server, under design; no server is shipped yet.
-- `docs/specs/` — the spec corpus: architecture, tool API, roadmap, and symlinks to the locked specs.
-- `docs/glossary/` — domain glossary, one node per term; `README.md` indexes them.
-- `docs/notes/`, `docs/journal/`, `docs/decisions/`, `docs/todos/` — the agent's own corpus: running notes, design history, decisions, and action items. Free to add.
-- `docs/proxies/` — proxy documents for external resources: frontmatter'd markdown stand-ins carrying a URL and summary so the resource can be linked from the graph.
-- `templates/` — **dead.** A retired "mail-merge" build (`build/build.py`, `manifest.txt`) that once generated skill bodies and the hook. Abandoned; don't edit or build from it.
+To explore the corpus, use the `catalog` MCP tools. The corpus root is `docs/` — start
+there, since `under` defaults to the repo root, which is not it.
 
-## Conventions
+- `contents(under, keys)` — one folder: its subtree with per-folder document counts, then
+  the documents in that folder with their frontmatter. `contents(under="docs")` is the
+  layout. `keys` trims the frontmatter to the properties you name.
+- `vocabulary(under)` — every frontmatter key in use and how many documents carry it. Call
+  it before passing `keys`, since a key that doesn't exist returns nothing.
 
-- The source of truth for the frontmatter and edge model is the locked specs under `plugins/hoplite-skills/references/`. The hook enforces them; edit it directly in `plugins/hoplite-skills/hooks/`.
-- Write corpus prose to the Microsoft Writing Style Guide: plain, scannable, one idea per sentence.
+## Rules
 
-## Python idioms
-
-- Use protocol style interfaces.
-- **The MCP server is standard library only at runtime.** `plugins/hoplite-mcp` declares
-  no runtime dependency and never will — the stdio host is hand-rolled JSON-RPC rather
-  than the MCP SDK for this reason. A plugin has no install step, so one dependency means
-  every user bootstraps a venv before anything works. Reach for a third-party package and
-  the answer is to write the small thing on the stdlib instead, or to not do it. Dev
-  tooling is exempt: ruff, pyright, and pytest are extras, and nothing shipped imports them.
+- `plugins/hoplite-skills/references/` is the source of truth for the locked specs.
+  `docs/specs/` reaches them by symlink, so edit the originals.
+- `plugins/hoplite-mcp` takes no runtime dependency, ever. Stdlib only, so the plugin has
+  no install step. Dev tooling is exempt.
+- Python: protocol-style interfaces.
+- Corpus prose: Microsoft Writing Style Guide. Plain, scannable, one idea per sentence.

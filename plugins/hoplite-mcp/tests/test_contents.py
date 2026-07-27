@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
 from pathlib import Path
 
 import pytest
+from fakes import CORPUS, REAL, FakeFiles, document
 
 from hoplite_catalog.contents import (
     Directory,
@@ -204,21 +204,21 @@ class TestProjected:
 class TestReadEntry:
     def test_path_is_corpus_relative_and_posix(self, tmp_path: Path) -> None:
         _write(tmp_path / "docs" / "glossary" / "edge.md", "---\ntitle: Edge\n---\n")
-        entry = read_entry(tmp_path, tmp_path / "docs" / "glossary" / "edge.md")
+        entry = read_entry(REAL, tmp_path, tmp_path / "docs" / "glossary" / "edge.md")
         assert entry.path == "docs/glossary/edge.md"
         assert entry.frontmatter == ("title: Edge",)
 
     def test_byte_order_mark_does_not_hide_the_opening_fence(self, tmp_path: Path) -> None:
         _write(tmp_path / "a.md", "---\ntitle: A\n---\n", encoding="utf-8-sig")
-        assert read_entry(tmp_path, tmp_path / "a.md").frontmatter == ("title: A",)
+        assert read_entry(REAL, tmp_path, tmp_path / "a.md").frontmatter == ("title: A",)
 
     def test_crlf_slices_the_same_as_lf(self, tmp_path: Path) -> None:
         _write(tmp_path / "a.md", "---\ntitle: A\n---\n\n# A\n", newline="\r\n")
-        assert read_entry(tmp_path, tmp_path / "a.md").frontmatter == ("title: A",)
+        assert read_entry(REAL, tmp_path, tmp_path / "a.md").frontmatter == ("title: A",)
 
     def test_non_ascii_survives(self, tmp_path: Path) -> None:
         _write(tmp_path / "a.md", "---\nsummary: a kernel — the genus\n---\n")
-        assert read_entry(tmp_path, tmp_path / "a.md").frontmatter == (
+        assert read_entry(REAL, tmp_path, tmp_path / "a.md").frontmatter == (
             "summary: a kernel — the genus",
         )
 
@@ -233,7 +233,7 @@ class TestReadEntry:
         except OSError as exc:  # Windows needs developer mode or elevation
             pytest.skip(f"cannot create a symlink here: {exc}")
 
-        entry = read_entry(tmp_path, link)
+        entry = read_entry(REAL, tmp_path, link)
         assert entry.path == "docs/specs/frontmatter.md"
         assert entry.frontmatter == ("title: F",)
 
@@ -243,17 +243,17 @@ class TestMarkdownIn:
         _write(tmp_path / "b.md", "")
         _write(tmp_path / "a.md", "")
         _write(tmp_path / "sub" / "c.md", "")
-        assert [path.name for path in markdown_in(tmp_path)] == ["a.md", "b.md"]
+        assert [path.name for path in markdown_in(REAL, tmp_path)] == ["a.md", "b.md"]
 
     def test_an_empty_folder_holds_no_documents(self, tmp_path: Path) -> None:
-        assert markdown_in(tmp_path) == ()
+        assert markdown_in(REAL, tmp_path) == ()
 
     def test_a_directory_named_like_a_document_is_not_one(self, tmp_path: Path) -> None:
         # Obsidian corpora do produce these. Counted as a document it would be tallied in
         # the subtree that also lists it as a directory, then handed to read_entry.
         (tmp_path / "sub.md").mkdir()
         _write(tmp_path / "real.md", "")
-        assert [path.name for path in markdown_in(tmp_path)] == ["real.md"]
+        assert [path.name for path in markdown_in(REAL, tmp_path)] == ["real.md"]
 
     def test_a_dangling_link_is_still_a_document(self, tmp_path: Path) -> None:
         # is_file() would drop it here and collect would never refuse it, so a document
@@ -263,7 +263,7 @@ class TestMarkdownIn:
         except OSError as exc:
             pytest.skip(f"cannot create a symlink here: {exc}")
 
-        assert [path.name for path in markdown_in(tmp_path)] == ["dangling.md"]
+        assert [path.name for path in markdown_in(REAL, tmp_path)] == ["dangling.md"]
 
 
 class TestOtherFiles:
@@ -272,21 +272,24 @@ class TestOtherFiles:
         _write(tmp_path / "docs" / "a.md", "")
         _write(tmp_path / "docs" / "notes.txt", "")
         _write(tmp_path / "docs" / "graph.pdf", "")
-        assert other_files(tmp_path, tmp_path / "docs") == ("docs/graph.pdf", "docs/notes.txt")
+        assert other_files(REAL, tmp_path, tmp_path / "docs") == (
+            "docs/graph.pdf",
+            "docs/notes.txt",
+        )
 
     def test_markdown_is_never_reported_here(self, tmp_path: Path) -> None:
         _write(tmp_path / "docs" / "a.md", "")
-        assert other_files(tmp_path, tmp_path / "docs") == ()
+        assert other_files(REAL, tmp_path, tmp_path / "docs") == ()
 
     def test_subfolders_are_not_reported_here(self, tmp_path: Path) -> None:
         _write(tmp_path / "docs" / "sub" / "deep.pdf", "")
-        assert other_files(tmp_path, tmp_path / "docs") == ()
+        assert other_files(REAL, tmp_path, tmp_path / "docs") == ()
 
     def test_a_directory_is_never_an_other_file(self, tmp_path: Path) -> None:
         # Including one named like a document, which is a directory in both groups' eyes.
         (tmp_path / "docs" / "sub.md").mkdir(parents=True)
         (tmp_path / "docs" / "plain").mkdir()
-        assert other_files(tmp_path, tmp_path / "docs") == ()
+        assert other_files(REAL, tmp_path, tmp_path / "docs") == ()
 
     def test_a_link_out_of_the_corpus_is_marked(self, tmp_path: Path) -> None:
         # A bare path here asserts the file is in the corpus, and for this one that is
@@ -300,7 +303,7 @@ class TestOtherFiles:
         except OSError as exc:
             pytest.skip(f"cannot create a symlink here: {exc}")
 
-        listed = other_files(tmp_path, tmp_path / "docs")
+        listed = other_files(REAL, tmp_path, tmp_path / "docs")
         assert listed == ("docs/leak.pdf links outside the corpus",)
         assert "secret.pdf" not in listed[0]
         assert str(outside) not in listed[0]
@@ -313,7 +316,7 @@ class TestOtherFiles:
         except OSError as exc:
             pytest.skip(f"cannot create a symlink here: {exc}")
 
-        assert other_files(tmp_path, tmp_path / "docs") == ("docs/graph.pdf",)
+        assert other_files(REAL, tmp_path, tmp_path / "docs") == ("docs/graph.pdf",)
 
     def test_a_dangling_link_is_reported_rather_than_dropped(self, tmp_path: Path) -> None:
         # It is neither a file nor a directory, so is_file() would leave it in no group.
@@ -323,7 +326,7 @@ class TestOtherFiles:
         except OSError as exc:
             pytest.skip(f"cannot create a symlink here: {exc}")
 
-        assert other_files(tmp_path, tmp_path / "docs") == ("docs/gone.pdf",)
+        assert other_files(REAL, tmp_path, tmp_path / "docs") == ("docs/gone.pdf",)
 
     def test_hidden_files_are_skipped_like_hidden_directories(self, tmp_path: Path) -> None:
         # With the corpus root as the default, listing them put .env and .gitignore in a
@@ -331,13 +334,13 @@ class TestOtherFiles:
         _write(tmp_path / "docs" / ".env", "")
         _write(tmp_path / "docs" / ".gitignore", "")
         _write(tmp_path / "docs" / "notes.txt", "")
-        assert other_files(tmp_path, tmp_path / "docs") == ("docs/notes.txt",)
+        assert other_files(REAL, tmp_path, tmp_path / "docs") == ("docs/notes.txt",)
 
     def test_a_hidden_markdown_file_is_still_a_document(self, tmp_path: Path) -> None:
         # It is addressable by a wikilink, so it belongs in the documents group, not here.
         _write(tmp_path / "docs" / ".draft.md", "")
-        assert other_files(tmp_path, tmp_path / "docs") == ()
-        assert [path.name for path in markdown_in(tmp_path / "docs")] == [".draft.md"]
+        assert other_files(REAL, tmp_path, tmp_path / "docs") == ()
+        assert [path.name for path in markdown_in(REAL, tmp_path / "docs")] == [".draft.md"]
 
     def test_every_entry_lands_in_exactly_one_group(self, tmp_path: Path) -> None:
         # The three groups partition the directory: subdirectory, document, or other file.
@@ -347,9 +350,11 @@ class TestOtherFiles:
         (tmp_path / "docs" / "sub.md").mkdir()
         (tmp_path / "docs" / "plain").mkdir()
 
-        directories = {path.name for path in subdirectories(tmp_path / "docs")}
-        documents = {path.name for path in markdown_in(tmp_path / "docs")}
-        others = {path.rsplit("/", 1)[-1] for path in other_files(tmp_path, tmp_path / "docs")}
+        directories = {path.name for path in subdirectories(REAL, tmp_path / "docs")}
+        documents = {path.name for path in markdown_in(REAL, tmp_path / "docs")}
+        others = {
+            path.rsplit("/", 1)[-1] for path in other_files(REAL, tmp_path, tmp_path / "docs")
+        }
 
         assert directories == {"sub.md", "plain"}
         assert documents == {"a.md"}
@@ -364,7 +369,7 @@ class TestSubdirectories:
         for name in ("z", "a", "m"):
             (tmp_path / name).mkdir()
         _write(tmp_path / "a.md", "")
-        assert [path.name for path in subdirectories(tmp_path)] == ["a", "m", "z"]
+        assert [path.name for path in subdirectories(REAL, tmp_path)] == ["a", "m", "z"]
 
     @pytest.mark.parametrize("name", [".git", ".venv", ".obsidian"])
     def test_hidden_directories_are_never_walked_into(self, tmp_path: Path, name: str) -> None:
@@ -372,23 +377,25 @@ class TestSubdirectories:
         # are each thousands of directories that no corpus addresses.
         (tmp_path / name).mkdir()
         (tmp_path / "docs").mkdir()
-        assert [path.name for path in subdirectories(tmp_path)] == ["docs"]
+        assert [path.name for path in subdirectories(REAL, tmp_path)] == ["docs"]
 
     def test_a_dot_inside_the_name_is_not_hidden(self, tmp_path: Path) -> None:
         (tmp_path / "v1.2").mkdir()
-        assert [path.name for path in subdirectories(tmp_path)] == ["v1.2"]
+        assert [path.name for path in subdirectories(REAL, tmp_path)] == ["v1.2"]
 
 
 class TestWalk:
     def test_reports_the_folder_itself_first(self, tmp_path: Path) -> None:
         _write(tmp_path / "docs" / "a.md", "")
-        assert walk(tmp_path, tmp_path / "docs") == (Directory(path="docs", depth=0, documents=1),)
+        assert walk(REAL, tmp_path, tmp_path / "docs") == (
+            Directory(path="docs", depth=0, documents=1),
+        )
 
     def test_recurses_to_full_depth_in_pre_order(self, tmp_path: Path) -> None:
         _write(tmp_path / "docs" / "glossary" / "a.md", "")
         _write(tmp_path / "docs" / "glossary" / "deep" / "b.md", "")
         _write(tmp_path / "docs" / "notes" / "c.md", "")
-        assert [(node.path, node.depth) for node in walk(tmp_path, tmp_path / "docs")] == [
+        assert [(node.path, node.depth) for node in walk(REAL, tmp_path, tmp_path / "docs")] == [
             ("docs", 0),
             ("docs/glossary", 1),
             ("docs/glossary/deep", 2),
@@ -400,13 +407,15 @@ class TestWalk:
         # are budgeting against.
         _write(tmp_path / "docs" / "sub" / "a.md", "")
         _write(tmp_path / "docs" / "sub" / "b.md", "")
-        counts = {node.path: node for node in walk(tmp_path, tmp_path / "docs")}
+        counts = {node.path: node for node in walk(REAL, tmp_path, tmp_path / "docs")}
         assert counts["docs"] == Directory(path="docs", depth=0, documents=0)
         assert counts["docs/sub"] == Directory(path="docs/sub", depth=1, documents=2)
 
     def test_a_folder_holding_no_documents_is_reported_with_zero(self, tmp_path: Path) -> None:
         (tmp_path / "docs").mkdir()
-        assert walk(tmp_path, tmp_path / "docs") == (Directory(path="docs", depth=0, documents=0),)
+        assert walk(REAL, tmp_path, tmp_path / "docs") == (
+            Directory(path="docs", depth=0, documents=0),
+        )
 
     def test_it_does_not_open_any_document(self, tmp_path: Path) -> None:
         # The walk is at stat level, so an unreadable document costs the subtree nothing.
@@ -416,24 +425,24 @@ class TestWalk:
         except OSError as exc:
             pytest.skip(f"cannot create a symlink here: {exc}")
 
-        assert walk(tmp_path, tmp_path / "docs")[0].path == "docs"
+        assert walk(REAL, tmp_path, tmp_path / "docs")[0].path == "docs"
 
     def test_is_deterministic(self, tmp_path: Path) -> None:
         for name in ("z", "m", "a"):
             _write(tmp_path / "docs" / name / "a.md", "")
-        assert walk(tmp_path, tmp_path / "docs") == walk(tmp_path, tmp_path / "docs")
+        assert walk(REAL, tmp_path, tmp_path / "docs") == walk(REAL, tmp_path, tmp_path / "docs")
 
     def test_a_hidden_folder_and_its_whole_subtree_stay_out(self, tmp_path: Path) -> None:
         # The bound: walking a repository must not report .git or .venv, which are each
         # thousands of directories deep and hold nothing the corpus addresses.
         _write(tmp_path / ".git" / "objects" / "ab" / "x.md", "")
         _write(tmp_path / "docs" / "a.md", "")
-        assert [node.path for node in walk(tmp_path, tmp_path)] == [".", "docs"]
+        assert [node.path for node in walk(REAL, tmp_path, tmp_path)] == [".", "docs"]
 
     def test_naming_a_hidden_folder_outright_still_walks_it(self, tmp_path: Path) -> None:
         # The rule is about what a walk wanders into, not about what may be asked for.
         _write(tmp_path / ".github" / "workflows" / "ci.md", "")
-        assert [node.path for node in walk(tmp_path, tmp_path / ".github")] == [
+        assert [node.path for node in walk(REAL, tmp_path, tmp_path / ".github")] == [
             ".github",
             ".github/workflows",
         ]
@@ -443,7 +452,7 @@ class TestWalk:
     ) -> None:
         # It appeared twice before: as a directory node and in its parent's count.
         (tmp_path / "docs" / "sub.md").mkdir(parents=True)
-        assert walk(tmp_path, tmp_path / "docs") == (
+        assert walk(REAL, tmp_path, tmp_path / "docs") == (
             Directory(path="docs", depth=0, documents=0),
             Directory(path="docs/sub.md", depth=1, documents=0),
         )
@@ -451,7 +460,7 @@ class TestWalk:
     def test_the_corpus_root_is_walkable(self, tmp_path: Path) -> None:
         # Someone whose corpus is the working directory has no wrapper folder to name.
         _write(tmp_path / "docs" / "a.md", "")
-        assert walk(tmp_path, tmp_path)[0] == Directory(path=".", depth=0, documents=0)
+        assert walk(REAL, tmp_path, tmp_path)[0] == Directory(path=".", depth=0, documents=0)
 
     def test_a_symlinked_folder_pointing_out_of_the_root_is_named_not_walked(
         self, tmp_path: Path
@@ -466,7 +475,7 @@ class TestWalk:
         except OSError as exc:
             pytest.skip(f"cannot create a symlink here: {exc}")
 
-        nodes = walk(tmp_path, tmp_path / "docs")
+        nodes = walk(REAL, tmp_path, tmp_path / "docs")
         assert nodes[1] == ForeignDirectory(path="docs/external", depth=1)
         assert "secret" not in render_report(nodes, (), ())
 
@@ -480,7 +489,7 @@ class TestWalk:
         except OSError as exc:
             pytest.skip(f"cannot create a symlink here: {exc}")
 
-        assert walk(tmp_path, tmp_path / "docs")[1] == Directory(
+        assert walk(REAL, tmp_path, tmp_path / "docs")[1] == Directory(
             path="docs/specs", depth=1, documents=1
         )
 
@@ -495,7 +504,7 @@ class TestWalk:
         except OSError as exc:
             pytest.skip(f"cannot create a symlink here: {exc}")
 
-        assert walk(tmp_path, tmp_path / "docs") == (
+        assert walk(REAL, tmp_path, tmp_path / "docs") == (
             Directory(path="docs", depth=0, documents=0),
             Directory(path="docs/glossary", depth=1, documents=1),
             Directory(path="docs/mirror", depth=1, documents=1),
@@ -512,13 +521,13 @@ class TestWalk:
         except OSError as exc:
             pytest.skip(f"cannot create a symlink here: {exc}")
 
-        assert [node.path for node in walk(tmp_path, tmp_path / "docs")] == [
+        assert [node.path for node in walk(REAL, tmp_path, tmp_path / "docs")] == [
             "docs",
             "docs/glossary",
             "docs/glossary/deep",
             "docs/mirror",
         ]
-        assert [node.path for node in walk(tmp_path, tmp_path / "docs" / "mirror")] == [
+        assert [node.path for node in walk(REAL, tmp_path, tmp_path / "docs" / "mirror")] == [
             "docs/mirror",
             "docs/mirror/deep",
         ]
@@ -533,7 +542,7 @@ class TestWalk:
         except OSError as exc:
             pytest.skip(f"cannot create a symlink here: {exc}")
 
-        assert walk(tmp_path, tmp_path / "docs") == (
+        assert walk(REAL, tmp_path, tmp_path / "docs") == (
             Directory(path="docs", depth=0, documents=1),
             Directory(path="docs/sub", depth=1, documents=0),
             Directory(path="docs/sub/loop", depth=2, documents=1),
@@ -544,70 +553,123 @@ class TestUnlistableDirectory:
     """One directory the process cannot read used to fail the whole call, and the raw
     OSError carried an absolute host path."""
 
-    def _corpus(self, tmp_path: Path) -> Path:
-        _write(tmp_path / "docs" / "a.md", "---\ntitle: A\n---\n")
-        _write(tmp_path / "docs" / "open" / "b.md", "---\ntitle: B\n---\n")
-        _write(tmp_path / "docs" / "closed" / "c.md", "---\ntitle: C\n---\n")
-        _write(tmp_path / "docs" / "closed" / "deep" / "d.md", "---\ntitle: D\n---\n")
-        return tmp_path / "docs"
+    DOCS = CORPUS / "docs"
+    CLOSED = DOCS / "closed"
+    FILES = FakeFiles(
+        texts={
+            DOCS / "a.md": document("A"),
+            DOCS / "open" / "b.md": document("B"),
+            CLOSED / "c.md": document("C"),
+            CLOSED / "deep" / "d.md": document("D"),
+        },
+        directories=frozenset(
+            {CORPUS, DOCS, DOCS / "open", CLOSED, CLOSED / "deep"},
+        ),
+        denied=frozenset({CLOSED}),
+    )
 
-    @pytest.mark.parametrize("failing", ["markdown_in", "subdirectories"])
-    def test_it_is_named_and_the_rest_of_the_subtree_survives(
-        self, tmp_path: Path, deny: Callable[[str, Path], None], failing: str
-    ) -> None:
-        docs = self._corpus(tmp_path)
-        deny(failing, docs / "closed")
-
-        assert walk(tmp_path, docs) == (
+    def test_it_is_named_and_the_rest_of_the_subtree_survives(self) -> None:
+        assert walk(self.FILES, CORPUS, self.DOCS) == (
             Directory(path="docs", depth=0, documents=1),
             UnlistableDirectory(path="docs/closed", depth=1),
             Directory(path="docs/open", depth=1, documents=1),
         )
 
-    @pytest.mark.parametrize("failing", ["markdown_in", "subdirectories"])
-    def test_it_is_not_descended_into(
-        self, tmp_path: Path, deny: Callable[[str, Path], None], failing: str
-    ) -> None:
+    def test_it_is_not_descended_into(self) -> None:
         # Its children are unreachable through it, so `deep` is not on the tree either.
-        docs = self._corpus(tmp_path)
-        deny(failing, docs / "closed")
-        assert "docs/closed/deep" not in [node.path for node in walk(tmp_path, docs)]
+        walked = [node.path for node in walk(self.FILES, CORPUS, self.DOCS)]
+        assert "docs/closed/deep" not in walked
 
-    def test_it_renders_as_one_line_beside_the_others(
-        self, tmp_path: Path, deny: Callable[[str, Path], None]
-    ) -> None:
-        docs = self._corpus(tmp_path)
-        deny("markdown_in", docs / "closed")
-        rendered = render_report(walk(tmp_path, docs), (), ())
+    def test_it_renders_as_one_line_beside_the_others(self) -> None:
+        rendered = render_report(walk(self.FILES, CORPUS, self.DOCS), (), ())
         assert "  closed/ cannot be listed" in rendered
 
-    def test_it_costs_the_recursive_read_only_its_own_documents(
-        self, tmp_path: Path, deny: Callable[[str, Path], None]
-    ) -> None:
+    def test_it_costs_the_recursive_read_only_its_own_documents(self) -> None:
         # The key count recurses from the corpus root, so raising here took the whole corpus.
-        docs = self._corpus(tmp_path)
-        deny("subdirectories", docs / "closed")
-        collected = collect(tmp_path, docs, recurse=True)
+        collected = collect(self.FILES, CORPUS, self.DOCS, recurse=True)
         assert [document.path for document in collected] == ["docs/a.md", "docs/open/b.md"]
 
-    def test_asking_for_it_directly_reports_rather_than_fails(
-        self, tmp_path: Path, deny: Callable[[str, Path], None]
-    ) -> None:
-        docs = self._corpus(tmp_path)
-        deny("markdown_in", docs / "closed")
-        assert collect(tmp_path, docs / "closed") == ()
-        assert other_files(tmp_path, docs / "closed") == ()
-        assert walk(tmp_path, docs / "closed") == (
+    def test_asking_for_it_directly_reports_rather_than_fails(self) -> None:
+        assert collect(self.FILES, CORPUS, self.CLOSED) == ()
+        assert other_files(self.FILES, CORPUS, self.CLOSED) == ()
+        assert walk(self.FILES, CORPUS, self.CLOSED) == (
             UnlistableDirectory(path="docs/closed", depth=0),
         )
 
-    def test_no_host_path_reaches_the_report(
-        self, tmp_path: Path, deny: Callable[[str, Path], None]
-    ) -> None:
-        docs = self._corpus(tmp_path)
-        deny("markdown_in", docs / "closed")
-        rendered = render_report(walk(tmp_path, docs), other_files(tmp_path, docs), ())
-        assert str(tmp_path) not in rendered
+    def test_no_host_path_reaches_the_report(self) -> None:
+        rendered = render_report(
+            walk(self.FILES, CORPUS, self.DOCS),
+            other_files(self.FILES, CORPUS, self.DOCS),
+            (),
+        )
+        assert str(CORPUS) not in rendered
+
+
+class TestContainmentWithoutSymlinks:
+    """The containment rules, on a fake.
+
+    The filesystem versions of these all `pytest.skip` when the OS refuses a symlink, so
+    on a plain Windows box every guarantee here went unverified.
+    """
+
+    DOCS = CORPUS / "docs"
+    OUTSIDE = CORPUS.parent / "elsewhere"
+    FILES = FakeFiles(
+        texts={
+            DOCS / "ok.md": document("OK"),
+            DOCS / "glossary" / "edge.md": document("Edge"),
+            OUTSIDE / "secret.md": document("Secret"),
+            OUTSIDE / "secret.pdf": "",
+        },
+        directories=frozenset({CORPUS, DOCS, DOCS / "glossary", OUTSIDE}),
+        links={
+            DOCS / "external": OUTSIDE,
+            DOCS / "leak.md": OUTSIDE / "secret.md",
+            DOCS / "leak.pdf": OUTSIDE / "secret.pdf",
+            DOCS / "mirror": DOCS / "glossary",
+            DOCS / "loop": DOCS,
+        },
+    )
+
+    def test_a_directory_linking_out_of_the_corpus_is_named_not_walked(self) -> None:
+        assert ForeignDirectory(path="docs/external", depth=1) in walk(
+            self.FILES, CORPUS, self.DOCS
+        )
+
+    def test_a_directory_linking_inside_the_corpus_is_listed_once(self) -> None:
+        # Named, because it exists; not descended, because its documents already appeared
+        # under the path they are reachable by.
+        walked = walk(self.FILES, CORPUS, self.DOCS)
+        assert Directory(path="docs/mirror", depth=1, documents=1) in walked
+        assert "docs/mirror/edge.md" not in [
+            document.path for document in collect(self.FILES, CORPUS, self.DOCS, recurse=True)
+        ]
+
+    def test_a_link_back_to_an_ancestor_terminates(self) -> None:
+        walked = [node.path for node in walk(self.FILES, CORPUS, self.DOCS)]
+        assert "docs/loop" in walked
+        assert "docs/loop/loop" not in walked
+
+    def test_a_document_linking_out_of_the_corpus_is_refused_by_name(self) -> None:
+        collected = collect(self.FILES, CORPUS, self.DOCS)
+        assert Unreadable(path="docs/leak.md", reason="links to a target outside the corpus") in (
+            collected
+        )
+        assert "Secret" not in render(collected)
+
+    def test_an_other_file_linking_out_of_the_corpus_is_marked(self) -> None:
+        listed = other_files(self.FILES, CORPUS, self.DOCS)
+        assert "docs/leak.pdf links outside the corpus" in listed
+        assert not any("secret" in line for line in listed)
+
+    def test_no_host_path_or_target_name_reaches_the_report(self) -> None:
+        rendered = render_report(
+            walk(self.FILES, CORPUS, self.DOCS),
+            other_files(self.FILES, CORPUS, self.DOCS),
+            collect(self.FILES, CORPUS, self.DOCS),
+        )
+        assert str(self.OUTSIDE) not in rendered
+        assert "elsewhere" not in rendered
 
 
 class TestRenderReport:
@@ -669,13 +731,13 @@ class TestCollect:
         _write(tmp_path / "docs" / "b.md", "---\ntitle: B\n---\n")
         _write(tmp_path / "docs" / "a.md", "---\ntitle: A\n---\n")
         _write(tmp_path / "docs" / "sub" / "c.md", "# C\n")
-        entries = collect(tmp_path, tmp_path / "docs")
+        entries = collect(REAL, tmp_path, tmp_path / "docs")
         assert [entry.path for entry in entries] == ["docs/a.md", "docs/b.md"]
 
     def test_recurse_reaches_the_whole_subtree(self, tmp_path: Path) -> None:
         _write(tmp_path / "docs" / "a.md", "---\ntitle: A\n---\n")
         _write(tmp_path / "docs" / "sub" / "c.md", "# C\n")
-        entries = collect(tmp_path, tmp_path / "docs", recurse=True)
+        entries = collect(REAL, tmp_path, tmp_path / "docs", recurse=True)
         assert [entry.path for entry in entries] == ["docs/a.md", "docs/sub/c.md"]
 
     def test_recurse_skips_hidden_folders(self, tmp_path: Path) -> None:
@@ -683,7 +745,7 @@ class TestCollect:
         # frontmatter out of site-packages while the subtree says the folder is not there.
         _write(tmp_path / ".venv" / "Lib" / "pkg" / "README.md", "---\ntitle: V\n---\n")
         _write(tmp_path / "docs" / "a.md", "---\ntitle: A\n---\n")
-        entries = collect(tmp_path, tmp_path, recurse=True)
+        entries = collect(REAL, tmp_path, tmp_path, recurse=True)
         assert [entry.path for entry in entries] == ["docs/a.md"]
 
     def test_recurse_follows_a_symlinked_folder_the_subtree_advertises(
@@ -701,11 +763,11 @@ class TestCollect:
         except OSError as exc:
             pytest.skip(f"cannot create a symlink here: {exc}")
 
-        assert walk(tmp_path, tmp_path / "docs") == (
+        assert walk(REAL, tmp_path, tmp_path / "docs") == (
             Directory(path="docs", depth=0, documents=1),
             Directory(path="docs/mirror", depth=1, documents=3),
         )
-        assert [doc.path for doc in collect(tmp_path, tmp_path / "docs", recurse=True)] == [
+        assert [doc.path for doc in collect(REAL, tmp_path, tmp_path / "docs", recurse=True)] == [
             "docs/a.md",
             "docs/mirror/x.md",
             "docs/mirror/y.md",
@@ -723,7 +785,7 @@ class TestCollect:
         except OSError as exc:
             pytest.skip(f"cannot create a symlink here: {exc}")
 
-        assert [doc.path for doc in collect(tmp_path, tmp_path / "docs", recurse=True)] == [
+        assert [doc.path for doc in collect(REAL, tmp_path, tmp_path / "docs", recurse=True)] == [
             "docs/glossary/edge.md"
         ]
 
@@ -731,9 +793,10 @@ class TestCollect:
         # Same rule in both, so `vocabulary` never counts a folder `contents` won't show.
         _write(tmp_path / ".venv" / "pkg" / "README.md", "---\ntitle: V\n---\n")
         _write(tmp_path / "docs" / "a.md", "---\ntitle: A\n---\n")
-        walked = {node.path for node in walk(tmp_path, tmp_path)}
+        walked = {node.path for node in walk(REAL, tmp_path, tmp_path)}
         collected = {
-            entry.path.rsplit("/", 1)[0] for entry in collect(tmp_path, tmp_path, recurse=True)
+            entry.path.rsplit("/", 1)[0]
+            for entry in collect(REAL, tmp_path, tmp_path, recurse=True)
         }
         assert collected <= walked
 
@@ -741,28 +804,28 @@ class TestCollect:
         self, tmp_path: Path
     ) -> None:
         _write(tmp_path / ".github" / "sub" / "ci.md", "---\ntitle: CI\n---\n")
-        entries = collect(tmp_path, tmp_path / ".github", recurse=True)
+        entries = collect(REAL, tmp_path, tmp_path / ".github", recurse=True)
         assert [entry.path for entry in entries] == [".github/sub/ci.md"]
 
     def test_ignores_non_markdown(self, tmp_path: Path) -> None:
         _write(tmp_path / "docs" / "a.md", "---\ntitle: A\n---\n")
         _write(tmp_path / "docs" / "notes.txt", "---\ntitle: not markdown\n---\n")
-        assert [entry.path for entry in collect(tmp_path, tmp_path / "docs")] == ["docs/a.md"]
+        assert [entry.path for entry in collect(REAL, tmp_path, tmp_path / "docs")] == ["docs/a.md"]
 
     def test_is_deterministic(self, tmp_path: Path) -> None:
         for name in ("z.md", "m.md", "a.md"):
             _write(tmp_path / "docs" / name, f"---\ntitle: {name}\n---\n")
-        first = render(collect(tmp_path, tmp_path / "docs"))
-        assert first == render(collect(tmp_path, tmp_path / "docs"))
+        first = render(collect(REAL, tmp_path, tmp_path / "docs"))
+        assert first == render(collect(REAL, tmp_path, tmp_path / "docs"))
 
     def test_a_single_file_target_lists_that_file(self, tmp_path: Path) -> None:
         _write(tmp_path / "docs" / "a.md", "---\ntitle: A\n---\n")
-        entries = collect(tmp_path, tmp_path / "docs" / "a.md")
+        entries = collect(REAL, tmp_path, tmp_path / "docs" / "a.md")
         assert [entry.path for entry in entries] == ["docs/a.md"]
 
     def test_empty_folder_collects_nothing(self, tmp_path: Path) -> None:
         (tmp_path / "docs").mkdir()
-        assert collect(tmp_path, tmp_path / "docs") == ()
+        assert collect(REAL, tmp_path, tmp_path / "docs") == ()
 
     def test_a_directory_named_like_a_document_does_not_break_the_call(
         self, tmp_path: Path
@@ -770,12 +833,14 @@ class TestCollect:
         # It used to reach read_entry, where the read failed and took the listing with it.
         (tmp_path / "docs" / "sub.md").mkdir(parents=True)
         _write(tmp_path / "docs" / "real.md", "---\ntitle: R\n---\n")
-        assert [entry.path for entry in collect(tmp_path, tmp_path / "docs")] == ["docs/real.md"]
+        assert [entry.path for entry in collect(REAL, tmp_path, tmp_path / "docs")] == [
+            "docs/real.md"
+        ]
 
     def test_recurse_also_skips_a_directory_named_like_a_document(self, tmp_path: Path) -> None:
         (tmp_path / "docs" / "sub.md").mkdir(parents=True)
         _write(tmp_path / "docs" / "sub.md" / "inner.md", "---\ntitle: I\n---\n")
-        entries = collect(tmp_path, tmp_path / "docs", recurse=True)
+        entries = collect(REAL, tmp_path, tmp_path / "docs", recurse=True)
         assert [entry.path for entry in entries] == ["docs/sub.md/inner.md"]
 
 
@@ -795,7 +860,7 @@ class TestCollectContainment:
         # The walk reads symlinked files like any other, so the guard has to sit here too:
         # otherwise foreign frontmatter comes back attached to an in-corpus path.
         docs = self._leaky_corpus(tmp_path)
-        assert collect(tmp_path, docs) == (
+        assert collect(REAL, tmp_path, docs) == (
             Unreadable(path="docs/leak.md", reason="links to a target outside the corpus"),
             Entry(path="docs/ok.md", frontmatter=("title: OK",)),
         )
@@ -804,7 +869,7 @@ class TestCollectContainment:
         # It used to raise, so a single planted link made the folder unlistable, and
         # through the recursive key count it took the whole subtree with it.
         docs = self._leaky_corpus(tmp_path)
-        assert render(collect(tmp_path, docs)) == (
+        assert render(collect(REAL, tmp_path, docs)) == (
             "docs/leak.md\nlinks to a target outside the corpus\n\ndocs/ok.md\ntitle: OK"
         )
 
@@ -812,7 +877,7 @@ class TestCollectContainment:
         # Where the link points is a filesystem path the corpus does not otherwise expose,
         # and it adds nothing the caller can act on.
         docs = self._leaky_corpus(tmp_path)
-        rendered = render(collect(tmp_path, docs))
+        rendered = render(collect(REAL, tmp_path, docs))
         assert "docs/leak.md" in rendered
         assert "secret.md" not in rendered
         assert str(tmp_path.parent) not in rendered
@@ -826,7 +891,7 @@ class TestCollectContainment:
         except OSError as exc:
             pytest.skip(f"cannot create a symlink here: {exc}")
 
-        rendered = render(collect(tmp_path, tmp_path / "docs"))
+        rendered = render(collect(REAL, tmp_path, tmp_path / "docs"))
         assert "docs/inner.md\ncannot be read (" in rendered
         assert "docs/ok.md\ntitle: OK" in rendered
         assert str(tmp_path) not in rendered
@@ -837,7 +902,7 @@ class TestCollectContainment:
         _write(tmp_path / "docs" / "ok.md", "---\ntitle: OK\n---\n")
         (tmp_path / "docs" / "latin.md").write_bytes(b"---\ntitle: caf\xe9\n---\n")
 
-        assert collect(tmp_path, tmp_path / "docs") == (
+        assert collect(REAL, tmp_path, tmp_path / "docs") == (
             Unreadable(path="docs/latin.md", reason="cannot be read (not UTF-8 text)"),
             Entry(path="docs/ok.md", frontmatter=("title: OK",)),
         )
@@ -848,14 +913,14 @@ class TestCollectContainment:
         image.parent.mkdir(parents=True)
         image.write_bytes(b"\x89PNG\r\n\x1a\n\xff\xfe")
 
-        assert collect(tmp_path, image) == (
+        assert collect(REAL, tmp_path, image) == (
             Unreadable(path="docs/diagram.png", reason="cannot be read (not UTF-8 text)"),
         )
 
     def test_an_unreadable_document_carries_no_properties(self, tmp_path: Path) -> None:
         # So the reason standing in for its frontmatter never enters the key vocabulary.
         docs = self._leaky_corpus(tmp_path)
-        leak = next(doc for doc in collect(tmp_path, docs) if doc.path == "docs/leak.md")
+        leak = next(doc for doc in collect(REAL, tmp_path, docs) if doc.path == "docs/leak.md")
         assert leak.properties() == ()
         assert leak.projected(frozenset({"title"})) == leak
 
@@ -868,7 +933,7 @@ class TestCollectContainment:
         except OSError as exc:
             pytest.skip(f"cannot create a symlink here: {exc}")
 
-        entries = collect(tmp_path, tmp_path / "docs" / "specs")
+        entries = collect(REAL, tmp_path, tmp_path / "docs" / "specs")
         assert [entry.path for entry in entries] == ["docs/specs/frontmatter.md"]
 
 
@@ -876,21 +941,22 @@ class TestResolveUnder:
     def test_resolves_relative_to_the_root(self, tmp_path: Path) -> None:
         (tmp_path / "docs" / "glossary").mkdir(parents=True)
         assert (
-            resolve_under(tmp_path, "docs/glossary") == (tmp_path / "docs" / "glossary").resolve()
+            resolve_under(REAL, tmp_path, "docs/glossary")
+            == (tmp_path / "docs" / "glossary").resolve()
         )
 
     def test_the_root_itself_is_allowed(self, tmp_path: Path) -> None:
-        assert resolve_under(tmp_path, "") == tmp_path.resolve()
+        assert resolve_under(REAL, tmp_path, "") == tmp_path.resolve()
 
     @pytest.mark.parametrize("under", ["..", "docs/../..", "../elsewhere"])
     def test_escaping_the_root_is_rejected(self, tmp_path: Path, under: str) -> None:
         (tmp_path / "docs").mkdir()
         with pytest.raises(ValueError, match="outside the corpus root"):
-            resolve_under(tmp_path, under)
+            resolve_under(REAL, tmp_path, under)
 
     def test_a_missing_folder_is_rejected(self, tmp_path: Path) -> None:
         with pytest.raises(ValueError, match="does not exist"):
-            resolve_under(tmp_path, "docs/nope")
+            resolve_under(REAL, tmp_path, "docs/nope")
 
     def test_a_symlinked_folder_pointing_out_of_the_root_is_rejected(self, tmp_path: Path) -> None:
         # Lexically inside the corpus, physically outside it. Reads follow symlinks, so
@@ -906,7 +972,7 @@ class TestResolveUnder:
             pytest.skip(f"cannot create a symlink here: {exc}")
 
         with pytest.raises(ValueError, match="resolves outside the corpus root"):
-            resolve_under(tmp_path, "docs/external")
+            resolve_under(REAL, tmp_path, "docs/external")
 
     def test_a_symlink_resolving_inside_the_root_is_allowed(self, tmp_path: Path) -> None:
         # The docs/specs case: a symlink into plugins/, still inside the corpus root.
@@ -918,11 +984,11 @@ class TestResolveUnder:
         except OSError as exc:
             pytest.skip(f"cannot create a symlink here: {exc}")
 
-        assert resolve_under(tmp_path, "docs/specs/frontmatter.md") == link
+        assert resolve_under(REAL, tmp_path, "docs/specs/frontmatter.md") == link
 
     def test_collapses_dot_segments_without_following_symlinks(self, tmp_path: Path) -> None:
         (tmp_path / "docs" / "specs").mkdir(parents=True)
-        assert resolve_under(tmp_path, "docs/./notes/../specs") == tmp_path / "docs" / "specs"
+        assert resolve_under(REAL, tmp_path, "docs/./notes/../specs") == tmp_path / "docs" / "specs"
 
     def test_naming_a_symlink_keeps_the_link_path(self, tmp_path: Path) -> None:
         # Passing the symlink itself as `under`, not reaching it through a folder walk.
@@ -934,5 +1000,5 @@ class TestResolveUnder:
         except OSError as exc:  # Windows needs developer mode or elevation
             pytest.skip(f"cannot create a symlink here: {exc}")
 
-        under = resolve_under(tmp_path, "docs/specs/frontmatter.md")
-        assert collect(tmp_path, under)[0].path == "docs/specs/frontmatter.md"
+        under = resolve_under(REAL, tmp_path, "docs/specs/frontmatter.md")
+        assert collect(REAL, tmp_path, under)[0].path == "docs/specs/frontmatter.md"
