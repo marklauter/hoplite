@@ -4,9 +4,10 @@ Two tools today: ``contents``, a per-directory frontmatter listing over the corp
 ``vocabulary``, a count of the frontmatter keys in use. The graph tools designed in
 ``docs/specs/hoplite-tool-api.md`` are not built yet.
 
-``Files`` is the filesystem port every walking function takes as its first argument, and
-``RealFiles`` is the only adapter shipped. ``server`` is not re-exported here: it is the
-composition root and an entry point, so importing this package must not pull the host in.
+``Files`` is the filesystem port and ``RealFiles`` is the only adapter shipped. ``Corpus``
+pairs a port with a resolved root and is what every walking function takes as its first
+argument. ``server`` is not re-exported here: it is the composition root and an entry
+point, so importing this package must not pull the host in.
 """
 
 from hoplite_catalog.adapters import RealFiles
@@ -21,7 +22,6 @@ from hoplite_catalog.contents import (
     UnlistableDirectory,
     Unreadable,
     collect,
-    corpus_path,
     group_properties,
     markdown_in,
     other_files,
@@ -33,11 +33,13 @@ from hoplite_catalog.contents import (
     subdirectories,
     walk,
 )
+from hoplite_catalog.corpus import Corpus
 from hoplite_catalog.ports import Files
 from hoplite_catalog.vocabulary import KeyUse, render_vocabulary, tally
 
 __all__ = [
     "FENCE",
+    "Corpus",
     "Directory",
     "DirectoryNode",
     "Document",
@@ -50,7 +52,6 @@ __all__ = [
     "UnlistableDirectory",
     "Unreadable",
     "collect",
-    "corpus_path",
     "group_properties",
     "markdown_in",
     "other_files",

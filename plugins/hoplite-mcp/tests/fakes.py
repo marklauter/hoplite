@@ -21,14 +21,25 @@ from pathlib import Path
 from typing import Final, final
 
 from hoplite_catalog.adapters import RealFiles
+from hoplite_catalog.corpus import Corpus
 
-__all__ = ["CORPUS", "REAL", "FakeFiles", "document"]
+__all__ = ["CORPUS", "REAL", "FakeFiles", "document", "fake", "real"]
 
 REAL: Final = RealFiles()
 
 # An absolute path that never exists. `Path("/corpus")` is not absolute on Windows, where
-# a path needs a drive, and `corpus_path` calls `absolute()` on what it emits.
+# a path needs a drive, and `Corpus.path_of` calls `absolute()` on what it emits.
 CORPUS: Final = Path(os.path.abspath("/corpus"))
+
+
+def real(root: Path) -> Corpus:
+    """The real filesystem rooted at ``root``, which is a ``tmp_path`` the test owns."""
+    return Corpus(REAL, root)
+
+
+def fake(files: FakeFiles) -> Corpus:
+    """An in-memory corpus rooted at ``CORPUS``, the root every ``FakeFiles`` tree uses."""
+    return Corpus(files, CORPUS)
 
 
 def document(title: str) -> str:

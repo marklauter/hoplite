@@ -13,7 +13,7 @@ from importlinter import configuration
 from importlinter.application import use_cases
 
 import hoplite_catalog
-from hoplite_catalog import adapters, contents, ports, vocabulary
+from hoplite_catalog import adapters, contents, corpus, ports, vocabulary
 
 # Registers the built-in contract types. The CLI and the `api` module both do this on the
 # way in; calling `use_cases` directly skips it, and the run fails on a missing registry
@@ -33,7 +33,11 @@ def test_the_package_re_exports_every_public_name() -> None:
     # here, and `files` was added whole. A name a module exports and the package does not
     # is an import that works one way and fails the other, for no stated reason.
     modules = (
-        set(contents.__all__) | set(ports.__all__) | set(adapters.__all__) | set(vocabulary.__all__)
+        set(contents.__all__)
+        | set(corpus.__all__)
+        | set(ports.__all__)
+        | set(adapters.__all__)
+        | set(vocabulary.__all__)
     )
     assert set(hoplite_catalog.__all__) == modules
 

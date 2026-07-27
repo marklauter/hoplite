@@ -116,10 +116,11 @@ python -m pyright
 The dev extra installs the test and lint tools. The server itself has no dependencies.
 `pytest` needs the extra because coverage runs on every test run.
 
-`files.py` holds the `Files` port and its pathlib adapter, `RealFiles`. It is the only code
-that touches a filesystem. `contents.py` holds the walking, slicing, and rendering. It
-takes a `Files` as its first argument, so a test hands it an in-memory corpus and drives
-the cases a real filesystem will not reliably produce.
+`ports.py` holds the `Files` port. `adapters.py` holds `RealFiles`, the pathlib
+implementation, and is the only code that touches a filesystem; an import-linter contract
+keeps the core from importing it, so the port cannot be bypassed. `contents.py` holds the
+walking, slicing, and rendering. It takes a `Files` as its first argument, so a test hands
+it an in-memory corpus and drives the cases a real filesystem will not reliably produce.
 `vocabulary.py` counts keys over what it collects. `server.py` is the stdio JSON-RPC host,
 hand-rolled on the standard library. The graph tools designed in
 `docs/specs/hoplite-tool-api.md` register here when they land.

@@ -27,7 +27,7 @@ from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Final, assert_never, final
 
-from hoplite_catalog.ports import Files
+from hoplite_catalog.corpus import Corpus
 
 __all__ = [
     "FENCE",
@@ -40,7 +40,6 @@ __all__ = [
     "UnlistableDirectory",
     "Unreadable",
     "collect",
-    "corpus_path",
     "group_properties",
     "markdown_in",
     "other_files",
@@ -240,15 +239,15 @@ def slice_frontmatter(lines: Sequence[str]) -> tuple[str, ...] | None:
     return None if closing is None else tuple(lines[1:closing])
 
 
-def resolve_under(files: Files, root: Path, under: str) -> Path:
+def resolve_under(corpus: Corpus, under: str) -> Path:
     """Normalize ``under`` against the corpus root, rejecting anything outside it.
 
     Normalization is lexical — ``normpath`` collapses ``.`` and ``..`` without touching
     the filesystem — so a symlinked target keeps the path the corpus links to.
     ``Path.resolve`` would follow the link and make ``docs/specs/frontmatter.md`` come
     back as ``plugins/hoplite-skills/references/frontmatter.md``, which is the same defect
-    ``read_entry`` avoids. A path is a link address here; where the bytes live is not this
-    module's business.
+    ``Corpus.path_of`` avoids. A path is a link address here; where the bytes live is not
+    this module's business.
 
     Containment is checked twice, because reporting and reading are different questions.
     The lexical check stops ``..`` traversal. The resolved check stops a symlinked folder
@@ -264,15 +263,14 @@ def resolve_under(files: Files, root: Path, under: str) -> Path:
     rather than riding back as an empty result — a silent empty listing reads as "the
     folder is empty", not "you typo'd".
     """
-    resolved_root = files.resolve(root)
-    target = Path(os.path.normpath(resolved_root / under))
-    if not _contains(resolved_root, target):
+    target = Path(os.path.normpath(corpus.root / under))
+    if not corpus.contains(target):
         raise ValueError(f"{under!r} is outside the corpus root")
-    if not files.exists(target):
+    if not corpus.exists(target):
         raise ValueError(f"{under!r} does not exist")
-    if not _contains(resolved_root, files.resolve(target)):
+    if not corpus.contains_target(target):
         raise ValueError(f"{under!r} resolves outside the corpus root")
-    if files.is_file(target) and target.suffix != ".md":
+    if corpus.is_file(target) and target.suffix != ".md":
         # A file named directly is the one path into `collect` that skips `markdown_in`,
         # and with it both the suffix test and the hidden-file skip. Without this, any file
         # in the working directory opening with `---` has that block emitted — a `.env`
@@ -283,30 +281,15 @@ def resolve_under(files: Files, root: Path, under: str) -> Path:
     return target
 
 
-def _contains(root: Path, path: Path) -> bool:
-    """True when ``path`` is ``root`` or sits beneath it."""
-    return path == root or root in path.parents
-
-
-def read_entry(files: Files, root: Path, path: Path) -> Entry:
+def read_entry(corpus: Corpus, path: Path) -> Entry:
     """Read one document and slice its frontmatter.
 
     How bytes become text — the byte-order mark, the newline translation — is the adapter's
-    decision and lives in ``RealFiles.read_text``.
-
-    The emitted path is where the corpus links to the document, not where the bytes live.
-    ``path`` is deliberately not resolved: ``docs/specs/frontmatter.md`` is a symlink into
-    ``plugins/hoplite-skills/references/``, and resolving it would report a path no
-    wikilink in the corpus uses. Only ``root`` is resolved, to give ``relative_to`` a
-    normalized base.
+    decision and lives in ``RealFiles.read_text``. Which path the document is reported
+    under is ``Corpus.path_of``.
     """
-    lines = files.read_text(path).splitlines()
-    return Entry(path=corpus_path(files, root, path), frontmatter=slice_frontmatter(lines))
-
-
-def corpus_path(files: Files, root: Path, path: Path) -> str:
-    """The document's path as the corpus addresses it — root-relative, forward slashes."""
-    return path.absolute().relative_to(files.resolve(root)).as_posix()
+    lines = corpus.read_text(path).splitlines()
+    return Entry(path=corpus.path_of(path), frontmatter=slice_frontmatter(lines))
 
 
 @final
@@ -326,7 +309,7 @@ class _Listing:
     others: tuple[Path, ...]
 
 
-def _partition(files: Files, directory: Path) -> _Listing:
+def _partition(corpus: Corpus, directory: Path) -> _Listing:
     """Read ``directory`` once and split what is in it. Raises ``OSError`` at the call.
 
     One ``entries`` call and one ``is_directory`` per entry. The walk used to ask twice per
@@ -352,7 +335,7 @@ def _partition(files: Files, directory: Path) -> _Listing:
     Windows and case-sensitively everywhere else. One corpus now lists the same documents on
     every platform; a ``README.MD`` moves to the other-files group rather than vanishing.
     """
-    entries = tuple((path, files.is_directory(path)) for path in files.entries(directory))
+    entries = tuple((path, corpus.is_directory(path)) for path in corpus.entries(directory))
     return _Listing(
         directories=tuple(
             sorted(path for path, is_dir in entries if is_dir and not path.name.startswith("."))
@@ -374,22 +357,22 @@ def _is_markdown(path: Path) -> bool:
     return path.suffix == ".md"
 
 
-def subdirectories(files: Files, directory: Path) -> tuple[Path, ...]:
+def subdirectories(corpus: Corpus, directory: Path) -> tuple[Path, ...]:
     """The child directories a walk descends into, ordered by path. See ``_partition``."""
-    return _partition(files, directory).directories
+    return _partition(corpus, directory).directories
 
 
-def markdown_in(files: Files, directory: Path) -> tuple[Path, ...]:
+def markdown_in(corpus: Corpus, directory: Path) -> tuple[Path, ...]:
     """The markdown documents directly in ``directory``, ordered by path.
 
     One definition of "document", used by the listing and by the subtree counts. It comes
     from the same pass that decides the other two groups, so a file cannot fall between
     them — see ``_partition``.
     """
-    return _partition(files, directory).documents
+    return _partition(corpus, directory).documents
 
 
-def other_files(files: Files, root: Path, directory: Path) -> tuple[str, ...]:
+def other_files(corpus: Corpus, directory: Path) -> tuple[str, ...]:
     """The non-markdown files directly in ``directory``, as corpus paths, ordered.
 
     They cannot carry frontmatter, but hiding them makes the listing lie about what the
@@ -414,13 +397,13 @@ def other_files(files: Files, root: Path, directory: Path) -> tuple[str, ...]:
     carries, on the same line, because this group is one line per file.
     """
     try:
-        others = _partition(files, directory).others
+        others = _partition(corpus, directory).others
     except OSError:
         return ()
-    return tuple(_other_line(files, root, path) for path in others)
+    return tuple(_other_line(corpus, path) for path in others)
 
 
-def _other_line(files: Files, root: Path, path: Path) -> str:
+def _other_line(corpus: Corpus, path: Path) -> str:
     """One other-files line: the corpus path, marked when it does not stay in the corpus.
 
     A resolve that fails — a symlink loop, a share that went away — marks that one file
@@ -429,15 +412,15 @@ def _other_line(files: Files, root: Path, path: Path) -> str:
     the caller the whole report. What cannot be answered is reported as what it is: the file
     is named, and the line says the listing could not read it.
     """
-    relative = corpus_path(files, root, path)
+    relative = corpus.path_of(path)
     try:
-        contained = _contains(files.resolve(root), files.resolve(path))
+        contained = corpus.contains_target(path)
     except OSError:
         return f"{relative} {_UNREADABLE}"
     return relative if contained else f"{relative} {_OUTSIDE}"
 
 
-def _unlinked_directories(files: Files, root: Path, under: Path) -> frozenset[Path]:
+def _unlinked_directories(corpus: Corpus, under: Path) -> frozenset[Path]:
     """The resolved paths of the directories reachable from ``under`` without crossing a link.
 
     Which of two names for one directory gets descended is decided from this rather than by
@@ -446,21 +429,20 @@ def _unlinked_directories(files: Files, root: Path, under: Path) -> frozenset[Pa
 
     Only the descent needs it. Both names are still listed either way — see ``walk``.
     """
-    resolved_root = files.resolve(root)
     unlinked: set[Path] = set()
     stack = [under]
 
     while stack:
         directory = stack.pop()
         try:
-            resolved = files.resolve(directory)
-            if resolved in unlinked or not _contains(resolved_root, resolved):
+            resolved = corpus.resolve(directory)
+            if resolved in unlinked or not corpus.contains(resolved):
                 continue
             unlinked.add(resolved)
             stack.extend(
                 child
-                for child in _partition(files, directory).directories
-                if not files.is_symlink(child)
+                for child in _partition(corpus, directory).directories
+                if not corpus.is_symlink(child)
             )
         except OSError:
             # A directory that cannot be read reaches nothing, so it contributes nothing.
@@ -469,7 +451,7 @@ def _unlinked_directories(files: Files, root: Path, under: Path) -> frozenset[Pa
     return frozenset(unlinked)
 
 
-def _walk(files: Files, root: Path, under: Path) -> Iterator[tuple[Path, DirectoryNode, bool]]:
+def _walk(corpus: Corpus, under: Path) -> Iterator[tuple[Path, DirectoryNode, bool]]:
     """Every directory at or under ``under``, with its node and whether it was descended.
 
     The one traversal both the subtree and the recursive listing read, so they cannot
@@ -477,22 +459,21 @@ def _walk(files: Files, root: Path, under: Path) -> Iterator[tuple[Path, Directo
     paths it descended into, which are exactly the directories whose documents have not
     already been listed under another name.
     """
-    resolved_root = files.resolve(root)
-    unlinked = _unlinked_directories(files, root, under)
+    unlinked = _unlinked_directories(corpus, under)
     visited: set[Path] = set()
     stack: list[tuple[Path, int]] = [(under, 0)]
 
     while stack:
         directory, depth = stack.pop()
-        path = corpus_path(files, root, directory)
-        resolved = files.resolve(directory)
+        path = corpus.path_of(directory)
+        resolved = corpus.resolve(directory)
 
-        if not _contains(resolved_root, resolved):
+        if not corpus.contains(resolved):
             yield directory, ForeignDirectory(path=path, depth=depth), False
             continue
 
         try:
-            listing = _partition(files, directory)
+            listing = _partition(corpus, directory)
         except OSError:
             yield directory, UnlistableDirectory(path=path, depth=depth), False
             continue
@@ -501,7 +482,7 @@ def _walk(files: Files, root: Path, under: Path) -> Iterator[tuple[Path, Directo
         # to descend, whichever of the two the stack happens to reach first. `under` is
         # exempt: a caller who names the link is asking for what is under it, and no other
         # path in this walk stands for it.
-        shadowed = directory != under and files.is_symlink(directory) and resolved in unlinked
+        shadowed = directory != under and corpus.is_symlink(directory) and resolved in unlinked
 
         node = Directory(path=path, depth=depth, documents=len(listing.documents))
         if shadowed or resolved in visited:
@@ -513,7 +494,7 @@ def _walk(files: Files, root: Path, under: Path) -> Iterator[tuple[Path, Directo
         stack.extend((child, depth + 1) for child in reversed(listing.directories))
 
 
-def walk(files: Files, root: Path, under: Path) -> tuple[DirectoryNode, ...]:
+def walk(corpus: Corpus, under: Path) -> tuple[DirectoryNode, ...]:
     """The directory subtree at ``under``, to full depth, in pre-order.
 
     Only directories recurse, and hidden ones are skipped — see ``subdirectories``, which
@@ -547,12 +528,10 @@ def walk(files: Files, root: Path, under: Path) -> tuple[DirectoryNode, ...]:
     That is also what stops a link back to an ancestor from looping forever: the ancestor is
     reached without a link, so the loop is entered once, named, and not descended.
     """
-    return tuple(node for _, node, _ in _walk(files, root, under))
+    return tuple(node for _, node, _ in _walk(corpus, under))
 
 
-def collect(
-    files: Files, root: Path, under: Path, *, recurse: bool = False
-) -> tuple[Document, ...]:
+def collect(corpus: Corpus, under: Path, *, recurse: bool = False) -> tuple[Document, ...]:
     """Read the ``.md`` documents in ``under``, ordered by path.
 
     ``recurse`` is off for the listing, which reports one directory at a time, and on for
@@ -589,35 +568,34 @@ def collect(
     Ordering is by the emitted path string, so two calls over an unchanged corpus return
     identical output — the listing stays diffable and cacheable.
     """
-    resolved_root = files.resolve(root)
-    if files.is_file(under):
+    if corpus.is_file(under):
         paths: tuple[Path, ...] = (under,)
     elif recurse:
         paths = tuple(
             sorted(
                 path
-                for directory, _, descended in _walk(files, root, under)
+                for directory, _, descended in _walk(corpus, under)
                 if descended
-                for path in markdown_in(files, directory)
+                for path in markdown_in(corpus, directory)
             )
         )
     else:
         # The subtree names an unreadable directory; here it simply holds no documents.
         try:
-            paths = markdown_in(files, under)
+            paths = markdown_in(corpus, under)
         except OSError:
             paths = ()
 
     documents: list[Document] = []
     for path in paths:
-        relative = corpus_path(files, root, path)
+        relative = corpus.path_of(path)
         try:
-            if not _contains(resolved_root, files.resolve(path)):
+            if not corpus.contains_target(path):
                 documents.append(
                     Unreadable(path=relative, reason="links to a target outside the corpus")
                 )
                 continue
-            documents.append(read_entry(files, root, path))
+            documents.append(read_entry(corpus, path))
         except (OSError, UnicodeDecodeError) as exc:
             documents.append(Unreadable(path=relative, reason=_read_failure(exc)))
     return tuple(sorted(documents, key=lambda document: document.path))
