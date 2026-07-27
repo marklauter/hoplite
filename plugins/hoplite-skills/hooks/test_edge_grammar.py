@@ -22,18 +22,18 @@ from edge_grammar import (
 # --- valid targets ------------------------------------------------------------
 
 VALID = [
-    "circle",                       # bare slug
-    "lib/shapes/circle",            # folder-path prefix
-    "docs/glossary/term",   # the canonical corpus form
-    "circle#properties",            # section
-    "circle#properties#radius",     # nested section
-    "circle#cross sections",        # section label keeps its spaces
-    "circle#^radius-def",           # block
-    "circle.md",                    # dots are ordinary — .md is not special
-    "my.file.name.xyz",             # several dots, still one slug
-    "draft-idea",                   # a ghost is a plain, not-yet-resolved slug
-    "#summary",                     # same-page section (nav link)
-    "#^block-id",                   # same-page block
+    "circle",  # bare slug
+    "lib/shapes/circle",  # folder-path prefix
+    "docs/glossary/term",  # the canonical corpus form
+    "circle#properties",  # section
+    "circle#properties#radius",  # nested section
+    "circle#cross sections",  # section label keeps its spaces
+    "circle#^radius-def",  # block
+    "circle.md",  # dots are ordinary — .md is not special
+    "my.file.name.xyz",  # several dots, still one slug
+    "draft-idea",  # a ghost is a plain, not-yet-resolved slug
+    "#summary",  # same-page section (nav link)
+    "#^block-id",  # same-page block
 ]
 
 
@@ -56,15 +56,15 @@ def test_inline_display_text_allowed() -> None:
 INVALID = [
     ("", "empty"),
     ("   ", "empty"),
-    ("docs/specs:term", "colon"),     # no colons — the folder path is the namespace
+    ("docs/specs:term", "colon"),  # no colons — the folder path is the namespace
     ("a:b:c", "colon"),
-    ("refines::circle", "predicate"),   # predicates are frontmatter keys, not targets
-    ("circle|shown", "body-only"),      # display is body-only
-    ("foo!bar", "body-only"),           # embed is body-only
-    ("café", "does not match"),         # non-ASCII is outside the strict segment set
-    ("circle#", "does not match"),      # trailing anchor, empty heading
-    ("circle/", "does not match"),      # trailing slash, no second segment
-    ("circle#^", "does not match"),     # empty block id
+    ("refines::circle", "predicate"),  # predicates are frontmatter keys, not targets
+    ("circle|shown", "body-only"),  # display is body-only
+    ("foo!bar", "body-only"),  # embed is body-only
+    ("café", "does not match"),  # non-ASCII is outside the strict segment set
+    ("circle#", "does not match"),  # trailing anchor, empty heading
+    ("circle/", "does not match"),  # trailing slash, no second segment
+    ("circle#^", "does not match"),  # empty block id
 ]
 
 
@@ -108,18 +108,18 @@ REGEX_MATCHES = [
 ]
 
 REGEX_REJECTS = [
-    "",                         # no page
-    "docs/specs:term",        # colons are gone
-    "refines::circle",          # predicate colons are gone
-    "a:b:c:d",                  # any colon
-    "circle|shown",             # `|` is not a segment char
-    "foo!bar",                  # `!` is not a segment char
-    "café",                     # non-ASCII
-    "circle/",                  # trailing slash, no second segment
-    "/circle",                  # leading slash
-    "circle#",                  # trailing anchor, empty heading
-    "circle#^",                 # empty block id
-    "#",                        # bare hash, no label
+    "",  # no page
+    "docs/specs:term",  # colons are gone
+    "refines::circle",  # predicate colons are gone
+    "a:b:c:d",  # any colon
+    "circle|shown",  # `|` is not a segment char
+    "foo!bar",  # `!` is not a segment char
+    "café",  # non-ASCII
+    "circle/",  # trailing slash, no second segment
+    "/circle",  # leading slash
+    "circle#",  # trailing anchor, empty heading
+    "circle#^",  # empty block id
+    "#",  # bare hash, no label
 ]
 
 
@@ -311,7 +311,9 @@ def test_inline_edges_embed_marker_with_predicate() -> None:
 
 
 def test_inline_edges_anchored_target_with_predicate() -> None:
-    assert inline_edges("[[circle#properties]]<!--refines-->") == [("circle#properties", "refines", 1)]
+    assert inline_edges("[[circle#properties]]<!--refines-->") == [
+        ("circle#properties", "refines", 1)
+    ]
 
 
 def test_inline_edges_skips_code() -> None:

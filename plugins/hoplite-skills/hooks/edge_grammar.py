@@ -24,9 +24,9 @@ __all__ = [
 ]
 
 # Character classes — see ../references/expressing-edges.md ### Grammar.
-_SEG = r"[A-Za-z0-9._-]+"      # one path segment (slug or folder)
-_HEADING = r"[^#^|\[\]]+"      # a section label — heading text, spaces allowed
-_BLOCKID = r"[A-Za-z0-9-]+"    # an Obsidian block id
+_SEG = r"[A-Za-z0-9._-]+"  # one path segment (slug or folder)
+_HEADING = r"[^#^|\[\]]+"  # a section label — heading text, spaces allowed
+_BLOCKID = r"[A-Za-z0-9-]+"  # an Obsidian block id
 _ANCHOR = rf"(?:\#\^{_BLOCKID}|(?:\#{_HEADING})+)"
 _PATH = rf"{_SEG}(?:/{_SEG})*"
 
