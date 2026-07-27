@@ -9,6 +9,7 @@ Two tools today: ``contents``, a per-directory frontmatter listing over the corp
 composition root and an entry point, so importing this package must not pull the host in.
 """
 
+from hoplite_catalog.adapters import RealFiles
 from hoplite_catalog.contents import (
     FENCE,
     Directory,
@@ -32,7 +33,7 @@ from hoplite_catalog.contents import (
     subdirectories,
     walk,
 )
-from hoplite_catalog.files import Files, RealFiles
+from hoplite_catalog.ports import Files
 from hoplite_catalog.vocabulary import KeyUse, render_vocabulary, tally
 
 __all__ = [

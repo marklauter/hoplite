@@ -363,6 +363,22 @@ class TestOtherFiles:
             path.name for path in (tmp_path / "docs").iterdir()
         }
 
+    def test_a_file_whose_target_cannot_be_reached_is_marked_not_raised(self) -> None:
+        # Asking where a link points is a read, and it fails the ways a read fails. The
+        # resolve used to sit outside the guard, so one looping link unwound past collect's
+        # per-document handler and turned the whole report into "cannot read the corpus".
+        docs = CORPUS / "docs"
+        loop = docs / "loop.pdf"
+        files = FakeFiles(
+            texts={docs / "graph.pdf": "", loop: ""},
+            directories=frozenset({CORPUS, docs}),
+            unresolvable=frozenset({loop}),
+        )
+        assert other_files(files, CORPUS, docs) == (
+            "docs/graph.pdf",
+            "docs/loop.pdf cannot be read",
+        )
+
 
 class TestSubdirectories:
     def test_lists_child_directories_in_order(self, tmp_path: Path) -> None:
@@ -547,6 +563,63 @@ class TestWalk:
             Directory(path="docs/sub", depth=1, documents=0),
             Directory(path="docs/sub/loop", depth=2, documents=1),
         )
+
+
+class TestWhichNameIsDescended:
+    """Two names for one directory: the walk descends the one that reaches it without a
+    link, whichever the traversal happens to reach first.
+
+    Sort order used to decide it. `docs/mirror -> docs/glossary` behaved only because
+    `mirror` sorts after `glossary`; rename the link to `docs/aaa` and the link won, taking
+    `docs/glossary/deep` out of the subtree and out of the recursive listing along with
+    every document under it — so the paths wikilinks address were in neither.
+    """
+
+    DOCS = CORPUS / "docs"
+    GLOSSARY = DOCS / "glossary"
+    DEEP = GLOSSARY / "deep"
+    FILES = FakeFiles(
+        texts={GLOSSARY / "a.md": document("A"), DEEP / "b.md": document("B")},
+        directories=frozenset({CORPUS, DOCS, GLOSSARY, DEEP}),
+        links={DOCS / "aaa": GLOSSARY},
+    )
+
+    def test_the_link_sorting_first_does_not_win_the_descent(self) -> None:
+        assert walk(self.FILES, CORPUS, self.DOCS) == (
+            Directory(path="docs", depth=0, documents=0),
+            Directory(path="docs/aaa", depth=1, documents=1),
+            Directory(path="docs/glossary", depth=1, documents=1),
+            Directory(path="docs/glossary/deep", depth=2, documents=1),
+        )
+
+    def test_the_recursive_listing_uses_the_paths_the_corpus_addresses(self) -> None:
+        assert [
+            document.path for document in collect(self.FILES, CORPUS, self.DOCS, recurse=True)
+        ] == ["docs/glossary/a.md", "docs/glossary/deep/b.md"]
+
+    def test_naming_the_link_outright_still_walks_it(self) -> None:
+        # No other path in this walk stands for what the caller asked for.
+        assert [node.path for node in walk(self.FILES, CORPUS, self.DOCS / "aaa")] == [
+            "docs/aaa",
+            "docs/aaa/deep",
+        ]
+
+    def test_a_link_to_a_directory_no_other_path_reaches_is_walked(self) -> None:
+        # The real docs/specs. Dropping it would hide documents nothing else reaches, so
+        # the rule is "another path reaches the target", not "this is a link".
+        references = CORPUS / "references"
+        files = FakeFiles(
+            texts={references / "frontmatter.md": document("Frontmatter")},
+            directories=frozenset({CORPUS, self.DOCS, references}),
+            links={self.DOCS / "specs": references},
+        )
+        assert walk(files, CORPUS, self.DOCS) == (
+            Directory(path="docs", depth=0, documents=0),
+            Directory(path="docs/specs", depth=1, documents=1),
+        )
+        assert [document.path for document in collect(files, CORPUS, self.DOCS, recurse=True)] == [
+            "docs/specs/frontmatter.md"
+        ]
 
 
 class TestUnlistableDirectory:
@@ -896,6 +969,25 @@ class TestCollectContainment:
         assert "docs/ok.md\ntitle: OK" in rendered
         assert str(tmp_path) not in rendered
 
+    def test_a_document_whose_target_cannot_be_reached_is_named_not_raised(self) -> None:
+        # The containment check follows the link, and following one fails the ways a read
+        # fails. Outside the guard it escaped collect and cost the caller the whole report —
+        # under recurse, the whole subtree for one looping link.
+        docs = CORPUS / "docs"
+        loop = docs / "loop.md"
+        files = FakeFiles(
+            texts={docs / "ok.md": document("OK"), loop: document("Loop")},
+            directories=frozenset({CORPUS, docs}),
+            unresolvable=frozenset({loop}),
+        )
+        assert collect(files, CORPUS, docs) == (
+            Unreadable(
+                path="docs/loop.md",
+                reason="cannot be read (Too many levels of symbolic links)",
+            ),
+            Entry(path="docs/ok.md", frontmatter=("title: OK",)),
+        )
+
     def test_a_document_that_is_not_utf_8_is_reported_not_raised(self, tmp_path: Path) -> None:
         # UnicodeDecodeError is a ValueError, not an OSError, so it used to escape collect
         # and fail the whole call — one latin-1 file made its folder unlistable.
@@ -935,6 +1027,45 @@ class TestCollectContainment:
 
         entries = collect(REAL, tmp_path, tmp_path / "docs" / "specs")
         assert [entry.path for entry in entries] == ["docs/specs/frontmatter.md"]
+
+
+class TestOnlyMarkdownIsOpened:
+    """Naming a file directly is the one path into `collect` that skips `markdown_in`.
+
+    Without the guard it skips the suffix test and the hidden-file skip with it, so any
+    file in the working directory opening with `---` has that block emitted.
+    """
+
+    @pytest.mark.parametrize("name", [".env", "secrets.yaml", "notes.txt", "Makefile"])
+    def test_a_non_markdown_file_named_directly_is_refused(self, tmp_path: Path, name: str) -> None:
+        _write(tmp_path / name, "---\nAWS_SECRET: hunter2\n---\n")
+        with pytest.raises(ValueError, match="not a markdown document"):
+            resolve_under(REAL, tmp_path, name)
+
+    def test_the_refusal_does_not_echo_the_contents(self, tmp_path: Path) -> None:
+        _write(tmp_path / ".env", "---\nAWS_SECRET: hunter2\n---\n")
+        with pytest.raises(ValueError) as caught:
+            resolve_under(REAL, tmp_path, ".env")
+        assert "hunter2" not in str(caught.value)
+
+    def test_a_markdown_file_named_directly_still_works(self, tmp_path: Path) -> None:
+        _write(tmp_path / "docs" / "edge.md", "---\ntitle: Edge\n---\n")
+        target = resolve_under(REAL, tmp_path, "docs/edge.md")
+        assert collect(REAL, tmp_path, target) == (
+            Entry(path="docs/edge.md", frontmatter=("title: Edge",)),
+        )
+
+    def test_a_hidden_markdown_file_named_directly_still_works(self, tmp_path: Path) -> None:
+        # The same rule folders follow: skipped by the walk, reachable when asked for.
+        _write(tmp_path / "docs" / ".draft.md", "---\ntitle: Draft\n---\n")
+        target = resolve_under(REAL, tmp_path, "docs/.draft.md")
+        assert collect(REAL, tmp_path, target) == (
+            Entry(path="docs/.draft.md", frontmatter=("title: Draft",)),
+        )
+
+    def test_a_directory_named_like_a_document_is_still_a_directory(self, tmp_path: Path) -> None:
+        (tmp_path / "docs" / "sub.md").mkdir(parents=True)
+        assert resolve_under(REAL, tmp_path, "docs/sub.md") == (tmp_path / "docs" / "sub.md")
 
 
 class TestResolveUnder:

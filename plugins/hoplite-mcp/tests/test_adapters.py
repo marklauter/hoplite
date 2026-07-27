@@ -59,6 +59,35 @@ class TestKindAndExistence:
     def test_exists_is_false_for_what_was_never_created(self, tmp_path: Path) -> None:
         assert not REAL.exists(tmp_path / "never-created")
 
+    def test_is_symlink_answers_about_the_link_not_its_target(self, tmp_path: Path) -> None:
+        # The one method on the port that does not follow. A linked directory and the
+        # directory it points at answer the same to `is_directory`, `resolve`, and
+        # `entries`; this is what tells them apart.
+        target = tmp_path / "target"
+        target.mkdir()
+        (target / "deep.md").write_text("", encoding="utf-8")
+        link = tmp_path / "link"
+        try:
+            link.symlink_to(target)
+        except OSError as exc:
+            pytest.skip(f"cannot create a symlink here: {exc}")
+
+        assert REAL.is_symlink(link)
+        assert not REAL.is_symlink(target)
+        assert REAL.is_directory(link) == REAL.is_directory(target)
+        # Reached through a link is not the same as being one.
+        assert not REAL.is_symlink(link / "deep.md")
+
+    def test_a_dangling_link_is_still_a_link(self, tmp_path: Path) -> None:
+        link = tmp_path / "gone.md"
+        try:
+            link.symlink_to(tmp_path / "never-created.md")
+        except OSError as exc:
+            pytest.skip(f"cannot create a symlink here: {exc}")
+
+        assert REAL.is_symlink(link)
+        assert not REAL.exists(link)
+
 
 class TestResolve:
     def test_it_collapses_a_relative_step(self, tmp_path: Path) -> None:

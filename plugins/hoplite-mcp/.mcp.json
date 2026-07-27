@@ -2,7 +2,7 @@
   "mcpServers": {
     "catalog": {
       "command": "${CLAUDE_PLUGIN_OPTION_PYTHON_PATH:-python3}",
-      "args": ["-m", "hoplite_catalog.server"],
+      "args": ["-P", "-m", "hoplite_catalog.server"],
       "env": {
         "PYTHONPATH": "${CLAUDE_PLUGIN_ROOT}/src"
       }

@@ -13,13 +13,14 @@ The filesystem tests are not marked ``integration``. They run in half a second a
 
 from __future__ import annotations
 
+import errno
 import os.path
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Final, final
 
-from hoplite_catalog.files import RealFiles
+from hoplite_catalog.adapters import RealFiles
 
 __all__ = ["CORPUS", "REAL", "FakeFiles", "document"]
 
@@ -43,7 +44,9 @@ class FakeFiles:
     ``texts`` maps a file to its content and ``directories`` names the folders. ``links``
     maps a path to what it resolves to, which is how a symlink is expressed — including one
     whose target sits outside ``CORPUS``. ``denied`` names directories that raise the way an
-    unreadable one does, and ``undecodable`` names files that are not text.
+    unreadable one does, ``undecodable`` names files that are not text, and ``unresolvable``
+    names paths whose target cannot be reached at all — a symlink loop, a share that went
+    away — which is the one failure the filesystem raises from ``resolve`` itself.
 
     Every mapping is keyed by absolute path, so a test reads as the tree it describes.
     """
@@ -53,6 +56,7 @@ class FakeFiles:
     links: Mapping[Path, Path] = field(default_factory=dict)
     denied: frozenset[Path] = frozenset()
     undecodable: frozenset[Path] = frozenset()
+    unresolvable: frozenset[Path] = frozenset()
 
     def _known(self) -> frozenset[Path]:
         return frozenset(self.texts) | self.directories | frozenset(self.links)
@@ -73,17 +77,33 @@ class FakeFiles:
         )
 
     def is_directory(self, path: Path) -> bool:
-        return self.resolve(path) in self.directories
+        try:
+            return self.resolve(path) in self.directories
+        except OSError:
+            return False
 
     def is_file(self, path: Path) -> bool:
-        target = self.resolve(path)
+        """A path that cannot be resolved is neither file nor directory, the way pathlib's
+        predicates swallow the ``OSError`` and answer ``False``. It still appears in
+        ``entries``, so the listing sees it and has to say something about it."""
+        try:
+            target = self.resolve(path)
+        except OSError:
+            return False
         return target in self.texts or target in self.undecodable
+
+    def is_symlink(self, path: Path) -> bool:
+        """The link itself, not its target — so an entry reached *through* a link is not
+        one. ``docs/mirror`` is a link; ``docs/mirror/edge.md`` is a file underneath one."""
+        return path in self.links
 
     def exists(self, path: Path) -> bool:
         return self.is_file(path) or self.is_directory(path)
 
     def resolve(self, path: Path) -> Path:
         """Follow a link, including one an ancestor stands for, the way the OS does."""
+        if path in self.unresolvable:
+            raise OSError(errno.ELOOP, "Too many levels of symbolic links", str(path))
         if path in self.links:
             return self.links[path]
         for parent in path.parents:

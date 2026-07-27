@@ -48,12 +48,14 @@ root_packages = ["hoplite_catalog"]
 
 # The dependency direction, asserted by tests/test_architecture.py so it runs in the same
 # pytest step as everything else. `server` is the composition root and the only module that
-# names the real filesystem; `files` is the port and depends on nothing local. `exhaustive`
-# makes a new module a failure until it is placed in the layering deliberately.
+# may name the real filesystem; `adapters` sits above the core so `contents` and
+# `vocabulary` cannot import it, which is what makes `ports` a boundary rather than a
+# suggestion; `ports` is the port and depends on nothing local. `exhaustive` makes a new
+# module a failure until it is placed in the layering deliberately.
 [[tool.importlinter.contracts]]
 name = "The package layers in one direction"
 type = "layers"
-layers = ["server", "vocabulary", "contents", "files"]
+layers = ["server", "adapters", "vocabulary", "contents", "ports"]
 containers = ["hoplite_catalog"]
 exhaustive = true
 

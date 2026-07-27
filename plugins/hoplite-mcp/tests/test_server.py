@@ -5,8 +5,9 @@ from __future__ import annotations
 import io
 import json
 import tomllib
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Never, final
 
 import pytest
 from fakes import REAL
@@ -90,6 +91,19 @@ class TestHandshake:
 
     def test_ping_is_answered(self, corpus: Path) -> None:
         assert _result(respond(REAL, corpus, _request("ping"))) == {}
+
+
+class TestLaunchConfiguration:
+    def test_the_working_directory_is_kept_off_the_import_path(self) -> None:
+        # `-m` prepends the working directory to sys.path, ahead of the PYTHONPATH that
+        # points at the plugin. Claude Code launches the server in the user's own project,
+        # so a `hoplite_catalog/` or `hoplite_catalog.py` sitting in a cloned repo would
+        # shadow the plugin and run at server start. `-P` is what stops that, and it is a
+        # line in a JSON file with nothing else to keep it there.
+        config = json.loads((Path(__file__).parents[1] / ".mcp.json").read_text(encoding="utf-8"))
+        args: list[str] = config["mcpServers"]["catalog"]["args"]
+        assert "-P" in args
+        assert args.index("-P") < args.index("-m")
 
 
 class TestToolsList:
@@ -437,6 +451,54 @@ class TestProtocolErrors:
 
     def test_a_json_array_is_an_invalid_request(self, corpus: Path) -> None:
         assert _error_of(respond(REAL, corpus, "[1, 2]"))["code"] == -32600
+
+
+@final
+@dataclass(frozen=True, slots=True)
+class _RefusingFiles:
+    """A ``Files`` that fails the test if the host reads the corpus at all.
+
+    A notification owes no reply, so ``respond`` returns ``None`` whether or not it ran the
+    method first. Refusing every read is what makes the difference observable.
+    """
+
+    def _refuse(self, path: Path) -> Never:
+        raise AssertionError(f"the corpus was read for a notification: {path}")
+
+    def entries(self, directory: Path) -> tuple[Path, ...]:
+        self._refuse(directory)
+
+    def is_directory(self, path: Path) -> bool:
+        self._refuse(path)
+
+    def is_file(self, path: Path) -> bool:
+        self._refuse(path)
+
+    def is_symlink(self, path: Path) -> bool:
+        self._refuse(path)
+
+    def exists(self, path: Path) -> bool:
+        self._refuse(path)
+
+    def resolve(self, path: Path) -> Path:
+        self._refuse(path)
+
+    def read_text(self, path: Path) -> str:
+        self._refuse(path)
+
+
+class TestNotifications:
+    def test_a_tools_call_without_an_id_is_not_dispatched(self, corpus: Path) -> None:
+        # Dispatching first and discarding the result let a `vocabulary` notification read
+        # every document in the corpus to answer a message that owes no reply.
+        line = json.dumps(
+            {"jsonrpc": "2.0", "method": "tools/call", "params": {"name": "vocabulary"}}
+        )
+        assert respond(_RefusingFiles(), corpus, line) is None
+
+    def test_an_unknown_method_without_an_id_is_still_silent(self, corpus: Path) -> None:
+        line = json.dumps({"jsonrpc": "2.0", "method": "resources/list"})
+        assert respond(_RefusingFiles(), corpus, line) is None
 
 
 class TestServeLoop:

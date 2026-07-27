@@ -20,6 +20,7 @@ import sys
 from pathlib import Path
 from typing import Final, TextIO, cast
 
+from hoplite_catalog.adapters import RealFiles
 from hoplite_catalog.contents import (
     collect,
     other_files,
@@ -28,7 +29,7 @@ from hoplite_catalog.contents import (
     resolve_under,
     walk,
 )
-from hoplite_catalog.files import Files, RealFiles
+from hoplite_catalog.ports import Files
 from hoplite_catalog.vocabulary import render_vocabulary, tally
 
 __all__ = ["DEFAULT_UNDER", "PROTOCOL_VERSION", "SERVER_NAME", "TOOLS", "respond", "serve"]
@@ -276,10 +277,12 @@ def respond(files: Files, root: Path, line: str) -> dict[str, object] | None:
     if not isinstance(method, str):
         return None if request_id is None else _error(request_id, _INVALID_REQUEST, "no method")
 
-    result = _dispatch(files, root, method, _as_mapping(message.get("params")) or {})
-
     if request_id is None:
-        return None  # a notification; the reply, if any, is discarded
+        # Nothing is owed, so nothing is run. Dispatching first and discarding the result
+        # let a `tools/call` notification read every document in the corpus for no reply.
+        return None
+
+    result = _dispatch(files, root, method, _as_mapping(message.get("params")) or {})
     if result is None:
         return _error(request_id, _METHOD_NOT_FOUND, f"unknown method: {method}")
     return {"jsonrpc": "2.0", "id": request_id, "result": result}

@@ -27,7 +27,7 @@ from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Final, assert_never, final
 
-from hoplite_catalog.files import Files
+from hoplite_catalog.ports import Files
 
 __all__ = [
     "FENCE",
@@ -76,6 +76,7 @@ _NONE: Final = "none"
 # One wording, used by every group that can report something it will not follow.
 _OUTSIDE: Final = "links outside the corpus"
 _UNLISTABLE: Final = "cannot be listed"
+_UNREADABLE: Final = "cannot be read"
 
 
 @final
@@ -257,10 +258,11 @@ def resolve_under(files: Files, root: Path, under: str) -> Path:
     ``docs/specs/`` resolve to ``plugins/hoplite-skills/references/``, inside the root, so
     they pass.
 
-    Raises ``ValueError`` when the path escapes the root or names nothing. Both are
-    caller errors the agent could have prevented, and per the error model in
-    ``docs/specs/hoplite-tool-api.md`` those throw rather than riding back as an empty
-    result — a silent empty listing reads as "the folder is empty", not "you typo'd".
+    Raises ``ValueError`` when the path escapes the root, names nothing, or names a file
+    that is not a ``.md`` document. All three are caller errors the agent could have
+    prevented, and per the error model in ``docs/specs/hoplite-tool-api.md`` those throw
+    rather than riding back as an empty result — a silent empty listing reads as "the
+    folder is empty", not "you typo'd".
     """
     resolved_root = files.resolve(root)
     target = Path(os.path.normpath(resolved_root / under))
@@ -270,6 +272,14 @@ def resolve_under(files: Files, root: Path, under: str) -> Path:
         raise ValueError(f"{under!r} does not exist")
     if not _contains(resolved_root, files.resolve(target)):
         raise ValueError(f"{under!r} resolves outside the corpus root")
+    if files.is_file(target) and target.suffix != ".md":
+        # A file named directly is the one path into `collect` that skips `markdown_in`,
+        # and with it both the suffix test and the hidden-file skip. Without this, any file
+        # in the working directory opening with `---` has that block emitted — a `.env`
+        # someone wrote YAML into, a lockfile, a certificate. The listing reports a
+        # non-markdown file by path and never opens it, and asking for one by name must not
+        # be the exception to that.
+        raise ValueError(f"{under!r} is not a markdown document")
     return target
 
 
@@ -376,7 +386,6 @@ def other_files(files: Files, root: Path, directory: Path) -> tuple[str, ...]:
     claiming something untrue. It is marked with the same wording a foreign directory
     carries, on the same line, because this group is one line per file.
     """
-    resolved_root = files.resolve(root)
     try:
         documents = set(markdown_in(files, directory))
         others = sorted(
@@ -388,12 +397,54 @@ def other_files(files: Files, root: Path, directory: Path) -> tuple[str, ...]:
         )
     except OSError:
         return ()
-    return tuple(
-        corpus_path(files, root, path)
-        if _contains(resolved_root, files.resolve(path))
-        else f"{corpus_path(files, root, path)} {_OUTSIDE}"
-        for path in others
-    )
+    return tuple(_other_line(files, root, path) for path in others)
+
+
+def _other_line(files: Files, root: Path, path: Path) -> str:
+    """One other-files line: the corpus path, marked when it does not stay in the corpus.
+
+    A resolve that fails — a symlink loop, a share that went away — marks that one file
+    rather than raising. This group already refuses to fail a directory for one bad entry,
+    and an ``OSError`` escaping here unwound past ``collect``'s per-document handler and cost
+    the caller the whole report. What cannot be answered is reported as what it is: the file
+    is named, and the line says the listing could not read it.
+    """
+    relative = corpus_path(files, root, path)
+    try:
+        contained = _contains(files.resolve(root), files.resolve(path))
+    except OSError:
+        return f"{relative} {_UNREADABLE}"
+    return relative if contained else f"{relative} {_OUTSIDE}"
+
+
+def _unlinked_directories(files: Files, root: Path, under: Path) -> frozenset[Path]:
+    """The resolved paths of the directories reachable from ``under`` without crossing a link.
+
+    Which of two names for one directory gets descended is decided from this rather than by
+    sort order. The link loses to the path that reaches the same directory without following
+    one, so the walk descends the path a wikilink addresses.
+
+    Only the descent needs it. Both names are still listed either way — see ``walk``.
+    """
+    resolved_root = files.resolve(root)
+    unlinked: set[Path] = set()
+    stack = [under]
+
+    while stack:
+        directory = stack.pop()
+        try:
+            resolved = files.resolve(directory)
+            if resolved in unlinked or not _contains(resolved_root, resolved):
+                continue
+            unlinked.add(resolved)
+            stack.extend(
+                child for child in subdirectories(files, directory) if not files.is_symlink(child)
+            )
+        except OSError:
+            # A directory that cannot be read reaches nothing, so it contributes nothing.
+            # `_walk` is where that gets reported, as an `UnlistableDirectory`.
+            continue
+    return frozenset(unlinked)
 
 
 def _walk(files: Files, root: Path, under: Path) -> Iterator[tuple[Path, DirectoryNode, bool]]:
@@ -405,6 +456,7 @@ def _walk(files: Files, root: Path, under: Path) -> Iterator[tuple[Path, Directo
     already been listed under another name.
     """
     resolved_root = files.resolve(root)
+    unlinked = _unlinked_directories(files, root, under)
     visited: set[Path] = set()
     stack: list[tuple[Path, int]] = [(under, 0)]
 
@@ -424,8 +476,14 @@ def _walk(files: Files, root: Path, under: Path) -> Iterator[tuple[Path, Directo
             yield directory, UnlistableDirectory(path=path, depth=depth), False
             continue
 
+        # A link whose target another path reaches without one. The other path is the one
+        # to descend, whichever of the two the stack happens to reach first. `under` is
+        # exempt: a caller who names the link is asking for what is under it, and no other
+        # path in this walk stands for it.
+        shadowed = directory != under and files.is_symlink(directory) and resolved in unlinked
+
         node = Directory(path=path, depth=depth, documents=documents)
-        if resolved in visited:
+        if shadowed or resolved in visited:
             yield directory, node, False
             continue
 
@@ -451,12 +509,22 @@ def walk(files: Files, root: Path, under: Path) -> tuple[DirectoryNode, ...]:
 
     A symlinked directory resolving *inside* the corpus is a directory the caller can see
     on disk, so it is emitted like any other, with the count of documents reachable
-    through the link. What the visited set governs is the descent, not the emission:
+    through the link. What is governed is the descent, not the emission:
     ``docs/mirror -> docs/glossary`` is listed, and its children are not walked a second
-    time under a second name. Dropping the node instead — which is what testing the set
-    before emitting does — hides a directory that exists, the same lie ``ForeignDirectory``
-    exists to prevent. It is also what stops a link back to an ancestor from looping
-    forever: the loop is entered once, named, and not descended.
+    time under a second name. Dropping the node instead hides a directory that exists, the
+    same lie ``ForeignDirectory`` exists to prevent.
+
+    Which of the two names is descended is decided by ``_unlinked_directories``, not by
+    which one the traversal reaches first. The link loses whenever another path reaches the
+    same directory without crossing one, so the walk descends the path the corpus addresses:
+    with ``docs/aaa -> docs/glossary``, the real ``docs/glossary`` is walked and ``docs/aaa``
+    is only named. Sort order used to decide it, which put ``docs/glossary/deep`` — and every
+    document under it — out of the subtree and out of the recursive listing whenever the link
+    sorted first. A link is still descended when no such path exists, since dropping it then
+    would hide documents nothing else reaches.
+
+    That is also what stops a link back to an ancestor from looping forever: the ancestor is
+    reached without a link, so the loop is entered once, named, and not descended.
     """
     return tuple(node for _, node, _ in _walk(files, root, under))
 
@@ -484,6 +552,11 @@ def collect(
     propagate: an ``OSError`` message carries an absolute host path and names the document
     by where its bytes were meant to live rather than by the path the corpus addresses it
     with, and either one escaping fails the whole call for one bad file.
+
+    The containment check sits inside the same guard, because following a link to ask where
+    it points is itself a read and fails the same ways — a symlink loop, a share that went
+    away. Outside it, one such file unwound past this handler and cost the caller the whole
+    report, which under ``recurse`` is the whole subtree.
 
     Under ``recurse`` the directories come from the same walk the subtree is built from,
     not from ``rglob``. ``rglob`` never follows a directory symlink, so the subtree would
@@ -517,12 +590,12 @@ def collect(
     documents: list[Document] = []
     for path in paths:
         relative = corpus_path(files, root, path)
-        if not _contains(resolved_root, files.resolve(path)):
-            documents.append(
-                Unreadable(path=relative, reason="links to a target outside the corpus")
-            )
-            continue
         try:
+            if not _contains(resolved_root, files.resolve(path)):
+                documents.append(
+                    Unreadable(path=relative, reason="links to a target outside the corpus")
+                )
+                continue
             documents.append(read_entry(files, root, path))
         except (OSError, UnicodeDecodeError) as exc:
             documents.append(Unreadable(path=relative, reason=_read_failure(exc)))

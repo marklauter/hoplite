@@ -80,7 +80,9 @@ corpus root.
 ## Errors
 
 Both tools return an error, and no report, when `under` names nothing, sits outside the
-corpus root, or resolves outside it through a link. The argument checks do the same:
+corpus root, resolves outside it through a link, or names a file that is not `.md`. Only
+markdown is ever opened: a `.env` or a lockfile that happens to start with `---` is refused
+by name, not sliced. The argument checks do the same:
 `under` must be a string, `keys` a list of strings. `contents` also errors when `keys` names no
 property carried by any document that has frontmatter. A folder whose documents have no
 frontmatter at all is not that case, and lists normally.
