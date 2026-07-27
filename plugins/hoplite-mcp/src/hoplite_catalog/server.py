@@ -22,17 +22,11 @@ from pathlib import Path
 from typing import Final, TextIO, cast
 
 from hoplite_catalog.adapters import RealFiles
-from hoplite_catalog.contents import (
-    collect,
-    other_files,
-    render,
-    render_report,
-    resolve_under,
-    walk,
-)
+from hoplite_catalog.contents import collect, other_files, resolve_under, walk
 from hoplite_catalog.corpus import Corpus
 from hoplite_catalog.errors import CallerError
-from hoplite_catalog.vocabulary import render_vocabulary, tally
+from hoplite_catalog.rendering import render, render_report, render_vocabulary
+from hoplite_catalog.vocabulary import tally
 
 __all__ = ["DEFAULT_UNDER", "PROTOCOL_VERSION", "SERVER_NAME", "TOOLS", "respond", "serve"]
 

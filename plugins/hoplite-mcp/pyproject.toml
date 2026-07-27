@@ -30,7 +30,7 @@ testpaths = ["tests"]
 pythonpath = ["src"]
 # The ratchet: monotonic, set to the measured value and only ever raised. A scoped run
 # passes --no-cov, since a subset of the suite cannot meet a project-wide floor.
-addopts = "--cov=src --cov-branch --cov-fail-under=95"
+addopts = "--cov=src --cov-branch --cov-fail-under=97"
 
 [tool.coverage.report]
 exclude_also = [
@@ -53,11 +53,13 @@ root_packages = ["hoplite_catalog"]
 # suggestion; `corpus` pairs a port with a resolved root and is the only thing the walk
 # holds; `ports` is the port and depends on nothing local. `exhaustive` makes a new module
 # a failure until it is placed in the layering deliberately. `errors` sits at the bottom
-# because both `contents` and `server` raise `CallerError` and neither owns it.
+# because both `contents` and `server` raise `CallerError` and neither owns it. `rendering`
+# sits above the core because every string a caller sees is written there and nothing
+# below it decides wording.
 [[tool.importlinter.contracts]]
 name = "The package layers in one direction"
 type = "layers"
-layers = ["server", "adapters", "vocabulary", "contents", "corpus", "ports", "errors"]
+layers = ["server", "adapters", "rendering", "vocabulary", "contents", "corpus", "ports", "errors"]
 containers = ["hoplite_catalog"]
 exhaustive = true
 

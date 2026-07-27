@@ -17,17 +17,19 @@ from hoplite_catalog.contents import (
     DirectoryNode,
     Document,
     Entry,
+    File,
+    FileNode,
     ForeignDirectory,
+    ForeignFile,
     Property,
     UnlistableDirectory,
     Unreadable,
+    UnreadableFile,
     collect,
     group_properties,
     markdown_in,
     other_files,
     read_entry,
-    render,
-    render_report,
     resolve_under,
     slice_frontmatter,
     subdirectories,
@@ -36,7 +38,8 @@ from hoplite_catalog.contents import (
 from hoplite_catalog.corpus import Corpus
 from hoplite_catalog.errors import CallerError
 from hoplite_catalog.ports import Files
-from hoplite_catalog.vocabulary import KeyUse, render_vocabulary, tally
+from hoplite_catalog.rendering import render, render_report, render_vocabulary
+from hoplite_catalog.vocabulary import KeyUse, tally
 
 __all__ = [
     "FENCE",
@@ -46,13 +49,17 @@ __all__ = [
     "DirectoryNode",
     "Document",
     "Entry",
+    "File",
+    "FileNode",
     "Files",
     "ForeignDirectory",
+    "ForeignFile",
     "KeyUse",
     "Property",
     "RealFiles",
     "UnlistableDirectory",
     "Unreadable",
+    "UnreadableFile",
     "collect",
     "group_properties",
     "markdown_in",

@@ -10,21 +10,23 @@ from fakes import CORPUS, FakeFiles, document, fake, real
 from hoplite_catalog.contents import (
     Directory,
     Entry,
+    File,
     ForeignDirectory,
+    ForeignFile,
     UnlistableDirectory,
     Unreadable,
+    UnreadableFile,
     collect,
     group_properties,
     markdown_in,
     other_files,
     read_entry,
-    render,
-    render_report,
     resolve_under,
     slice_frontmatter,
     subdirectories,
     walk,
 )
+from hoplite_catalog.rendering import render, render_report
 
 
 def _write(path: Path, text: str, *, encoding: str = "utf-8", newline: str = "\n") -> Path:
@@ -273,8 +275,8 @@ class TestOtherFiles:
         _write(tmp_path / "docs" / "notes.txt", "")
         _write(tmp_path / "docs" / "graph.pdf", "")
         assert other_files(real(tmp_path), tmp_path / "docs") == (
-            "docs/graph.pdf",
-            "docs/notes.txt",
+            File(path="docs/graph.pdf"),
+            File(path="docs/notes.txt"),
         )
 
     def test_markdown_is_never_reported_here(self, tmp_path: Path) -> None:
@@ -304,9 +306,9 @@ class TestOtherFiles:
             pytest.skip(f"cannot create a symlink here: {exc}")
 
         listed = other_files(real(tmp_path), tmp_path / "docs")
-        assert listed == ("docs/leak.pdf links outside the corpus",)
-        assert "secret.pdf" not in listed[0]
-        assert str(outside) not in listed[0]
+        assert listed == (ForeignFile(path="docs/leak.pdf"),)
+        assert "secret.pdf" not in listed[0].path
+        assert str(outside) not in listed[0].path
 
     def test_a_link_inside_the_corpus_is_not_marked(self, tmp_path: Path) -> None:
         _write(tmp_path / "assets" / "graph.pdf", "")
@@ -316,7 +318,7 @@ class TestOtherFiles:
         except OSError as exc:
             pytest.skip(f"cannot create a symlink here: {exc}")
 
-        assert other_files(real(tmp_path), tmp_path / "docs") == ("docs/graph.pdf",)
+        assert other_files(real(tmp_path), tmp_path / "docs") == (File(path="docs/graph.pdf"),)
 
     def test_a_dangling_link_is_reported_rather_than_dropped(self, tmp_path: Path) -> None:
         # It is neither a file nor a directory, so is_file() would leave it in no group.
@@ -326,7 +328,7 @@ class TestOtherFiles:
         except OSError as exc:
             pytest.skip(f"cannot create a symlink here: {exc}")
 
-        assert other_files(real(tmp_path), tmp_path / "docs") == ("docs/gone.pdf",)
+        assert other_files(real(tmp_path), tmp_path / "docs") == (File(path="docs/gone.pdf"),)
 
     def test_hidden_files_are_skipped_like_hidden_directories(self, tmp_path: Path) -> None:
         # With the corpus root as the default, listing them put .env and .gitignore in a
@@ -334,7 +336,7 @@ class TestOtherFiles:
         _write(tmp_path / "docs" / ".env", "")
         _write(tmp_path / "docs" / ".gitignore", "")
         _write(tmp_path / "docs" / "notes.txt", "")
-        assert other_files(real(tmp_path), tmp_path / "docs") == ("docs/notes.txt",)
+        assert other_files(real(tmp_path), tmp_path / "docs") == (File(path="docs/notes.txt"),)
 
     def test_a_hidden_markdown_file_is_still_a_document(self, tmp_path: Path) -> None:
         # It is addressable by a wikilink, so it belongs in the documents group, not here.
@@ -355,7 +357,7 @@ class TestOtherFiles:
         directories = {path.name for path in subdirectories(real(tmp_path), tmp_path / "docs")}
         documents = {path.name for path in markdown_in(real(tmp_path), tmp_path / "docs")}
         others = {
-            path.rsplit("/", 1)[-1] for path in other_files(real(tmp_path), tmp_path / "docs")
+            node.path.rsplit("/", 1)[-1] for node in other_files(real(tmp_path), tmp_path / "docs")
         }
 
         assert directories == {"sub.md", "plain"}
@@ -377,8 +379,8 @@ class TestOtherFiles:
             unresolvable=frozenset({loop}),
         )
         assert other_files(fake(files), docs) == (
-            "docs/graph.pdf",
-            "docs/loop.pdf cannot be read",
+            File(path="docs/graph.pdf"),
+            UnreadableFile(path="docs/loop.pdf"),
         )
 
 
@@ -732,8 +734,8 @@ class TestContainmentWithoutSymlinks:
 
     def test_an_other_file_linking_out_of_the_corpus_is_marked(self) -> None:
         listed = other_files(fake(self.FILES), self.DOCS)
-        assert "docs/leak.pdf links outside the corpus" in listed
-        assert not any("secret" in line for line in listed)
+        assert ForeignFile(path="docs/leak.pdf") in listed
+        assert not any("secret" in node.path for node in listed)
 
     def test_no_host_path_or_target_name_reaches_the_report(self) -> None:
         rendered = render_report(
@@ -755,7 +757,7 @@ class TestRenderReport:
     def test_the_three_groups_come_in_order_under_their_headings(self) -> None:
         report = render_report(
             self.TREE,
-            ("docs/graph.pdf",),
+            (File(path="docs/graph.pdf"),),
             (Entry(path="docs/a.md", frontmatter=("title: A",)),),
         )
         assert report == (
@@ -792,11 +794,22 @@ class TestRenderReport:
         # Both render as a bare path, so only the heading tells them apart.
         report = render_report(
             (Directory(path="docs", depth=0, documents=1),),
-            ("docs/graph.pdf",),
+            (File(path="docs/graph.pdf"),),
             (Entry(path="docs/bare.md", frontmatter=None),),
         )
         assert "# other files\ndocs/graph.pdf" in report
         assert "# documents\ndocs/bare.md" in report
+
+    def test_an_other_file_leaving_the_corpus_carries_the_directory_wording(self) -> None:
+        # One phrase for the whole report: a file and a folder that leave say the same thing.
+        report = render_report((), (ForeignFile(path="docs/leak.pdf"),), ())
+        assert "# other files\ndocs/leak.pdf links outside the corpus" in report
+
+    def test_an_unreachable_other_file_says_so_on_its_own_line(self) -> None:
+        # A symlink loop or a share that went away. The file is named either way, because a
+        # file a caller can see on disk must not go missing from the listing.
+        report = render_report((), (UnreadableFile(path="docs/loop.pdf"),), ())
+        assert "# other files\ndocs/loop.pdf cannot be read" in report
 
 
 class TestCollect:

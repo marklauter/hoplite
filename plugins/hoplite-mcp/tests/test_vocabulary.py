@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 from hoplite_catalog.contents import Entry
-from hoplite_catalog.vocabulary import KeyUse, render_vocabulary, tally
+from hoplite_catalog.rendering import render_vocabulary
+from hoplite_catalog.vocabulary import KeyUse, tally
 
 
 def _entry(path: str, *lines: str) -> Entry:

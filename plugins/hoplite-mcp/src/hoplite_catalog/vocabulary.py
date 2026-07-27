@@ -24,7 +24,7 @@ from typing import final
 
 from hoplite_catalog.contents import Document
 
-__all__ = ["KeyUse", "render_vocabulary", "tally"]
+__all__ = ["KeyUse", "tally"]
 
 
 @final
@@ -52,12 +52,3 @@ def tally(documents: Iterable[Document]) -> tuple[KeyUse, ...]:
         key for document in documents for key in {prop.key for prop in document.properties()}
     )
     return tuple(KeyUse(key=key, documents=counts[key]) for key in sorted(counts))
-
-
-def render_vocabulary(uses: Iterable[KeyUse]) -> str:
-    """Render the tally: one ``key: documents`` line per key.
-
-    The shape is frontmatter's own — a key, a colon, a value — because that is what the
-    caller is about to write and read.
-    """
-    return "\n".join(f"{use.key}: {use.documents}" for use in uses)

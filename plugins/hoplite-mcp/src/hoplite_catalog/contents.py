@@ -22,10 +22,10 @@ from __future__ import annotations
 
 import os.path
 import re
-from collections.abc import Iterable, Iterator, Sequence
+from collections.abc import Iterator, Sequence
 from dataclasses import dataclass, replace
 from pathlib import Path
-from typing import Final, assert_never, final
+from typing import Final, final
 
 from hoplite_catalog.corpus import Corpus
 from hoplite_catalog.errors import CallerError
@@ -36,17 +36,19 @@ __all__ = [
     "DirectoryNode",
     "Document",
     "Entry",
+    "File",
+    "FileNode",
     "ForeignDirectory",
+    "ForeignFile",
     "Property",
     "UnlistableDirectory",
     "Unreadable",
+    "UnreadableFile",
     "collect",
     "group_properties",
     "markdown_in",
     "other_files",
     "read_entry",
-    "render",
-    "render_report",
     "resolve_under",
     "slice_frontmatter",
     "subdirectories",
@@ -58,25 +60,6 @@ FENCE: Final = "---"
 # A root-level mapping key: unindented, up to the first colon. Indented lines and `-`
 # list items are continuations of the key above them.
 _ROOT_KEY_RE: Final = re.compile(r"^([A-Za-z0-9_.\-]+)\s*:")
-
-# Headings carry a `#` so they cannot be mistaken for content. A blank line separates the
-# groups and also separates two documents inside the last one, so the heading is the only
-# boundary marker — and an unprefixed word on its own line above a path reads as a path.
-#
-# A frontmatter key can never collide: `_ROOT_KEY_RE` admits alphanumerics, underscore,
-# dot, and dash. A path can, but only at the corpus root. Paths are corpus-relative, so one
-# inside a folder leads with that folder; a file at the root leads with its own name, and
-# `#hash.md` there emits a line starting with `#`. Left as is: the collision needs a
-# root-level file named for a heading, and prefixing every root path with `./` to close it
-# would put noise on every line of every listing to buy nothing else.
-_TREE_HEADING: Final = "# directories (documents directly in each)"
-_OTHER_HEADING: Final = "# other files"
-_DOCUMENT_HEADING: Final = "# documents"
-_NONE: Final = "none"
-# One wording, used by every group that can report something it will not follow.
-_OUTSIDE: Final = "links outside the corpus"
-_UNLISTABLE: Final = "cannot be listed"
-_UNREADABLE: Final = "cannot be read"
 
 
 @final
@@ -102,22 +85,6 @@ class Entry:
             return self
         kept = [line for prop in self.properties() if prop.key in keys for line in prop.lines]
         return replace(self, frontmatter=tuple(kept) or None)
-
-    def block(self) -> str:
-        """The path, then one line per property.
-
-        Emitted through ``properties`` rather than from the raw block, so a document
-        renders the same whether or not ``keys`` was supplied — one scanner decides what a
-        property owns, and the projection cannot keep a line the plain listing drops. What
-        that costs is anything owned by no key: a comment, and a stray line above the first
-        key. Neither is addressable, and a comment is the one that matters, since the report
-        marks its groups with a leading ``#`` and a comment emitted verbatim forges one.
-
-        Blank lines inside a block are dropped, so a stray one cannot split a document
-        into two records once ``render`` joins blocks with a blank line.
-        """
-        lines = (line for prop in self.properties() for line in prop.lines if line.strip())
-        return "\n".join([self.path, *lines])
 
 
 @final
@@ -148,9 +115,6 @@ class Unreadable:
     def projected(self, keys: frozenset[str] | None) -> Unreadable:
         """Unchanged. ``keys`` selects frontmatter, and there is none to select from."""
         return self
-
-    def block(self) -> str:
-        return f"{self.path}\n{self.reason}"
 
 
 @final
@@ -213,7 +177,46 @@ class UnlistableDirectory:
     depth: int
 
 
+@final
+@dataclass(frozen=True, slots=True)
+class File:
+    """A non-markdown file directly in the requested directory.
+
+    It cannot carry frontmatter, but hiding it makes the listing lie about what the
+    directory holds. It is reported as a path alone, in its own labelled group: a bare path
+    in the documents group already means "markdown document with no frontmatter", so an
+    unlabelled PDF path would be indistinguishable from one.
+    """
+
+    path: str
+
+
+@final
+@dataclass(frozen=True, slots=True)
+class ForeignFile:
+    """A file inside the corpus whose target is outside it.
+
+    The same answer ``ForeignDirectory`` gives, for the same reason: the name is reported
+    and the file is never opened.
+    """
+
+    path: str
+
+
+@final
+@dataclass(frozen=True, slots=True)
+class UnreadableFile:
+    """A file whose target could not be reached at all — a symlink loop, a share that went
+    away. Named rather than dropped, and rather than failing the directory for one entry."""
+
+    path: str
+
+
 type DirectoryNode = Directory | ForeignDirectory | UnlistableDirectory
+
+# What the other-files group lists: a file, one that leaves the corpus, or one that could
+# not be reached. Every visible non-markdown entry is exactly one of the three.
+type FileNode = File | ForeignFile | UnreadableFile
 
 # What the documents group lists: one that was read, or one that could not be.
 type Document = Entry | Unreadable
@@ -371,13 +374,8 @@ def markdown_in(corpus: Corpus, directory: Path) -> tuple[Path, ...]:
     return _partition(corpus, directory).documents
 
 
-def other_files(corpus: Corpus, directory: Path) -> tuple[str, ...]:
-    """The non-markdown files directly in ``directory``, as corpus paths, ordered.
-
-    They cannot carry frontmatter, but hiding them makes the listing lie about what the
-    directory holds. They are reported as paths alone, in their own labelled group: a
-    bare path already means "markdown document with no frontmatter", so an unlabelled
-    PDF path would be indistinguishable from one.
+def other_files(corpus: Corpus, directory: Path) -> tuple[FileNode, ...]:
+    """The non-markdown files directly in ``directory``, ordered by path.
 
     Which entries land here is decided by ``_partition``, in the same pass that decides
     the other two groups. Hidden files are skipped there, the same rule hidden directories
@@ -392,31 +390,30 @@ def other_files(corpus: Corpus, directory: Path) -> tuple[str, ...]:
     Containment is checked here as it is at every other site that emits a path. A bare
     ``docs/leak.pdf`` asserts the file is in the corpus, and for a link out of it that is
     false — only the name would leak, never the bytes, but the listing would still be
-    claiming something untrue. It is marked with the same wording a foreign directory
-    carries, on the same line, because this group is one line per file.
+    claiming something untrue. Which of the three records that produces is this module's
+    answer; how each one reads is ``rendering``'s.
     """
     try:
         others = _partition(corpus, directory).others
     except OSError:
         return ()
-    return tuple(_other_line(corpus, path) for path in others)
+    return tuple(_file_node(corpus, path) for path in others)
 
 
-def _other_line(corpus: Corpus, path: Path) -> str:
-    """One other-files line: the corpus path, marked when it does not stay in the corpus.
+def _file_node(corpus: Corpus, path: Path) -> FileNode:
+    """Classify one other file: listed, leaving the corpus, or unreachable.
 
     A resolve that fails — a symlink loop, a share that went away — marks that one file
     rather than raising. This group already refuses to fail a directory for one bad entry,
     and an ``OSError`` escaping here unwound past ``collect``'s per-document handler and cost
-    the caller the whole report. What cannot be answered is reported as what it is: the file
-    is named, and the line says the listing could not read it.
+    the caller the whole report. What cannot be answered is reported as what it is.
     """
     relative = corpus.path_of(path)
     try:
         contained = corpus.contains_target(path)
     except OSError:
-        return f"{relative} {_UNREADABLE}"
-    return relative if contained else f"{relative} {_OUTSIDE}"
+        return UnreadableFile(path=relative)
+    return File(path=relative) if contained else ForeignFile(path=relative)
 
 
 def _unlinked_directories(corpus: Corpus, under: Path) -> frozenset[Path]:
@@ -643,51 +640,3 @@ def group_properties(lines: Sequence[str]) -> tuple[Property, ...]:
         elif groups:
             groups[-1][1].append(line)
     return tuple(Property(key=key, lines=tuple(owned)) for key, owned in groups)
-
-
-def render(documents: Iterable[Document]) -> str:
-    """Render the listing: a path per document, then its lines under it.
-
-    A blank line separates documents. No ``---`` fences — they delimit a block for a
-    parser, and only an agent reads this.
-    """
-    return "\n\n".join(document.block() for document in documents)
-
-
-def _render_node(node: DirectoryNode) -> str:
-    """One subtree line: indented name, then its document count.
-
-    Names only below the root, because names are what make the subtree cheap enough to
-    lead with. The root line carries the full corpus path, so the caller can read a child
-    path off the indentation without a round trip.
-    """
-    indent = "  " * node.depth
-    name = node.path.rsplit("/", 1)[-1] if node.depth else (node.path or ".")
-    match node:
-        case Directory(documents=documents):
-            return f"{indent}{name}/ {documents}"
-        case ForeignDirectory():
-            return f"{indent}{name}/ {_OUTSIDE}"
-        case UnlistableDirectory():
-            return f"{indent}{name}/ {_UNLISTABLE}"
-        case _:
-            # A third kind of node added without a line here fails the type check rather
-            # than rendering as nothing.
-            assert_never(node)
-
-
-def render_report(
-    tree: Iterable[DirectoryNode], others: Iterable[str], documents: Iterable[Document]
-) -> str:
-    """Render the three parts of the report, each under its own heading.
-
-    Every heading is emitted, with ``none`` under an empty one. A directory holding no
-    documents is a real answer — ``docs/`` holds none in either corpus that exists today —
-    so the shape of the report stays the same whether or not a part has anything in it.
-    """
-    sections = (
-        "\n".join([_TREE_HEADING, *(_render_node(node) for node in tree)]),
-        "\n".join([_OTHER_HEADING, *(tuple(others) or (_NONE,))]),
-        "\n".join([_DOCUMENT_HEADING, render(documents) or _NONE]),
-    )
-    return "\n\n".join(sections)
