@@ -42,7 +42,7 @@ Write `docs/glossary/<term>.md` (kebab-case) to the frontmatter standard (`${CLA
 title: <term>
 type: definition
 summary: "<the kernel>"
-tags: [glossary, <optional-grouping>]
+tags: [<optional-grouping>]
 created: YYYY-MM-DD
 status: <evolving | locked>
 is-a: "[[<broader-term>]]"

@@ -20,8 +20,9 @@ Write `docs/decisions/<slug>.md` (kebab-case of the title) to the frontmatter st
 ```markdown
 ---
 title: <the decision, stated as a claim>
+type: decision
 summary: "<one line — what was decided and why>"
-tags: [decision, <domain>]
+tags: [<domain>]
 created: YYYY-MM-DD
 status: <evolving | locked>
 ---
