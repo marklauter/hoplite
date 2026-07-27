@@ -16,7 +16,7 @@ Record one event in the project's path as a dated entry under `docs/journal/` �
 
 Write to the [Microsoft Writing Style Guide](https://learn.microsoft.com/style-guide/welcome/) — plain and scannable; say what a thing is before how to use it.
 
-Write `docs/journal/<YYYY-MM-DD>-<HHMM>-<slug>.md` to the frontmatter standard (`${CLAUDE_PLUGIN_ROOT}/references/frontmatter.md`): `title`, `summary`, `tags: [journal, <domain>]`, `created`. No `status` — entries don't evolve. Open with the context going in, then what you tried, expected, and learned.
+Write `docs/journal/<YYYY-MM-DD>-<HHMM>-<slug>.md` to the frontmatter standard (`${CLAUDE_PLUGIN_ROOT}/references/frontmatter.md`): `title`, `type: journal`, `summary`, `tags: [<domain>]`, `created`. No `status` — entries don't evolve. Open with the context going in, then what you tried, expected, and learned.
 
 ## Proofread
 
