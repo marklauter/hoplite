@@ -309,52 +309,84 @@ def corpus_path(files: Files, root: Path, path: Path) -> str:
     return path.absolute().relative_to(files.resolve(root)).as_posix()
 
 
-def subdirectories(files: Files, directory: Path) -> tuple[Path, ...]:
-    """The child directories a walk descends into, ordered by path.
+@final
+@dataclass(frozen=True, slots=True, kw_only=True)
+class _Listing:
+    """One directory read, split into the three groups the report shows.
 
-    Hidden directories are skipped. A leading dot is the filesystem's own marker for
-    "not content", and it is what keeps the subtree bounded without a list of names to
-    maintain: ``.git`` and ``.venv`` are each thousands of directories, and neither holds
-    anything a corpus addresses. A caller naming a hidden directory outright still gets
-    it — the rule is about what a walk wanders into, not about what may be asked for.
+    The split is the structure rather than a claim three docstrings make separately: every
+    visible entry lands in exactly one of these, because one pass assigns it.
+
+    Keyword-only because all three fields are ``tuple[Path, ...]``, so positionally a
+    transposed pair type-checks and renders a plausible wrong report.
     """
-    return tuple(
-        sorted(
-            path
-            for path in files.entries(directory)
-            if files.is_directory(path) and not path.name.startswith(".")
-        )
+
+    directories: tuple[Path, ...]
+    documents: tuple[Path, ...]
+    others: tuple[Path, ...]
+
+
+def _partition(files: Files, directory: Path) -> _Listing:
+    """Read ``directory`` once and split what is in it. Raises ``OSError`` at the call.
+
+    One ``entries`` call and one ``is_directory`` per entry. The walk used to ask twice per
+    directory — once for the document count, once for the children — and the other-files
+    group a third time, all to classify the same names against the same tests.
+
+    Hidden entries are skipped, except a hidden ``.md``: a leading dot is the filesystem's
+    marker for "not content", which keeps the subtree bounded without a list of names to
+    maintain, but a document is addressable by a wikilink whatever it is called. A caller
+    naming a hidden directory outright still gets it — the rule is about what a walk
+    wanders into, not about what may be asked for.
+
+    A directory named ``notes.md`` is a directory, not a document. Classified the other way
+    it would be counted in the subtree and also listed there as a directory, then handed to
+    ``read_entry``, where the read fails.
+
+    The test is ``is_directory``, not ``is_file``. A symlink dangling inside the corpus is
+    neither, and keying on ``is_file`` would drop it from all three groups — the one outcome
+    this module refuses, since a document a caller can see on disk must never go missing.
+    It lands in ``documents`` on its suffix, and ``collect`` refuses it out loud.
+
+    The suffix is matched exactly, where ``glob("*.md")`` matched it case-insensitively on
+    Windows and case-sensitively everywhere else. One corpus now lists the same documents on
+    every platform; a ``README.MD`` moves to the other-files group rather than vanishing.
+    """
+    entries = tuple((path, files.is_directory(path)) for path in files.entries(directory))
+    return _Listing(
+        directories=tuple(
+            sorted(path for path, is_dir in entries if is_dir and not path.name.startswith("."))
+        ),
+        documents=tuple(
+            sorted(path for path, is_dir in entries if not is_dir and _is_markdown(path))
+        ),
+        others=tuple(
+            sorted(
+                path
+                for path, is_dir in entries
+                if not is_dir and not _is_markdown(path) and not path.name.startswith(".")
+            )
+        ),
     )
+
+
+def _is_markdown(path: Path) -> bool:
+    return path.suffix == ".md"
+
+
+def subdirectories(files: Files, directory: Path) -> tuple[Path, ...]:
+    """The child directories a walk descends into, ordered by path. See ``_partition``."""
+    return _partition(files, directory).directories
 
 
 def markdown_in(files: Files, directory: Path) -> tuple[Path, ...]:
     """The markdown documents directly in ``directory``, ordered by path.
 
-    One definition of "document", used by the listing, by the subtree counts, and — by
-    subtraction — by ``other_files``. Sharing it is what keeps a file from falling
-    between the two groups: anything this does not match is reported as an other file.
-
-    Directories are excluded, because a directory can be named ``notes.md`` and Obsidian
-    corpora do produce them. Left in, one would be counted as a document in the subtree
-    while also appearing there as a directory, and handed to ``read_entry``, where the
-    read fails and takes the whole call with it.
-
-    The test is ``not is_directory()``, not ``is_file()``. A symlink dangling inside the
-    corpus is neither a file nor a directory, and ``is_file()`` would drop it silently —
-    the one outcome this module refuses, since a document a caller can see on disk must
-    never go missing from the listing. It stays in, and ``collect`` refuses it out loud.
-
-    The suffix is matched exactly, where ``glob("*.md")`` matched it case-insensitively on
-    Windows and case-sensitively everywhere else. One corpus now lists the same documents
-    on every platform; a ``README.MD`` moves to the other-files group rather than vanishing.
+    One definition of "document", used by the listing and by the subtree counts. It comes
+    from the same pass that decides the other two groups, so a file cannot fall between
+    them — see ``_partition``.
     """
-    return tuple(
-        sorted(
-            path
-            for path in files.entries(directory)
-            if path.suffix == ".md" and not files.is_directory(path)
-        )
-    )
+    return _partition(files, directory).documents
 
 
 def other_files(files: Files, root: Path, directory: Path) -> tuple[str, ...]:
@@ -365,16 +397,11 @@ def other_files(files: Files, root: Path, directory: Path) -> tuple[str, ...]:
     bare path already means "markdown document with no frontmatter", so an unlabelled
     PDF path would be indistinguishable from one.
 
-    ``not is_directory()`` matches ``markdown_in``, so the two partition everything the
-    report shows: a visible entry is a subdirectory, a document, or an other file, never
-    both and never neither. ``is_file()`` would leave a dangling link in none of the three.
-
-    Hidden files are skipped, the same rule ``subdirectories`` applies to hidden
-    directories. A leading dot is the filesystem's marker for "not content", and it does
-    not stop meaning that because the entry is a file: with the corpus root as the default,
-    listing it would put ``.env``, ``.gitignore``, and ``.mcp.json`` in a corpus report
-    while ``.git/`` was correctly absent from the tree beside it. A hidden ``.md`` file is
-    left alone — it is a document, and a wikilink can address it.
+    Which entries land here is decided by ``_partition``, in the same pass that decides
+    the other two groups. Hidden files are skipped there, the same rule hidden directories
+    get: with the corpus root as the default, listing them would put ``.env``,
+    ``.gitignore``, and ``.mcp.json`` in a corpus report while ``.git/`` was correctly
+    absent from the tree beside it.
 
     A directory that cannot be read yields nothing here rather than raising. The subtree
     already names it ``cannot be listed``, so the caller learns it from the group built to
@@ -387,14 +414,7 @@ def other_files(files: Files, root: Path, directory: Path) -> tuple[str, ...]:
     carries, on the same line, because this group is one line per file.
     """
     try:
-        documents = set(markdown_in(files, directory))
-        others = sorted(
-            path
-            for path in files.entries(directory)
-            if not files.is_directory(path)
-            and not path.name.startswith(".")
-            and path not in documents
-        )
+        others = _partition(files, directory).others
     except OSError:
         return ()
     return tuple(_other_line(files, root, path) for path in others)
@@ -438,7 +458,9 @@ def _unlinked_directories(files: Files, root: Path, under: Path) -> frozenset[Pa
                 continue
             unlinked.add(resolved)
             stack.extend(
-                child for child in subdirectories(files, directory) if not files.is_symlink(child)
+                child
+                for child in _partition(files, directory).directories
+                if not files.is_symlink(child)
             )
         except OSError:
             # A directory that cannot be read reaches nothing, so it contributes nothing.
@@ -470,8 +492,7 @@ def _walk(files: Files, root: Path, under: Path) -> Iterator[tuple[Path, Directo
             continue
 
         try:
-            documents = len(markdown_in(files, directory))
-            children = subdirectories(files, directory)
+            listing = _partition(files, directory)
         except OSError:
             yield directory, UnlistableDirectory(path=path, depth=depth), False
             continue
@@ -482,14 +503,14 @@ def _walk(files: Files, root: Path, under: Path) -> Iterator[tuple[Path, Directo
         # path in this walk stands for it.
         shadowed = directory != under and files.is_symlink(directory) and resolved in unlinked
 
-        node = Directory(path=path, depth=depth, documents=documents)
+        node = Directory(path=path, depth=depth, documents=len(listing.documents))
         if shadowed or resolved in visited:
             yield directory, node, False
             continue
 
         visited.add(resolved)
         yield directory, node, True
-        stack.extend((child, depth + 1) for child in reversed(children))
+        stack.extend((child, depth + 1) for child in reversed(listing.directories))
 
 
 def walk(files: Files, root: Path, under: Path) -> tuple[DirectoryNode, ...]:
