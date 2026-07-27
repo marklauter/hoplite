@@ -626,6 +626,56 @@ class TestWhichNameIsDescended:
         ]
 
 
+class TestOneDocumentTwoPaths:
+    """A linked *file*, which the walk's directory de-duplication cannot see.
+
+    It compares the targets of the directories it descends, and here both directories are
+    real and distinct. The real corpus has two of these — `docs/specs/frontmatter.md` links
+    to `plugins/hoplite-skills/references/frontmatter.md` — so a recursive read reached each
+    document under both names and the key count charged every property on it twice, which
+    read as two documents carrying `requires` where one does.
+    """
+
+    DOCS = CORPUS / "docs"
+    SPECS = DOCS / "specs"
+    REFERENCES = CORPUS / "references"
+    TARGET = REFERENCES / "frontmatter.md"
+    FILES = FakeFiles(
+        texts={TARGET: "---\ntitle: Frontmatter\nrequires: setup\n---\n"},
+        directories=frozenset({CORPUS, DOCS, SPECS, REFERENCES}),
+        links={SPECS / "frontmatter.md": TARGET},
+    )
+
+    def test_a_recursive_read_reports_it_once(self) -> None:
+        assert collect(fake(self.FILES), CORPUS, recurse=True) == (
+            Entry(
+                path="docs/specs/frontmatter.md",
+                frontmatter=("title: Frontmatter", "requires: setup"),
+            ),
+        )
+
+    def test_the_listing_of_one_directory_names_it_under_the_path_asked_for(self) -> None:
+        # Both are entries a caller can see on disk, and each directory holds one of them.
+        # De-duplicating is the recursive read's job, not the listing's.
+        assert [entry.path for entry in collect(fake(self.FILES), self.SPECS)] == [
+            "docs/specs/frontmatter.md"
+        ]
+        assert [entry.path for entry in collect(fake(self.FILES), self.REFERENCES)] == [
+            "references/frontmatter.md"
+        ]
+
+    def test_the_subtree_still_counts_it_in_both_directories(self) -> None:
+        # The counts say what sits in each directory, which is what a caller asking for one
+        # of them gets back. Unchanged: this is the same reason a mirrored directory's
+        # documents are counted twice.
+        assert walk(fake(self.FILES), CORPUS) == (
+            Directory(path=".", depth=0, documents=0),
+            Directory(path="docs", depth=1, documents=0),
+            Directory(path="docs/specs", depth=2, documents=1),
+            Directory(path="references", depth=1, documents=1),
+        )
+
+
 class TestUnlistableDirectory:
     """One directory the process cannot read used to fail the whole call, and the raw
     OSError carried an absolute host path."""
@@ -1000,6 +1050,23 @@ class TestCollectContainment:
             ),
             Entry(path="docs/ok.md", frontmatter=("title: OK",)),
         )
+
+    def test_a_recursive_read_keeps_it_rather_than_dropping_it(self) -> None:
+        # The recursive read asks what each document resolves to, so it can report one that
+        # two paths reach only once. That question fails here, and a document nothing can
+        # answer for must still be reported: dropping it silently is the one outcome the
+        # `Unreadable` record exists to prevent.
+        docs = CORPUS / "docs"
+        loop = docs / "loop.md"
+        files = FakeFiles(
+            texts={docs / "ok.md": document("OK"), loop: document("Loop")},
+            directories=frozenset({CORPUS, docs}),
+            unresolvable=frozenset({loop}),
+        )
+        assert [entry.path for entry in collect(fake(files), CORPUS, recurse=True)] == [
+            "docs/loop.md",
+            "docs/ok.md",
+        ]
 
     def test_a_document_that_is_not_utf_8_is_reported_not_raised(self, tmp_path: Path) -> None:
         # UnicodeDecodeError is a ValueError, not an OSError, so it used to escape collect

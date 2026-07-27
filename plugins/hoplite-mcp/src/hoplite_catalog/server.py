@@ -179,11 +179,19 @@ def _call_contents(corpus: Corpus, arguments: dict[str, object]) -> dict[str, ob
     # `had_frontmatter` guard is what separates those two: a folder where nothing has
     # frontmatter at all is not the caller's mistake, so it must not be blamed on the keys.
     # An empty `keys` is exempt too — it asks for paths alone, and gets them.
+    #
+    # The refusal carries the keys that are in use, because the caller's next move is a
+    # second call with a corrected `keys`, and the answer to "corrected to what" was already
+    # read to decide this. Withholding it costs them a `vocabulary` round trip to learn what
+    # this call already knows. The list is what one directory carries, which is the scope
+    # the retry is against, and is bounded by that — ten keys in the busiest folder here.
     had_frontmatter = any(document.properties() for document in documents)
     kept_any = any(document.properties() for document in projected)
     if keys and had_frontmatter and not kept_any:
+        in_use = [use.key for use in tally(documents)]
         raise CallerError(
-            f"none of the requested keys appear in any document under {under!r}: {sorted(keys)}"
+            f"none of the requested keys appear in any document under {under!r}: "
+            f"{sorted(keys)}; the keys in use there are {in_use}"
         )
 
     # A single document as `under` has no subtree and no siblings to report, so it gets the

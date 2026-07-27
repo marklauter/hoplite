@@ -297,6 +297,13 @@ class TestContents:
         assert _result(message)["isError"] is True
         assert "none of the requested keys" in _tool_text(message)
 
+    def test_the_refusal_names_the_keys_that_are_in_use(self, corpus: Path) -> None:
+        # The caller's next move is the same call with a corrected `keys`, and this call
+        # already read what the answer is. Withholding it costs them a `vocabulary` trip.
+        params = {"name": "contents", "arguments": {"under": "docs", "keys": ["titel"]}}
+        text = _tool_text(respond(real(corpus), _request("tools/call", params)))
+        assert "the keys in use there are ['title']" in text
+
     def test_a_frontmatterless_folder_is_not_blamed_on_the_keys(self, corpus: Path) -> None:
         # Nothing here has frontmatter, so an empty projection is the corpus's doing, not
         # a typo. Refusing with a message naming the keys would be confidently wrong.

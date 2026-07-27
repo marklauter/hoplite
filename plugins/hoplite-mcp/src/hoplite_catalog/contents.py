@@ -22,7 +22,7 @@ from __future__ import annotations
 
 import os.path
 import re
-from collections.abc import Iterator, Sequence
+from collections.abc import Iterable, Iterator, Sequence
 from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Final, final
@@ -447,13 +447,33 @@ def _unlinked_directories(corpus: Corpus, under: Path) -> frozenset[Path]:
     return frozenset(unlinked)
 
 
-def _walk(corpus: Corpus, under: Path) -> Iterator[tuple[Path, DirectoryNode, bool]]:
-    """Every directory at or under ``under``, with its node and whether it was descended.
+@final
+@dataclass(frozen=True, slots=True)
+class _Visit:
+    """One directory the walk reached: its node, and its documents when it was descended.
+
+    ``documents`` is ``None`` for every directory the walk did not go into — one outside
+    the corpus, one it could not read, and one whose target another name already stands
+    for. That is exactly the set whose documents must not be read a second time, so the
+    distinction the recursive listing needs is the same one the walk already made.
+
+    Carrying the paths rather than a flag is what stops the directory from being read
+    twice. ``collect`` used to re-derive them with its own ``markdown_in`` call, which
+    partitioned every directory in the subtree a second time and left the second read
+    unguarded where the first one was not.
+    """
+
+    node: DirectoryNode
+    documents: tuple[Path, ...] | None
+
+
+def _walk(corpus: Corpus, under: Path) -> Iterator[_Visit]:
+    """Every directory at or under ``under``, with its node and the documents in it.
 
     The one traversal both the subtree and the recursive listing read, so they cannot
-    disagree about which directories exist. ``walk`` keeps the nodes; ``collect`` keeps the
-    paths it descended into, which are exactly the directories whose documents have not
-    already been listed under another name.
+    disagree about which directories exist, nor about what is in them. ``walk`` keeps the
+    nodes; ``collect`` keeps the documents of the directories that were descended, which
+    are exactly the ones not already listed under another name.
     """
     unlinked = _unlinked_directories(corpus, under)
     visited: set[Path] = set()
@@ -462,16 +482,19 @@ def _walk(corpus: Corpus, under: Path) -> Iterator[tuple[Path, DirectoryNode, bo
     while stack:
         directory, depth = stack.pop()
         path = corpus.path_of(directory)
-        resolved = corpus.resolve(directory)
-
-        if not corpus.contains(resolved):
-            yield directory, ForeignDirectory(path=path, depth=depth), False
-            continue
 
         try:
+            # `resolve` follows links, so it fails the ways a read does — the port says any
+            # method may raise `OSError`, and every other site that resolves guards it. A
+            # directory that cannot be resolved is unlistable for the same reason a denied
+            # one is, so it shares the handler rather than escaping to fail the whole walk.
+            resolved = corpus.resolve(directory)
+            if not corpus.contains(resolved):
+                yield _Visit(ForeignDirectory(path=path, depth=depth), None)
+                continue
             listing = _partition(corpus, directory)
         except OSError:
-            yield directory, UnlistableDirectory(path=path, depth=depth), False
+            yield _Visit(UnlistableDirectory(path=path, depth=depth), None)
             continue
 
         # A link whose target another path reaches without one. The other path is the one
@@ -482,11 +505,11 @@ def _walk(corpus: Corpus, under: Path) -> Iterator[tuple[Path, DirectoryNode, bo
 
         node = Directory(path=path, depth=depth, documents=len(listing.documents))
         if shadowed or resolved in visited:
-            yield directory, node, False
+            yield _Visit(node, None)
             continue
 
         visited.add(resolved)
-        yield directory, node, True
+        yield _Visit(node, listing.documents)
         stack.extend((child, depth + 1) for child in reversed(listing.directories))
 
 
@@ -524,7 +547,7 @@ def walk(corpus: Corpus, under: Path) -> tuple[DirectoryNode, ...]:
     That is also what stops a link back to an ancestor from looping forever: the ancestor is
     reached without a link, so the loop is entered once, named, and not descended.
     """
-    return tuple(node for _, node, _ in _walk(corpus, under))
+    return tuple(visit.node for visit in _walk(corpus, under))
 
 
 def collect(corpus: Corpus, under: Path, *, recurse: bool = False) -> tuple[Document, ...]:
@@ -554,12 +577,16 @@ def collect(corpus: Corpus, under: Path, *, recurse: bool = False) -> tuple[Docu
     away. Outside it, one such file unwound past this handler and cost the caller the whole
     report, which under ``recurse`` is the whole subtree.
 
-    Under ``recurse`` the directories come from the same walk the subtree is built from,
-    not from ``rglob``. ``rglob`` never follows a directory symlink, so the subtree would
+    Under ``recurse`` the documents come from the same walk the subtree is built from, not
+    from ``rglob``. ``rglob`` never follows a directory symlink, so the subtree would
     advertise ``docs/mirror/ 3`` while the key count saw none of those three. Reading from
-    the walk keeps one answer to "which directories are there", and it inherits the walk's
-    two rules for free: hidden directories are skipped, and a directory whose target was
-    already listed under another name is not read a second time.
+    the walk keeps one answer to "which directories are there, and what is in them", and it
+    inherits the walk's two rules for free: hidden directories are skipped, and a directory
+    whose target was already listed under another name is not read a second time.
+
+    A recursive read reports one document once, however many paths reach it — see
+    ``_distinct``. The one-directory listing does not de-duplicate: two names in one
+    directory are two entries a caller can see on disk, and both belong in the group.
 
     Ordering is by the emitted path string, so two calls over an unchanged corpus return
     identical output — the listing stays diffable and cacheable.
@@ -567,13 +594,9 @@ def collect(corpus: Corpus, under: Path, *, recurse: bool = False) -> tuple[Docu
     if corpus.is_file(under):
         paths: tuple[Path, ...] = (under,)
     elif recurse:
-        paths = tuple(
-            sorted(
-                path
-                for directory, _, descended in _walk(corpus, under)
-                if descended
-                for path in markdown_in(corpus, directory)
-            )
+        paths = _distinct(
+            corpus,
+            (path for visit in _walk(corpus, under) for path in visit.documents or ()),
         )
     else:
         # The subtree names an unreadable directory; here it simply holds no documents.
@@ -595,6 +618,40 @@ def collect(corpus: Corpus, under: Path, *, recurse: bool = False) -> tuple[Docu
         except (OSError, UnicodeDecodeError) as exc:
             documents.append(Unreadable(path=relative, reason=_read_failure(exc)))
     return tuple(sorted(documents, key=lambda document: document.path))
+
+
+def _distinct(corpus: Corpus, paths: Iterable[Path]) -> tuple[Path, ...]:
+    """One path per document, keyed on what each resolves to, ordered by path.
+
+    The walk de-duplicates directories, and that is all it can do: it compares the targets
+    of the directories it descends, so two names for one *file* are invisible to it.
+    ``docs/specs/frontmatter.md`` is a symlink to
+    ``plugins/hoplite-skills/references/frontmatter.md`` and both directories are real, so a
+    recursive read reached the same document twice and the key vocabulary counted every
+    property on it twice — ``requires: 2`` for one document carrying it.
+
+    The first path in sort order wins, which is the shallower, corpus-addressed one often
+    enough to be the useful default and is deterministic in every case. Which name survives
+    does not change a key count; that it is one name is the whole point.
+
+    A path that cannot be resolved is kept rather than dropped. Nothing here can tell it
+    apart from another, and ``collect`` reports it as ``Unreadable`` a few lines later —
+    the alternative is a document going missing over a failure that has its own line in
+    the report.
+    """
+    seen: set[Path] = set()
+    kept: list[Path] = []
+    for path in sorted(paths):
+        try:
+            resolved = corpus.resolve(path)
+        except OSError:
+            kept.append(path)
+            continue
+        if resolved in seen:
+            continue
+        seen.add(resolved)
+        kept.append(path)
+    return tuple(kept)
 
 
 def _read_failure(exc: OSError | UnicodeDecodeError) -> str:

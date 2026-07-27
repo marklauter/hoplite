@@ -43,10 +43,11 @@ walked into, so nothing under it is listed:
 ```
 
 A folder linking to another folder inside the corpus is walked, and its documents are
-reported under the link path. A document reachable by two paths is listed once, under the
-first path reached, so `vocabulary` counts it once. Each folder counts what sits in it, so
-a mirrored document is counted twice and the folder counts will not add up to the document
-count. A link back to an ancestor terminates.
+reported under the link path. `vocabulary` recurses, and it counts a document once however
+many paths reach it, whether the link is to the folder or to the file. `contents` reports
+one folder, so it lists what is in the folder asked for, under the path asked for. Each
+folder counts what sits in it, so a mirrored document is counted twice and the folder
+counts will not add up to the document count. A link back to an ancestor terminates.
 
 Skipping hidden folders is the only bound on the walk. Folders without a leading dot are
 walked to full depth, `__pycache__`, `node_modules`, and a dotless `venv` included. Naming
@@ -84,8 +85,9 @@ corpus root, resolves outside it through a link, or names a file that is not `.m
 markdown is ever opened: a `.env` or a lockfile that happens to start with `---` is refused
 by name, not sliced. The argument checks do the same:
 `under` must be a string, `keys` a list of strings. `contents` also errors when `keys` names no
-property carried by any document that has frontmatter. A folder whose documents have no
-frontmatter at all is not that case, and lists normally.
+property carried by any document that has frontmatter, and that error names the keys the
+folder does carry, so the corrected call needs no `vocabulary` trip first. A folder whose
+documents have no frontmatter at all is not that case, and lists normally.
 
 A document that cannot be read is reported instead of failing the call. It keeps its place
 in `# documents` and prints the path and the reason, where its frontmatter would be:
@@ -118,9 +120,12 @@ The dev extra installs the test and lint tools. The server itself has no depende
 
 `ports.py` holds the `Files` port. `adapters.py` holds `RealFiles`, the pathlib
 implementation, and is the only code that touches a filesystem; an import-linter contract
-keeps the core from importing it, so the port cannot be bypassed. `contents.py` holds the
-walking, slicing, and rendering. It takes a `Files` as its first argument, so a test hands
-it an in-memory corpus and drives the cases a real filesystem will not reliably produce.
-`vocabulary.py` counts keys over what it collects. `server.py` is the stdio JSON-RPC host,
-hand-rolled on the standard library. The graph tools designed in
-`docs/specs/hoplite-tool-api.md` register here when they land.
+keeps the core from importing it, so the port cannot be bypassed. `corpus.py` pairs that
+port with its resolved root as a `Corpus`, which every walking function takes as its first
+argument, so a test hands it an in-memory corpus and drives the cases a real filesystem
+will not reliably produce. `contents.py` holds the walking and the slicing, `rendering.py`
+turns what they return into the report text, and `vocabulary.py` counts keys over what
+`contents` collects. `errors.py` holds `CallerError`, the one exception the host answers
+with instead of logging. `server.py` is the stdio JSON-RPC host, hand-rolled on the
+standard library. The graph tools designed in `docs/specs/hoplite-tool-api.md` register
+here when they land.
