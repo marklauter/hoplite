@@ -456,6 +456,83 @@ class TestProtocolErrors:
 
 @final
 @dataclass(frozen=True, slots=True)
+class _BrokenFiles:
+    """A ``Files`` that fails the way a defect does, not the way the substrate does.
+
+    Substituted at the port rather than patched into a module, because that is what the
+    port is for: a bug deep in the walk is not otherwise provokable on demand, and the two
+    classes it can belong to are what these tests tell apart. ``entries`` raises the plain
+    kind; ``read_text`` raises ``ValueError``, which is the one that used to be
+    indistinguishable from a caller's typo.
+    """
+
+    def entries(self, directory: Path) -> tuple[Path, ...]:
+        raise RuntimeError("a defect in the walk")
+
+    def is_directory(self, path: Path) -> bool:
+        return True
+
+    def is_file(self, path: Path) -> bool:
+        return False
+
+    def is_symlink(self, path: Path) -> bool:
+        return False
+
+    def exists(self, path: Path) -> bool:
+        return True
+
+    def resolve(self, path: Path) -> Path:
+        return path
+
+    def read_text(self, path: Path) -> str:
+        raise ValueError("a defect that happens to be a ValueError")
+
+
+class TestBugsAreNotAnswers:
+    """A defect must not come back as a readable message the agent retries against.
+
+    `_call_tool` used to catch `ValueError` — the class `resolve_under` raises and the class
+    a bug raises — so both arrived as an error *result*: `isError: true` with prose in it,
+    which reads as "you asked wrong". Nothing reached the log either. These pin the split.
+    """
+
+    def _broken(self, tmp_path: Path) -> Corpus:
+        return Corpus(_BrokenFiles(), tmp_path)
+
+    def test_a_bug_is_a_protocol_error_not_a_tool_result(self, tmp_path: Path) -> None:
+        message = respond(self._broken(tmp_path), _request("tools/call", {"name": "contents"}))
+        assert _error_of(message)["code"] == -32603
+
+    def test_a_bug_raising_value_error_is_still_a_protocol_error(self, tmp_path: Path) -> None:
+        # The regression this split exists for: indistinguishable from a bad `under` before.
+        corpus = Corpus(_BrokenFiles(), tmp_path)
+        message = respond(corpus, _request("tools/call", {"name": "vocabulary"}))
+        assert _error_of(message)["code"] == -32603
+
+    def test_the_error_message_carries_no_host_path(self, tmp_path: Path) -> None:
+        # An exception's own text names where the bytes live; the protocol error must not.
+        message = respond(self._broken(tmp_path), _request("tools/call", {"name": "contents"}))
+        assert str(tmp_path) not in _error_of(message)["message"]
+
+    def test_the_traceback_reaches_stderr(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        # Swallowing the bug silently would be the same defect in a different disguise.
+        respond(self._broken(tmp_path), _request("tools/call", {"name": "contents"}))
+        assert "a defect in the walk" in capsys.readouterr().err
+
+    def test_a_caller_error_is_still_a_tool_result(self, corpus: Path) -> None:
+        # The other side of the split, so narrowing the catch cannot quietly widen again.
+        message = respond(
+            real(corpus),
+            _request("tools/call", {"name": "contents", "arguments": {"under": "nope"}}),
+        )
+        assert _result(message)["isError"] is True
+        assert "does not exist" in _tool_text(message)
+
+
+@final
+@dataclass(frozen=True, slots=True)
 class _RefusingFiles:
     """A ``Files`` that fails the test if the host reads the corpus at all.
 

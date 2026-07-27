@@ -34,11 +34,13 @@ from hoplite_catalog.contents import (
     walk,
 )
 from hoplite_catalog.corpus import Corpus
+from hoplite_catalog.errors import CallerError
 from hoplite_catalog.ports import Files
 from hoplite_catalog.vocabulary import KeyUse, render_vocabulary, tally
 
 __all__ = [
     "FENCE",
+    "CallerError",
     "Corpus",
     "Directory",
     "DirectoryNode",

@@ -52,11 +52,12 @@ root_packages = ["hoplite_catalog"]
 # `vocabulary` cannot import it, which is what makes `ports` a boundary rather than a
 # suggestion; `corpus` pairs a port with a resolved root and is the only thing the walk
 # holds; `ports` is the port and depends on nothing local. `exhaustive` makes a new module
-# a failure until it is placed in the layering deliberately.
+# a failure until it is placed in the layering deliberately. `errors` sits at the bottom
+# because both `contents` and `server` raise `CallerError` and neither owns it.
 [[tool.importlinter.contracts]]
 name = "The package layers in one direction"
 type = "layers"
-layers = ["server", "adapters", "vocabulary", "contents", "corpus", "ports"]
+layers = ["server", "adapters", "vocabulary", "contents", "corpus", "ports", "errors"]
 containers = ["hoplite_catalog"]
 exhaustive = true
 

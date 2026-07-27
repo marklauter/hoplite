@@ -17,6 +17,7 @@ from __future__ import annotations
 import io
 import json
 import sys
+import traceback
 from pathlib import Path
 from typing import Final, TextIO, cast
 
@@ -30,6 +31,7 @@ from hoplite_catalog.contents import (
     walk,
 )
 from hoplite_catalog.corpus import Corpus
+from hoplite_catalog.errors import CallerError
 from hoplite_catalog.vocabulary import render_vocabulary, tally
 
 __all__ = ["DEFAULT_UNDER", "PROTOCOL_VERSION", "SERVER_NAME", "TOOLS", "respond", "serve"]
@@ -47,6 +49,7 @@ DEFAULT_UNDER: Final = "."
 _PARSE_ERROR: Final = -32700
 _INVALID_REQUEST: Final = -32600
 _METHOD_NOT_FOUND: Final = -32601
+_INTERNAL_ERROR: Final = -32603
 
 # Shaped like method help: one line on what it does, then Returns. When to call it stays
 # out — the authoring skills already say when to search the corpus for a pre-existing
@@ -153,10 +156,10 @@ def _string_set(value: object, name: str) -> frozenset[str] | None:
     if value is None:
         return None
     if not isinstance(value, list):
-        raise ValueError(f"{name!r} must be a list of strings")
+        raise CallerError(f"{name!r} must be a list of strings")
     items = cast("list[object]", value)
     if not all(isinstance(item, str) for item in items):
-        raise ValueError(f"{name!r} must be a list of strings")
+        raise CallerError(f"{name!r} must be a list of strings")
     return frozenset(cast("list[str]", items))
 
 
@@ -164,12 +167,12 @@ def _under_argument(arguments: dict[str, object]) -> str:
     """Read the ``under`` argument, which every tool takes and defaults the same way."""
     under = arguments.get("under", DEFAULT_UNDER)
     if not isinstance(under, str):
-        raise ValueError("'under' must be a string")
+        raise CallerError("'under' must be a string")
     return under
 
 
 def _call_contents(corpus: Corpus, arguments: dict[str, object]) -> dict[str, object]:
-    """Run the ``contents`` tool. Raises ``ValueError`` on a bad argument."""
+    """Run the ``contents`` tool. Raises ``CallerError`` on a bad argument."""
     under = _under_argument(arguments)
     keys = _string_set(arguments.get("keys"), "keys")
 
@@ -185,7 +188,7 @@ def _call_contents(corpus: Corpus, arguments: dict[str, object]) -> dict[str, ob
     had_frontmatter = any(document.properties() for document in documents)
     kept_any = any(document.properties() for document in projected)
     if keys and had_frontmatter and not kept_any:
-        raise ValueError(
+        raise CallerError(
             f"none of the requested keys appear in any document under {under!r}: {sorted(keys)}"
         )
 
@@ -197,7 +200,7 @@ def _call_contents(corpus: Corpus, arguments: dict[str, object]) -> dict[str, ob
 
 
 def _call_vocabulary(corpus: Corpus, arguments: dict[str, object]) -> dict[str, object]:
-    """Run the ``vocabulary`` tool. Raises ``ValueError`` on a bad argument."""
+    """Run the ``vocabulary`` tool. Raises ``CallerError`` on a bad argument."""
     under = _under_argument(arguments)
     uses = tally(collect(corpus, resolve_under(corpus, under), recurse=True))
     if not uses:
@@ -207,7 +210,13 @@ def _call_vocabulary(corpus: Corpus, arguments: dict[str, object]) -> dict[str, 
 
 def _call_tool(corpus: Corpus, params: dict[str, object]) -> dict[str, object]:
     """Dispatch ``tools/call``. An unknown tool or bad argument comes back as an error
-    result rather than a JSON-RPC error, so the agent can read the message and retry."""
+    result rather than a JSON-RPC error, so the agent can read the message and retry.
+
+    Only ``CallerError`` gets that treatment. This used to catch ``ValueError``, which is
+    the same class a bug raises, so a defect in the walk came back as a readable message the
+    agent would retry against and nothing reached the log. A plain ``ValueError`` now
+    travels to ``respond``, which reports it as an internal error and prints the traceback.
+    """
     name = params.get("name")
     arguments = _as_mapping(params.get("arguments")) or {}
     try:
@@ -217,8 +226,8 @@ def _call_tool(corpus: Corpus, params: dict[str, object]) -> dict[str, object]:
             case "vocabulary":
                 return _call_vocabulary(corpus, arguments)
             case _:
-                raise ValueError(f"unknown tool: {name!r}")
-    except ValueError as exc:
+                raise CallerError(f"unknown tool: {name!r}")
+    except CallerError as exc:
         return _text_result(str(exc), is_error=True)
     except OSError as exc:
         # The backstop, not the normal path: an unreadable document and an unreadable
@@ -278,7 +287,17 @@ def respond(corpus: Corpus, line: str) -> dict[str, object] | None:
         # let a `tools/call` notification read every document in the corpus for no reply.
         return None
 
-    result = _dispatch(corpus, method, _as_mapping(message.get("params")) or {})
+    try:
+        result = _dispatch(corpus, method, _as_mapping(message.get("params")) or {})
+    except Exception:
+        # The host boundary, and the only place this package catches broadly. A bug must
+        # not take the server down mid-session, and it must not be disguised as an answer
+        # either: the agent gets a protocol-level error it cannot mistake for a result, and
+        # the traceback goes to stderr, where Claude Code surfaces it under `--debug mcp`.
+        # The message carries nothing, because an exception's own text carries host paths.
+        # `Exception`, not `BaseException`, so KeyboardInterrupt still stops the process.
+        traceback.print_exc(file=sys.stderr)
+        return _error(request_id, _INTERNAL_ERROR, f"internal error handling {method}")
     if result is None:
         return _error(request_id, _METHOD_NOT_FOUND, f"unknown method: {method}")
     return {"jsonrpc": "2.0", "id": request_id, "result": result}

@@ -28,6 +28,7 @@ from pathlib import Path
 from typing import Final, assert_never, final
 
 from hoplite_catalog.corpus import Corpus
+from hoplite_catalog.errors import CallerError
 
 __all__ = [
     "FENCE",
@@ -257,19 +258,17 @@ def resolve_under(corpus: Corpus, under: str) -> Path:
     ``docs/specs/`` resolve to ``plugins/hoplite-skills/references/``, inside the root, so
     they pass.
 
-    Raises ``ValueError`` when the path escapes the root, names nothing, or names a file
-    that is not a ``.md`` document. All three are caller errors the agent could have
-    prevented, and per the error model in ``docs/specs/hoplite-tool-api.md`` those throw
-    rather than riding back as an empty result — a silent empty listing reads as "the
-    folder is empty", not "you typo'd".
+    Raises ``CallerError`` when the path escapes the root, names nothing, or names a file
+    that is not a ``.md`` document. All three are things the agent could have gotten right,
+    and the host turns them into an error result carrying the message — see ``errors``.
     """
     target = Path(os.path.normpath(corpus.root / under))
     if not corpus.contains(target):
-        raise ValueError(f"{under!r} is outside the corpus root")
+        raise CallerError(f"{under!r} is outside the corpus root")
     if not corpus.exists(target):
-        raise ValueError(f"{under!r} does not exist")
+        raise CallerError(f"{under!r} does not exist")
     if not corpus.contains_target(target):
-        raise ValueError(f"{under!r} resolves outside the corpus root")
+        raise CallerError(f"{under!r} resolves outside the corpus root")
     if corpus.is_file(target) and target.suffix != ".md":
         # A file named directly is the one path into `collect` that skips `markdown_in`,
         # and with it both the suffix test and the hidden-file skip. Without this, any file
@@ -277,7 +276,7 @@ def resolve_under(corpus: Corpus, under: str) -> Path:
         # someone wrote YAML into, a lockfile, a certificate. The listing reports a
         # non-markdown file by path and never opens it, and asking for one by name must not
         # be the exception to that.
-        raise ValueError(f"{under!r} is not a markdown document")
+        raise CallerError(f"{under!r} is not a markdown document")
     return target
 
 
