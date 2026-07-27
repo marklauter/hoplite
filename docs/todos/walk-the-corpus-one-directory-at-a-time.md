@@ -5,7 +5,7 @@ tags: [todo, mcp, design]
 created: 2026-07-26
 priority: high
 effort: medium
-status: open
+status: closed
 cites: "[[docs/specs/hoplite-tool-api.md]]"
 ---
 

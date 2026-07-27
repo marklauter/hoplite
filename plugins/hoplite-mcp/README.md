@@ -1,102 +1,133 @@
 # hoplite-mcp
 
-The `catalog` MCP server. One tool today: `contents`.
+The `catalog` MCP server, over a markdown corpus. Two tools. No dependencies, no build
+step, Python 3.12 or newer. The corpus root is the working directory Claude Code launched
+in, so paths are repo-relative.
 
-## contents
+## contents(under, keys)
 
-`contents` lists every markdown document under a folder of the corpus, each with its
-frontmatter exactly as written.
+Reports one folder in three groups, each under a `#` heading:
+
+- `# directories` — the folder tree rooted at `under`, to full depth, each folder with the
+  count of documents directly in it.
+- `# other files` — the non-markdown files in `under`.
+- `# documents` — the documents in `under` alone, each followed by its frontmatter lines as
+  written, comments dropped.
+
+The `#` marks a heading. A blank line can't, because blank lines also separate two
+documents inside `# documents`.
+
+A frontmatter key can never start with `#`. A path can: paths are corpus-relative, so one
+inside a folder always leads with that folder, but a file sitting at the corpus root leads
+with its own name. So a root-level `#hash.md` prints a line starting with `#`, and a
+root-level file named exactly `# documents` prints a line identical to a heading.
+
+Frontmatter comments are dropped: printed as written, a `#` line would read as a heading.
+Nothing else in a block is touched.
+
+Directories recurse, documents do not. Hidden folders are not walked into and hidden files
+are not listed, though naming a hidden folder as `under` works. A hidden `.md` file is
+still a document. A folder linking outside the corpus prints `links outside the corpus`
+where its count would be, and a non-markdown file linking outside prints it after the path:
 
 ```
-contents(under="docs/glossary")
-
-docs/glossary/edge.md
-title: Edge
-summary: "A relationship between two documents."
-tags: [glossary, hoplite]
-status: locked
-is-a: "[[relationship]]"
-
-docs/glossary/README.md
+  external/ links outside the corpus
+notes/leak.pdf links outside the corpus
 ```
 
-The output is a path per document, followed by its frontmatter properties, one per line,
-with a blank line between documents. A document with no frontmatter is a single line.
+A folder that cannot be read prints `cannot be listed` where its count would be. It is not
+walked into, so nothing under it is listed:
 
-There are no `---` fences. They delimit a block for a parser reading a file, and nothing
-reads this but an agent, for which the path line and the blank line already mark every
-boundary. Blank lines inside a block are dropped, so a stray one cannot split a document
-into two records.
+```
+  closed/ cannot be listed
+```
 
-`under` is a folder relative to the corpus root, and defaults to `docs`. The listing
-recurses, and is ordered by path so two calls over an unchanged corpus return identical
-text.
+A folder linking to another folder inside the corpus is walked, and its documents are
+reported under the link path. `vocabulary` recurses, and it counts a document once however
+many paths reach it, whether the link is to the folder or to the file. `contents` reports
+one folder, so it lists what is in the folder asked for, under the path asked for. Each
+folder counts what sits in it, so a mirrored document is counted twice and the folder
+counts will not add up to the document count. A link back to an ancestor terminates.
 
-### Sizing the listing
+Skipping hidden folders is the only bound on the walk. Folders without a leading dot are
+walked to full depth, `__pycache__`, `node_modules`, and a dotless `venv` included. Naming
+a hidden folder as `under` walks its non-hidden children to full depth. There is no cap on
+the number of folders reported.
 
-Listing the whole corpus costs around 16,800 tokens, and `summary` is 57% of that. Since
-`summary` is what makes a listing worth reading, it stays in by default, and two optional
-arguments cut the cost when a folder is too large to read whole.
+`under` defaults to the corpus root. `keys` picks which frontmatter properties to emit:
+omit it for all of them, `[]` for paths alone.
 
-`keys` picks which properties to emit. `exclude` drops folders, matched on whole path
-segments, before the files are read.
+```
+contents(under="notes")
 
-| call over `docs/` | documents | ~tokens |
-|---|---|---|
-| `contents()` | 163 | 16,800 |
-| `exclude: ["docs/journal"]` | 113 | 10,700 |
-| `keys: ["title", "tags", "status"]` | 163 | 5,800 |
-| both of the above | 113 | 3,600 |
-| `keys: []` | 163 | 2,100 |
+# directories (documents directly in each)
+notes/ 0
+  external/ links outside the corpus
+  travel/ 2
 
-`keys` omitted means every property; `keys: []` means paths alone. The two compose.
+# other files
+notes/scan.pdf
 
-### It slices, it does not parse
+# documents
+none
+```
 
-`contents` finds the opening `---`, finds the closing `---`, and emits the lines between
-them. There is no YAML parser in the path, which is what buys the properties worth
-having:
+## vocabulary(under)
 
-- Keys keep their authored order, quoting, and spacing.
-- Malformed frontmatter passes through as written rather than being rejected or repaired.
-- The output round-trips: what comes back is what is on disk.
-- A property whose value is a `[[wikilink]]` is visibly an edge, because the value is
-  right there. No classification pass is needed — see
-  `plugins/hoplite-skills/references/frontmatter.md`.
+Reports one `key: documents` line per frontmatter key, ordered by key. The number is how
+many documents carry that key. Recurses, skipping hidden folders. `under` defaults to the
+corpus root.
 
-What it costs: `contents` cannot filter or project. A tag predicate or field selection
-would need real parsing. It also does not apply the derived defaults in the frontmatter
-standard, so a document without a `title` key shows no title rather than one inferred
-from its slug.
+## Errors
 
-### There is no index file
+Both tools return an error, and no report, when `under` names nothing, sits outside the
+corpus root, resolves outside it through a link, or names a file that is not `.md`. Only
+markdown is ever opened: a `.env` or a lockfile that happens to start with `---` is refused
+by name, not sliced. The argument checks do the same:
+`under` must be a string, `keys` a list of strings. `contents` also errors when `keys` names no
+property carried by any document that has frontmatter, and that error names the keys the
+folder does carry, so the corrected call needs no `vocabulary` trip first. A folder whose
+documents have no frontmatter at all is not that case, and lists normally.
 
-The listing is computed on call, not stored. Nothing in the corpus has to be updated when
-a document is added, and two contributors adding documents in parallel touch disjoint
-files.
+A document that cannot be read is reported instead of failing the call. It keeps its place
+in `# documents` and prints the path and the reason, where its frontmatter would be:
+
+```
+notes/leak.md
+links to a target outside the corpus
+```
+
+The other reason is `cannot be read (...)`, carrying the operating system's message.
 
 ## Install
 
-The server has no dependencies and no build step. `.mcp.json` runs the interpreter
-directly — no shell, since Claude Code spawns MCP servers as processes and `sh` is absent
-from the PATH on Windows. Set the plugin's **Python executable** option if `python3` is
-not the right name on your machine; a wrong value shows up as a failed MCP connection
-rather than a message, because the process never starts.
-
-The corpus root is the working directory Claude Code launched in, so `under` paths are
-repo-relative.
+Set the plugin's **Python executable** option if `python3` is not the right name on your
+machine, or is older than 3.12. The symptom either way is a failed MCP connection rather
+than a message.
 
 ## Development
 
 ```sh
 cd plugins/hoplite-mcp
+pip install -e .[dev]
 python -m pytest
 python -m ruff check .
 python -m pyright
 ```
 
-`src/hoplite_catalog/contents.py` is the pure core — slicing and rendering, no I/O beyond
-one read function. `src/hoplite_catalog/server.py` is the stdio JSON-RPC host, hand-rolled
-on the standard library because the tool needs nothing else. When the graph tools in
-`docs/specs/hoplite-tool-api.md` land, the host is the layer to swap for the official MCP
-SDK; the tool body knows nothing about transport.
+The dev extra installs the test and lint tools. The server itself has no dependencies.
+`pytest` needs the extra because coverage runs on every test run.
+
+`ports.py` holds the `Files` port. `adapters.py` holds `RealFiles`, the pathlib
+implementation, and is the only code that touches a filesystem; an import-linter contract
+keeps the core from importing it, so the port cannot be bypassed. `corpus.py` pairs that
+port with its resolved root as a `Corpus`, which every walking function takes as its first
+argument, so a test hands it an in-memory corpus and drives the cases a real filesystem
+will not reliably produce. `documents.py` slices frontmatter out of text and knows nothing
+about a filesystem, `contents.py` does the walking, `rendering.py` turns what they return
+into the report text, and `vocabulary.py` counts keys over what `contents` collects.
+`refusals.py` names what a caller can get wrong — a folder that does not exist, an
+argument of the wrong shape — which the tools return as values and the host answers with
+instead of logging. Anything else that goes wrong is raised and logged. `server.py` is the
+stdio JSON-RPC host, hand-rolled on the standard library. The graph tools designed in
+`docs/specs/hoplite-tool-api.md` register here when they land.

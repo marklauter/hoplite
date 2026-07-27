@@ -4,9 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "hoplite-catalog"
-version = "0.1.0"
+# Pinned to .claude-plugin/plugin.json and server.SERVER_VERSION by a test.
+version = "0.2.0"
 description = "The Hoplite catalog MCP server — a frontmatter listing over the corpus"
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 # No runtime dependencies, deliberately. `contents` slices text and the stdio host is
 # stdlib JSON-RPC, so the plugin runs under whatever Python is on PATH with no venv to
 # bootstrap. Adding a dependency here reintroduces that install step for every user.
@@ -15,6 +16,8 @@ dependencies = []
 [project.optional-dependencies]
 dev = [
     "pytest>=8.0",
+    "pytest-cov>=5.0",
+    "import-linter>=2.0",
     "ruff>=0.6",
     "pyright>=1.1.380",
 ]
@@ -25,10 +28,63 @@ where = ["src"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
+# The coverage threshold. It stays at 95 — it is a floor that catches untested code, not a
+# number to chase, and tying it to the last measurement makes every refactor that moves
+# coverage a threshold edit too. A scoped run passes --no-cov, since a subset of the suite
+# cannot meet a project-wide floor.
+addopts = "--cov=src --cov-branch --cov-fail-under=95"
+
+[tool.coverage.report]
+exclude_also = [
+    # Unreachable by construction: `assert_never` is how a new variant becomes a pyright
+    # error, so the line executing would mean the type check had already failed.
+    "assert_never\\(",
+    # The entry-point guard runs under the interpreter, never under pytest.
+    "if __name__ == .__main__.:",
+    # The version floor in `__init__`. Any interpreter that can run the suite is one the
+    # check passes, so the block is unreachable from here by definition — it exists for the
+    # interpreters that cannot get this far.
+    "if sys\\.version_info",
+    # Import-time only; the block has no runtime behavior to test.
+    "if TYPE_CHECKING:",
+]
+
+[tool.importlinter]
+root_packages = ["hoplite_catalog"]
+
+# The dependency direction, asserted by tests/test_architecture.py so it runs in the same
+# pytest step as everything else. `server` is the composition root and the only module that
+# may name the real filesystem; `adapters` sits above the core so `contents` and
+# `vocabulary` cannot import it, which is what makes `ports` a boundary rather than a
+# suggestion; `corpus` pairs a port with a resolved root and is the only thing the walk
+# holds; `ports` is the port and depends on nothing local. `exhaustive` makes a new module
+# a failure until it is placed in the layering deliberately. `rendering` sits above the core
+# because every string a caller sees is written there and nothing below it decides wording.
+#
+# The bottom two are the pure ones. `documents` slices frontmatter out of text it is handed
+# and has no idea a filesystem exists — this is the line that says so, where before it was
+# true only by convention inside one module with `contents`. `refusals` names what a caller
+# can get wrong, which both `contents` and `server` produce and neither owns.
+[[tool.importlinter.contracts]]
+name = "The package layers in one direction"
+type = "layers"
+layers = [
+    "server",
+    "adapters",
+    "rendering",
+    "vocabulary",
+    "contents",
+    "corpus",
+    "ports",
+    "documents",
+    "refusals",
+]
+containers = ["hoplite_catalog"]
+exhaustive = true
 
 [tool.ruff]
 line-length = 100
-target-version = "py311"
+target-version = "py312"
 
 [tool.ruff.lint]
 select = ["A", "E", "F", "I", "B", "UP", "SIM", "RUF"]
@@ -37,7 +93,7 @@ select = ["A", "E", "F", "I", "B", "UP", "SIM", "RUF"]
 include = ["src", "tests"]
 extraPaths = ["src"]
 typeCheckingMode = "strict"
-pythonVersion = "3.11"
+pythonVersion = "3.12"
 
 # Tests read JSON-RPC envelopes, which are `dict[str, Any]` by nature; the strict-mode
 # unknown-type reports fire on every subscript. Real type errors still surface here.
