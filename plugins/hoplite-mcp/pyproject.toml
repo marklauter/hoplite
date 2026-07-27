@@ -4,9 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "hoplite-catalog"
-version = "0.1.0"
+# Pinned to .claude-plugin/plugin.json and server.SERVER_VERSION by a test.
+version = "0.2.0"
 description = "The Hoplite catalog MCP server — a frontmatter listing over the corpus"
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 # No runtime dependencies, deliberately. `contents` slices text and the stdio host is
 # stdlib JSON-RPC, so the plugin runs under whatever Python is on PATH with no venv to
 # bootstrap. Adding a dependency here reintroduces that install step for every user.
@@ -28,7 +29,7 @@ pythonpath = ["src"]
 
 [tool.ruff]
 line-length = 100
-target-version = "py311"
+target-version = "py312"
 
 [tool.ruff.lint]
 select = ["A", "E", "F", "I", "B", "UP", "SIM", "RUF"]
@@ -37,7 +38,7 @@ select = ["A", "E", "F", "I", "B", "UP", "SIM", "RUF"]
 include = ["src", "tests"]
 extraPaths = ["src"]
 typeCheckingMode = "strict"
-pythonVersion = "3.11"
+pythonVersion = "3.12"
 
 # Tests read JSON-RPC envelopes, which are `dict[str, Any]` by nature; the strict-mode
 # unknown-type reports fire on every subscript. Real type errors still surface here.

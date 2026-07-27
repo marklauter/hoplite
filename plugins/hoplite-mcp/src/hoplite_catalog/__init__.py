@@ -1,33 +1,54 @@
 """The Hoplite `catalog` MCP server.
 
-One tool today: ``contents``, a frontmatter listing over a subtree of the corpus. The
-graph tools designed in ``docs/specs/hoplite-tool-api.md`` are not built yet.
+Two tools today: ``contents``, a per-directory frontmatter listing over the corpus, and
+``vocabulary``, a count of the frontmatter keys in use. The graph tools designed in
+``docs/specs/hoplite-tool-api.md`` are not built yet.
 """
 
 from hoplite_catalog.contents import (
+    Directory,
+    DirectoryNode,
+    Document,
     Entry,
+    ForeignDirectory,
+    Property,
+    Unreadable,
     collect,
     corpus_path,
-    is_excluded,
-    normalize_exclusions,
-    project,
+    group_properties,
+    markdown_in,
+    other_files,
     read_entry,
     render,
-    resolve_exclusions,
+    render_report,
     resolve_under,
     slice_frontmatter,
+    subdirectories,
+    walk,
 )
+from hoplite_catalog.vocabulary import KeyUse, render_vocabulary, tally
 
 __all__ = [
+    "Directory",
+    "DirectoryNode",
+    "Document",
     "Entry",
+    "ForeignDirectory",
+    "KeyUse",
+    "Property",
+    "Unreadable",
     "collect",
     "corpus_path",
-    "is_excluded",
-    "normalize_exclusions",
-    "project",
+    "group_properties",
+    "markdown_in",
+    "other_files",
     "read_entry",
     "render",
-    "resolve_exclusions",
+    "render_report",
+    "render_vocabulary",
     "resolve_under",
     "slice_frontmatter",
+    "subdirectories",
+    "tally",
+    "walk",
 ]

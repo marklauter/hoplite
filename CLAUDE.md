@@ -24,3 +24,9 @@ Hoplite — a knowledge graph over a markdown corpus. The repo is a Claude Code 
 ## Python idioms
 
 - Use protocol style interfaces.
+- **The MCP server is standard library only at runtime.** `plugins/hoplite-mcp` declares
+  no runtime dependency and never will — the stdio host is hand-rolled JSON-RPC rather
+  than the MCP SDK for this reason. A plugin has no install step, so one dependency means
+  every user bootstraps a venv before anything works. Reach for a third-party package and
+  the answer is to write the small thing on the stdlib instead, or to not do it. Dev
+  tooling is exempt: ruff, pyright, and pytest are extras, and nothing shipped imports them.

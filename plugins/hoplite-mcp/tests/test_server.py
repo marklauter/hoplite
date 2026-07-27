@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import io
 import json
+import tomllib
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
@@ -60,11 +62,17 @@ class TestHandshake:
         assert result["serverInfo"]["name"] == SERVER_NAME
         assert "tools" in result["capabilities"]
 
-    def test_the_reported_version_matches_the_plugin_manifest(self) -> None:
-        # initialize reports SERVER_VERSION, so a bumped manifest must not leave it behind.
-        manifest = Path(__file__).parent.parent / ".claude-plugin" / "plugin.json"
-        declared: str = json.loads(manifest.read_text(encoding="utf-8"))["version"]
+    def test_the_reported_version_matches_every_manifest(self) -> None:
+        # Three files declare it and initialize reports one of them, so a bump that misses
+        # any of the three ships a server that lies about which version it is. pyproject
+        # was the one left behind at 0.1.0.
+        plugin = Path(__file__).parent.parent
+        declared: str = json.loads(
+            (plugin / ".claude-plugin" / "plugin.json").read_text(encoding="utf-8")
+        )["version"]
+        packaged = tomllib.loads((plugin / "pyproject.toml").read_text(encoding="utf-8"))
         assert declared == SERVER_VERSION
+        assert packaged["project"]["version"] == SERVER_VERSION
 
     def test_initialized_notification_gets_no_reply(self, corpus: Path) -> None:
         line = json.dumps({"jsonrpc": "2.0", "method": "notifications/initialized"})
@@ -75,41 +83,135 @@ class TestHandshake:
 
 
 class TestToolsList:
-    def test_advertises_contents(self, corpus: Path) -> None:
+    def test_advertises_both_tools(self, corpus: Path) -> None:
         tools = _result(respond(corpus, _request("tools/list")))["tools"]
-        assert [tool["name"] for tool in tools] == ["contents"]
+        assert [tool["name"] for tool in tools] == ["contents", "vocabulary"]
 
-    def test_contents_is_marked_read_only(self, corpus: Path) -> None:
-        tool = _result(respond(corpus, _request("tools/list")))["tools"][0]
-        assert tool["annotations"]["readOnlyHint"] is True
-        assert tool["annotations"]["openWorldHint"] is False
+    def test_both_tools_are_marked_read_only(self, corpus: Path) -> None:
+        for tool in _result(respond(corpus, _request("tools/list")))["tools"]:
+            assert tool["annotations"]["readOnlyHint"] is True
+            assert tool["annotations"]["openWorldHint"] is False
 
     def test_every_input_is_optional(self, corpus: Path) -> None:
-        schema = _result(respond(corpus, _request("tools/list")))["tools"][0]["inputSchema"]
-        assert list(schema["properties"]) == ["under", "keys", "exclude"]
-        assert schema["additionalProperties"] is False
-        assert "required" not in schema
+        tools = _result(respond(corpus, _request("tools/list")))["tools"]
+        assert list(tools[0]["inputSchema"]["properties"]) == ["under", "keys"]
+        assert list(tools[1]["inputSchema"]["properties"]) == ["under"]
+        for tool in tools:
+            assert tool["inputSchema"]["additionalProperties"] is False
+            assert "required" not in tool["inputSchema"]
 
 
-class TestToolsCall:
-    def test_lists_the_corpus(self, corpus: Path) -> None:
-        message = respond(corpus, _request("tools/call", {"name": "contents"}))
-        assert _tool_text(message) == "docs/edge.md\ntitle: Edge\n\ndocs/loose.md"
+_HEADINGS = ("# directories", "# other files", "# documents")
+
+
+def _section(text: str, heading: str) -> str:
+    """The body of one group of the contents report.
+
+    Anchored on the heading lines, not on blank lines: a blank line separates the groups
+    and also separates two documents inside the last one, so the headings are what make
+    the report unambiguous to read.
+    """
+    lines = text.splitlines()
+    starts = [
+        index
+        for index, line in enumerate(lines)
+        if any(line.startswith(candidate) for candidate in _HEADINGS)
+    ]
+    for start, end in zip(starts, [*starts[1:], len(lines)], strict=True):
+        if lines[start].startswith(heading):
+            return "\n".join(lines[start + 1 : end]).strip("\n")
+    raise AssertionError(f"no {heading!r} group in:\n{text}")
+
+
+_DOCS = {"under": "docs"}
+
+
+class TestContents:
+    def test_reports_the_subtree_the_other_files_and_the_documents(self, corpus: Path) -> None:
+        (corpus / "docs" / "graph.pdf").write_text("", encoding="utf-8")
+        params = {"name": "contents", "arguments": _DOCS}
+        message = respond(corpus, _request("tools/call", params))
+        assert _tool_text(message) == (
+            "# directories (documents directly in each)\n"
+            "docs/ 2\n"
+            "\n"
+            "# other files\n"
+            "docs/graph.pdf\n"
+            "\n"
+            "# documents\n"
+            "docs/edge.md\n"
+            "title: Edge\n"
+            "\n"
+            "docs/loose.md"
+        )
         assert _result(message)["isError"] is False
 
-    def test_under_scopes_the_listing(self, corpus: Path) -> None:
+    def test_the_subtree_carries_every_folder_with_its_count(self, corpus: Path) -> None:
+        (corpus / "docs" / "sub" / "deeper").mkdir(parents=True)
+        (corpus / "docs" / "sub" / "deep.md").write_text("---\ntitle: D\n---\n", encoding="utf-8")
+        text = _tool_text(
+            respond(corpus, _request("tools/call", {"name": "contents", "arguments": _DOCS}))
+        )
+        assert _section(text, "# directories") == "docs/ 2\n  sub/ 1\n    deeper/ 0"
+
+    def test_documents_do_not_recurse(self, corpus: Path) -> None:
+        # The whole point: the caller pays for the folder it asked for, not the corpus.
+        (corpus / "docs" / "sub").mkdir()
+        (corpus / "docs" / "sub" / "deep.md").write_text("---\ntitle: D\n---\n", encoding="utf-8")
+        text = _tool_text(
+            respond(corpus, _request("tools/call", {"name": "contents", "arguments": _DOCS}))
+        )
+        assert "docs/sub/deep.md" not in text
+
+    def test_the_default_is_the_corpus_root(self, corpus: Path) -> None:
+        # Not a guessed folder name: one corpus keeps its documents in `docs`, another in
+        # `vault`, another at the top level. The root is the only answer that fits all three.
+        text = _tool_text(respond(corpus, _request("tools/call", {"name": "contents"})))
+        assert _section(text, "# directories") == "./ 0\n  docs/ 2"
+
+    def test_the_default_never_walks_a_hidden_folder(self, corpus: Path) -> None:
+        # The corpus root is a working directory, so it is where .git and .venv live.
+        (corpus / ".git" / "objects").mkdir(parents=True)
+        text = _tool_text(respond(corpus, _request("tools/call", {"name": "contents"})))
+        assert ".git" not in text
+
+    def test_naming_a_hidden_folder_outright_still_works(self, corpus: Path) -> None:
+        (corpus / ".github").mkdir()
+        (corpus / ".github" / "ci.md").write_text("---\ntitle: CI\n---\n", encoding="utf-8")
+        params = {"name": "contents", "arguments": {"under": ".github"}}
+        message = respond(corpus, _request("tools/call", params))
+        assert _result(message)["isError"] is False
+        assert _section(_tool_text(message), "# documents") == ".github/ci.md\ntitle: CI"
+
+    def test_a_folder_named_like_a_document_does_not_break_the_call(self, corpus: Path) -> None:
+        # Obsidian produces these. It used to be counted as a document, listed as a folder,
+        # and then read — which failed and took the whole listing with it.
+        (corpus / "docs" / "sub.md").mkdir()
+        params = {"name": "contents", "arguments": _DOCS}
+        message = respond(corpus, _request("tools/call", params))
+        assert _result(message)["isError"] is False
+        text = _tool_text(message)
+        assert _section(text, "# directories") == "docs/ 2\n  sub.md/ 0"
+        assert _section(text, "# documents") == "docs/edge.md\ntitle: Edge\n\ndocs/loose.md"
+
+    def test_under_walks_into_one_folder(self, corpus: Path) -> None:
         (corpus / "docs" / "sub").mkdir()
         (corpus / "docs" / "sub" / "deep.md").write_text("---\ntitle: D\n---\n", encoding="utf-8")
         params = {"name": "contents", "arguments": {"under": "docs/sub"}}
-        assert _tool_text(respond(corpus, _request("tools/call", params))) == (
-            "docs/sub/deep.md\ntitle: D"
-        )
+        text = _tool_text(respond(corpus, _request("tools/call", params)))
+        assert _section(text, "# documents") == "docs/sub/deep.md\ntitle: D"
 
-    def test_an_empty_folder_says_so(self, corpus: Path) -> None:
+    def test_a_folder_holding_no_documents_is_a_real_answer(self, corpus: Path) -> None:
         (corpus / "docs" / "empty").mkdir()
         params = {"name": "contents", "arguments": {"under": "docs/empty"}}
-        assert "no markdown documents" in _tool_text(
-            respond(corpus, _request("tools/call", params))
+        message = respond(corpus, _request("tools/call", params))
+        assert _result(message)["isError"] is False
+        assert _section(_tool_text(message), "# documents") == "none"
+
+    def test_naming_one_document_returns_the_listing_alone(self, corpus: Path) -> None:
+        params = {"name": "contents", "arguments": {"under": "docs/edge.md"}}
+        assert _tool_text(respond(corpus, _request("tools/call", params))) == (
+            "docs/edge.md\ntitle: Edge"
         )
 
     def test_a_bad_under_is_an_error_result_not_a_protocol_error(self, corpus: Path) -> None:
@@ -143,13 +245,15 @@ class TestToolsCall:
         (corpus / "docs" / "edge.md").write_text(
             "---\ntitle: Edge\nsummary: long prose\n---\n", encoding="utf-8"
         )
-        text = _tool_text(respond(corpus, _request("tools/call", {"name": "contents"})))
+        text = _tool_text(
+            respond(corpus, _request("tools/call", {"name": "contents", "arguments": _DOCS}))
+        )
         assert "summary: long prose" in text
 
     def test_an_empty_keys_list_returns_paths_alone(self, corpus: Path) -> None:
         params = {"name": "contents", "arguments": {"under": "docs", "keys": []}}
         text = _tool_text(respond(corpus, _request("tools/call", params)))
-        assert text == "docs/edge.md\n\ndocs/loose.md"
+        assert _section(text, "# documents") == "docs/edge.md\n\ndocs/loose.md"
 
     def test_a_non_list_keys_is_refused(self, corpus: Path) -> None:
         params = {"name": "contents", "arguments": {"keys": "title"}}
@@ -162,38 +266,13 @@ class TestToolsCall:
         message = respond(corpus, _request("tools/call", params))
         assert _result(message)["isError"] is True
 
-    def test_exclude_drops_a_folder(self, corpus: Path) -> None:
-        (corpus / "docs" / "journal").mkdir()
-        (corpus / "docs" / "journal" / "day.md").write_text(
-            "---\ntitle: D\n---\n", encoding="utf-8"
-        )
-        params = {"name": "contents", "arguments": {"exclude": ["docs/journal"]}}
-        text = _tool_text(respond(corpus, _request("tools/call", params)))
-        assert "docs/journal/day.md" not in text
-        assert "docs/edge.md" in text
-
-    def test_excluding_everything_says_so(self, corpus: Path) -> None:
-        params = {"name": "contents", "arguments": {"exclude": ["docs"]}}
-        text = _tool_text(respond(corpus, _request("tools/call", params)))
-        assert text == "no markdown documents under 'docs' after exclusions"
-
-    def test_a_trailing_slash_on_exclude_still_excludes(self, corpus: Path) -> None:
-        (corpus / "docs" / "journal").mkdir()
-        (corpus / "docs" / "journal" / "day.md").write_text(
-            "---\ntitle: D\n---\n", encoding="utf-8"
-        )
-        params = {"name": "contents", "arguments": {"exclude": ["docs/journal/"]}}
-        assert "docs/journal/day.md" not in _tool_text(
-            respond(corpus, _request("tools/call", params))
-        )
-
     def test_a_misspelled_key_is_refused(self, corpus: Path) -> None:
-        params = {"name": "contents", "arguments": {"keys": ["titel"]}}
+        params = {"name": "contents", "arguments": {"under": "docs", "keys": ["titel"]}}
         message = respond(corpus, _request("tools/call", params))
         assert _result(message)["isError"] is True
         assert "none of the requested keys" in _tool_text(message)
 
-    def test_a_frontmatterless_subtree_is_not_blamed_on_the_keys(self, corpus: Path) -> None:
+    def test_a_frontmatterless_folder_is_not_blamed_on_the_keys(self, corpus: Path) -> None:
         # Nothing here has frontmatter, so an empty projection is the corpus's doing, not
         # a typo. Refusing with a message naming the keys would be confidently wrong.
         bare = corpus / "docs" / "bare"
@@ -202,74 +281,147 @@ class TestToolsCall:
         params = {"name": "contents", "arguments": {"under": "docs/bare", "keys": ["title"]}}
         message = respond(corpus, _request("tools/call", params))
         assert _result(message)["isError"] is False
-        assert _tool_text(message) == "docs/bare/a.md"
+        assert _section(_tool_text(message), "# documents") == "docs/bare/a.md"
 
-    def test_the_remedy_a_refusal_names_is_actually_callable(self, corpus: Path) -> None:
-        # End to end on the deadlock: collect refuses the listing over a dangling link out
-        # of the corpus and names an exclusion, so that exclusion has to be accepted.
+    def test_a_link_out_of_the_corpus_is_reported_not_refused(self, corpus: Path) -> None:
+        # The reason stands where the frontmatter would be, and the rest of the folder
+        # still lists. It used to fail the whole call, with no argument left to route
+        # around it once `exclude` was removed.
         try:
             (corpus / "docs" / "dangling.md").symlink_to(corpus.parent / "never-created.md")
         except OSError as exc:
             pytest.skip(f"cannot create a symlink here: {exc}")
 
-        refusal = respond(corpus, _request("tools/call", {"name": "contents"}))
-        assert _result(refusal)["isError"] is True
-        assert "docs/dangling.md" in _tool_text(refusal)
-
-        params = {"name": "contents", "arguments": {"exclude": ["docs/dangling.md"]}}
-        message = respond(corpus, _request("tools/call", params))
+        message = respond(corpus, _request("tools/call", {"name": "contents", "arguments": _DOCS}))
         assert _result(message)["isError"] is False
-        assert _tool_text(message) == "docs/edge.md\ntitle: Edge\n\ndocs/loose.md"
+        assert _section(_tool_text(message), "# documents") == (
+            "docs/dangling.md\nlinks to a target outside the corpus\n\n"
+            "docs/edge.md\ntitle: Edge\n\ndocs/loose.md"
+        )
+        assert str(corpus.parent) not in _tool_text(message)
 
-    def test_an_unreadable_document_also_names_a_remedy_that_works(self, corpus: Path) -> None:
-        # Same invariant as the out-of-root link, second place it has to hold: a link
-        # dangling inside the corpus. The raw OSError named no remedy and leaked a host path.
+    def test_an_unreadable_document_is_reported_without_a_host_path(self, corpus: Path) -> None:
+        # A link dangling inside the corpus passes containment and fails at the read. The
+        # raw OSError would leak a host path and name the document by where its bytes live.
         try:
             (corpus / "docs" / "inner.md").symlink_to(corpus / "docs" / "never-created.md")
         except OSError as exc:
             pytest.skip(f"cannot create a symlink here: {exc}")
 
-        refusal = respond(corpus, _request("tools/call", {"name": "contents"}))
-        assert _result(refusal)["isError"] is True
-        text = _tool_text(refusal)
-        assert "docs/inner.md" in text
+        message = respond(corpus, _request("tools/call", {"name": "contents", "arguments": _DOCS}))
+        assert _result(message)["isError"] is False
+        text = _tool_text(message)
+        assert "docs/inner.md\ncannot be read (" in text
+        assert "docs/edge.md\ntitle: Edge" in text
         assert str(corpus) not in text
 
-        params = {"name": "contents", "arguments": {"exclude": ["docs/inner.md"]}}
-        message = respond(corpus, _request("tools/call", params))
-        assert _result(message)["isError"] is False
-        assert _tool_text(message) == "docs/edge.md\ntitle: Edge\n\ndocs/loose.md"
+    def test_an_unreadable_document_does_not_stop_the_key_count(self, corpus: Path) -> None:
+        # vocabulary recurses, so raising here cost the whole subtree for one bad link.
+        try:
+            (corpus / "docs" / "inner.md").symlink_to(corpus / "docs" / "never-created.md")
+        except OSError as exc:
+            pytest.skip(f"cannot create a symlink here: {exc}")
 
-    def test_an_exclude_relative_to_under_is_refused(self, corpus: Path) -> None:
-        (corpus / "docs" / "journal").mkdir()
-        params = {"name": "contents", "arguments": {"exclude": ["journal"]}}
-        message = respond(corpus, _request("tools/call", params))
-        assert _result(message)["isError"] is True
-        assert "not a path in the corpus" in _tool_text(message)
+        message = respond(corpus, _request("tools/call", {"name": "vocabulary"}))
+        assert _result(message)["isError"] is False
+        assert _tool_text(message) == "title: 1"
+
+    def test_a_mis_encoded_document_does_not_stop_the_key_count(self, corpus: Path) -> None:
+        # UnicodeDecodeError is a ValueError, so _call_tool caught it as a whole-call
+        # failure: one latin-1 file cost vocabulary the entire subtree. No symlink needed.
+        (corpus / "docs" / "latin.md").write_bytes(b"---\ntitle: caf\xe9\n---\n")
+
+        message = respond(corpus, _request("tools/call", {"name": "vocabulary"}))
+        assert _result(message)["isError"] is False
+        assert _tool_text(message) == "title: 1"
+
+    def test_an_unlistable_directory_does_not_fail_the_call(
+        self, corpus: Path, deny: Callable[[str, Path], None]
+    ) -> None:
+        # It used to raise out of the walk and come back as one errno line carrying an
+        # absolute host path, with no listing at all.
+        (corpus / "docs" / "closed").mkdir()
+        deny("markdown_in", corpus / "docs" / "closed")
+
+        message = respond(corpus, _request("tools/call", {"name": "contents", "arguments": _DOCS}))
+        assert _result(message)["isError"] is False
+        text = _tool_text(message)
+        assert "  closed/ cannot be listed" in text
+        assert _section(text, "# documents") == "docs/edge.md\ntitle: Edge\n\ndocs/loose.md"
+        assert str(corpus) not in text
 
     def test_a_key_absent_from_some_documents_is_fine(self, corpus: Path) -> None:
         # docs/loose.md has no frontmatter at all; docs/edge.md has a title.
-        params = {"name": "contents", "arguments": {"keys": ["title"]}}
+        params = {"name": "contents", "arguments": {"under": "docs", "keys": ["title"]}}
         text = _tool_text(respond(corpus, _request("tools/call", params)))
-        assert text == "docs/edge.md\ntitle: Edge\n\ndocs/loose.md"
+        assert _section(text, "# documents") == "docs/edge.md\ntitle: Edge\n\ndocs/loose.md"
 
-    def test_a_non_list_exclude_is_refused(self, corpus: Path) -> None:
-        params = {"name": "contents", "arguments": {"exclude": "docs/journal"}}
+
+class TestVocabulary:
+    def test_counts_the_keys_across_the_whole_subtree(self, corpus: Path) -> None:
+        (corpus / "docs" / "sub").mkdir()
+        (corpus / "docs" / "sub" / "deep.md").write_text(
+            "---\ntitle: D\nstatus: locked\n---\n", encoding="utf-8"
+        )
+        message = respond(corpus, _request("tools/call", {"name": "vocabulary"}))
+        assert _tool_text(message) == "status: 1\ntitle: 2"
+        assert _result(message)["isError"] is False
+
+    def test_under_scopes_the_count(self, corpus: Path) -> None:
+        (corpus / "docs" / "sub").mkdir()
+        (corpus / "docs" / "sub" / "deep.md").write_text(
+            "---\nstatus: locked\n---\n", encoding="utf-8"
+        )
+        params = {"name": "vocabulary", "arguments": {"under": "docs/sub"}}
+        assert _tool_text(respond(corpus, _request("tools/call", params))) == "status: 1"
+
+    def test_a_folder_with_no_frontmatter_says_so(self, corpus: Path) -> None:
+        bare = corpus / "docs" / "bare"
+        bare.mkdir()
+        (bare / "a.md").write_text("# A\n", encoding="utf-8")
+        params = {"name": "vocabulary", "arguments": {"under": "docs/bare"}}
+        message = respond(corpus, _request("tools/call", params))
+        assert _result(message)["isError"] is False
+        assert _tool_text(message) == "no frontmatter keys under 'docs/bare'"
+
+    def test_it_answers_which_keys_contents_can_be_asked_for(self, corpus: Path) -> None:
+        # The reason the tool exists: `contents(keys=[...])` refuses a key that does not
+        # exist, and nothing else could tell the caller which ones do.
+        (corpus / "docs" / "edge.md").write_text(
+            "---\ntitle: Edge\nstatus: locked\n---\n", encoding="utf-8"
+        )
+        keys = [
+            line.split(":")[0]
+            for line in _tool_text(
+                respond(corpus, _request("tools/call", {"name": "vocabulary"}))
+            ).splitlines()
+        ]
+        params = {"name": "contents", "arguments": {"keys": keys}}
+        assert _result(respond(corpus, _request("tools/call", params)))["isError"] is False
+
+    def test_the_default_counts_from_the_corpus_root(self, corpus: Path) -> None:
+        assert _tool_text(respond(corpus, _request("tools/call", {"name": "vocabulary"}))) == (
+            "title: 1"
+        )
+
+    def test_hidden_folders_are_never_counted(self, corpus: Path) -> None:
+        # A .venv is full of markdown, and counting it would report keys from packages
+        # while `contents` says the folder does not exist.
+        venv = corpus / ".venv" / "pkg"
+        venv.mkdir(parents=True)
+        (venv / "README.md").write_text("---\nlicense: MIT\n---\n", encoding="utf-8")
+        text = _tool_text(respond(corpus, _request("tools/call", {"name": "vocabulary"})))
+        assert text == "title: 1"
+
+    def test_a_bad_under_is_an_error_result(self, corpus: Path) -> None:
+        params = {"name": "vocabulary", "arguments": {"under": "docs/nope"}}
         message = respond(corpus, _request("tools/call", params))
         assert _result(message)["isError"] is True
-        assert "'exclude' must be a list of strings" in _tool_text(message)
+        assert "does not exist" in _tool_text(message)
 
-    def test_keys_and_exclude_compose(self, corpus: Path) -> None:
-        (corpus / "docs" / "journal").mkdir()
-        (corpus / "docs" / "journal" / "day.md").write_text(
-            "---\ntitle: D\n---\n", encoding="utf-8"
-        )
-        params = {
-            "name": "contents",
-            "arguments": {"keys": ["title"], "exclude": ["docs/journal"]},
-        }
-        text = _tool_text(respond(corpus, _request("tools/call", params)))
-        assert text == "docs/edge.md\ntitle: Edge\n\ndocs/loose.md"
+    def test_a_non_string_under_is_refused(self, corpus: Path) -> None:
+        params = {"name": "vocabulary", "arguments": {"under": 7}}
+        assert _result(respond(corpus, _request("tools/call", params)))["isError"] is True
 
     def test_an_unknown_tool_is_an_error_result(self, corpus: Path) -> None:
         message = respond(corpus, _request("tools/call", {"name": "nope"}))

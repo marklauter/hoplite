@@ -23,19 +23,25 @@ from typing import Final, TextIO, cast
 
 from hoplite_catalog.contents import (
     collect,
-    project,
+    other_files,
     render,
-    resolve_exclusions,
+    render_report,
     resolve_under,
+    walk,
 )
+from hoplite_catalog.vocabulary import render_vocabulary, tally
 
 __all__ = ["DEFAULT_UNDER", "PROTOCOL_VERSION", "SERVER_NAME", "TOOLS", "respond", "serve"]
 
 SERVER_NAME: Final = "catalog"
 # Pinned to .claude-plugin/plugin.json by a test, since initialize reports it.
-SERVER_VERSION: Final = "0.1.8"
+SERVER_VERSION: Final = "0.2.0"
 PROTOCOL_VERSION: Final = "2025-06-18"
-DEFAULT_UNDER: Final = "docs"
+# The corpus root, not a folder name. One corpus keeps its documents in `docs`, another in
+# `vault`, another at the top level with no wrapper folder at all. Defaulting to any of
+# those names guesses at someone's layout and fails for everyone else; defaulting to the
+# root shows the caller what the layout is, which is the orientation call this tool is for.
+DEFAULT_UNDER: Final = "."
 
 _PARSE_ERROR: Final = -32700
 _INVALID_REQUEST: Final = -32600
@@ -46,27 +52,45 @@ _METHOD_NOT_FOUND: Final = -32601
 # document, and a trigger here would fire on writes that have nothing to do with the
 # corpus. The skills do not name this tool yet, which is the gap that connects them.
 _CONTENTS_DESCRIPTION: Final = (
-    "Survey a folder of the markdown corpus and trace its documents' edges.\n\n"
-    "Returns the path per document, and, if available, its frontmatter properties, one "
-    "per line, with a blank line between documents. A property whose value is a "
-    "`[[wikilink]]` is an edge; anything else is a claim about the document."
+    "Survey one folder of the markdown corpus and trace its documents' edges.\n\n"
+    "Returns three groups, each under a `#` heading.\n\n"
+    "`# directories` is the folder tree rooted at the one asked for, to full depth, each "
+    "with the count of documents directly in it — call again with one of those folders to "
+    "read it. `# other files` is the non-markdown files in the folder. `# documents` is "
+    "the path per document in that folder alone, and, if available, its frontmatter "
+    "properties, one per line, with a blank line between documents. A property whose "
+    "value is a `[[wikilink]]` is an edge; anything else is a claim about the document.\n\n"
+    "Anything the tool will not follow is named rather than hidden. A folder or file "
+    "marked `links outside the corpus`, or a folder marked `cannot be listed`, was not "
+    "read. A document that could not be read carries the reason where its properties "
+    "would be."
 )
+
+_VOCABULARY_DESCRIPTION: Final = (
+    "Count the frontmatter keys in use across a folder of the markdown corpus.\n\n"
+    "Returns one `key: documents` line per distinct key, ordered by key, where the "
+    "number is how many documents carry it. Recurses. Call it before `contents` with "
+    "`keys`, since a key that does not exist returns nothing."
+)
+
+_UNDER_SCHEMA: Final[dict[str, object]] = {
+    "type": "string",
+    "description": (
+        "Folder relative to the corpus root, like 'docs/glossary'. Defaults to the corpus "
+        "root, which is where to start when you do not yet know how the corpus is laid out. "
+        "Hidden folders are never walked into, though naming one directly still works."
+    ),
+}
 
 TOOLS: Final[tuple[dict[str, object], ...]] = (
     {
         "name": "contents",
-        "title": "List corpus documents with their frontmatter",
+        "title": "List one folder of the corpus with its documents' frontmatter",
         "description": _CONTENTS_DESCRIPTION,
         "inputSchema": {
             "type": "object",
             "properties": {
-                "under": {
-                    "type": "string",
-                    "description": (
-                        "Folder to list, relative to the corpus root, like "
-                        f"'docs/glossary'. Recurses into subfolders. Defaults to '{DEFAULT_UNDER}'."
-                    ),
-                },
+                "under": _UNDER_SCHEMA,
                 "keys": {
                     "type": "array",
                     "items": {"type": "string"},
@@ -74,24 +98,31 @@ TOOLS: Final[tuple[dict[str, object], ...]] = (
                         "Frontmatter properties to keep, like ['title', 'tags']. Omit to "
                         "get every property, including summary. An empty list returns "
                         "paths alone. Use it to trade detail for size when a folder is "
-                        "too large to read whole."
-                    ),
-                },
-                "exclude": {
-                    "type": "array",
-                    "items": {"type": "string"},
-                    "description": (
-                        "Paths to skip, relative to the corpus root, like "
-                        "['docs/journal'] for a folder and everything under it or "
-                        "['docs/journal/2026-07-26.md'] for one document. Matches whole "
-                        "path segments, so 'docs/journal' leaves 'docs/journals.md' alone."
+                        "too large to read whole. `vocabulary` lists the keys in use."
                     ),
                 },
             },
             "additionalProperties": False,
         },
         "annotations": {
-            "title": "List corpus documents with their frontmatter",
+            "title": "List one folder of the corpus with its documents' frontmatter",
+            "readOnlyHint": True,
+            "destructiveHint": False,
+            "idempotentHint": True,
+            "openWorldHint": False,
+        },
+    },
+    {
+        "name": "vocabulary",
+        "title": "Count the frontmatter keys in use",
+        "description": _VOCABULARY_DESCRIPTION,
+        "inputSchema": {
+            "type": "object",
+            "properties": {"under": _UNDER_SCHEMA},
+            "additionalProperties": False,
+        },
+        "annotations": {
+            "title": "Count the frontmatter keys in use",
             "readOnlyHint": True,
             "destructiveHint": False,
             "idempotentHint": True,
@@ -128,34 +159,49 @@ def _string_set(value: object, name: str) -> frozenset[str] | None:
     return frozenset(cast("list[str]", items))
 
 
-def _call_contents(root: Path, arguments: dict[str, object]) -> dict[str, object]:
-    """Run the ``contents`` tool. Raises ``ValueError`` on a bad argument."""
+def _under_argument(arguments: dict[str, object]) -> str:
+    """Read the ``under`` argument, which every tool takes and defaults the same way."""
     under = arguments.get("under", DEFAULT_UNDER)
     if not isinstance(under, str):
         raise ValueError("'under' must be a string")
-    keys = _string_set(arguments.get("keys"), "keys")
-    exclude = resolve_exclusions(root, _string_set(arguments.get("exclude"), "exclude") or ())
+    return under
 
-    entries = collect(root, resolve_under(root, under), exclude)
-    projected = [project(entry, keys) for entry in entries]
+
+def _call_contents(root: Path, arguments: dict[str, object]) -> dict[str, object]:
+    """Run the ``contents`` tool. Raises ``ValueError`` on a bad argument."""
+    under = _under_argument(arguments)
+    keys = _string_set(arguments.get("keys"), "keys")
+
+    target = resolve_under(root, under)
+    documents = collect(root, target)
+    projected = [document.projected(keys) for document in documents]
 
     # A misspelled key would otherwise return a bare path list, which reads as "these
     # documents have no frontmatter" rather than "that key does not exist". The
-    # `had_frontmatter` guard is what separates those two: a subtree where nothing has
+    # `had_frontmatter` guard is what separates those two: a folder where nothing has
     # frontmatter at all is not the caller's mistake, so it must not be blamed on the keys.
     # An empty `keys` is exempt too — it asks for paths alone, and gets them.
-    had_frontmatter = any(entry.frontmatter for entry in entries)
-    kept_any = any(entry.frontmatter for entry in projected)
+    had_frontmatter = any(document.properties() for document in documents)
+    kept_any = any(document.properties() for document in projected)
     if keys and had_frontmatter and not kept_any:
         raise ValueError(
             f"none of the requested keys appear in any document under {under!r}: {sorted(keys)}"
         )
 
-    listing = render(projected)
-    if listing:
-        return _text_result(listing)
-    tail = " after exclusions" if exclude else ""
-    return _text_result(f"no markdown documents under {under!r}{tail}")
+    # A single document as `under` has no subtree and no siblings to report, so it gets the
+    # listing alone. Wrapping one document in three headings would be all frame, no picture.
+    if target.is_file():
+        return _text_result(render(projected))
+    return _text_result(render_report(walk(root, target), other_files(root, target), projected))
+
+
+def _call_vocabulary(root: Path, arguments: dict[str, object]) -> dict[str, object]:
+    """Run the ``vocabulary`` tool. Raises ``ValueError`` on a bad argument."""
+    under = _under_argument(arguments)
+    uses = tally(collect(root, resolve_under(root, under), recurse=True))
+    if not uses:
+        return _text_result(f"no frontmatter keys under {under!r}")
+    return _text_result(render_vocabulary(uses))
 
 
 def _call_tool(root: Path, params: dict[str, object]) -> dict[str, object]:
@@ -164,13 +210,23 @@ def _call_tool(root: Path, params: dict[str, object]) -> dict[str, object]:
     name = params.get("name")
     arguments = _as_mapping(params.get("arguments")) or {}
     try:
-        if name != "contents":
-            raise ValueError(f"unknown tool: {name!r}")
-        return _call_contents(root, arguments)
+        match name:
+            case "contents":
+                return _call_contents(root, arguments)
+            case "vocabulary":
+                return _call_vocabulary(root, arguments)
+            case _:
+                raise ValueError(f"unknown tool: {name!r}")
     except ValueError as exc:
         return _text_result(str(exc), is_error=True)
     except OSError as exc:
-        return _text_result(f"cannot read the corpus: {exc}", is_error=True)
+        # The backstop, not the normal path: an unreadable document and an unreadable
+        # directory are both reported in the listing. `exc.strerror` rather than `exc`,
+        # because the full message carries an absolute host path, which nothing else the
+        # server emits does.
+        return _text_result(
+            f"cannot read the corpus: {exc.strerror or type(exc).__name__}", is_error=True
+        )
 
 
 def _dispatch(root: Path, method: str, params: dict[str, object]) -> dict[str, object] | None:

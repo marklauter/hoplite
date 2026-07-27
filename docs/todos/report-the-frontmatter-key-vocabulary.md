@@ -1,11 +1,11 @@
 ---
 title: Report the frontmatter key vocabulary
-summary: "Add a second tool to the catalog MCP server returning every distinct frontmatter key in a corpus with the count of documents carrying it and whether its values are edges or claims, so the open vocabulary is inspectable and its drift visible."
+summary: "Add a second tool to the catalog MCP server returning every distinct frontmatter key in a corpus with the count of documents carrying it, so the open vocabulary is inspectable before a caller names a key."
 tags: [todo, mcp, design]
 created: 2026-07-26
 priority: medium
 effort: low
-status: open
+status: closed
 cites:
   - "[[docs/specs/frontmatter.md]]"
   - "[[docs/todos/predicates-are-an-open-vocabulary.md]]"
@@ -64,10 +64,15 @@ Searching for a key with a given value, the equivalent of `where status = 'locke
 
 ## Shape of done
 
-- A second tool reports key, document count, and kind over a directory of the corpus.
-- Detection follows continuation lines and skips the four special keys, both covered by tests built from the counterexamples above.
-- Mixed is reported when it occurs, and a test constructs the case since no corpus supplies one.
+- A second tool reports key and document count over a directory of the corpus.
+- The count follows continuation lines, covered by a test built from the counterexample above.
 - The gate is green: `ruff format --check`, `ruff check`, `pyright` strict, and the suite, all run from `plugins/hoplite-mcp/`.
+
+## Cut before it shipped
+
+The kind column — claim, edge, or mixed — is not in the tool. The report is `key: count` and nothing else, so the special-key exclusion and the edge-detection rule below it went with it. Nothing in the output flags a key as suspect; the count says which keys exist and how widely each is used, and the caller judges.
+
+The drift framing above went with it for the same reason. A count of 1 is not a drift signal: `estimates`, `requires`, and `refines` are all deliberate coinages, three of three false positives. What separates a coinage from drift is whether the key has a glossary entry, which a count cannot see — `contrast` sits on five documents and looks healthy while [[docs/todos/predicates-are-an-open-vocabulary.md]] wants it renamed.
 
 ## See also
 
