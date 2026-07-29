@@ -4,7 +4,6 @@ summary: not-related is the first structural-negative stereotype on the mentions
 tags: [todo, edges, stereotypes, not-related, design]
 created: 2026-05-27
 priority: low
-effort: medium
 status: open
 ---
 

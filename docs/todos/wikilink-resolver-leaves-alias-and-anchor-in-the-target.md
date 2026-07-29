@@ -4,7 +4,6 @@ summary: Anchor and alias syntax survive wikilink capture and resolution, produc
 tags: [todo, mcp, wikilinks, bug]
 created: 2026-05-27
 priority: medium
-effort: low
 status: closed
 ---
 

@@ -4,7 +4,6 @@ summary: MinHash Jaccard over shingles weights every shingle equally, suppressin
 tags: [todo, mcp, related-edges, bm25, ranking, design]
 created: 2026-05-27
 priority: high
-effort: high
 status: open
 ---
 

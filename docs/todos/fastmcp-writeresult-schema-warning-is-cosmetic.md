@@ -4,7 +4,6 @@ summary: FastMCP logs a schema warning at startup about `WriteResult`'s `path` f
 tags: [todo, mcp, fastmcp]
 created: 2026-05-25
 priority: low
-effort: low
 status: open
 ---
 

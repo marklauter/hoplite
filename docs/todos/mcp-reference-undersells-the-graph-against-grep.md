@@ -4,7 +4,6 @@ summary: High-priority TODO. The component at plugins/hoplite/components/hoplite
 tags: [todo, mcp, design]
 created: 2026-05-26
 priority: low
-effort: low
 status: open
 ---
 

@@ -22,4 +22,9 @@ there, since `under` defaults to the repo root, which is not it.
 - `plugins/hoplite-mcp` takes no runtime dependency, ever. Stdlib only, so the plugin has
   no install step. Dev tooling is exempt.
 - Python: protocol-style interfaces.
-- Corpus prose: Microsoft Writing Style Guide. Plain, scannable, one idea per sentence.
+- Corpus prose: Microsoft Writing Style Guide. Plain, scannable, one idea per sentence. Run
+  the `hoplite-skills:proofreading` skill after writing a markdown file.
+
+## Plugin script-location trap
+
+Scripts a skill uses live under that skill's own directory: `${CLAUDE_PLUGIN_ROOT}/skills/<skill>/scripts/`. A SKILL.md that names a script without anchoring its path leaves the agent looking in the wrong place, finding nothing, and reporting "scripts not installed." Every script reference in a SKILL.md needs an explicit `${CLAUDE_PLUGIN_ROOT}/...` path.

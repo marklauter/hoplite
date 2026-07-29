@@ -4,7 +4,6 @@ summary: taking-notes still reads as an imperative runbook (Recording a note has
 tags: [todo, skills, taking-notes, claude-code]
 created: 2026-05-26
 priority: medium
-effort: medium
 status: open
 ---
 

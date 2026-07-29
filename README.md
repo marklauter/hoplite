@@ -82,7 +82,7 @@ Eight skills over one authoring model — the corpus splits into a glossary (ter
 
 - `taking-notes` — capture the current state of one idea under `docs/notes/`; mutable, rewritten freely as understanding moves.
 - `journaling` — record what happened as an immutable dated entry under `docs/journal/`; never corrected, only appended.
-- `todo` — capture an action item under `docs/todos/`, born triaged: priority, effort, status set at capture.
+- `todo` — capture an action item under `docs/todos/`, born triaged: priority and status set at capture.
 - `triage` — work the backlog under `docs/todos/`: re-prioritise, mark blockers with `blocked-by` edges, close what's done.
 - `decision` — record a hard-to-reverse trade-off as an ADR-equivalent note under `docs/decisions/`.
 - `glossary` — reduce a term to its kernel — a word plus the smallest phrase that unpacks it — under `docs/glossary/`.

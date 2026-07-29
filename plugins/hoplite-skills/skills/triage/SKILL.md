@@ -1,14 +1,14 @@
 ---
 name: triage
-description: Triage notes typed `todo` under docs/todos/ — assign priority, effort, and status, mark blockers, close what's done. Use to work the backlog, prioritise, or sweep for unlabelled action items.
+description: Triage notes typed `todo` under docs/todos/ — assign priority and status, mark blockers, close what's done. Use to work the backlog, prioritise, or sweep for unlabelled action items.
 ---
 
 # Triage
 
-A todo is a note typed `todo` — an action item the corpus tracks, living under `docs/todos/`. The type is immutable; its lifecycle lives in three properties, so history stays queryable without rewriting it. Triage sets those properties; state is a property, never a tag. Todos written before `type` carry `tags: [todo]` instead — treat both as todos until the corpus is backfilled.
+A todo is a note typed `todo` — an action item the corpus tracks, living under `docs/todos/`. The type is immutable; its lifecycle lives in two properties, so history stays queryable without rewriting it. Triage sets those properties; state is a property, never a tag. Todos written before `type` carry `tags: [todo]` instead — treat both as todos until the corpus is backfilled.
 
-- Untriaged todo → assign. A `todo` note with no triage fields → set `priority` (high|medium|low), `effort` (high|medium|low), `status: open` (frontmatter standard: `${CLAUDE_PLUGIN_ROOT}/references/frontmatter.md`).
-- Judge effort from the code, not the note. Reading the file the note points at surfaces three shapes: *closure* (already done → `closed` plus a `## Resolution` naming where it landed), *fork* (two unrelated changes in one note → split into two), *revised effort* (a "localized" fix that actually needs migration or tests).
+- Untriaged todo → assign. A `todo` note with no triage fields → set `priority` (high|medium|low), `status: open` (frontmatter standard: `${CLAUDE_PLUGIN_ROOT}/references/frontmatter.md`).
+- Judge priority from the code, not the note. Reading the file the note points at surfaces three shapes: *closure* (already done → `closed` plus a `## Resolution` naming where it landed), *fork* (two unrelated changes in one note → split into two), *revised scope* (a "localized" fix that actually needs migration or tests).
 - Blocked → link it. Todos that must close first → a `blocked-by` edge property whose value is a quoted wikilink, like `blocked-by: "[[<target>]]"` (a block-style list when there are several; edge/link syntax: `${CLAUDE_PLUGIN_ROOT}/references/expressing-edges.md`).
 - Done → close. Work landed → `status: closed`, body gets `## Resolution`. Parked → `deferred`, naming what would un-park it (a blocker resolves, the scale arrives). Won't-do → `declined`, body says why.
 - Recoverable from the note alone. A `## Resolution` or a `declined` reason → name where it landed in full — file, function, or commit — concrete enough to verify without re-walking the conversation.

@@ -4,7 +4,6 @@ summary: Background agent samples the corpus, traverses neighborhoods, and write
 tags: [todo, architecture, roadmap, dream]
 created: 2026-05-25
 priority: low
-effort: high
 status: open
 ---
 

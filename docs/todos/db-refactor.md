@@ -4,7 +4,6 @@ summary: Numbered plan to replace the in-memory dict-backed graph with a persist
 tags: [todo, sqlite, architecture]
 created: 2026-05-27
 priority: high
-effort: high
 status: in-progress
 ---
 

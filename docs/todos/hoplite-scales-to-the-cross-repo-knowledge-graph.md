@@ -4,7 +4,6 @@ summary: Two coupled upgrades make Hoplite usable across the multi-repo personal
 tags: [todo, scale, bm25, corpus, design, epic]
 created: 2026-05-27
 priority: high
-effort: high
 status: open
 ---
 

@@ -4,7 +4,6 @@ summary: tools.set_root binds the index to one corpus root under cwd. Cross-repo
 tags: [todo, mcp, corpus, config, design]
 created: 2026-05-27
 priority: medium
-effort: high
 status: open
 ---
 

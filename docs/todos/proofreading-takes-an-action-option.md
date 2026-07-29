@@ -4,7 +4,6 @@ summary: proofreading always fixes what it finds; add --action:report so a calle
 tags: [todo, skills, proofreading, claude-code]
 created: 2026-07-24
 priority: low
-effort: low
 status: open
 ---
 

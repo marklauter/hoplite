@@ -4,7 +4,6 @@ summary: A master todo that decomposes into sub-tasks needs an explicit hierarch
 tags: [todo, skills, open-question]
 created: 2026-05-27
 priority: low
-effort: medium
 status: closed
 ---
 

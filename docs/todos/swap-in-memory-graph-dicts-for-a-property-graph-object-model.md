@@ -4,7 +4,6 @@ summary: Hand-rolled adjacency dicts today; explore swapping to an object Graph<
 tags: [todo, refactor, in-memory, graph]
 created: 2026-05-25
 priority: low
-effort: high
 status: open
 ---
 

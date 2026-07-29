@@ -4,7 +4,6 @@ summary: SessionStart hooks don't fire on /plugin install. The MCP launcher poll
 tags: [todo, bootstrap, mcp, lifecycle, bug]
 created: 2026-05-25
 priority: medium
-effort: medium
 status: open
 ---
 
