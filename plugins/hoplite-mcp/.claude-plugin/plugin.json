@@ -1,6 +1,5 @@
 {
   "name": "hoplite-mcp",
-  "version": "0.2.0",
   "description": "The Hoplite catalog MCP server. Ships two tools: contents, which walks one folder of the corpus and lists its documents' frontmatter as written, and vocabulary, which counts the frontmatter keys in use. The graph tools are still under design.",
   "author": {
     "name": "MSL"

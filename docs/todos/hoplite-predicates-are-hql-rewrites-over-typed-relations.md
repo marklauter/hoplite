@@ -4,7 +4,6 @@ summary: Proposed predicate language for `where` and `relatives` — HQL (Hoplit
 tags: [todo, mcp, design, architecture, hql]
 created: 2026-05-27
 priority: high
-effort: high
 status: open
 ---
 

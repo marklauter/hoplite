@@ -4,7 +4,6 @@ summary: Walking `tuple(related, P)` ranks by the path's product of edge confide
 tags: [todo, mcp, design, architecture]
 created: 2026-05-27
 priority: low
-effort: medium
 status: open
 blocked-by: ["[[related-edges-rarely-fire-in-current-corpus]]"]
 ---

@@ -4,7 +4,6 @@ summary: The in-memory graph model has stabilized across several iterations; rev
 tags: [todo, sqlite, graph]
 created: 2026-05-27
 priority: high
-effort: high
 status: in-progress
 ---
 

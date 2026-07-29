@@ -5,7 +5,6 @@ tags: [todo]
 created: 2026-07-02
 status: open
 priority: medium
-effort: medium
 ---
 
 # Reconcile hoplite-navigation to the read model

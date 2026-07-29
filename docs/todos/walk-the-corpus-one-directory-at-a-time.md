@@ -4,7 +4,6 @@ summary: "Replace the recursive listing and its exclude argument in the catalog 
 tags: [todo, mcp, design]
 created: 2026-07-26
 priority: high
-effort: medium
 status: closed
 cites: "[[docs/specs/hoplite-tool-api.md]]"
 ---

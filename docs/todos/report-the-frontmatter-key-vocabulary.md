@@ -4,7 +4,6 @@ summary: "Add a second tool to the catalog MCP server returning every distinct f
 tags: [todo, mcp, design]
 created: 2026-07-26
 priority: medium
-effort: low
 status: closed
 cites:
   - "[[docs/specs/frontmatter.md]]"

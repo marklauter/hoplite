@@ -4,7 +4,6 @@ summary: Spot-checks against the spec and journal documents show zero `related` 
 tags: [todo, mcp, graph, related-edges, minhash, bug]
 created: 2026-05-26
 priority: high
-effort: medium
 status: open
 ---
 

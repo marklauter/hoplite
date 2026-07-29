@@ -4,7 +4,6 @@ summary: One coordinated work cycle delivering the open-vocab stereotype model o
 tags: [todo, edges, stereotypes, design, epic]
 created: 2026-05-27
 priority: medium
-effort: medium
 status: open
 ---
 

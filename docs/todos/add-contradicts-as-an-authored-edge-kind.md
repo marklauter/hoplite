@@ -4,7 +4,6 @@ summary: contradicts is one of the v1 canonical stereotypes on the mentions edge
 tags: [todo, edges, stereotypes, contradicts, design]
 created: 2026-05-27
 priority: low
-effort: medium
 status: open
 ---
 

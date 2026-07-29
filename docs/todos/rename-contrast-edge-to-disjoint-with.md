@@ -4,7 +4,6 @@ summary: the glossary skill now names the symmetric sibling edge disjoint-with; 
 tags: [todo, glossary, skills, corpus]
 created: 2026-07-25
 priority: medium
-effort: low
 status: open
 ---
 

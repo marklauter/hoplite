@@ -4,7 +4,6 @@ summary: Three regression scenarios for the SessionStart venv bootstrap — cold
 tags: [todo, mcp, verification]
 created: 2026-05-25
 priority: medium
-effort: low
 status: open
 ---
 
