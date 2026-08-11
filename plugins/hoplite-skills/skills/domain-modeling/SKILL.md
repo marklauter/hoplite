@@ -1,6 +1,6 @@
 ---
 name: domain-modeling
-description: Use when designing the domain model — reducing a term, concept, or decision to its irreducible kernel: resolving terminology against the glossary, stress-testing concept boundaries against the spec, or recording a design decision. The active discipline of changing the model, not reading the corpus for vocabulary.
+description: 'Use when designing the domain model — reducing a term, concept, or decision to its irreducible kernel: resolving terminology against the glossary, stress-testing concept boundaries against the spec, or recording a design decision. The active discipline of changing the model, not reading the corpus for vocabulary.'
 ---
 
 # Domain modeling
