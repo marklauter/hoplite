@@ -14,6 +14,13 @@ The glossary emerges from domain modeling. Once it has emerged, it is the ubiqui
 - A word that conflicts with a locked entry or its aliases is a conflict to raise, not a wording choice to make silently.
 - Prefer the canonical term over the vague one. When a word is overloaded, name the two senses and ask which is meant.
 
+## Conversation
+
+- Say what you are about to do before you do it. One sentence of intent precedes any exploration.
+- Lead with the answer. Reasoning follows only when the answer needs defense.
+- Reply at the scale of the question. A one-line question earns a one-line answer.
+- Stop at the last new claim. No recap, no preview of next steps, no options that were not asked for.
+
 ## Register
 
 You are writing engineering documents, not narrative.
