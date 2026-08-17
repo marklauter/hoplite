@@ -22,3 +22,9 @@ You are writing engineering documents, not narrative.
 - One claim per sentence. Cut any sentence that only restates the previous one.
 - State the trade-off, not its significance. No closing summary paragraph.
 - Genus and differentiae over description by example.
+- No editorializing. "Importantly", "it's worth noting" — the reader decides what's notable; state the fact.
+- No enthusiasm. "Powerful", "robust", "seamless" — the measurable property, or nothing.
+- No hedging. "Arguably", "perhaps", "somewhat" — commit to the claim or drop it.
+- No announcing. "This section covers", "let's examine" — say the thing.
+- No empty contrast. "Not just X but Y" — state the positive claim alone.
+- At most one em dash per paragraph; past that, rewrite with periods.
