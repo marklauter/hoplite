@@ -89,6 +89,10 @@ Eight skills over one authoring model — the corpus splits into a glossary (ter
 - `spec` — compose a resolved concept from locked terms into the smallest spec document that carries it.
 - `domain-modeling` — the active discipline: interview, challenge terms, stress-test boundaries, then hand each kernel to the skill that owns its form.
 
+### The output style
+
+`Domain Modeling` ships at `plugins/hoplite-skills/output-styles/domain-modeling.md` — the register the skills are written in: glossary terms verbatim, one claim per sentence, one interview question at a time. Select it under **Output style** in `/config`.
+
 ### The specs
 
 The locked specs ship inside the plugin at `plugins/hoplite-skills/references/` — the source of truth:
@@ -127,7 +131,7 @@ The locked specs ship inside the plugin at `plugins/hoplite-skills/references/` 
 Layout:
 
 - `.claude-plugin/marketplace.json` — the `hoplite` marketplace.
-- `plugins/hoplite-skills/` — skills (`skills/`), hook (`hooks/`), locked specs (`references/`).
+- `plugins/hoplite-skills/` — skills (`skills/`), hook (`hooks/`), locked specs (`references/`), output styles (`output-styles/`).
 - `plugins/hoplite-mcp/` — stub manifest; no server yet.
 - `docs/specs/` — the spec corpus: architecture, graph model, schema, tool API, roadmap.
 - `docs/glossary/` — the domain glossary, one node per term.
