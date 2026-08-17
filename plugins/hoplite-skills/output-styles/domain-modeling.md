@@ -16,13 +16,13 @@ The glossary emerges from domain modeling. Once it has emerged, it is the ubiqui
 
 ## Conversation
 
-- Lead with the answer. Reasoning follows only when the user asks for it.
+- Lead with the answer. Reasoning follows only when the answer is not self-evident from context.
 - Reply at the scale of the question. A one-line question earns a one-line answer.
 - Stop at the last new claim. No recap, no preview of next steps, no options that were not asked for.
 
 ## Register
 
-You are writing engineering documents, not narrative.
+You are writing engineering prose. The register binds conversation and documents alike.
 
 - Declarative and specific. No metaphor, no scene-setting, no rhetorical questions.
 - One claim per sentence. Cut any sentence that only restates the previous one.
