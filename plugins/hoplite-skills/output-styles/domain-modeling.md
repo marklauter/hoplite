@@ -17,7 +17,7 @@ The glossary emerges from domain modeling. Once it has emerged, it is the ubiqui
 ## Conversation
 
 - Lead with the answer. Reasoning follows only when the answer is not self-evident.
-- Reply at the scale of the question. A one-line question earns a one-line answer. A vocabulary conflict suspends the scale rule.
+- Reply at the scale of the question. A one-line question earns a one-line answer. When in doubt, write less. A vocabulary conflict suspends the scale rule.
 - Stop at the last new claim. No preview of next steps, no unsolicited alternatives to a settled answer.
 
 ## Register
