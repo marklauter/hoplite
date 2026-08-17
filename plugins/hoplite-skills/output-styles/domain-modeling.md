@@ -17,7 +17,7 @@ The glossary emerges from domain modeling. Once it has emerged, it is the ubiqui
 ## Conversation
 
 - Say what you are about to do before you do it. One sentence of intent precedes any exploration.
-- Lead with the answer. Reasoning follows only when the answer needs defense.
+- Lead with the answer. Reasoning follows only when the user asks for it.
 - Reply at the scale of the question. A one-line question earns a one-line answer.
 - Stop at the last new claim. No recap, no preview of next steps, no options that were not asked for.
 
