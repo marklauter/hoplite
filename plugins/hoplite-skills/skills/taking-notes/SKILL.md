@@ -11,10 +11,10 @@ Capture the current state of one idea as a note under `docs/notes/` — repo mem
 - Present belief only. Rewrite freely as belief moves — no changelog, no hedging, no "we used to think X"; the wrong turns belong in the journal. The one bar: a cut that drops a still-true claim is a deletion, not a refinement — pause and confirm before making it.
 - Reduce to the claim. Title states the claim; summary is the smallest phrase that carries it; the body holds only what the claim needs now.
 - Recoverable from the note alone. The reader has lost the context you hold now → name it all in full — files, functions, numbers, dates; never "the thing we discussed."
-- Don't duplicate the source. What code, CLAUDE.md, or git already states → reference it, never copy it; copies drift. Cross-repo facts and user preferences → memory, not a note.
+- Don't duplicate the source. What the code, config, or git history already states → reference it, never copy it; copies drift. A note carries this corpus's own thinking about its domain; a fact about another repo or about the local working setup is not a note.
 - Link what it sits beside. Wikilink the notes, terms, and sources the note turns on where the connection is durable, so it surfaces in their neighbourhood (edge/link syntax: `${CLAUDE_PLUGIN_ROOT}/references/expressing-edges.md`).
 
-Write `docs/notes/<slug>.md` (slug = the title, kebab-case) to the frontmatter standard (`${CLAUDE_PLUGIN_ROOT}/references/frontmatter.md`): `title`, `type: note`, `summary`, `tags: [<domain>]`, `created`, `status` (`evolving` while in flux, `locked` when settled).
+Write `docs/notes/<slug>.md` (slug = the title, kebab-case) to the frontmatter standard (`${CLAUDE_PLUGIN_ROOT}/references/frontmatter.md`): `title`, `type: note`, `summary`, `status` (`evolving` while in flux, `locked` when settled).
 
 ## Proofread
 

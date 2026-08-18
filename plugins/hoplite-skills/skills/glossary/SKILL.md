@@ -21,11 +21,13 @@ Obey these logical rules when reducing terms to their kernel:
 
 A noun kernel opens with an indefinite article and its genus. A verb kernel opens with the infinitive.
 
+Check the kernel for action. Read every clause after the genus: a finite verb whose subject is the term states what happens at evaluation time rather than what the term is, and an action is an accident under rule 1. A purpose phrase carries function without the verb, so write "a machine for converting fuel into motion", not "a machine that converts fuel to motion", and "a rewrite pairing a relation to follow with a relation to take", not "a rewrite that reads a factset, then evaluates it".
+
 The glossary maps each concept to exactly one term, and every statement sits on the term it describes. Repair the map when either breaks.
 
 - Collapse several words for one concept into the canonical one, and split one word carrying several concepts into a word per sense. Delete the entries you retire and repoint their wikilinks. "`couch`, `settee`, and `davenport` collapse to `sofa`. `bug` splits into `insect` and `defect`."
 - Define the domain, not the build. A kernel stays true after a rewrite in another language, so a type, function, module, or layer name never appears in one.
-- Move mechanism to the term it describes. "`engine` is *a machine that converts fuel to motion*, not *the spark-plug firing order*, which belongs to `ignition`."
+- Move mechanism to the term it describes. "`engine` is *a machine for converting fuel into motion*, not *the spark-plug firing order*, which belongs to `ignition`."
 
 The glossary is coherent when every term is satisfiable. A term whose genus, differentiae, and disjointness claims cannot all hold at once names nothing.
 
@@ -42,8 +44,6 @@ Write `docs/glossary/<term>.md` (kebab-case) to the frontmatter standard (`${CLA
 title: <term>
 type: definition
 summary: "<the kernel>"
-tags: [<optional-grouping>]
-created: YYYY-MM-DD
 status: <evolving | locked>
 is-a: "[[<broader-term>]]"
 disjoint-with:
