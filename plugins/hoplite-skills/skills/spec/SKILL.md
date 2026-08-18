@@ -20,8 +20,6 @@ Write `docs/specs/<concept>.md` to the frontmatter standard (`${CLAUDE_PLUGIN_RO
 title: <concept>
 type: specification
 summary: "<one line — what the concept is, built from its terms>"
-tags: [<domain>]
-created: YYYY-MM-DD
 status: <evolving | locked>
 cites:
   - "[[<term>]]"

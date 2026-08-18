@@ -15,7 +15,7 @@ Capture one action item as a note under `docs/todos/` — repo memory that outli
 - Blocked from birth → link it. A todo that can't start until another closes → a `blocked-by` edge property whose value is a quoted wikilink, like `blocked-by: "[[<target>]]"` (a block-style list when there are several; edge/link syntax: `${CLAUDE_PLUGIN_ROOT}/references/expressing-edges.md`).
 - Link what it sits beside. Wikilink the notes, terms, and sources the todo turns on where the connection is durable, so it surfaces in their neighbourhood (same edge/link syntax).
 
-Write `docs/todos/<slug>.md` (slug = the title, kebab-case) to the frontmatter standard (`${CLAUDE_PLUGIN_ROOT}/references/frontmatter.md`): `title`, `type: todo`, `summary`, `tags: [<domain>]`, `created`, `priority`, `status: open`.
+Write `docs/todos/<slug>.md` (slug = the title, kebab-case) to the frontmatter standard (`${CLAUDE_PLUGIN_ROOT}/references/frontmatter.md`): `title`, `type: todo`, `summary`, `priority`, `status: open`.
 
 ## Proofread
 
